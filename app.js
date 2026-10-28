@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v846';
+var APP_JS_VERSION = 'v847';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3648,7 +3648,7 @@ function renderAdminList() {
     html += pending.map(adminPendingRowHtml).join('');
     html += '<div style="height:6px;border-bottom:1px solid var(--border);margin-bottom:6px"></div>';
   }
-  html = _accPanelHtml() + _shAdmHtml() + _unAdmHtml() + _admUnFHtml() + html; // v838: ユニオンとUPBD（オーナー） // v831: 兼務の管理者はユニオンで絞れる // v790: 公開範囲・先行利用／v827: MAPの共有（#23）
+  html = _accPanelHtml() + _shAdmHtml() + _unAdmHtml() + _featAdmHtml() + _admUnFHtml() + html; // v847: 新機能のテスト（オーナー） // v838: ユニオンとUPBD（オーナー） // v831: 兼務の管理者はユニオンで絞れる // v790: 公開範囲・先行利用／v827: MAPの共有（#23）
   if (!others.length && !pending.length) { body.innerHTML = html + '<div class="ev-empty">該当ユーザーがいません</div>'; return; }
   html += others.map(adminRowHtml).join('');
   body.innerHTML = html;
@@ -3993,6 +3993,136 @@ function unAdmSave() {
     .then(function() { _unionCfg = list; try { localStorage.setItem('gm_unions', JSON.stringify(list)); } catch (e) {} _unionSelectsRefresh(); toast('✓ ユニオンとUPBDを保存しました'); renderAdminList(); })
     .catch(function() { toast('保存できませんでした（ルールの反映をご確認ください）'); });
   _accDlgClose(); _unEd = null;
+}
+// ── v847: 新機能のテスト（機能のスイッチ） ──
+//   appConfig/features = { flags:{ 機能名:{ on:true/false, testers:[uid] } }, at, by }（読み＝ログインした人・書き＝オーナーだけ）
+//   テスト中 … 「先に見られる人」にだけ出る。全員に公開 … 全員に出る（アプリの更新なしで、開いている画面にもすぐ）
+var FEATURES = [
+  { k: 'sheet2', t: '計画シートにまとめる', d: '「○月の目標」をなくし、目標の数字を計画シートの「数字と改善点」に移す' }
+];
+var _featCfg = null, _featUnsub = null, _featEd = null;
+function _featFlags() {
+  if (_featCfg) return _featCfg;
+  try { var c = JSON.parse(localStorage.getItem('gm_feat') || 'null'); if (c && typeof c === 'object' && !Array.isArray(c)) return c; } catch (e) {}
+  return {};
+}
+function _featClean(F) {
+  var out = {};
+  if (!F || typeof F !== 'object') return out;
+  Object.keys(F).forEach(function(k) {
+    var f = F[k] || {};
+    out[k] = { on: f.on === true, testers: Array.isArray(f.testers) ? f.testers.filter(function(x) { return typeof x === 'string' && x; }).slice(0, 50) : [] };
+  });
+  return out;
+}
+// この人に出すか（全員に公開・または先に見られる人）
+function featOn(k) {
+  var f = _featFlags()[k]; if (!f) return false;
+  if (f.on === true) return true;
+  var uid = currentUser && currentUser.uid;
+  return !!(uid && Array.isArray(f.testers) && f.testers.indexOf(uid) >= 0);
+}
+// 先に見ている（まだ全員には出ていない）時だけ「テスト中」の印
+function featTesting(k) { var f = _featFlags()[k]; return !!(f && f.on !== true && featOn(k)); }
+function _featBadge(k) { _featCss(); return featTesting(k) ? '<span class="feat-bdg">テスト中（開発メンバーだけ）</span>' : ''; }
+function _featSig() { return FEATURES.map(function(F) { return featOn(F.k) ? 1 : 0; }).join(''); }
+// ログインした時に読む（変わったらすぐ画面に反映）
+function _featLoad() {
+  if (_featUnsub) { try { _featUnsub(); } catch (e) {} _featUnsub = null; }
+  if (typeof db === 'undefined' || !db || !currentUser || !currentUser.uid) return;
+  var apply = function(dd) {
+    var before = _featSig();
+    _featCfg = _featClean(dd && dd.flags);
+    try { localStorage.setItem('gm_feat', JSON.stringify(_featCfg)); } catch (e) {}
+    if (_featSig() !== before) { try { renderCurrentView(); } catch (e) {} }
+    var bx = document.getElementById('featAdmBox'); if (bx) bx.outerHTML = _featAdmHtml();
+  };
+  try {
+    var ref = db.doc('appConfig/features');
+    if (typeof ref.onSnapshot === 'function') _featUnsub = ref.onSnapshot(function(d) { apply(d && d.exists ? (d.data() || {}) : {}); }, function() {});
+    else ref.get().then(function(d) { apply(d && d.exists ? (d.data() || {}) : {}); }).catch(function() {});
+  } catch (e) {}
+}
+function _featCss() {
+  if (document.getElementById('featCss')) return;
+  var st = document.createElement('style'); st.id = 'featCss';
+  st.textContent = '.feat-bdg{display:inline-flex;align-items:center;margin-left:6px;padding:2px 8px;border-radius:999px;background:color-mix(in srgb,#8B7CFF 18%,transparent);border:1px solid color-mix(in srgb,#8B7CFF 55%,transparent);color:#8B7CFF;font-size:10.5px;font-weight:900;white-space:nowrap;vertical-align:middle}'
+    + '.feat-r{margin-top:9px;padding:10px 11px;border-radius:12px;border:1px solid var(--border2);background:var(--surface);cursor:pointer}.feat-r b{display:block;font-size:13.5px;font-weight:900}.feat-r small{display:block;margin-top:3px;font-size:11.5px;color:var(--text-dim);font-weight:700;line-height:1.5}'
+    + '.feat-st{display:inline-block;margin-top:6px;padding:3px 9px;border-radius:8px;font-size:11.5px;font-weight:900;border:1px solid var(--border2);color:var(--text-mid)}.feat-st.on{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent)}.feat-st.t{border-color:#8B7CFF;color:#8B7CFF}'
+    + '.feat-ch{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.feat-ch span{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:10px;background:var(--surface3);font-size:13px;font-weight:800}.feat-ch span i{font-style:normal;color:#FF6B7F;cursor:pointer;font-weight:900}'
+    + '.feat-pk{margin-top:8px;max-height:220px;overflow-y:auto;border:1px solid var(--border);border-radius:10px}.feat-pk div{display:flex;align-items:center;gap:8px;padding:9px 10px;border-bottom:1px solid var(--border);font-size:14px;font-weight:800;cursor:pointer}.feat-pk div small{margin-left:auto;font-size:11.5px;color:var(--text-dim);font-weight:700}.feat-pk div:last-child{border-bottom:0}';
+  document.head.appendChild(st);
+}
+function _featUserNm(uid) { var u = _adminFindUser(uid); return u ? (u.name || '（名前なし）') : '（見つからない人）'; }
+// アカウント管理（オーナー）：新機能のテスト
+function _featAdmHtml() {
+  if (!(currentUser && isOwnerUid(currentUser.uid))) return '';
+  _accCss(); _featCss();
+  var FL = _featFlags();
+  return '<div class="acc-box" id="featAdmBox"><div class="h">新機能のテスト<small>先に見られる人だけで試して、問題なければ「全員に公開」。アプリの更新なしですぐ切り替わります</small></div>'
+    + FEATURES.map(function(F) {
+      var f = FL[F.k] || { on: false, testers: [] }, n = (f.testers || []).length;
+      return '<div class="feat-r" onclick="featAdmOpen(\'' + F.k + '\')"><b>' + evEsc(F.t) + '</b><small>' + evEsc(F.d) + '</small>'
+        + (f.on ? '<span class="feat-st on">全員に公開</span>' : '<span class="feat-st t">テスト中・先に見られる人 ' + n + '人</span>') + '</div>';
+    }).join('') + '</div>';
+}
+function featAdmOpen(k) {
+  if (!(currentUser && isOwnerUid(currentUser.uid))) return;
+  var F = FEATURES.filter(function(x) { return x.k === k; })[0]; if (!F) return;
+  var f = _featFlags()[k] || { on: false, testers: [] };
+  _featEd = { k: k, on: f.on === true, testers: (f.testers || []).slice(), q: '', pick: false };
+  _featAdmRender();
+}
+function _featAdmRender() {
+  var E = _featEd; if (!E) return;
+  var F = FEATURES.filter(function(x) { return x.k === E.k; })[0]; if (!F) return;
+  _accCss(); _featCss();
+  var h = '<div class="hd">' + evEsc(F.t) + '<span onclick="_accDlgClose()">閉じる</span></div>'
+    + '<div class="nt">' + evEsc(F.d) + '</div>'
+    + '<div class="sec">公開のしかた</div>'
+    + '<div class="acc-seg" style="grid-template-columns:1fr 1fr"><span class="' + (E.on ? '' : 'on') + '" onclick="featAdmOn(0)">テスト中<small>先に見られる人だけ</small></span><span class="' + (E.on ? 'on' : '') + '" onclick="featAdmOn(1)">全員に公開<small>みんなに出る</small></span></div>'
+    + '<div class="sec">先に見られる人<em>テスト中の時だけ使います</em></div>'
+    + '<div class="feat-ch">' + (E.testers.length ? E.testers.map(function(uid, i) { return '<span>' + evEsc(_featUserNm(uid)) + '<i onclick="featAdmDel(' + i + ')">✕</i></span>'; }).join('') : '<span style="background:none;color:var(--text-dim);padding-left:0">まだいません</span>') + '</div>';
+  if (E.pick) {
+    var q = E.q.toLowerCase();
+    var L = (_adminUsers || []).filter(function(u) { return u && u.id && u.status !== 'pending' && E.testers.indexOf(u.id) < 0 && (!q || ((u.name || '') + (u.union || '') + (u.email || '')).toLowerCase().indexOf(q) >= 0); })
+      .sort(function(a, b) { return (a.name || '').localeCompare(b.name || ''); }).slice(0, 40);
+    h += '<input class="fi" id="featQ" value="' + evEsc(E.q) + '" placeholder="名前・ユニオンで探す" oninput="featAdmQ(this.value)" style="width:100%;box-sizing:border-box;margin-top:10px;padding:9px 11px;font-size:15px">'
+      + '<div class="feat-pk" id="featPk">' + _featPkHtml(L) + '</div>';
+  } else h += '<div class="acc-acts"><span onclick="featAdmPick()">＋ 足す</span></div>';
+  h += '<div class="bt"><span onclick="_accDlgClose()">やめる</span><span class="p" onclick="featAdmSave()">保存する</span></div>';
+  _accDlg(h);
+}
+function _featPkHtml(L) { return L.length ? L.map(function(u) { return '<div onclick="featAdmAdd(\'' + u.id + '\')">' + evEsc(u.name || '（名前なし）') + '<small>' + evEsc(u.union || '') + '</small></div>'; }).join('') : '<div style="cursor:default;color:var(--text-dim)">見つかりません</div>'; }
+function featAdmOn(v) { if (!_featEd) return; _featEd.on = !!v; _featAdmRender(); }
+function featAdmPick() { if (!_featEd) return; _featEd.pick = true; _featAdmRender(); setTimeout(function() { var i = document.getElementById('featQ'); if (i) i.focus(); }, 30); }
+function featAdmQ(v) {
+  if (!_featEd) return; _featEd.q = String(v || '');
+  var E = _featEd, q = E.q.toLowerCase(), box = document.getElementById('featPk'); if (!box) return;
+  var L = (_adminUsers || []).filter(function(u) { return u && u.id && u.status !== 'pending' && E.testers.indexOf(u.id) < 0 && (!q || ((u.name || '') + (u.union || '') + (u.email || '')).toLowerCase().indexOf(q) >= 0); })
+    .sort(function(a, b) { return (a.name || '').localeCompare(b.name || ''); }).slice(0, 40);
+  box.innerHTML = _featPkHtml(L);
+}
+function featAdmAdd(uid) { if (!_featEd || _featEd.testers.indexOf(uid) >= 0) return; _featEd.testers.push(uid); _featEd.pick = false; _featEd.q = ''; _featAdmRender(); }
+function featAdmDel(i) { if (!_featEd) return; _featEd.testers.splice(i, 1); _featAdmRender(); }
+function featAdmSave() {
+  var E = _featEd; if (!E || !(currentUser && isOwnerUid(currentUser.uid))) return;
+  var F = FEATURES.filter(function(x) { return x.k === E.k; })[0]; if (!F) return;
+  var cur = _featFlags()[E.k] || {};
+  if (E.on && cur.on !== true && !confirm('「' + F.t + '」を全員に公開しますか？\n今使っている人の画面にも、すぐに出ます')) return;
+  if (!E.on && cur.on === true && !confirm('「' + F.t + '」をテスト中に戻しますか？\n先に見られる人以外の画面からは、すぐに消えます')) return;
+  var flags = JSON.parse(JSON.stringify(_featFlags()));
+  flags[E.k] = { on: E.on, testers: E.testers.slice(0, 50) };
+  db.doc('appConfig/features').set({ flags: flags, at: new Date().toISOString(), by: currentUser.uid })
+    .then(function() {
+      var before = _featSig(); _featCfg = _featClean(flags);
+      try { localStorage.setItem('gm_feat', JSON.stringify(_featCfg)); } catch (e) {}
+      toast('✓ ' + (E.on ? '全員に公開しました' : 'テスト中で保存しました'));
+      renderAdminList();
+      if (_featSig() !== before) { try { renderCurrentView(); } catch (e) {} }
+    })
+    .catch(function() { toast('保存できませんでした（ルールの反映をご確認ください）'); });
+  _accDlgClose(); _featEd = null;
 }
 // v393: 活動地域の選択肢はメンバー編集の「地域」と同じリスト（REGION_PRESETS）＋その他（自由入力）
 function areaOptionsHtml(ph) {
@@ -4363,7 +4493,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v846';
+  var DATA_VERSION = 'v847';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6473,6 +6603,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v847', d:'2026-10-28', items:['新しい機能を、先に開発メンバーだけで試してから全員に出せる仕組みを入れました（今の画面は変わりません）'] },
   { v:'v846', d:'2026-10-28', items:['ユーザーの一覧（スマホのカード・PCの表）からも、右のゴミ箱で削除できるようにしました（削除したあと「元に戻す」で戻せます）'] },
   { v:'v845', d:'2026-10-27', items:['ユーザーの画面のいちばん下に「このユーザーを削除」を出しました（削除したあと「元に戻す」で戻せます）'] },
   { v:'v844', d:'2026-10-27', items:['ユーザーを押すと、MAPと同じメンバー画面のユーザー版が開くようにしました（ポイント・ADP・購入・ニーズ・活動・メモ・プロフィール。稼働・やる気・研修は出しません）','ADP・購入の入力が重なって見えていたのを直しました（製品名・日付・記録するを1行ずつ。日付が空の時は「日付を選ぶ」）','ニーズは選ぶボタンをやめて自由に書く欄だけに（前に選んだものは文章に入れて残しました）','「＋ ToDo」で、いつものタスクを足す画面がその人にひもづいて開き、記録は「活動」に残ります'] },
@@ -39026,6 +39157,7 @@ function loginSuccess(user) {
   ckAccessCheck(user, false); // v770: 受付の名簿を確認（無効ならゲート）
   _admCore = null; setTimeout(_admCoreLoad, 1200); // v831: 兼務のユニオン管理者か
   accCheck(user, false); // v790: 公開範囲を確認（まだ使えない人はゲート）
+  _featLoad(); // v847: 新機能のテスト（先に見られる人・全員に公開）
   setTimeout(function() { _shRefFill(user); _shDailyCheck(); }, 2500); // v827: 紹介者を名簿から・前からある共有を確かめる（#23）
   setTimeout(function() { try { if (_gdAuto()) return; } catch (eGd) {} try { _rnPopCheck(); } catch (eRp) {} }, 1800); // v689: アップデート後の最初の1回だけ更新内容（v755: はじめての人は先に使い方の案内）
   state.gcalConnected = false; state.gcalCalendarId = ''; // v820: Googleカレンダー連携はなくした
