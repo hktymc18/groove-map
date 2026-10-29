@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v852';
+var APP_JS_VERSION = 'v853';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4571,7 +4571,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v852';
+  var DATA_VERSION = 'v853';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6681,6 +6681,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v853', d:'2026-10-29', items:['MAPを開いた時に、上の帯（現状・理想、月、共有など）が飾りのない文字だけで並ぶことがあったのを直しました（#37）','MAPの「ビジネス｜ユーザー」の「?」を押した時の説明が、画面の下に出たまま消せなくなることがあったのを直しました（#38）'] },
   { v:'v852', d:'2026-10-28', items:['（開発メンバーで試し中）計画シートの振り返りで、数字の列がそろうように'] },
   { v:'v851', d:'2026-10-28', items:['メンバーのタイトルに「ユーザー」を追加（そのほか → ユーザー／OUT）。間違えて変えても選び直せば戻ります。BA・研修生からユーザーにすると、ユーザーの一覧に入ります（#39）'] },
   { v:'v850', d:'2026-10-28', items:['（開発メンバーで試し中）スマホの計画シートを1画面に：目標・MAP・行動・振り返りを切りかえて、下にスクロールしない形に'] },
@@ -19410,6 +19411,7 @@ function _mxRender(mapType, members, container) {
 }
 // 上の3段（切替・数字・チップ）＋凡例＋列の見出し
 function _mxTop(mapType) {
+  _mxCss(); // #37 v853: MAPの上の帯の見た目を必ず読み込む（ユーザー表示から開くと _mxRender を通らず、帯が飾りなしの文字だけになっていた）
   window._mxLandWas = _uxLand(); // v662
   var view = document.getElementById(mapType === 'ideal' ? 'view-ideal' : 'view-current'); if (!view) return;
   var top = document.getElementById('mxTop');
@@ -19443,6 +19445,7 @@ function _mxTop(mapType) {
     + '<div class="mxh"><span class="a">名前<em>' + evEsc(sortLb) + '</em></span><span class="b">稼働</span><span class="c">GSV</span></div>');
 }
 function _mxBtm(mapType) {
+  _mxCss(); // #37 v853: 下の帯も同じく
   var b = document.getElementById('mxBtm');
   if (!b) { b = document.createElement('div'); b.id = 'mxBtm'; document.body.appendChild(b); }
   var tb = document.getElementById('mobileTabbar'); b.style.bottom = (tb && tb.offsetHeight ? tb.offsetHeight : 62) + 'px';
@@ -23203,6 +23206,7 @@ function _ux2Css() {
 var UX_INFO = {};
 function uxInfo(k) {
   var d = UX_INFO[k]; if (!d) return;
+  _ux2Css(); // #38 v853: 説明の見た目（#uxInfo）を必ず読み込む（MAPから直接「?」を押すと見た目なしで画面の下に出て、閉じられなかった）
   uxInfoClose();
   var ov = document.createElement('div'); ov.id = 'uxInfo';
   ov.onclick = function(e) { if (e.target === ov) uxInfoClose(); };
