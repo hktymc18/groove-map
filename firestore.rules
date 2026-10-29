@@ -514,6 +514,11 @@ service cloud.firestore {
         || (existsAfter(/databases/$(database)/documents/checkinMembers/$(d.get('no', '__none')))
             && ckDecoSameAs(d, getAfter(/databases/$(database)/documents/checkinMembers/$(d.get('no', '__none'))).data));
     }
+    // 🌐 v34: 自分のユニオンで研修生登録の担当（管理者・リーダー含む）になっている人
+    //   → ほかのユニオンの「研修生」も、会員番号で1件ずつ開いて受講記録・面談シート・DLR予約を記録できる（一覧は見られない）
+    function ckTrainerAnywhere() {
+      return signedIn() && notDisabled(request.auth.uid) && ckMyUnion() != '' && isCkTrainer(ckMyUnion());
+    }
     // 研修生の受講記録のどれかを、この人が受講済みにした
     function ckTrainedBy(d) {
       let t = d.get('trainings', {});
@@ -613,9 +618,19 @@ service cloud.firestore {
         && ckMyUnion() in resource.data.alsoUnions;
     }
     match /checkinMembers/{no} {
+      // 🌐 v34: ほかのユニオンの研修生への記録（受講・面談シート・DLR予約だけ。紹介者の変更・削除は不可）
+      //   安い判定（研修生か・変える項目）を先に。読み取り回数の上限に当たらないよう、このallowを先頭に置く
+      allow update: if resource.data.get('trainee', false) == true
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['trainings','coSheet','dlrRsv'])
+                    && ckTrainerAnywhere();
       // 🔒 見られるのは自分が関わるユニオンの名簿だけ（ckCanSee）。一覧は union で絞った検索のみ。
       // 存在しない番号の get は可（研修生登録の番号の空き確認に使う・中身は何も見えない）
-      allow get: if resource == null || ckCanSee(resource.data.get('union',''))
+      allow get: if resource == null
+        // 🌐 v34: 研修担当は、ほかのユニオンの研修生も番号で1件ずつ開ける（正規メンバーは不可・一覧は不可）
+        //   ※ 読み取り回数の上限に当たらないよう、研修生かどうか → 自分のユニオンの担当か、を先に判定
+        || (resource.data.get('trainee', false) == true && ckTrainerAnywhere())
+        || ckCanSee(resource.data.get('union',''))
         // 🔗 v770: NAVIGATORのアカウントに紐付いた本人の名簿（ログイン時に「受付で無効」かを見る）
         || (signedIn() && profileExists(request.auth.uid)
             && profile(request.auth.uid).get('ckNo', '') == no)

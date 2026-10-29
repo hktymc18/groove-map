@@ -2264,10 +2264,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v111';
+var APP_VER = 'v112';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v112', d: '2026/10/29', items: ['🌐 研修生登録の担当は、ほかのユニオンの研修生も「研修をした方の番号」に会員番号を入れて「開く」で開き、受講済み・面談シート・DLR予約を記録できるようになりました（受講済みにした人は自分の一覧にも出ます）'] },
   { v: 'v111', d: '2026/10/29', items: ['🔎 研修生登録の担当も、研修後入力の検索欄に会員番号を最後まで入れると、まだ担当していない研修生（同じユニオン）を一覧に出せるようになりました'] },
   { v: 'v110', d: '2026/10/28', items: ['🏅 タイトルが RUBY・DIAMOND・BLUE DIAMOND・TEAM ELITE の人の会員証にも、役職バッジ（EXPERT・受付など）が出るようになりました。カードの質感に合わせた控えめなデザインです'] },
   { v: 'v109', d: '2026/10/28', items: ['👤 タイトルが RUBY 以上の人は、会員証の下の「PROFILE 詳細」から、自己紹介（200字まで・資格もここに）・得意なこと・苦手なことを書けるようになりました', '🃏 カードコレクションのAさんのカードでも「詳細」を押すと、そのAさんの最新のプロフィールが見られます'] },
@@ -9436,6 +9437,22 @@ $('btnPledges').onclick = function(){ pledgeArchiveModal(null); };
    任命された担当（checkinUnions.trainers）＋管理者だけが、研修生の登録と
    チュートリアル記録を行える。登録と同時に会員証を発行し、QRを本人に読ませて渡す */
 var gTrMembers = [], gTrToday = [], gTrSex = '', gTrLast = null, gTrAdmin = false;
+/* 🌐 v112: ほかのユニオンの研修生（番号で開いた人）。採番・系列の選択肢に混ざらないよう gTrMembers とは別に持つ。
+   開いた番号は端末に覚えて、次に開いた時も（自分が受講済みにした人なら）一覧に出す */
+var gTrX = [];
+function trXKey(){ return 'bci_trx_' + ((gUser && gUser.uid) || ''); }
+function trXNos(){ try{ var a = JSON.parse(localStorage.getItem(trXKey()) || '[]'); return Array.isArray(a) ? a : []; }catch(e){ return []; } }
+function trXRemember(no){ try{ var a = trXNos().filter(function(x){ return x !== no; }); a.unshift(no); localStorage.setItem(trXKey(), JSON.stringify(a.slice(0, 200))); }catch(e){} }
+function trXAdd(m){ gTrX = gTrX.filter(function(x){ return x.no !== m.no; }).concat([m]); }
+function trXLoad(){
+  var nos = trXNos(); if(!nos.length) return Promise.resolve();
+  return Promise.all(nos.slice(0, 60).map(function(no){
+    return db.collection('checkinMembers').doc(no).get().then(function(sn){
+      var m = sn.exists ? sn.data() : null;
+      if(m && m.trainee && !ckMemberOff(m) && m.union !== gUnion){ m.no = no; trXAdd(m); }
+    }).catch(function(){});
+  })).then(function(){ trRenderList(); });
+}
 /* ══════ 📜 研修担当者の秘密保持契約（PROMOTE 様式） ══════
    研修生登録ページ（#trainer）は、初めて使う時に誓約してから使える（任命された担当者・管理者とも。オーナーは甲の側なので不要）。
    記録は trainerNda/{uid}__{版}（作成のみ・本人も書き換え不可）。文面を変えたら NDA_VER を上げる → 全員もう一度誓約 */
@@ -9570,6 +9587,7 @@ function trLoadMembers(){
     $('trNoPrev').textContent = nextMemberNo(gTrMembers, gUnion) || '—';
     trFillUp();
     trRenderList();
+    trXLoad();   // 🌐 ほかのユニオンの研修生（番号で開いたことがある人）
   }).catch(function(e){ toast('名簿読込エラー: ' + e.message); });
 }
 // UPルビー: そのユニオンの名簿に実在する系列だけから選択（手入力は廃止。
@@ -9762,9 +9780,12 @@ function trPeople(m){
 }
 function trSearchBase(){
   var seeAll = canEditUnion(gUnion);
-  var src = (seeAll && gTrFilter.all && gTrAll) ? gTrAll : gTrMembers;
+  var allMode = !!(seeAll && gTrFilter.all && gTrAll);   // 担当している全ユニオンから検索（管理者）
+  var src = allMode ? gTrAll : gTrMembers;
+  if(!allMode) src = src.concat(gTrX.filter(function(x){ return !src.some(function(y){ return y.no === x.no; }); }));
   return src.filter(function(m){
-    return m.trainee && !ckMemberOff(m) && (seeAll || trMine(m));
+    // 管理者は自分のユニオン（全ユニオン検索なら担当している全ユニオン）全員。ほかのユニオンの研修生は自分が担当した人だけ
+    return m.trainee && !ckMemberOff(m) && (allMode || (seeAll && m.union === gUnion) || trMine(m));
   });
 }
 function trRenderList(){
@@ -9803,7 +9824,7 @@ function trRenderList(){
     + '<div style="display:flex;gap:8px;margin:0 0 6px;">'
     + '<input type="text" id="trOpenNo" placeholder="例: ' + esc(gUnionPrefix[gUnion] || 'ANT') + '0000（本人の会員証に記載）" style="flex:1;min-width:0;">'
     + '<button id="trOpenGo">開く</button></div>'
-    + (seeAll ? '' : '<p style="font-size:11.5px;color:var(--sub);margin:0 0 8px;">一覧に出る研修生' + hq('下の一覧には、自分が登録した研修生と、自分が研修を受講済みにした研修生が出ます。それ以外の研修生は、会員番号（QRカード記載）を最後まで入れると出ます（上の欄で「開く」でも開けます）。') + '</p>')
+    + (seeAll ? '' : '<p style="font-size:11.5px;color:var(--sub);margin:0 0 8px;">一覧に出る研修生' + hq('下の一覧には、自分が登録した研修生と、自分が研修を受講済みにした研修生が出ます。それ以外の研修生は、会員番号（QRカード記載）を最後まで入れると出ます。ほかのユニオンの研修生は、上の欄に番号を入れて「開く」を押すと開けます。') + '</p>')
     + '<div style="margin-top:14px;">' + searchHtml + '</div>'
     + '<div id="tsResults"></div>';
   // 検索条件の変更
@@ -9834,15 +9855,19 @@ function trRenderList(){
     // 一覧の読込後に登録された分にも対応して最新を1件取得
     db.collection('checkinMembers').doc(no).get().then(function(sn){
       var m = sn.exists ? sn.data() : null;
-      if(m && m.trainee && !ckMemberOff(m) && m.union === gUnion){
+      if(m && m.trainee && !ckMemberOff(m)){
         m.no = no; $('trOpenNo').value = '';
         // 一覧のデータにも入れておく（受講済みにしたら、そのまま自分の一覧に出るように）
-        gTrMembers = gTrMembers.filter(function(x){ return x.no !== no; }).concat([m]);
+        if(m.union === gUnion) gTrMembers = gTrMembers.filter(function(x){ return x.no !== no; }).concat([m]);
+        else { trXAdd(m); trXRemember(no); }   // 🌐 v112: ほかのユニオンの研修生も番号で開ける
         trChecklist(m);
       } else {
         toast('この番号の研修生が見つかりません（' + no + '）');
       }
-    }).catch(function(){ toast('読み込みに失敗しました'); });
+    }).catch(function(e){
+      // ほかのユニオンの正規メンバーなど、研修担当が開けない番号はルールで止まる
+      toast(e && e.code === 'permission-denied' ? 'この番号の研修生が見つかりません（' + no + '）' : '読み込みに失敗しました');
+    });
   };
   trRenderDlr();
 }
@@ -9880,7 +9905,7 @@ function trApplyFilter(){
             + '<div style="flex:1;min-width:0;"><b style="font-size:16px;">' + esc(m.name || '') + '</b>'
             + '<div style="font-size:12px;color:var(--sub);">' + esc(m.no) + '・UP: ' + esc(m.group || '')
             + (m.referrer ? '・紹介: ' + esc(m.referrer) : '')
-            + (gTrFilter.all ? '・' + esc(m.union || '') + (m._area ? '（' + esc(m._area) + '）' : '') : '')
+            + (gTrFilter.all ? '・' + esc(m.union || '') + (m._area ? '（' + esc(m._area) + '）' : '') : (m.union && m.union !== gUnion ? '・' + esc(m.union) : ''))
             + (m.regByName ? '・登録: ' + esc(m.regByName) : '') + '</div></div>'
             + '<button data-tsend="' + i + '" title="会員証URLをLINE等で送る" style="padding:7px 10px;font-size:12.5px;">📨 送る</button>'
             + (bpc ? '<span class="pill g">昇格待ち</span>' : '')
@@ -10071,7 +10096,7 @@ function trChecklist(m){
         : '')
       + (r
         ? '<span style="font-size:12.5px;color:var(--green);font-weight:700;">✓ ' + esc(trDateShort(r.at)) + ' ' + esc(r.byName || '') + '</span>'
-          + (r.by === gUser.uid || canEditUnion(gUnion)
+          + (r.by === gUser.uid || canEditUnion(m.union || gUnion)
             ? '<button data-tk="' + esc(it.k) + '" data-tundo="1" style="padding:5px 10px;font-size:12px;">取消</button>' : '')
         : '<button data-tk="' + esc(it.k) + '" class="primary" style="padding:9px 14px;font-size:13px;">✓ 受講済みにする</button>')
       + '</div>';
@@ -10083,18 +10108,18 @@ function trChecklist(m){
     + TR_ITEMS.filter(function(it){ return it.main; }).map(rowHtml).join('')
     + '<label style="margin-top:14px;">サブ項目</label>'
     + TR_ITEMS.filter(function(it){ return !it.main; }).map(rowHtml).join('')
-    + (trPromoteReady(m) && canEditUnion(gUnion)
+    + (trPromoteReady(m) && canEditUnion(m.union || gUnion)
       ? '<div class="btns" style="justify-content:flex-start;"><button id="tcPromote" class="primary">⭐ 正規メンバーに昇格</button></div>'
       : '')
     + (m.trainee && !trPromoteReady(m)
       ? '<p style="font-size:12px;color:var(--sub);margin:12px 0 0;">⭐ 昇格の条件: ' + trPromoteRule()
         + '<br>あと: <b style="color:var(--ink);">' + esc(trPromoteMissing(m).join('・')) + '</b></p>'
       : '')
-    + (!m.trainee && canEditUnion(gUnion)
+    + (!m.trainee && canEditUnion(m.union || gUnion)
       ? '<div class="btns" style="justify-content:flex-start;"><button id="tcDemote">↩︎ 研修生に戻す（昇格の取り消し）</button></div>'
       : '')
     + '<div class="btns">'
-    + (m.trainee && (trMine(m) || canEditUnion(gUnion)) ? '<button id="tcDel" class="danger ghost" style="margin-right:auto;">🗑 この研修生を削除</button>' : '')
+    + (m.trainee && ((trMine(m) && m.union === gUnion) || canEditUnion(m.union)) ? '<button id="tcDel" class="danger ghost" style="margin-right:auto;">🗑 この研修生を削除</button>' : '')
     + '<button id="tcClose">閉じる</button></div>', true);
   $('tcClose').onclick = closeModal;
   if($('tcDel')) $('tcDel').onclick = function(){ trDeleteTrainee(m); };
