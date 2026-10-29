@@ -2264,10 +2264,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v110';
+var APP_VER = 'v111';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v111', d: '2026/10/29', items: ['🔎 研修生登録の担当も、研修後入力の検索欄に会員番号を最後まで入れると、まだ担当していない研修生（同じユニオン）を一覧に出せるようになりました'] },
   { v: 'v110', d: '2026/10/28', items: ['🏅 タイトルが RUBY・DIAMOND・BLUE DIAMOND・TEAM ELITE の人の会員証にも、役職バッジ（EXPERT・受付など）が出るようになりました。カードの質感に合わせた控えめなデザインです'] },
   { v: 'v109', d: '2026/10/28', items: ['👤 タイトルが RUBY 以上の人は、会員証の下の「PROFILE 詳細」から、自己紹介（200字まで・資格もここに）・得意なこと・苦手なことを書けるようになりました', '🃏 カードコレクションのAさんのカードでも「詳細」を押すと、そのAさんの最新のプロフィールが見られます'] },
   { v: 'v108', d: '2026/10/28', items: ['👑 会員証の「タイトル」（BR〜TEAM ELITE）と「バッジ」（役職）を分けました。名簿の会員証で、タイトルは1つ、バッジ（EXPERT・ASSOCIATE・マコシエイト・DIRECTOR・受付・設営・個別・体感）はいくつでも付けられます', '🎨 RUBY・DIAMOND・PLATINUM のカードのデザインは、これからはタイトルで決まります（今付いている宝石のバッジは、そのままタイトルに引き継がれます・見た目は変わりません）', '🏅 バッジの一覧から「NTC Ambassador」をなくしました'] },
@@ -9802,7 +9803,7 @@ function trRenderList(){
     + '<div style="display:flex;gap:8px;margin:0 0 6px;">'
     + '<input type="text" id="trOpenNo" placeholder="例: ' + esc(gUnionPrefix[gUnion] || 'ANT') + '0000（本人の会員証に記載）" style="flex:1;min-width:0;">'
     + '<button id="trOpenGo">開く</button></div>'
-    + (seeAll ? '' : '<p style="font-size:11.5px;color:var(--sub);margin:0 0 8px;">一覧に出る研修生' + hq('下の一覧には、自分が登録した研修生と、自分が研修を受講済みにした研修生が出ます。それ以外の研修生は、上の会員番号（QRカード記載）を入れると開けます。') + '</p>')
+    + (seeAll ? '' : '<p style="font-size:11.5px;color:var(--sub);margin:0 0 8px;">一覧に出る研修生' + hq('下の一覧には、自分が登録した研修生と、自分が研修を受講済みにした研修生が出ます。それ以外の研修生は、会員番号（QRカード記載）を最後まで入れると出ます（上の欄で「開く」でも開けます）。') + '</p>')
     + '<div style="margin-top:14px;">' + searchHtml + '</div>'
     + '<div id="tsResults"></div>';
   // 検索条件の変更
@@ -9861,6 +9862,14 @@ function trApplyFilter(){
     if(q && (norm(m.name) + norm(m.kana) + norm(m.no)).indexOf(q) < 0) return false;
     return true;
   });
+  // 🔎 v108: 研修担当（一覧は自分の研修生だけ）でも、会員番号を最後まで入れたら、同じユニオンの研修生ならその人を出す
+  //   （名前の一部などでは出さない＝ほかの担当の研修生を一覧で見て回ることはできない）
+  if(!seeAll && q){
+    var qNo = q.replace(/[Ａ-Ｚａ-ｚ０-９]/g, function(ch){ return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0); }).toUpperCase();
+    (gTrMembers || []).forEach(function(m){
+      if(m.trainee && !ckMemberOff(m) && String(m.no || '').toUpperCase() === qNo && list.indexOf(m) < 0) list.push(m);
+    });
+  }
   list.sort(function(a, b){ return a.no < b.no ? -1 : 1; });
   box.innerHTML = '<p style="font-size:12px;color:var(--sub);margin:2px 0 4px;">該当 ' + list.length + '名</p>'
     + (list.length
