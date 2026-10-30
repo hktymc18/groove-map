@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v853';
+var APP_JS_VERSION = 'v854';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4571,7 +4571,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v853';
+  var DATA_VERSION = 'v854';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6681,6 +6681,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v854', d:'2026-10-30', items:['（開発メンバーで試し中）スマホの計画シートのサマリーを「今月の成績表」1枚に（スクショしてそのまま送れる形）'] },
   { v:'v853', d:'2026-10-29', items:['MAPを開いた時に、上の帯（現状・理想、月、共有など）が飾りのない文字だけで並ぶことがあったのを直しました（#37）','MAPの「ビジネス｜ユーザー」の「?」を押した時の説明が、画面の下に出たまま消せなくなることがあったのを直しました（#38）'] },
   { v:'v852', d:'2026-10-28', items:['（開発メンバーで試し中）計画シートの振り返りで、数字の列がそろうように'] },
   { v:'v851', d:'2026-10-28', items:['メンバーのタイトルに「ユーザー」を追加（そのほか → ユーザー／OUT）。間違えて変えても選び直せば戻ります。BA・研修生からユーザーにすると、ユーザーの一覧に入ります（#39）'] },
@@ -18669,7 +18670,7 @@ function _p2MonToSheet() { var my = _p2MonYm; _p2MonYm = ''; _p2ShYm = (my && my
 var _p2From = ''; // v652: ツールから開いたか（戻る先）
 function p2Go(k, i) {
   if (k === 'mon' && _p2Sh2()) { _p2MonToSheet(); k = 'sheet'; i = 0; }
-  if (k === 'sheet' && _p2Pg !== 'sheet') { _p2S3T = 0; _p2S3Sh = ''; } // v850: 開いた時は目標から
+  if (k === 'sheet' && _p2Pg !== 'sheet') { _p2S3T = 0; _p2S3Sh = ''; _p2S3Sum = false; } // v850: 開いた時は目標から
   if (k !== _p2Pg) _p2From = _p2Pg;
   if (k === 'why') { var wi = i || 0; if (wi <= 2) { k = 'essay'; i = wi; } else if (wi <= 6) { k = 'ideal'; i = wi - 1; } else if (wi === 8) { k = 'dream'; i = 0; } else { k = 'ideal'; i = wi === 7 ? 0 : 6; } } // v629: 想い→理想・作文・夢100
   if (k !== 'mon') _p2MonYm = ''; // v597: 来月を見ていたら今月に戻す
@@ -19036,7 +19037,7 @@ function _p2PageParts() {
   } else if (k === 'sheet') { // v686: 計画シート（目標・MAP → 数字 → 行動 → 改善点）
     _ux2Css(); body = _p2ShPageHtml(i);
     if (i < P2_SH_PG.length - 1) { next = P2_SH_PG[i + 1] + ' ›'; nextOn = 'p2PgSub(' + (i + 1) + ')'; } // v787: 「✓ 完了」はなくした（戻るで戻る）
-    if (_p2S3On()) { dots = P2_S3_T.slice(); dotI = _p2S3T; dotOn = 'p2S3Tab'; } // v850: 下の●＝4つのタブ
+    if (_p2S3On() && !_p2S3Sum) { dots = P2_S3_T.slice(); dotI = _p2S3T; dotOn = 'p2S3Tab'; } // v850: 下の●＝4つのタブ（v853: サマリーの時は出さない）
   } else if (k === 'yk') { // v715: やること
     _ux2Css(); body = _p2YkHtml();
   } else if (k === 'year') { // v686: 年の目標・ロードマップ（1画面）
@@ -42281,7 +42282,7 @@ function _p2ShIssSync(ym, mid, oldT, newT) { // 課題を書き直したら、�
 //   ページは下にスクロールしない（多い時は枠の中だけ）。押すと下から小さな画面（数字の − ＋・課題・例・改善点・…）。PCは今のまま
 var P2_S3_T = ['目標', 'MAP', '行動', '振り返り'];
 var _p2S3T = 0, _p2S3Mine = 'self', _p2S3Cat = 'front', _p2S3Sh = '';
-function _p2S3On() { try { return _p2Sh2() && !isPCMode() && !_p2SumOn('sh'); } catch (e) { return false; } }
+function _p2S3On() { try { return _p2Sh2() && !isPCMode(); } catch (e) { return false; } } // v853: スマホのサマリーも1画面（_p2S3Sum）
 function p2S3Tab(i) { _p2S3T = Math.max(0, Math.min(P2_S3_T.length - 1, +i || 0)); _p2S3Sh = ''; renderPlan(); }
 function p2S3Sw(v) { _p2S3Mine = v === 'team' ? 'team' : 'self'; renderPlan(); }
 function p2S3Cat(k) { _p2S3Cat = k; renderPlan(); }
@@ -42366,6 +42367,11 @@ function _p2S3Html() {
   _p2ShCss(); _p2ShCss2(); _p2S3Css(); _p2Sh2Css(); _p2ShIssCss();
   var ym = _p2ShYmN(), t = _p2S3T, ro = _p2ShRo();
   try { _p2Sh2Snap(ym); } catch (e) {}
+  if (_p2S3Sum) { // v853: サマリー＝今月の成績表1枚
+    _p2S3SumCss(); setTimeout(_p2S3After, 0);
+    return '<div class="s3" id="p2S3"><div class="s3-hr"><b>計画シート</b><span class="ym"><span onclick="p2ShMon(-1)">‹</span>' + _p2ShMonLb(ym) + '<span class="' + (ym >= _p2Ym(1) ? 'off' : '') + '" onclick="p2ShMon(1)">›</span></span>' + (featTesting('sheet2') ? '<span class="s3-tst">テスト中</span>' : '') + '<span class="cl" onclick="p2S3Sum(0)">✕ 編集に戻る</span></div>'
+      + '<div class="s3-p s3s" id="p2S3P">' + _p2S3SumHtml(ym, ro) + '</div></div>';
+  }
   var dots = _p2S3Dots(ym);
   var h = '<div class="s3" id="p2S3"><div class="s3-hr"><b>計画シート</b><span class="ym"><span onclick="p2ShMon(-1)">‹</span>' + _p2ShMonLb(ym) + '<span class="' + (ym >= _p2Ym(1) ? 'off' : '') + '" onclick="p2ShMon(1)">›</span></span>' + (ym === _p2Ym(0) ? '' : '<small style="margin-left:8px;font-size:12px;color:var(--text-dim);font-weight:800;white-space:nowrap">' + parseInt(ym.slice(0, 4), 10) + '年</small>') + (featTesting('sheet2') ? '<span class="s3-tst">テスト中</span>' : '') + '<span class="mo" onclick="p2S3Sheet(\'menu\')" title="PDF・印刷・サマリー・項目">…</span></div>'
     + '<div class="s3-tb">' + P2_S3_T.map(function(lb, i) { return '<span class="' + (i === t ? 'on' : '') + '" onclick="p2S3Tab(' + i + ')">' + lb + (dots[i] ? '<i></i>' : '') + '</span>'; }).join('') + '</div>'
@@ -42373,6 +42379,61 @@ function _p2S3Html() {
   if (_p2S3Sh) h += _p2S3SheetHtml(ym, ro);
   setTimeout(_p2S3After, 0);
   return h;
+}
+// ════ v853: スマホのサマリー＝「今月の成績表」1枚（スクショしてアップに送れる・見るだけ・押すとそのタブへ）════
+var _p2S3Sum = false;
+function p2S3Sum(on) { _p2S3Sum = !!on; _p2S3Sh = ''; renderPlan(); }
+function p2S3SumGo(t, sw) { _p2S3Sum = false; if (sw) _p2S3Mine = sw; p2S3Tab(t); }
+function _p2S3CardHtml(ym) {
+  var S = _p2S3Score(ym), st = S ? Math.min(5, Math.floor(S.pct / 20)) : 0, gold = S && S.all, cur = _p2Ym(0);
+  var dl = ym === cur ? (function() { var d0 = new Date(); return '残り' + (new Date(d0.getFullYear(), d0.getMonth() + 1, 0).getDate() - d0.getDate() + 1) + '日'; })() : _p2ShMonLb(ym);
+  return '<div class="s3-cd' + (gold ? ' gold' : '') + '"><div class="m">' + dl + '</div>' + (S ? '<div class="big">' + S.pct + '<small>%</small></div><div class="lb">' + (gold ? '全部達成' : '今月の達成度') + '</div><div class="st">' + [0, 1, 2, 3, 4].map(function(j) { return '<i class="' + (j < st ? 'on' : '') + '">' + icn('star') + '</i>'; }).join('') + '</div>' : '<div class="big na">—</div><div class="lb">目標を決めると<br>達成度が出ます</div>') + '</div>';
+}
+function _p2S3SumHtml(ym, ro) {
+  var Y = _p2ShYear(), I = _p2ShInc(ym), F = _p2ShFr(ym), A = _p2Act(ym), cur = _p2Ym(0), root = _p2OwnRoot();
+  var un = viewingOwnerUid ? '' : ((currentUser && currentUser.union) || '');
+  var nm = root ? (((root.lastName || '') + ' ' + (root.firstName || '')).trim() || '（名前なし）') : ((currentUser && currentUser.name) || '');
+  var ttl = root ? titleAbbr(root.title || '') || (root.title || '') : '';
+  var ms = Y.ms ? evEsc(Y.ms.t || '') + '（' + (Y.ms.ym === cur ? '今月' : _p2ShMonLb(Y.ms.ym)) + '）' : (Y.nx && Y.nx.title && !Y.nx.isFinal ? evEsc(Y.nx.title) : '—');
+  var top = '<div class="s3s-top">' + _p2S3CardHtml(ym) + '<div class="s3s-in"><div class="nm"><b>' + evEsc(nm) + '</b>' + (ttl ? '<span class="tg">' + evEsc(ttl) + '</span>' : '') + (un ? '<span class="un">' + evEsc(un) + '</span>' : '') + '</div>'
+    + '<div class="ln"><small>年の目標</small>' + (Y.inc ? '<b>' + Y.inc + '万</b> ' : '') + '<em>' + evEsc(Y.title || '—') + '</em></div>'
+    + '<div class="ln"><small>マイルストーン</small><em>' + ms + '</em></div>'
+    + '<div class="ln two"><span><small>月収</small><b class="' + _p2S3Cls(I.now, I.t) + '">' + _p2S3Num(I.now) + '</b><i>/ ' + _p2S3Num(I.t) + '万</i></span><span><small>フロント</small><b class="' + _p2S3Cls(F.now, F.t) + '">' + F.now + '</b><i>/ ' + _p2S3Num(F.t) + '</i></span></div></div></div>';
+  var grid = function(L) {
+    var cells = L.map(function(k) { var X = _p2ShKv(ym, k, A); return { k: k, X: X }; }).filter(function(o) { return o.X.t; });
+    if (!cells.length) return '<div class="s3s-em">目標がまだありません</div>';
+    return '<div class="s3s-g">' + cells.map(function(o) { var ok = (+o.X.v || 0) >= o.X.t; return '<div class="c"><span class="n">' + evEsc(_p2S3Lb(o.k)) + '</span><span class="v"><b class="' + _p2S3Cls(o.X.v, o.X.t) + '">' + _p2S3Num(o.X.v) + '</b><i>/' + _p2S3Num(o.X.t) + '</i>' + (ok ? '<em>✓</em>' : '') + '</span></div>'; }).join('') + '</div>';
+  };
+  var cnt = function(L) { var ok = 0, n = 0; L.forEach(function(k) { var X = _p2ShKv(ym, k, A); if (X.t) { n++; if ((+X.v || 0) >= X.t) ok++; } }); return ok + '/' + n; };
+  var Ls = _p2S3Self(), Lt = _p2Sh2Team();
+  var sec = function(lb, r, on, body) { return '<div class="s3s-sec" onclick="' + on + '"><div class="s3s-h"><b>' + lb + '</b><span>' + r + ' ›</span></div>' + body + '</div>'; };
+  var h = top + sec('自分自身の目標', '達成 ' + cnt(Ls), 'p2S3SumGo(0,\'self\')', grid(Ls));
+  if (Lt.length) h += sec('チームの目標', '達成 ' + cnt(Lt), 'p2S3SumGo(0,\'team\')', grid(Lt));
+  var all = _p2ShActs(ym), td = evTodayYmd();
+  var ag = '<div class="s3s-g">' + P2_SH_CAT.map(function(c) {
+    var L = _p2ShActs(ym, c.k), dn = L.filter(function(e) { return e.done; }).length, p = L.length ? Math.round(dn / L.length * 100) : 0;
+    return '<div class="c a"><span class="n">' + c.s + '</span><span class="v"><b>' + dn + '</b><i>/' + L.length + '</i></span><span class="br"><u style="width:' + p + '%"></u></span></div>';
+  }).join('') + '</div>';
+  h += sec('行動', '完了 ' + all.filter(function(e) { return e.done; }).length + '/' + all.length, 'p2S3SumGo(2)', ag);
+  var nI = _p2ShIssN(ym), nK = Object.keys(_p2ShM(ym).kz || {}).filter(function(k) { return String(_p2ShM(ym).kz[k] || '').trim(); }).length, od = all.filter(function(e) { return !e.done && _p2ShD(e) && _p2ShD(e) < td; }).length;
+  h += '<div class="s3s-ft"><span onclick="p2S3SumGo(1)">課題 <b>' + nI + '</b>人</span><span onclick="p2S3SumGo(3)">改善点 <b>' + nK + '</b>件</span><span class="' + (od ? 'ng' : '') + '" onclick="p2S3SumGo(2)">期日すぎ <b>' + od + '</b>件</span></div>';
+  return h;
+}
+function _p2S3SumCss() {
+  if (document.getElementById('p2S3SumCss')) return;
+  var st = document.createElement('style'); st.id = 'p2S3SumCss';
+  st.textContent = '.s3-hr .cl{margin-left:auto;padding:7px 10px;border-radius:10px;border:1px solid var(--border);background:var(--surface);font-size:13px;font-weight:900;color:var(--text-mid);cursor:pointer;flex:none}'
+    + '.s3s-top{display:grid;grid-template-columns:108px 1fr;gap:12px;padding:12px 14px;border-bottom:1px solid var(--border);flex:none}.s3s-top .s3-cd{height:138px}.s3s-top .s3-cd .big{font-size:42px}'
+    + '.s3s-in{min-width:0}.s3s-in .nm{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.s3s-in .nm b{font-size:16.5px;font-weight:900}.s3s-in .nm .tg{padding:1px 7px;border-radius:6px;background:var(--purple,#6B4FD8);color:#fff;font-size:11px;font-weight:900}.s3s-in .nm .un{font-size:11.5px;font-weight:800;color:var(--text-dim)}'
+    + '.s3s-in .ln{margin-top:6px;font-size:13.5px;font-weight:800;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.s3s-in .ln small{display:block;font-size:10.5px;color:var(--text-dim);font-weight:800}.s3s-in .ln em{font-style:normal;color:#C98A1B;font-weight:900}'
+    + '.s3s-in .ln.two{display:flex;gap:14px}.s3s-in .ln.two b{font:900 18px Inter,sans-serif}.s3s-in .ln.two i{font-style:normal;font-size:12px;color:var(--text-dim);margin-left:2px}'
+    + '.s3s-sec{cursor:pointer;flex:none}.s3s-h{display:flex;align-items:center;padding:9px 14px 7px;border-bottom:1px solid var(--border)}.s3s-h b{font-size:14px;font-weight:900;color:var(--pk)}.s3s-h span{margin-left:auto;font-size:12px;font-weight:900;color:var(--text-dim)}'
+    + '.s3s-g{display:grid;grid-template-columns:1fr 1fr}.s3s-g .c{display:flex;align-items:center;gap:6px;min-height:40px;padding:0 12px 0 14px;border-bottom:1px solid var(--border);min-width:0}.s3s-g .c:nth-child(odd){border-right:1px solid var(--border)}'
+    + '.s3s-g .n{font-size:14px;font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.s3s-g .v{margin-left:auto;flex:none;white-space:nowrap}.s3s-g .v b{font:900 17px Inter,sans-serif}.s3s-g .v i{font-style:normal;font:800 12.5px Inter,sans-serif;color:var(--text-dim);margin-left:1px}.s3s-g .v em{font-style:normal;margin-left:4px;color:var(--ok);font-weight:900;font-size:13px}'
+    + '.s3s-g .c.a{position:relative}.s3s-g .c.a .br{position:absolute;left:14px;right:12px;bottom:6px;height:3px;border-radius:2px;background:var(--surface2,var(--border))}.s3s-g .c.a .br u{display:block;height:100%;border-radius:2px;background:var(--accent)}'
+    + '.s3s-em{padding:10px 14px;font-size:13px;color:var(--text-dim);font-weight:700;border-bottom:1px solid var(--border)}'
+    + '.s3s-ft{display:grid;grid-template-columns:repeat(3,1fr);flex:none;margin-top:auto;border-top:1px solid var(--border)}.s3s-ft span{text-align:center;padding:12px 4px;font-size:13px;font-weight:800;color:var(--text-mid);cursor:pointer}.s3s-ft span+span{border-left:1px solid var(--border)}.s3s-ft b{font:900 16px Inter,sans-serif;color:var(--text)}.s3s-ft span.ng b{color:var(--ng)}';
+  document.head.appendChild(st);
 }
 // タブの赤い点（行動＝期日すぎ・振り返り＝届かなかったのに改善点がない）
 function _p2S3Dots(ym) {
@@ -42383,7 +42444,7 @@ function _p2S3After() {
   var el = document.getElementById('p2S3'); if (!el) return;
   _p2S3Fit();
   if (!window._p2S3Rs) { window._p2S3Rs = 1; var tR = 0; window.addEventListener('resize', function() { clearTimeout(tR); tR = setTimeout(function() { if (document.getElementById('p2S3')) _p2S3Fit(); }, 120); }); }
-  var p = document.getElementById('p2S3P'); if (p) _uxSwipe(p, function() { if (_p2S3T > 0) p2S3Tab(_p2S3T - 1); }, function() { if (_p2S3T < P2_S3_T.length - 1) p2S3Tab(_p2S3T + 1); });
+  var p = document.getElementById('p2S3P'); if (p && !_p2S3Sum) _uxSwipe(p, function() { if (_p2S3T > 0) p2S3Tab(_p2S3T - 1); }, function() { if (_p2S3T < P2_S3_T.length - 1) p2S3Tab(_p2S3T + 1); });
   if (_p2S3T === 1) { try { _p2ShMapDraw(); } catch (e) {} }
   if (/^kz:/.test(_p2S3Sh)) { var ta = document.getElementById('p2S3Kz'); if (ta && !ta.value) setTimeout(function() { try { ta.focus(); } catch (e) {} }, 60); }
 }
@@ -42474,7 +42535,7 @@ function _p2S3SheetHtml(ym, ro) {
     body = '<h3>計画シート' + x + '</h3><div class="s3-mn" style="margin-top:6px">'
       + '<div onclick="p2S3Sheet(\'\');p2ShPrint(1)">' + icn('save', 'width:18px;height:18px') + ' PDF<span>›</span></div>'
       + '<div onclick="p2S3Sheet(\'\');p2ShPrint()">' + icn('printer', 'width:18px;height:18px') + ' 印刷<span>›</span></div>'
-      + '<div onclick="_p2S3Sh=\'\';p2SumTgl(\'sh\',1)">' + icn('doc', 'width:18px;height:18px') + ' サマリーを見る<span>›</span></div>'
+      + '<div onclick="p2S3Sum(1)">' + icn('doc', 'width:18px;height:18px') + ' サマリーを見る<span>›</span></div>'
       + (ro ? '' : '<div onclick="p2S3Sheet(\'ked\')">' + icn('gear', 'width:18px;height:18px') + ' 数字の項目を変える<span>›</span></div>') + '</div>';
   } else if (s === 'ked') {
     body = '<h3>数字の項目を変える' + x + '</h3><div class="nt" style="margin-top:4px">自分自身の目標の項目です（名前・並び・足す・消す）</div>' + _p2ShKEdHtml();
