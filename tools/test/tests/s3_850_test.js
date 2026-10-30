@@ -100,9 +100,20 @@ T.run(async () => {
   w.p2S3Sheet('');
   w.p2S3Tab(1); w.p2Go(''); await sleep(30); w.p2Go('sheet'); await sleep(40);
   c('計画シートを開き直すと目標から', $('.s3-tb span.on').textContent === '目標');
-  w.p2SumTgl('sh', 1); await sleep(40);
-  c('サマリーの時は前のサマリー', !$('#p2S3'));
-  w.p2SumTgl('sh', 0); await sleep(40);
+  // v853: サマリー＝今月の成績表1枚
+  w.p2S3Sheet('menu'); await sleep(20); $$('.s3-sh .s3-mn > div').find(x => /サマリー/.test(x.textContent)).click(); await sleep(40);
+  const sm = () => ($('#p2S3P') || {}).textContent || '';
+  c('…→サマリー：成績表1枚（カード・名前・タイトル）', !!$('#p2S3.s3 .s3s-top') && /架空 一郎/.test(sm()) && /BR/.test($('.s3s-in .tg').textContent) && !!$('.s3s-top .s3-cd'));
+  c('サマリー：タブと下の●は出さない・編集に戻る', !$('.s3-tb') && !$$('.ux-btm .ux-dots span').length && /編集に戻る/.test($('.s3-hr').textContent));
+  c('サマリー：自分自身・チーム・行動の段（目標がある項目だけ）', $$('.s3s-h b').map(x => x.textContent).join('|') === '自分自身の目標|チームの目標|行動' && /マケPG/.test(sm()) && !/FT/.test($$('.s3s-g')[0].textContent));
+  c('サマリー：課題・改善点・期日すぎの件数', /課題1人/.test($('.s3s-ft').textContent.replace(/\s/g, '')) && /改善点1件/.test($('.s3s-ft').textContent.replace(/\s/g, '')));
+  c('サマリー：書く欄はない（見るだけ）', !$('#p2S3P input') && !$('#p2S3P textarea'));
+  $$('.s3s-sec')[2].click(); await sleep(40);
+  c('段を押すとその編集のタブ（行動）', !$('.s3s-top') && $('.s3-tb span.on').textContent === '行動');
+  w.p2S3Sum(1); await sleep(30); w.p2S3Sum(0); await sleep(30);
+  c('✕ 編集に戻る', !!$('.s3-tb'));
+  w.p2S3Sum(1); w.p2Go(''); await sleep(20); w.p2Go('sheet'); await sleep(40);
+  c('開き直すと編集（目標）から', !!$('.s3-tb') && $('.s3-tb span.on').textContent === '目標');
   // PCは今のまま
   setWH(1440, 900); w._uxSync && w._uxSync(); w.renderPlan(); await sleep(60);
   c('PCは今のまま（表）', !$('#p2S3') && $$('.sp-tb').length >= 1);
