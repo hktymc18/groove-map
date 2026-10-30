@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v854';
+var APP_JS_VERSION = 'v855';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4571,7 +4571,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v854';
+  var DATA_VERSION = 'v855';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6681,6 +6681,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v855', d:'2026-10-30', items:['ToDoの最初の表示を「すべて」か「今日」から選べるように（予定・ToDoの右上 ⋯ → ToDoの最初の表示）'] },
   { v:'v854', d:'2026-10-30', items:['（開発メンバーで試し中）スマホの計画シートのサマリーを「今月の成績表」1枚に（スクショしてそのまま送れる形）'] },
   { v:'v853', d:'2026-10-29', items:['MAPを開いた時に、上の帯（現状・理想、月、共有など）が飾りのない文字だけで並ぶことがあったのを直しました（#37）','MAPの「ビジネス｜ユーザー」の「?」を押した時の説明が、画面の下に出たまま消せなくなることがあったのを直しました（#38）'] },
   { v:'v852', d:'2026-10-28', items:['（開発メンバーで試し中）計画シートの振り返りで、数字の列がそろうように'] },
@@ -32519,6 +32520,7 @@ function openCalSettings() {
     + '<span class="ms-x" onclick="closeCalSettings()">✕</span></div>'
     + '<div style="padding:4px 16px 20px">'
     + (currentUser && currentUser.union ? '<div class="fr"><label class="fl">ユニオン予定</label><button class="fol-add" style="margin-top:0" onclick="closeCalSettings();openUnionListSheet()">' + icn('calendar') + ' ' + evEsc(currentUser.union) + 'のユニオン予定を見る</button></div>' : '') // v684: HOMEから移動
+    + '<div class="fr"><label class="fl">ToDoの最初の表示</label><div class="rg"><div class="rb' + (_tdDefType() === 'all' ? ' sel' : '') + '" data-tdd="all" onclick="setTdDef(\'all\')">すべて</div><div class="rb' + (_tdDefType() === 'today' ? ' sel' : '') + '" data-tdd="today" onclick="setTdDef(\'today\')">' + icn('sun') + ' 今日</div></div></div>' // v855
     + '<div class="fr"><label class="fl">週の始まり（月・週ビュー共通）</label>'
     + '<div class="rg">' + wsBtn(1, '月曜はじまり') + wsBtn(0, '日曜はじまり') + '</div></div>'
     + '<div class="fr" style="margin-top:4px"><label class="fl">月表示のスクロール</label>'
@@ -34079,7 +34081,16 @@ function evGrpToggle(k) { _evGrpCol[k] = !_evGrpCol[k]; renderAgenda(); }
 // ── v315: Lifebear式ToDo＝リスト/ラベル（maps/{uid}/meta/todoMeta に保存） ──
 var _todoMeta = null; // {lists:[{id,name,color}], labels:[{id,name,color}]}
 var _todoNav = { type: 'home' }; // home | {type:'smart',key:'my'|'star'|'week'|'done'} | {type:'list',id} | {type:'label',id}
-var _todoFilter = { type: 'today', id: '' }; // v337: ホーム一覧の絞り込み（all|today|list|label）。v744: 最初は「今日」
+// v855: ToDoの最初の表示（すべて／今日）は ⋯ の設定で選べる（端末ごと・最初は今日）
+function _tdDefType() { try { return localStorage.getItem('gm_tdDef') === 'all' ? 'all' : 'today'; } catch (e) { return 'today'; } }
+function setTdDef(v) {
+  try { localStorage.setItem('gm_tdDef', v === 'all' ? 'all' : 'today'); } catch (e) {}
+  _todoFilter = { type: _tdDefType(), id: '' };
+  try { renderAgenda(); } catch (e2) {}
+  try { Array.prototype.forEach.call(document.querySelectorAll('#calSetOv [data-tdd]'), function(b) { b.classList.toggle('sel', b.getAttribute('data-tdd') === _tdDefType()); }); } catch (e3) {}
+  toast('✓ ToDoは「' + (v === 'all' ? 'すべて' : '今日') + '」から表示します');
+}
+var _todoFilter = { type: _tdDefType(), id: '' }; // v337: ホーム一覧の絞り込み（all|today|list|label）。v744: 最初は「今日」。v855: 設定で選べる
 function todoSetFilter(type, id) {
   if (window._tdChipDragJust && Date.now() - window._tdChipDragJust < 600) return; // v366: 並べ替え直後の誤タップ防止
   _todoFilter = { type: type || 'all', id: id || '' };
@@ -34245,7 +34256,7 @@ function todoPickDel(kind, id) {
   if (kind === 'label' && _evLabelId === id) { _evLabelId = ''; updateTodoMetaDisplay(); }
   if (kind === 'list' && _evListId === id) { _evListId = ''; updateTodoMetaDisplay(); }
   if (typeof _tqListId !== 'undefined' && _tqListId === id) { _tqListId = ''; _tqRenderChips(); }
-  if (_todoFilter && _todoFilter.type === kind && _todoFilter.id === id) _todoFilter = { type: 'today', id: '' };
+  if (_todoFilter && _todoFilter.type === kind && _todoFilter.id === id) _todoFilter = { type: _tdDefType(), id: '' };
   renderAgenda();
   _todoPickerRender(kind);
   toast('' + (kind === 'label' ? 'ラベル' : 'リスト') + '「' + it.name + '」を削除しました');
@@ -34964,7 +34975,7 @@ function _renderAgendaCore() {
   // v337: 絞り込みチップ（すべて/今日/リスト/ラベル）。削除済みリストの絞り込みは自動解除
   var F = _todoFilter || { type: 'all', id: '' };
   if ((F.type === 'list' && !_todoListById(F.id)) || (F.type === 'label' && !_todoLabelById(F.id))) {
-    F = _todoFilter = { type: 'today', id: '' };
+    F = _todoFilter = { type: _tdDefType(), id: '' };
   }
   function fchip(sel, onclick, inner, attrs) { return '<div class="td-fchip' + (sel ? ' sel' : '') + '"' + (attrs ? ' ' + attrs : '') + ' onclick="' + onclick + '">' + inner + '</div>'; }
   var fch = '<div class="td-filters">'
