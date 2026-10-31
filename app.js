@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v855';
+var APP_JS_VERSION = 'v856';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4571,7 +4571,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v855';
+  var DATA_VERSION = 'v856';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6681,6 +6681,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v856', d:'2026-10-31', items:['はじめに1回「通知をオンにしますか？」とお聞きするようにしました（オンにすると予定・タスクの時刻にお知らせします。あとから 設定 → 通知 でも変えられます）'] },
   { v:'v855', d:'2026-10-30', items:['ToDoの最初の表示を「すべて」か「今日」から選べるように（予定・ToDoの右上 ⋯ → ToDoの最初の表示）'] },
   { v:'v854', d:'2026-10-30', items:['（開発メンバーで試し中）スマホの計画シートのサマリーを「今月の成績表」1枚に（スクショしてそのまま送れる形）'] },
   { v:'v853', d:'2026-10-29', items:['MAPを開いた時に、上の帯（現状・理想、月、共有など）が飾りのない文字だけで並ぶことがあったのを直しました（#37）','MAPの「ビジネス｜ユーザー」の「?」を押した時の説明が、画面の下に出たまま消せなくなることがあったのを直しました（#38）'] },
@@ -32297,6 +32298,49 @@ function requestNotifPermission() {
   }
 }
 
+// ── v856: はじめに1回「通知をオンにしますか？」（通知は本人が許可しないとオンにできないため、こちらから聞く）──
+//   まだ聞いていない端末（許可もブロックもしていない）だけ。「あとで」は7日後にもう1回まで。iPhoneはホーム画面のアプリの時だけ
+function _ntfIOS() { var ua = navigator.userAgent || ''; return /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && (navigator.maxTouchPoints || 0) > 1); }
+function _ntfStandalone() { try { return !!(navigator.standalone || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches)); } catch (e) { return false; } }
+function _ntfAskSt() { try { var o = JSON.parse(localStorage.getItem('gm_ntfAsk') || 'null'); return o && typeof o === 'object' ? o : { n: 0, at: 0 }; } catch (e) { return { n: 0, at: 0 }; } }
+function _ntfAskOk() {
+  if (!notifSupported() || Notification.permission !== 'default') return false;
+  try { if (localStorage.getItem('gm_pushOff') === '1') return false; } catch (e) {}
+  if (_ntfIOS() && !_ntfStandalone()) return false; // iPhoneのSafariでは通知が届かない
+  var s = _ntfAskSt();
+  if (s.n >= 2) return false;
+  if (s.n === 1 && Date.now() - (+s.at || 0) < 7 * 86400000) return false;
+  return true;
+}
+function _ntfAskCheck(tries, force) {
+  if (!force && !(typeof _gdAutoOk === 'function' && _gdAutoOk())) return;
+  if (!_ntfAskOk()) return;
+  var busy = (typeof _gdBusy === 'function' && _gdBusy()) || document.getElementById('approvalGate') || document.getElementById('pvGate') || document.getElementById('ntfAskOv');
+  if (busy) { if ((tries || 0) < 4) setTimeout(function() { _ntfAskCheck((tries || 0) + 1, force); }, 8000); return; }
+  var s = _ntfAskSt(); s.n = (+s.n || 0) + 1; s.at = Date.now();
+  try { localStorage.setItem('gm_ntfAsk', JSON.stringify(s)); } catch (e) {}
+  _ntfAskCss();
+  var ov = document.createElement('div'); ov.id = 'ntfAskOv';
+  ov.onclick = function(e) { if (e.target === ov) ntfAskLater(); };
+  ov.innerHTML = '<div class="na-c"><div class="ic">' + icn('bell') + '</div><b>予定・タスクの時刻にお知らせします</b><p>通知をオンにしますか？<br>あとから 設定 → 通知 でいつでも変えられます</p>'
+    + '<div class="go" onclick="ntfAskYes()">オンにする</div><div class="lt" onclick="ntfAskLater()">あとで</div></div>';
+  document.body.appendChild(ov);
+}
+function ntfAskClose() { var o = document.getElementById('ntfAskOv'); if (o) o.remove(); }
+function ntfAskYes() { ntfAskClose(); try { localStorage.removeItem('gm_pushOff'); } catch (e) {} requestNotifPermission(); } // 押した時にiPhoneの「許可しますか？」が出る
+function ntfAskLater() { ntfAskClose(); var s = _ntfAskSt(); toast(s.n >= 2 ? '設定 → 通知 からいつでもオンにできます' : 'また今度お聞きします（設定 → 通知 からもオンにできます）'); }
+function _ntfAskCss() {
+  if (document.getElementById('ntfAskCss')) return;
+  var st = document.createElement('style'); st.id = 'ntfAskCss';
+  st.textContent = '#ntfAskOv{position:fixed;inset:0;z-index:720;background:rgba(10,16,28,.45);display:flex;align-items:flex-end;justify-content:center}'
+    + '#ntfAskOv .na-c{width:100%;max-width:460px;background:var(--surface);border-radius:22px 22px 0 0;padding:22px 20px calc(env(safe-area-inset-bottom) + 18px);text-align:center}'
+    + '#ntfAskOv .ic{width:52px;height:52px;margin:0 auto 10px;border-radius:16px;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent)}#ntfAskOv .ic svg{width:26px;height:26px}'
+    + '#ntfAskOv b{display:block;font-size:17px;font-weight:900}#ntfAskOv p{margin:8px 0 0;font-size:13.5px;line-height:1.6;color:var(--text-mid);font-weight:700}'
+    + '#ntfAskOv .go{margin-top:16px;height:50px;border-radius:14px;background:var(--accent);color:var(--go-ink,#06251C);font-size:16px;font-weight:900;display:flex;align-items:center;justify-content:center;cursor:pointer}'
+    + '#ntfAskOv .lt{margin-top:6px;padding:12px;font-size:14px;font-weight:800;color:var(--text-dim);cursor:pointer}'
+    + '@media (min-width:700px){#ntfAskOv{align-items:center}#ntfAskOv .na-c{border-radius:20px}}';
+  document.head.appendChild(st);
+}
 // v351: 通知タップで該当タスク（1件時）またはToDoの「今日」一覧へ飛ぶ。iOS等はSW経由で表示
 function gmOpenDueTodos() {
   switchView('events');
@@ -39288,6 +39332,7 @@ function loginSuccess(user) {
   _featLoad(); // v847: 新機能のテスト（先に見られる人・全員に公開）
   setTimeout(function() { _shRefFill(user); _shDailyCheck(); }, 2500); // v827: 紹介者を名簿から・前からある共有を確かめる（#23）
   setTimeout(function() { try { if (_gdAuto()) return; } catch (eGd) {} try { _rnPopCheck(); } catch (eRp) {} }, 1800); // v689: アップデート後の最初の1回だけ更新内容（v755: はじめての人は先に使い方の案内）
+  setTimeout(function() { try { _ntfAskCheck(0); } catch (eNa) {} }, 4500); // v856: はじめに1回「通知をオンにしますか？」
   state.gcalConnected = false; state.gcalCalendarId = ''; // v820: Googleカレンダー連携はなくした
   // ゲームデータ復元
   state.game = user.game || defaultGame();
