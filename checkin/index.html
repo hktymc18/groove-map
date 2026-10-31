@@ -2264,10 +2264,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v112';
+var APP_VER = 'v113';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v113', d: '2026/10/31', items: ['🐞 DLR会場受講の予約で、月末（31日など）に開くと翌月のDLR・P&Pが日程の候補に出なかったのを直しました。候補は今月とこの先2か月から選べます'] },
   { v: 'v112', d: '2026/10/29', items: ['🌐 研修生登録の担当は、ほかのユニオンの研修生も「研修をした方の番号」に会員番号を入れて「開く」で開き、受講済み・面談シート・DLR予約を記録できるようになりました（受講済みにした人は自分の一覧にも出ます）'] },
   { v: 'v111', d: '2026/10/29', items: ['🔎 研修生登録の担当も、研修後入力の検索欄に会員番号を最後まで入れると、まだ担当していない研修生（同じユニオン）を一覧に出せるようになりました'] },
   { v: 'v110', d: '2026/10/28', items: ['🏅 タイトルが RUBY・DIAMOND・BLUE DIAMOND・TEAM ELITE の人の会員証にも、役職バッジ（EXPERT・受付など）が出るようになりました。カードの質感に合わせた控えめなデザインです'] },
@@ -10274,25 +10275,22 @@ function dlrTimeTo(from){
 }
 function dlrRsvModal(m, back){
   function goBack(){ closeModal(); if(back) back(); }
-  // 「DLR」「P&P」というタイトルのイベントだけを、全ユニオン・全地域から読み込む（今月＋来月）。
+  // 「DLR」「P&P」というタイトルのイベントだけを、全ユニオン・全地域から読み込む（今月＋この先2か月）。
   // 他ユニオン開催分（BASE REVEのメンバーがBASE ANTARESで受講等）も予約できる。
   // デフォルトは担当者の活動地域、セレクタで他地域（東京など）のDLRにも切り替え可能
   var tdy = todayStr();
-  var mk1 = tdy.slice(0, 7);
-  var d2 = new Date();
-  d2.setMonth(d2.getMonth() + 1);
-  var mk2 = d2.getFullYear() + '-' + ((d2.getMonth() + 1) < 10 ? '0' : '') + (d2.getMonth() + 1);
+  // 🐞 v113: 今月＋この先2か月。月は必ず「1日」を起点に足す（前は今日に1か月足していたので、
+  //   10/31 だと「11/31」→12/1 になり、11月のイベントが候補から丸ごと抜けていた）
+  var d0 = new Date(), mks = [0, 1, 2].map(function(k){ var d = new Date(d0.getFullYear(), d0.getMonth() + k, 1); return d.getFullYear() + '-' + pad(d.getMonth() + 1); });
   function isDlrEvent(name){ return /DLR|P\s*&\s*P|Ｐ＆Ｐ/i.test(String(name || '')); }
-  Promise.all([
-    db.collection('checkinEvents').where('month', '==', mk1).get().catch(function(){ return { forEach: function(){} }; }),
-    db.collection('checkinEvents').where('month', '==', mk2).get().catch(function(){ return { forEach: function(){} }; }),
-    db.collection('checkinUnions').get().catch(function(){ return { forEach: function(){} }; })
-  ]).then(function(res){
+  var noQs = { forEach: function(){} };
+  Promise.all(mks.map(function(mk){ return db.collection('checkinEvents').where('month', '==', mk).get().catch(function(){ return noQs; }); })
+    .concat([db.collection('checkinUnions').get().catch(function(){ return noQs; })])).then(function(res){
     // ユニオン → 活動地域（ユニオン有効化時に保存されるエリア情報）
     var unionArea = {};
-    res[2].forEach(function(d){ unionArea[d.id] = (d.data() && d.data().area) || ''; });
+    res[res.length - 1].forEach(function(d){ unionArea[d.id] = (d.data() && d.data().area) || ''; });
     var evs = [];
-    [res[0], res[1]].forEach(function(qs){
+    res.slice(0, mks.length).forEach(function(qs){
       qs.forEach(function(d){
         var ev = d.data(); ev.id = d.id;
         if((ev.date || '') < tdy) return;
