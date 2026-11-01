@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v858';
+var APP_JS_VERSION = 'v859';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -408,7 +408,8 @@ function copyToNextMonth() {
     if (tr.kind === 'promote' || tr.kind === 'demote' || tr.kind === 'advance') {
       // v339: 登録月が未入力（かつB系タイトルから逆算もできない）人の降格は、活動月数が1ヶ月目扱い＝B1になるため警告
       var _noSm = (tr.kind === 'demote' && !mm.startMonth && !/^B\d+$/.test((mm.title || '').trim()));
-      changes.push({ name: mcName(mm), from: (mm.title || '').trim(), to: tr.to, kind: tr.kind, reason: tr.reason || '', noStart: _noSm });
+      var _smUsed = (tr.kind === 'demote' && !_noSm) ? memberStartMonth(mm, nextMonth) : ''; // v858: どの登録月でB番号を決めたか
+      changes.push({ name: mcName(mm), from: (mm.title || '').trim(), to: tr.to, kind: tr.kind, reason: (tr.reason || '') + (_smUsed ? '・登録月 ' + _smUsed.replace('.', '年').replace(/^(\d+年)0?/, '$1') + '月から' + activityMonths(mm, nextMonth) + 'ヶ月目' : ''), noStart: _noSm });
     }
     if (tr.kind === 'demote' && (mm.title || '').trim() === 'BR' && mm.parentId) _ruDemoted.push(mm); // v426
     if (tr.kind === 'promote' && tr.to === 'BR' && mm.rollup && mm.rollup.at) _ruPromoted.push(mm); // v426
@@ -4572,7 +4573,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v858';
+  var DATA_VERSION = 'v859';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -4638,6 +4639,8 @@ function memberStartMonth(m, ref) {
   if (bm) return addMonths(ref, -(parseInt(bm[1], 10) - 1));
   return ref;
 }
+// v858: 分かっている登録月だけ（入力済み、またはB番号から逆算できる時）。分からない時は ''
+function _smKnown(m) { if (!m) return ''; if (m.startMonth) return String(m.startMonth); return /^B\d+$/.test((m.title || '').trim()) ? memberStartMonth(m) : ''; }
 // 対象月における活動月数（1始まり）
 function activityMonths(m, targetMonth) {
   var sm = memberStartMonth(m, targetMonth);
@@ -6682,6 +6685,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v859', d:'2026-11-01', items:['登録月が入っていない人（LOI・Q・BRなど）のGSVやタイトルを直すと、見ている月が登録月として勝手に保存されていたのを直しました（翌月コピーで降格した時のB番号がずれていました）','プロフィールのスタート月は、分からない時は空のまま表示します','翌月コピーの確認で、降格の理由に「登録月◯年◯月から◯ヶ月目」を出すようにしました'] },
   { v:'v858', d:'2026-11-01', items:['翌月コピーで、削除したメンバー（昔の重複など）が古いGSVのまま「降格」と出ていたのを直しました'] },
   { v:'v857', d:'2026-11-01', items:['ユニオン名の変更（LOAD → ALTAIR）に対応しました。登録・プロフィールの選択肢が ALTAIR になり、旧名（LOAD・LIEN LOAD）のままの人は開いた時に ALTAIR に直ります'] },
   { v:'v856', d:'2026-10-31', items:['はじめに1回「通知をオンにしますか？」とお聞きするようにしました（オンにすると予定・タスクの時刻にお知らせします。あとから 設定 → 通知 でも変えられます）'] },
@@ -16589,7 +16593,7 @@ function _meOpen(id) {
     _pendingPhoto = null; _photoPrevSet(_avatars[m.id] || null);
     if (typeof syncAgeField === 'function') syncAgeField();
     var _smEl = document.getElementById('fStartMonth');
-    if (_smEl) _smEl.value = (m.startMonth || memberStartMonth(m) || '').replace('.', '-');
+    if (_smEl) _smEl.value = _smKnown(m).replace('.', '-'); // v858: 登録月が無い人（LOI・Q・BRなど）に今の月を入れない（保存すると登録月が今の月になっていた）
     if (typeof syncStartSelects === 'function') syncStartSelects(); // v462
     var ts=document.getElementById('fTraineeStatus'); if(ts) ts.value=m.traineeStatus||'';
     var tr=document.getElementById('fTraineeResult'); if(tr) tr.value=m.traineeResult||'';
@@ -17114,7 +17118,7 @@ function saveMember() {
       var n = (typeof _normYm === 'function') ? _normYm(v) : v; // v462: 手入力の形式ゆれを整形
       if (n === null) { toast('\u26A0\uFE0F 登録月の形式が読めなかったため保存しませんでした（例 2026-09）'); n = ''; }
       if (n) return n.replace('-', '.');
-      if (editingId && _prevMember && _prevMember.startMonth) return _prevMember.startMonth;
+      if (editingId) return (_prevMember && _prevMember.startMonth) || ''; // v858: 直す時は今の月を勝手に入れない
       return state.currentMonth || currentMonthStr();
     })(),
     // v426: ロールアップ記録は持ち越し（下の遷移処理で更新）。OUT後の表示はOUTの時だけチップから読む
@@ -20338,7 +20342,7 @@ function _ppPage(m, pg) {
     _pmCss(); h += _pmBox(m.id, 'pp'); // v726
   } else if (pg === 'prof') {
     var rg = (m.region || '').trim(), regs = REGION_PRESETS.slice(); if (rg && regs.indexOf(rg) < 0) regs.push(rg);
-    var sm = String(m.startMonth || memberStartMonth(m) || '').replace('.', '-');
+    var sm = _smKnown(m).replace('.', '-'); // v858: 分からない人は「年・月」のまま（今の月を出さない）
     h = '<h2 class="ux-h2">プロフィール</h2>'
       + '<div class="ppl">名前</div><div class="ppn"><input class="ppin" id="ppLast" placeholder="姓" value="' + evEsc(m.lastName || '') + '" onchange="ppName()"><input class="ppin" id="ppFirst" placeholder="名" value="' + evEsc(m.firstName || '') + '" onchange="ppName()"></div>'
       + '<div class="ppl">性別</div><div class="ppb sm" style="--n:2"><span class="' + (m.gender !== 'female' ? 'on' : '') + '" onclick="ppGender(\'male\')">男性</span><span class="' + (m.gender === 'female' ? 'on' : '') + '" style="--a:var(--female)" onclick="ppGender(\'female\')">女性</span></div>'
