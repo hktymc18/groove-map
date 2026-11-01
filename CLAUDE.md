@@ -19,11 +19,29 @@ cd ~
 - ルールを変更したPRの完了報告では、上記のCloud Shellコマンドの実行を依頼すること
   （テキストファイルでの全文お渡しは不要）。
 
+## マージの決まり（自動の実行）
+
+- **自動の実行**＝人が見ていない実行（スケジュール実行・brain のタスクの自動実行）。
+  自動の実行は**最初に `.claude/autonomous.flag` を作る**（`touch .claude/autonomous.flag`。.gitignore 済み）。
+- 自動の実行では**マージしない**。PR を作るところまで（タスクに `#自動マージOK` がある時だけ例外）。
+  会話で本人が「マージして」と頼んだ時はマージしてよい。
+- 目印がある時は PreToolUse フック `tools/hooks/guard-autonomous.sh` が `gh pr merge`・main への push・
+  `--force`・MCP のマージ／自動マージの有効化を止める（目印が無い会話では何も止めない）。
+  テストは `bash tools/hooks/guard_test.sh`。
+
+## 確かめ方とPR
+
+- 確かめ方はスキル `verify-groove-map`（`.claude/skills/verify-groove-map/SKILL.md`）を使う。
+- PR の本文は `.github/pull_request_template.md` の形で書く。
+- 同じ指摘が2回出たら、強い順に仕組みにする（作りで防ぐ → CI・lint で止める → テスト → 最後にルールに書く）。
+- `git add -A` は使わない（ファイル名を指定して add する。写真・名簿などの混入を防ぐ）。
+
 ## その他の注意
 
 - GROOVE MAP本体（`app.js` / ルートの `index.html` / `sw.js`）の変更は、Claude が作業ブランチで
-  テスト → コミット → PR作成 → **mainへマージ（＝GitHub Pagesで本番反映）まで行う**（オーナーの指示。
-  ファイルのアップロードは不要）。マージ方式は merge（作業ブランチの履歴を保つ）。
+  テスト → コミット → PR作成まで行う。**会話でオーナー本人に「マージして」と頼まれた時は
+  mainへマージ（＝GitHub Pagesで本番反映）まで行う**（ファイルのアップロードは不要）。
+  マージ方式は merge（作業ブランチの履歴を保つ）。自動の実行では下の「マージの決まり」に従う。
 - `sw.js` / `app.js` / ルートの `index.html`（GROOVE MAP本体）はオーナーが直接アップロードで
   更新することがある。マージ時は基本 upload 側を採用しつつ、**`sw.js` の `/checkin` 除外ブロック
   （ネットワーク優先。これが無いと受付URLでMAPのログイン画面が出る）が消えていないか必ず確認**し、
