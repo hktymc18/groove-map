@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v857';
+var APP_JS_VERSION = 'v858';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -400,6 +400,7 @@ function copyToNextMonth() {
   var changes = [];
   var _ruDemoted = [], _ruPromoted = []; // v426: ロールアップ（BR維持失敗）／BR復帰
   copyMembers.forEach(function(mm) {
+    if (mm.deleted) { mm.ptCurrent = 0; mm.ptSelf = 0; return; } // v857: 削除した人は判定しない（削除した時の古いGSVのまま「降格」と出ていた）
     if (((mm.title || '').trim()) === 'OUT') return; // v458: OUT本人は判定対象外（後段でまとめて除外）
     if (mm.traineeResult) mm.trainee = false; // 研修結果確定済みは翌月の決定率にカウントしない
     mm.memo = ''; // v342: メモは月ごと＝翌月に持ち越さない
@@ -426,7 +427,7 @@ function copyToNextMonth() {
     var _t9 = (mm.title||'').trim();
     // v475: 研修結果「流れた」のNA（タイトル未設定〜研修ステップ帯）もOUTと同様に翌月から除外
     var _naOut9 = mm.traineeResult === '流れた' && (!_t9 || (typeof detectCategory === 'function' && detectCategory(_t9) === '研修生'));
-    if ((_t9 === 'OUT' || _naOut9) && mm.parentId) outIds[mm.id] = mm.parentId;
+    if ((_t9 === 'OUT' || _naOut9) && mm.parentId && !mm.deleted) outIds[mm.id] = mm.parentId; // v857: 削除した人は数えない
   }); // v440: OUTは当月のみ表示し、翌月コピーで常に除外
   var _outChanges = [];
   if (Object.keys(outIds).length) {
@@ -4571,7 +4572,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v857';
+  var DATA_VERSION = 'v858';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6681,6 +6682,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v858', d:'2026-11-01', items:['翌月コピーで、削除したメンバー（昔の重複など）が古いGSVのまま「降格」と出ていたのを直しました'] },
   { v:'v857', d:'2026-11-01', items:['ユニオン名の変更（LOAD → ALTAIR）に対応しました。登録・プロフィールの選択肢が ALTAIR になり、旧名（LOAD・LIEN LOAD）のままの人は開いた時に ALTAIR に直ります'] },
   { v:'v856', d:'2026-10-31', items:['はじめに1回「通知をオンにしますか？」とお聞きするようにしました（オンにすると予定・タスクの時刻にお知らせします。あとから 設定 → 通知 でも変えられます）'] },
   { v:'v855', d:'2026-10-30', items:['ToDoの最初の表示を「すべて」か「今日」から選べるように（予定・ToDoの右上 ⋯ → ToDoの最初の表示）'] },
