@@ -1928,6 +1928,24 @@ var gUnionPrefix = {};      // ユニオン名 → 会員番号プレフィッ�
 // 初期の命名規則（ユニオン設定で上書き可能）
 // 2026-10 のユニオン名変更（旧名 → 新名）。古いアプリから旧名で保存し直された人を、ログイン時に新しい名前へ直す
 var CK_UNION_RENAMED = { 'BASE ANTARES': 'ANTARES', 'BASE REVE': 'REVE', 'LIEN LOAD': 'LOAD' };
+// 🔁 v114: アカウント（NAVIGATOR・ATTACK LIST・GOAL共通の users）は旧ユニオン名のまま残っている人がいる
+//   （NAVIGATORはログイン時に直すが、ATTACK LISTだけ使う人などは直らない）。受付でアカウントを探す時は旧名も同じユニオンとして探す
+function ckUnionNames(un){ var a = [un]; Object.keys(CK_UNION_RENAMED).forEach(function(k){ if(CK_UNION_RENAMED[k] === un) a.push(k); }); return a; }
+function ckUsersOf(un){
+  var ns = ckUnionNames(un || '');
+  return (ns.length > 1 ? db.collection('users').where('union', 'in', ns) : db.collection('users').where('union', '==', un || '')).get();
+}
+// オーナーが受付を開いた時に、旧ユニオン名のままのアカウントを新しい名前へ直す（裏で・毎回。該当がいなければ何もしない）
+function ckHealOldUnionUsers(){
+  var olds = Object.keys(CK_UNION_RENAMED);
+  if(!olds.length) return;
+  db.collection('users').where('union', 'in', olds).get().then(function(qs){
+    qs.forEach(function(d){
+      var nu = CK_UNION_RENAMED[(d.data() || {}).union];
+      if(nu) db.collection('users').doc(d.id).set({ union: nu }, { merge: true }).catch(function(){});
+    });
+  }).catch(function(){});
+}
 var DEFAULT_NO_PREFIX = { 'REVE': 'RV', 'ANTARES': 'ANT', 'BASE REVE': 'RV', 'BASE ANTARES': 'ANT' };
 function unionNoPrefix(un){ return gUnionPrefix[un] || DEFAULT_NO_PREFIX[un] || ''; }
 // 自動発番: プレフィックス+数字の既存最大値+1（4桁ゼロ埋め）。数字のみの旧番号は無視
@@ -2264,10 +2282,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v113';
+var APP_VER = 'v114';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v114', d: '2026/11/01', items: ['🔁 ユニオン名を変える前の名前（LIEN LOAD・BASE ANTARES・BASE REVE）のままのアカウントも、研修生登録の担当・受付管理者の任命などの一覧に出るようにしました（オーナーが受付を開くと、新しい名前に自動で直します）'] },
   { v: 'v113', d: '2026/10/31', items: ['🐞 DLR会場受講の予約で、月末（31日など）に開くと翌月のDLR・P&Pが日程の候補に出なかったのを直しました。候補は今月とこの先2か月から選べます'] },
   { v: 'v112', d: '2026/10/29', items: ['🌐 研修生登録の担当は、ほかのユニオンの研修生も「研修をした方の番号」に会員番号を入れて「開く」で開き、受講済み・面談シート・DLR予約を記録できるようになりました（受講済みにした人は自分の一覧にも出ます）'] },
   { v: 'v111', d: '2026/10/29', items: ['🔎 研修生登録の担当も、研修後入力の検索欄に会員番号を最後まで入れると、まだ担当していない研修生（同じユニオン）を一覧に出せるようになりました'] },
@@ -5666,7 +5685,7 @@ $('btnProfile').onclick = function(){
    checkinUnions/{un}.unionAdmins に入れて ckMig33 の印を付ける。あとはオーナーが「👑 ユニオン管理者」で外せる */
 function ckMig33(list){
   list.forEach(function(x){
-    db.collection('users').where('union', '==', x.un).get().then(function(qs){
+    ckUsersOf(x.un).then(function(qs){
       var arr = (x.d.unionAdmins || []).slice();
       function add(uid){ if(uid && arr.indexOf(uid) < 0) arr.push(uid); }
       qs.forEach(function(u){ var v = u.data(); if(v.role === 'admin' && v.status !== 'disabled') add(u.id); });
@@ -5700,6 +5719,7 @@ function afterLogin(){
     });
     gUnions.sort();
     if(mig.length) ckMig33(mig);
+    if(isOwner()) ckHealOldUnionUsers();   // 🔁 v114
     if(gUnions.indexOf(gUnion) < 0){
       // 自ユニオンが未有効化
       if(isOwner() && gUnions.length){ gUnion = gUnions[0]; enterApp(); return; }
@@ -5891,7 +5911,7 @@ $('rosterUnionSel').onchange = function(){
 $('btnCkAdmins').onclick = function(){
   var un = gRosterUnion;
   var cur = (gCkAdmins[un] || []).slice();
-  db.collection('users').where('union', '==', un).get().then(function(qs){
+  ckUsersOf(un).then(function(qs){
     var users = [];
     var sameUids = {};
     qs.forEach(function(d){
@@ -5907,7 +5927,7 @@ $('btnCkAdmins').onclick = function(){
     return Promise.all(xUids.map(function(uid){
       return db.collection('users').doc(uid).get().then(function(sn){
         var u = sn.exists ? sn.data() : {};
-        return { uid: uid, name: u.name || uid.slice(0, 8), union: u.union || '?', checked: true };
+        return { uid: uid, name: u.name || uid.slice(0, 8), union: CK_UNION_RENAMED[u.union] || u.union || '?', checked: true };
       }).catch(function(){ return { uid: uid, name: uid.slice(0, 8), union: '?', checked: true }; });
     })).then(function(xRows){
       openCkAdminsModal(un, users, cur, xRows);
@@ -5959,7 +5979,7 @@ function openCkAdminsModal(un, users, cur, xRows){
   if(xl) xl.onclick = function(){
     var xun = $('ckaXUn').value;
     xl.disabled = true;
-    db.collection('users').where('union', '==', xun).get().then(function(qs){
+    ckUsersOf(xun).then(function(qs){
       var added = 0;
       qs.forEach(function(d){
         var u = d.data();
@@ -6000,7 +6020,7 @@ function openCkAdminsModal(un, users, cur, xRows){
 $('btnTrainers').onclick = function(){
   var un = gRosterUnion;
   Promise.all([
-    db.collection('users').where('union', '==', un).get(),
+    ckUsersOf(un),
     db.collection('checkinUnions').doc(un).get(),
     db.collection('trainerNda').where('union', '==', un).get().catch(function(){ return null; })   // 📜 誓約の記録
   ]).then(function(res){
@@ -6109,14 +6129,14 @@ $('btnUnionAdmins').onclick = function(){ ckOwnerListOpen('unionAdmins'); };
 $('btnAdminsView').onclick = function(){
   var un = gRosterUnion;
   Promise.all([
-    db.collection('users').where('union', '==', un).get(),
+    ckUsersOf(un),
     db.collection('checkinUnions').doc(un).get()
   ]).then(function(res){
     var byUid = {};
     res[0].forEach(function(d){
       var u = d.data();
       if(u.status === 'disabled') return;
-      byUid[d.id] = { name: u.name || d.id.slice(0, 8), union: u.union || un, role: u.role || '' };
+      byUid[d.id] = { name: u.name || d.id.slice(0, 8), union: CK_UNION_RENAMED[u.union] || u.union || un, role: u.role || '' };
     });
     var s0 = res[1].exists ? res[1].data() : {};
     var admins = (s0.admins || []).slice(), trainers = (s0.trainers || []).slice(), cores = (s0.unionAdmins || []).slice(), leaders = (s0.leaders || []).slice();
@@ -6126,7 +6146,7 @@ $('btnAdminsView').onclick = function(){
     return Promise.all(Object.keys(need).map(function(uid){
       return db.collection('users').doc(uid).get().then(function(sn){
         var u = sn.exists ? sn.data() : {};
-        byUid[uid] = { name: u.name || uid.slice(0, 8), union: u.union || '?', role: u.role || '' };
+        byUid[uid] = { name: u.name || uid.slice(0, 8), union: CK_UNION_RENAMED[u.union] || u.union || '?', role: u.role || '' };
       }).catch(function(){ byUid[uid] = { name: uid.slice(0, 8), union: '?', role: '' }; });
     })).then(function(){
       function row(uid, pill){
@@ -6196,7 +6216,7 @@ function coreAdminsModal(un, rows, kind){
   if(ld) ld.onclick = function(){
     var xun = $('caUn').value;
     ld.disabled = true;
-    db.collection('users').where('union', '==', xun).get().then(function(qs){
+    ckUsersOf(xun).then(function(qs){
       var added = 0;
       qs.forEach(function(d){
         var u = d.data();
@@ -7627,7 +7647,7 @@ function ckOffNav(m){
     var linked = [];
     qs.forEach(function(d){ var u = d.data(); linked.push({ uid: d.id, name: u.name || '', role: u.role || '', status: u.status || '' }); });
     if(linked.length) return { linked: linked, cands: [] };
-    return db.collection('users').where('union', '==', m.union || '').get().then(function(q2){
+    return ckUsersOf(m.union || '').then(function(q2){
       var ks = [groupKey(m.name)], cands = [];
       if(m.claimName && groupKey(m.claimName) !== ks[0]) ks.push(groupKey(m.claimName));
       q2.forEach(function(d){
