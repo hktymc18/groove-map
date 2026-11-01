@@ -1,6 +1,7 @@
 // 使い方: VIEW=events VW=390 VH=844 PFX=x SHOTS='[["name","js"]]' node shot.js
 // 例: VIEW=events VW=390 VH=844 PFX=cal SHOTS='[["month","setEventsMode(\"calendar\")"]]' node tools/test/shot/shot.js  → tools/test/out/cal_month.png
-const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+const PW = '/opt/node22/lib/node_modules/playwright';   // この環境に入っている物。無ければ（GitHub の CI など）tools/test に入れた playwright
+const { chromium } = require(require('fs').existsSync(PW) ? PW : 'playwright');
 const fs = require('fs');
 const DIR = require('path').resolve(__dirname, '../../..');
 (async () => {
