@@ -2282,10 +2282,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v114';
+var APP_VER = 'v115';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v115', d: '2026/11/01', items: ['✏ ユニオン名の変更（オーナー）で、NAVIGATORの登録画面のユニオン一覧（ユニオンとUPBD）も一緒に新しい名前に直すようにしました'] },
   { v: 'v114', d: '2026/11/01', items: ['🔁 ユニオン名を変える前の名前（LIEN LOAD・BASE ANTARES・BASE REVE）のままのアカウントも、研修生登録の担当・受付管理者の任命などの一覧に出るようにしました（オーナーが受付を開くと、新しい名前に自動で直します）'] },
   { v: 'v113', d: '2026/10/31', items: ['🐞 DLR会場受講の予約で、月末（31日など）に開くと翌月のDLR・P&Pが日程の候補に出なかったのを直しました。候補は今月とこの先2か月から選べます'] },
   { v: 'v112', d: '2026/10/29', items: ['🌐 研修生登録の担当は、ほかのユニオンの研修生も「研修をした方の番号」に会員番号を入れて「開く」で開き、受講済み・面談シート・DLR予約を記録できるようになりました（受講済みにした人は自分の一覧にも出ます）'] },
@@ -6469,6 +6470,21 @@ function ckRenameUnion(oldUn, newUn, log){
         var ops = [];
         qs.forEach(function(d){ ops.push(function(b){ b.set(d.ref, { union: newUn }, { merge: true }); }); });
         return batchAll(ops).then(function(){ return qs.size + '人'; });
+      });
+    });
+  }).then(function(){
+    // 🔁 v115: NAVIGATORの登録・プロフィールで選ぶユニオンの一覧（オーナーが「ユニオンとUPBD」で設定した appConfig/unions）も新しい名前に
+    return step('NAVIGATORの登録画面のユニオン一覧', function(){
+      return db.collection('appConfig').doc('unions').get().then(function(sn){
+        if(!sn.exists) return '設定なし（アプリに入っている一覧を使用）';
+        var d = sn.data() || {}, L = Array.isArray(d.list) ? d.list.slice() : [], n = 0;
+        var hasNew = L.some(function(x){ return x && x.name === newUn; });
+        L = L.filter(function(x){
+          if(x && x.name === oldUn){ n++; if(hasNew) return false; x.name = newUn; hasNew = true; }
+          return true;
+        });
+        if(!n) return '0件';
+        return db.collection('appConfig').doc('unions').set({ list: L, at: Date.now(), by: gUser.uid }).then(function(){ return n + '件'; });
       });
     });
   }).then(function(){
