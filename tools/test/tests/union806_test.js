@@ -7,9 +7,10 @@ T.run(async () => {
   const u = { uid: 'u1', name: '浦田昌矢', union: 'BASE ANTARES' };
   w._unionRenameHeal(u);
   c('BASE ANTARES → ANTARES（本人のプロフィールも書き直す）', u.union === 'ANTARES' && writes.length === 1 && writes[0][0] === 'users/u1' && writes[0][1].union === 'ANTARES', JSON.stringify(writes));
-  const r = { uid: 'u2', union: 'BASE REVE' }, l = { uid: 'u3', union: 'LIEN LOAD' };
-  w._unionRenameHeal(r); w._unionRenameHeal(l);
-  c('BASE REVE → REVE・LIEN LOAD → LOAD', r.union === 'REVE' && l.union === 'LOAD');
+  const r = { uid: 'u2', union: 'BASE REVE' }, l = { uid: 'u3', union: 'LIEN LOAD' }, ld = { uid: 'u8', union: 'LOAD' };
+  w._unionRenameHeal(r); w._unionRenameHeal(l); w._unionRenameHeal(ld);
+  c('BASE REVE → REVE・LIEN LOAD → ALTAIR・LOAD → ALTAIR（v857）', r.union === 'REVE' && l.union === 'ALTAIR' && ld.union === 'ALTAIR');
+  c('登録の選択肢は ALTAIR（LOADは出さない）', w.UNION_LIST.some(x => x.name === 'ALTAIR') && !w.UNION_LIST.some(x => x.name === 'LOAD'));
   const n = writes.length, ok = { uid: 'u4', union: 'ANTARES' }, lien = { uid: 'u5', union: 'LIEN' };
   w._unionRenameHeal(ok); w._unionRenameHeal(lien); w._unionRenameHeal({ uid: 'u6' }); w._unionRenameHeal(null);
   c('新しい名前・別のユニオン（LIEN）・未設定は触らない', ok.union === 'ANTARES' && lien.union === 'LIEN' && writes.length === n);

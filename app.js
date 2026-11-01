@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v856';
+var APP_JS_VERSION = 'v857';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3936,7 +3936,7 @@ var UNION_LIST = [
   { name:'INFLUENCE',    upbd:'高島健佑' },
   { name:'ANTARES',      upbd:'馬越雅哉' },
   { name:'REVE',         upbd:'浦田美沙子' },
-  { name:'LOAD',         upbd:'松田郁愛' },
+  { name:'ALTAIR',       upbd:'松田郁愛' },
   { name:'DEFI',         upbd:'中原賢三' },
   { name:'GRANDIR',      upbd:'嶽本尚希' },
   { name:'SFIDA',        upbd:'' },
@@ -3944,7 +3944,7 @@ var UNION_LIST = [
   { name:'UPBD',         upbd:'渡邉寛' }
 ];
 // v806: 2026-10 のユニオン名変更（旧名 → 新名）。古い版のアプリで旧名のまま保存し直された人を、ログイン時に新しい名前へ直す
-var UNION_RENAMED = { 'BASE ANTARES': 'ANTARES', 'BASE REVE': 'REVE', 'LIEN LOAD': 'LOAD' };
+var UNION_RENAMED = { 'BASE ANTARES': 'ANTARES', 'BASE REVE': 'REVE', 'LIEN LOAD': 'ALTAIR', 'LOAD': 'ALTAIR' }; // 2026-11: LOAD → ALTAIR
 function _unionRenameHeal(user) {
   var nu = user && UNION_RENAMED[user.union || ''];
   if (!nu) return;
@@ -4571,7 +4571,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v856';
+  var DATA_VERSION = 'v857';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6681,6 +6681,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v857', d:'2026-11-01', items:['ユニオン名の変更（LOAD → ALTAIR）に対応しました。登録・プロフィールの選択肢が ALTAIR になり、旧名（LOAD・LIEN LOAD）のままの人は開いた時に ALTAIR に直ります'] },
   { v:'v856', d:'2026-10-31', items:['はじめに1回「通知をオンにしますか？」とお聞きするようにしました（オンにすると予定・タスクの時刻にお知らせします。あとから 設定 → 通知 でも変えられます）'] },
   { v:'v855', d:'2026-10-30', items:['ToDoの最初の表示を「すべて」か「今日」から選べるように（予定・ToDoの右上 ⋯ → ToDoの最初の表示）'] },
   { v:'v854', d:'2026-10-30', items:['（開発メンバーで試し中）スマホの計画シートのサマリーを「今月の成績表」1枚に（スクショしてそのまま送れる形）'] },

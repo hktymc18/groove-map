@@ -1927,7 +1927,7 @@ var gUnionAddon = {};       // ユニオン名 → 追加オプションの設�
 var gUnionPrefix = {};      // ユニオン名 → 会員番号プレフィックス（checkinUnions.noPrefix）
 // 初期の命名規則（ユニオン設定で上書き可能）
 // 2026-10 のユニオン名変更（旧名 → 新名）。古いアプリから旧名で保存し直された人を、ログイン時に新しい名前へ直す
-var CK_UNION_RENAMED = { 'BASE ANTARES': 'ANTARES', 'BASE REVE': 'REVE', 'LIEN LOAD': 'LOAD' };
+var CK_UNION_RENAMED = { 'BASE ANTARES': 'ANTARES', 'BASE REVE': 'REVE', 'LIEN LOAD': 'ALTAIR', 'LOAD': 'ALTAIR' };   // 2026-11: LOAD → ALTAIR
 // 🔁 v114: アカウント（NAVIGATOR・ATTACK LIST・GOAL共通の users）は旧ユニオン名のまま残っている人がいる
 //   （NAVIGATORはログイン時に直すが、ATTACK LISTだけ使う人などは直らない）。受付でアカウントを探す時は旧名も同じユニオンとして探す
 function ckUnionNames(un){ var a = [un]; Object.keys(CK_UNION_RENAMED).forEach(function(k){ if(CK_UNION_RENAMED[k] === un) a.push(k); }); return a; }
@@ -2282,10 +2282,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v115';
+var APP_VER = 'v116';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v116', d: '2026/11/01', items: ['🔁 ユニオン名の変更（LOAD → ALTAIR）に対応しました。旧名（LOAD・LIEN LOAD）のままのアカウントも ALTAIR として扱います'] },
   { v: 'v115', d: '2026/11/01', items: ['✏ ユニオン名の変更（オーナー）で、NAVIGATORの登録画面のユニオン一覧（ユニオンとUPBD）も一緒に新しい名前に直すようにしました'] },
   { v: 'v114', d: '2026/11/01', items: ['🔁 ユニオン名を変える前の名前（LIEN LOAD・BASE ANTARES・BASE REVE）のままのアカウントも、研修生登録の担当・受付管理者の任命などの一覧に出るようにしました（オーナーが受付を開くと、新しい名前に自動で直します）'] },
   { v: 'v113', d: '2026/10/31', items: ['🐞 DLR会場受講の予約で、月末（31日など）に開くと翌月のDLR・P&Pが日程の候補に出なかったのを直しました。候補は今月とこの先2か月から選べます'] },
