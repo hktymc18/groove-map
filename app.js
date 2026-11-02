@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v859';
+var APP_JS_VERSION = 'v860';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4573,7 +4573,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v859';
+  var DATA_VERSION = 'v860';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6685,6 +6685,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v860', d:'2026-11-02', items:['設定の「通知」を最初からオンにしました（自分でオフにした時だけオフ）','この端末でまだ通知を許可していない時は、設定 → 通知 に「この端末で通知を受け取る」ボタンを出します'] },
   { v:'v859', d:'2026-11-01', items:['登録月が入っていない人（LOI・Q・BRなど）のGSVやタイトルを直すと、見ている月が登録月として勝手に保存されていたのを直しました（翌月コピーで降格した時のB番号がずれていました）','プロフィールのスタート月は、分からない時は空のまま表示します','翌月コピーの確認で、降格の理由に「登録月◯年◯月から◯ヶ月目」を出すようにしました'] },
   { v:'v858', d:'2026-11-01', items:['翌月コピーで、削除したメンバー（昔の重複など）が古いGSVのまま「降格」と出ていたのを直しました'] },
   { v:'v857', d:'2026-11-01', items:['ユニオン名の変更（LOAD → ALTAIR）に対応しました。登録・プロフィールの選択肢が ALTAIR になり、旧名（LOAD・LIEN LOAD）のままの人は開いた時に ALTAIR に直ります'] },
@@ -21857,14 +21858,14 @@ function _stLi(ic, t, sub, on, red) { return '<div onclick="' + on + '"><span cl
 function _stRender() {
   _uxCss(); _ux2Css(); _tdyCss(); _efCss(); _ppCss();
   var u = currentUser || {}, h = '', light = document.body.classList.contains('light');
-  var pushOn = ('Notification' in window) && Notification.permission === 'granted'; try { if (localStorage.getItem('gm_pushOff') === '1') pushOn = false; } catch (e) {}
+  var _pst = _pushSt(), pushOn = _pst === 'on' || _pst === 'need'; // v860: 最初からオン
   var crumb = { prof: 'プロフィール', look: '見た目', ntf: '通知' }[_stPg];
   h += '<div class="ux-top"><span class="ux-crumb" onclick="' + (_stPg ? 'setOpen()' : 'setClose()') + '">' + (_stPg ? '設定 › <b>' + crumb + '</b>' : 'HOME › <b>設定</b>') + '</span><span class="ux-home" onclick="setClose()" title="閉じる">✕</span></div>';
   if (!_stPg) {
     h += '<h2 class="ux-h2">設定</h2>'
       + '<div class="st-gh">自分</div><div class="st-ls">' + _stLi(icn('user'), 'プロフィール', evEsc([u.name, u.union, u.area].filter(Boolean).join('・')), "setOpen('prof')")
       + _stLi('🎨', '見た目', (light ? 'ライト' : 'ダーク') + '・HOMEのタイル ' + (_homeImgOn() ? '画像あり' : '画像なし'), "setOpen('look')")
-      + _stLi(icn('bell'), '通知', pushOn ? 'オン' : 'オフ', "setOpen('ntf')") + '</div>'
+      + _stLi(icn('bell'), '通知', _pst === 'need' ? 'オン（この端末の許可がまだ）' : _pst === 'denied' ? 'ブロック中' : (pushOn ? 'オン' : 'オフ'), "setOpen('ntf')") + '</div>'
       + '<div class="st-gh">予定・ToDo</div><div class="st-ls">' + _stLi(icn('calendar'), 'カレンダー', (currentUser && currentUser.union ? 'ユニオン予定・' : '') + '週の始まり・スクロール・予定の帯', 'openCalSettings()') + '</div>'
       + '<div class="st-gh">MAP・データ</div><div class="st-ls">' + (state.isEditor && !viewingOwnerUid ? _stLi('→', '翌月コピー', '今月のMAPを来月へ', 'copyToNextMonth()') : '')
       + _stLi('📄', '変更履歴', '追加・削除・タイトル変更', 'showHistoryModal()')
@@ -21896,7 +21897,7 @@ function _stRender() {
     var den = ('Notification' in window) && Notification.permission === 'denied';
     h += '<h2 class="ux-h2">通知</h2><div class="ux-sub">予定・タスクの時刻にこの端末へ通知します</div>'
       + (den ? '<div class="ux-hint">ブラウザ側で通知がブロックされています。iPhoneの設定→通知（またはSafariの設定）から許可してください</div>'
-        : '<div class="ppb sm" style="--n:2;margin-top:10px"><span class="' + (pushOn ? 'on' : '') + '" onclick="pushSetEnabled(true);setTimeout(_stRender,600)">オン</span><span class="' + (!pushOn ? 'on' : '') + '" onclick="pushSetEnabled(false);setTimeout(_stRender,600)">オフ</span></div>');
+        : '<div class="ppb sm" style="--n:2;margin-top:10px"><span class="' + (pushOn ? 'on' : '') + '" onclick="pushSetEnabled(true);setTimeout(_stRender,600)">オン</span><span class="' + (!pushOn ? 'on' : '') + '" onclick="pushSetEnabled(false);setTimeout(_stRender,600)">オフ</span></div>' + (_pst === 'need' ? _pushNeedHtml() : ''));
   }
   if (_stPg !== 'prof') h += '<div class="ux-btm"><span class="ux-bk" onclick="' + (_stPg ? 'setOpen()' : 'setClose()') + '">‹ 戻る</span></div>';
   var pg = document.getElementById('setPg');
@@ -32272,6 +32273,18 @@ function updateNotifBtn() {
   else { b.textContent = '通知をオン'; }
 }
 
+// v860: 通知のオン/オフは最初から「オン」。自分でオフにした時だけオフ。
+//   'on'＝届く／'need'＝オンだけど端末の許可がまだ／'off'＝自分でオフ／'denied'＝端末でブロック／'none'＝この端末では使えない
+function _pushSt() {
+  if (!('Notification' in window)) return 'none';
+  if (Notification.permission === 'denied') return 'denied';
+  try { if (localStorage.getItem('gm_pushOff') === '1') return 'off'; } catch (e) {}
+  return Notification.permission === 'granted' ? 'on' : 'need';
+}
+function _pushNeedHtml() {
+  if (typeof _ntfIOS === 'function' && _ntfIOS() && !_ntfStandalone()) return '<div class="ux-hint">iPhoneは、ホーム画面に追加したアプリで開くと通知が届きます（Safariのままでは届きません）</div>';
+  return '<div class="ux-hint">この端末の許可がまだです。下のボタンを押して「許可」を選ぶと届くようになります</div><div class="ux-nx" style="display:block;text-align:center;margin-top:8px" onclick="requestNotifPermission();setTimeout(function(){try{_stRender()}catch(e){}},1500)">' + icn('bell') + ' この端末で通知を受け取る</div>';
+}
 function requestNotifPermission() {
   if (!notifSupported()) { toast('このブラウザは通知に対応していません'); return; }
   if (Notification.permission === 'granted') {
@@ -32556,7 +32569,7 @@ function openCalSettings() {
   var pushDenied = ('Notification' in window) && Notification.permission === 'denied';
   var pushOff = false;
   try { pushOff = localStorage.getItem('gm_pushOff') === '1'; } catch(e0) {}
-  var pushOn = pushGranted && !pushOff;
+  var pushOn = !pushOff && !pushDenied; // v860: 最初からオン（許可がまだの時は、オンを押すと端末の許可を聞く）
   var pushRow;
   if (pushDenied) {
     pushRow = '<div style="font-size:12px;color:var(--text-dim);padding:4px 2px">ブラウザ側で通知がブロックされています。iPhoneの設定→通知（またはSafariの設定）から許可してください</div>';
@@ -32564,7 +32577,7 @@ function openCalSettings() {
     pushRow = '<div class="rg">'
       + '<div class="rb' + (pushOn ? ' sel' : '') + '" onclick="pushSetEnabled(true)">' + icn('bell') + ' オン</div>'
       + '<div class="rb' + (!pushOn ? ' sel' : '') + '" onclick="pushSetEnabled(false)">' + icn('belloff') + ' オフ</div>'
-      + '</div>';
+      + '</div>' + (pushOn && !pushGranted ? '<div style="font-size:12px;color:var(--text-dim);padding:6px 2px 0">この端末の許可がまだです。「オン」を押して「許可」を選ぶと届くようになります</div>' : '');
   }
   ov.innerHTML = '<div class="ms-sheet" style="max-height:82vh;overflow-y:auto"><div class="ms-grip"></div>'
     + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + icn('gear') + ' カレンダー設定</div></div>'
