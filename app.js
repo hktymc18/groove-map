@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v862';
+var APP_JS_VERSION = 'v863';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4574,7 +4574,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v862';
+  var DATA_VERSION = 'v863';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6686,6 +6686,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v863', d:'2026-11-02', items:['カレンダーを縦（連続）にしている時、iPhoneで予定を追加すると1年後の月まで飛んでしまうことがあったのを直しました'] },
   { v:'v862', d:'2026-11-02', items:['カレンダー（月）の予定の帯を、最初から「時間の長さで伸ばす」にしました（⋯の設定で「固定（1行）」を選んだ人はそのまま）'] },
   { v:'v861', d:'2026-11-02', items:['ライトモードで、翌月コピーの確認画面の名前の欄が黒くなって読めなかったのを直しました'] },
   { v:'v860', d:'2026-11-02', items:['設定の「通知」を最初からオンにしました（自分でオフにした時だけオフ）','この端末でまだ通知を許可していない時は、設定 → 通知 に「この端末で通知を受け取る」ボタンを出します'] },
@@ -35806,6 +35807,7 @@ function renderCalendar() {
   if (!grid._calScrollBound) {
     grid._calScrollBound = true;
     grid.addEventListener('scroll', _calOnScroll, { passive: true });
+    _calResizeBind(grid); // v863
   }
   // v299: 日マスの長押し→その日に即追加／v312: チップ長押し→ドラッグでリスケ
   if (!grid._calLpBound) {
@@ -35914,6 +35916,8 @@ function renderCalendar() {
       _calScrollInit = true;
       _calScrollToYmd(t, false); // 初期位置＝今日の週が最上段
     }
+  } else if (_calAnchorW != null && grid.clientHeight > 0) {
+    _calSetTopW(grid, _calAnchorW); // v863: 再描画しても「上に見えている週」を保つ（ピクセルだと高さが変わった時にずれる）
   } else {
     grid.scrollTop = keepTop; // 再描画してもスクロール位置を維持
   }
@@ -35926,6 +35930,25 @@ var _calRangeStart = null; // 描画範囲の先頭（週の開始日）
 var _calRangeWeeks = 0;
 var _calScrollInit = false;
 var _calScrRaf = false;
+// v863: 縦（連続）は、上に見えている週（小数）で位置を覚える。
+//   週の高さは表示の高さの20%なので、iPhoneでキーボードが出て表示が低くなると、同じピクセル位置が何ヶ月も先を指し、
+//   一番下（1年後の11月など）まで押し下げられてそのまま戻らなかった。高さが変わった時はスクロールを数えず、覚えた週に戻す
+var _calAnchorW = null, _calResizeHold = 0;
+function _calRowH(g) { return g.scrollHeight / Math.max(1, _calRangeWeeks); }
+function _calSetTopW(g, w) { var rh = _calRowH(g); if (rh > 0) g.scrollTop = Math.round(w * rh); }
+function _calResizeBind(g) {
+  var last = g.clientHeight;
+  var fix = function() {
+    if (_calScrollMode !== 'v' || !g.clientHeight) return;
+    if (g.clientHeight === last) return;
+    last = g.clientHeight;
+    _calResizeHold = Date.now() + 700;
+    if (_calAnchorW != null) _calSetTopW(g, _calAnchorW);
+  };
+  try { if (window.ResizeObserver) new ResizeObserver(function() { fix(); }).observe(g); } catch (e) {}
+  window.addEventListener('resize', fix);
+  try { if (window.visualViewport) window.visualViewport.addEventListener('resize', fix); } catch (e2) {}
+}
 function _calScrollToYmd(ymd, smooth) {
   if (_calScrollMode !== 'v') return; // v320: 横モードはスクロール制御なし
   var g = document.getElementById('evCalGrid');
@@ -35936,6 +35959,7 @@ function _calScrollToYmd(ymd, smooth) {
   if (idx < 0) idx = 0;
   if (idx > _calRangeWeeks - 1) idx = _calRangeWeeks - 1;
   var top = Math.round(idx * (g.scrollHeight / Math.max(1, _calRangeWeeks)));
+  _calAnchorW = idx; // v863
   if (smooth && g.scrollTo) { try { g.scrollTo({ top: top, behavior: 'smooth' }); return; } catch(e) {} }
   g.scrollTop = top;
 }
@@ -35946,9 +35970,12 @@ function _calOnScroll() {
   requestAnimationFrame(function(){
     _calScrRaf = false;
     var g = document.getElementById('evCalGrid');
-    if (!g || !_calRangeStart) return;
+    if (!g || !_calRangeStart || !g.clientHeight) return;
+    // v863: 表示の高さが変わった直後（キーボードが出た・閉じた）のスクロールは、自分で動かしたものではないので数えない
+    if (Date.now() < _calResizeHold) { if (_calAnchorW != null) _calSetTopW(g, _calAnchorW); return; }
     // 2段目あたりの週の中日でヘッダの年月を更新
     var rowH = g.scrollHeight / Math.max(1, _calRangeWeeks);
+    _calAnchorW = g.scrollTop / Math.max(1, rowH); // v863
     var idx = Math.round(g.scrollTop / rowH) + 1;
     var d = new Date(_calRangeStart.getTime());
     d.setDate(d.getDate() + idx * 7 + 3);
