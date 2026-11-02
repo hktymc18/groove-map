@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v860';
+var APP_JS_VERSION = 'v861';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -320,10 +320,11 @@ function _computeTitleTransition(m, nextMonth) {
 // 昇降格プレビュー確認モーダル → OKで onConfirm() 実行
 function _showCopyPreview(cur, nextMonth, changes, onConfirm, extraHtml) {
   var esc = (typeof evEsc === 'function') ? evEsc : function(s){ return s; };
+  // v861: 1人ずつの箱は --surface2（前は無い変数 --panel で、ライトモードでも黒い箱になり名前が読めなかった）
   function sect(title, list, color) {
     if (!list.length) return '';
     var rows = list.map(function(c) {
-      return '<div style="padding:7px 10px;border-radius:8px;background:var(--panel,#1a1d24);margin-bottom:6px">'
+      return '<div style="padding:7px 10px;border-radius:8px;background:var(--surface2,#1a1d24);border:1px solid var(--border,#2a2e38);margin-bottom:6px">'
         + '<div style="font-weight:600;font-size:14px">' + esc(c.name) + '</div>'
         + '<div style="font-size:12px;color:var(--text-dim,#8a94a6);margin-top:2px">'
         + esc(c.from || '—') + ' → <span style="color:' + color + ';font-weight:600">' + esc(c.to) + '</span>'
@@ -359,7 +360,7 @@ function _showCopyPreview(cur, nextMonth, changes, onConfirm, extraHtml) {
     + '<div style="font-size:11px;color:var(--text-dim,#8a94a6);margin:10px 0 14px">※GSVは0にリセットされ、上記タイトルで翌月を作成します。既存の翌月データは上書きされます。</div>'
     + '<div style="display:flex;gap:10px">'
     + '<button id="_cpCancel" style="flex:1;padding:11px;border-radius:10px;border:1px solid var(--border,#2a2e38);background:transparent;color:var(--text,#e6e8ec);font-size:14px;font-weight:600">キャンセル</button>'
-    + '<button id="_cpOk" style="flex:1;padding:11px;border-radius:10px;border:none;background:var(--accent,#2CE5B8);color:#08121a;font-size:14px;font-weight:700">確定してコピー</button>'
+    + '<button id="_cpOk" style="flex:1;padding:11px;border-radius:10px;border:none;background:var(--accent,#2CE5B8);color:var(--go-ink,#08121a);font-size:14px;font-weight:700">確定してコピー</button>'
     + '</div>';
   ov.appendChild(card);
   document.body.appendChild(ov);
@@ -4573,7 +4574,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v860';
+  var DATA_VERSION = 'v861';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6685,6 +6686,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v861', d:'2026-11-02', items:['ライトモードで、翌月コピーの確認画面の名前の欄が黒くなって読めなかったのを直しました'] },
   { v:'v860', d:'2026-11-02', items:['設定の「通知」を最初からオンにしました（自分でオフにした時だけオフ）','この端末でまだ通知を許可していない時は、設定 → 通知 に「この端末で通知を受け取る」ボタンを出します'] },
   { v:'v859', d:'2026-11-01', items:['登録月が入っていない人（LOI・Q・BRなど）のGSVやタイトルを直すと、見ている月が登録月として勝手に保存されていたのを直しました（翌月コピーで降格した時のB番号がずれていました）','プロフィールのスタート月は、分からない時は空のまま表示します','翌月コピーの確認で、降格の理由に「登録月◯年◯月から◯ヶ月目」を出すようにしました'] },
   { v:'v858', d:'2026-11-01', items:['翌月コピーで、削除したメンバー（昔の重複など）が古いGSVのまま「降格」と出ていたのを直しました'] },

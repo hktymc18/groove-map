@@ -56,4 +56,13 @@ T.run(async () => {
   c('降格の理由に「登録月 2026年7月から5ヶ月目」', d2 && d2.to === 'B5' && /登録月 2026年7月から5ヶ月目/.test(d2.reason));
   const d1 = got.find(x => /審査花|審査 花/.test(x.name));
   c('登録月が無い人は今まで通り⚠️（登録月を入れてね）', !d1 || d1.noStart);
+  // v861：確認画面の色は、アプリにある色の変数だけを使う（無い --panel だとライトでも黒い箱になっていた）
+  const fsx = require('fs'), px = require('path');
+  const src = w._showCopyPreview.toString(), html = fsx.readFileSync(px.join(__dirname, '../../../index.html'), 'utf8');
+  const used = Array.from(new Set((src.match(/var\(--[\w-]+/g) || []).map(v => v.slice(4))));
+  c('翌月コピーの確認：使っている色の変数はすべてアプリにある', used.length > 3 && used.every(v => html.indexOf(v + ':') >= 0) && !/var\(--panel/.test(src));
+  w._showCopyPreview('2026.10', '2026.11', [{ name: '見本 一', from: 'Q2', to: 'Q3', kind: 'advance', reason: '審査継続' }], () => {}); await sleep(10);
+  const box = Array.from(w.document.querySelectorAll('div')).find(d => /見本 一/.test(d.textContent) && /surface2/.test(d.getAttribute('style') || ''));
+  c('1人ずつの箱は --surface2（ライトでは明るい色）', !!box);
+  const cn = w.document.getElementById('_cpCancel'); if (cn) cn.click();
 });
