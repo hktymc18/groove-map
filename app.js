@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v861';
+var APP_JS_VERSION = 'v862';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4574,7 +4574,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v861';
+  var DATA_VERSION = 'v862';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6686,6 +6686,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v862', d:'2026-11-02', items:['カレンダー（月）の予定の帯を、最初から「時間の長さで伸ばす」にしました（⋯の設定で「固定（1行）」を選んだ人はそのまま）'] },
   { v:'v861', d:'2026-11-02', items:['ライトモードで、翌月コピーの確認画面の名前の欄が黒くなって読めなかったのを直しました'] },
   { v:'v860', d:'2026-11-02', items:['設定の「通知」を最初からオンにしました（自分でオフにした時だけオフ）','この端末でまだ通知を許可していない時は、設定 → 通知 に「この端末で通知を受け取る」ボタンを出します'] },
   { v:'v859', d:'2026-11-01', items:['登録月が入っていない人（LOI・Q・BRなど）のGSVやタイトルを直すと、見ている月が登録月として勝手に保存されていたのを直しました（翌月コピーで降格した時のB番号がずれていました）','プロフィールのスタート月は、分からない時は空のまま表示します','翌月コピーの確認で、降格の理由に「登録月◯年◯月から◯ヶ月目」を出すようにしました'] },
@@ -17275,9 +17276,9 @@ var _evMode    = 'agenda';   // 'agenda' | 'week' | 'calendar'
 try { var _evM0 = localStorage.getItem('gm_evMode'); if (_evM0 === 'calendar' || _evM0 === 'week' || _evM0 === 'agenda' || _evM0 === 'day') _evMode = _evM0; } catch(e) {}
 // S3: 週の始まり（1=月曜/0=日曜。月・週ビュー共通）
 var _weekStart = 0; // v384: 既定を日曜始まりに変更（設定で月曜へ切替可）
-// v386: 月表示で予定の帯を時間の長さに応じて縦に伸ばす（既定オフ＝1行固定）
-var _calBarDur = false;
-try { _calBarDur = localStorage.getItem('gm_barDur') === '1'; } catch(eBd) {}
+// v386: 月表示で予定の帯を時間の長さに応じて縦に伸ばす。v862: 最初は「時間の長さで伸ばす」（自分で「固定（1行）」を選んだ人はそのまま）
+var _calBarDur = true;
+try { _calBarDur = localStorage.getItem('gm_barDur') !== '0'; } catch(eBd) {}
 function setBarDur(v) {
   _calBarDur = !!v;
   try { localStorage.setItem('gm_barDur', v ? '1' : '0'); } catch(e) {}
