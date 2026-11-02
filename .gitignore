@@ -1,0 +1,4 @@
+tools/test/node_modules/
+tools/test/out/
+.DS_Store
+.claude/autonomous.flag

@@ -2,7 +2,8 @@
 // 使い方: CASES='[["名前",{"name":"見本 太郎","cardTitle":"RUBY","badges":["EXPERT"]}]]' VW=390 VH=844 DARK=1 PFX=x node tools/test/shot/ckcard.js
 //   → tools/test/out/x_名前.png（横向きは VW=844 VH=390・DARK=1 でダークモード）
 //   DATA='{"パス":{…}}' で架空のデータを足す・FULL=1 でページ全体・RM=1 で動きを止める（変更前後の比較用）
-const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+const PW = '/opt/node22/lib/node_modules/playwright';   // この環境に入っている物。無ければ（GitHub の CI など）tools/test に入れた playwright
+const { chromium } = require(require('fs').existsSync(PW) ? PW : 'playwright');
 const fs = require('fs');
 const DIR = require('path').resolve(__dirname, '../../..');
 (async () => {

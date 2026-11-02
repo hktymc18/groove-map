@@ -1,0 +1,37 @@
+# PR のたびに自動テストと sw.js の /checkin 除外の確認を回す
+name: PR test
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: sw.js の /checkin 除外ブロックが残っている（1 であること）
+        run: |
+          n=$(grep -c "url.pathname.indexOf('/checkin') >= 0" sw.js || true)
+          echo "count=$n"
+          [ "$n" = "1" ] || { echo "::error file=sw.js::/checkin の除外ブロックが無い（受付URLでMAPのログイン画面が出る）"; exit 1; }
+      - name: テストの準備（jsdom・写真用の playwright と Chromium）
+        run: |
+          cd tools/test
+          npm install --no-audit --no-fund
+          npm install --no-save --no-audit --no-fund playwright
+          npx playwright install --with-deps chromium
+      - name: 自動テスト
+        run: bash tools/test/run.sh
+      - name: 結果を残す
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-out
+          path: tools/test/out/
+          if-no-files-found: ignore

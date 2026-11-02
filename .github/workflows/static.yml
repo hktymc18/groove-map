@@ -31,6 +31,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: sw.js の /checkin 除外ブロックの確認（無ければデプロイしない）
+        run: |
+          n=$(grep -c "url.pathname.indexOf('/checkin') >= 0" sw.js || true)
+          echo "count=$n"
+          [ "$n" = "1" ] || { echo "::error file=sw.js::/checkin の除外ブロックが無いのでデプロイを止めました"; exit 1; }
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
