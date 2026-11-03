@@ -471,6 +471,8 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .pz-hist .dot{width:10px;height:10px;border-radius:50%;}
 .pz-hist .nm{margin-left:auto;color:var(--sub);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
 .pz-note{font-size:11.5px;color:var(--sub);margin:8px 0 0;}
+.utnote{margin:20px 0 0;padding:14px;border-radius:14px;background:#fff6cc;color:#33290a;font-size:13.5px;line-height:1.7;text-align:left;}
+.utnote a{display:block;margin-top:10px;padding:11px;border-radius:10px;background:#2361e8;color:#fff;font-weight:800;text-align:center;text-decoration:none;}
 .rc-items{margin:10px auto 0;max-width:260px;font-size:12.5px;color:#4f4b42;text-align:left;}
 .rc-items div{display:flex;justify-content:space-between;gap:10px;padding:3px 0;border-bottom:1px dashed #d8d4c8;}
 /* 受付の「測定・体験・購入」 */
@@ -2344,10 +2346,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v119';
+var APP_VER = 'v120';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v120', d: '2026/11/03', items: ['🎓 準備中のユーザー機能：ユーザーの名簿から「研修生にする」（本人の同意を確かめてから）・「ユーザーに戻す」ができるようにしました（オーナーと確認メンバーだけ）'] },
   { v: 'v119', d: '2026/11/03', items: ['💜 準備中のユーザー機能（ユーザー登録・ユーザーの名簿・測定・体験・購入）は、オーナーと「確認メンバー」だけに出すようにしました（名簿の⚙管理メニュー → 💜 ユーザー機能の確認メンバー・オーナーのみ）'] },
   { v: 'v118', d: '2026/11/03', items: ['💜 ユーザーの受付で「📋 測定・体験・購入」を記録できるようにしました。PRYSMiOの数値を入れると色が自動で付き、本人のカードに色・前回からの変化・次の色まで、が出ます',
     '🧾 会場でのお買い上げは、製品名・数・単価と販売者を入れると、本人のカードに領収書（お品代）が届きます（紙の領収書はいりません）',
@@ -4444,6 +4447,11 @@ function showCardView(token){
         renderCard(c);
         renderPrysm(c);
         renderReceipts(c);
+        if(c.toMember && c.toCard){
+          // 🎓 研修生になった人: 研修生のカード（VISITOR PASS）へ案内（このページの記録はそのまま見られる）
+          $('pzArea').insertAdjacentHTML('afterbegin', '<div class="utnote">🎓 研修生になりました。これからは<b>研修生のカード（VISITOR PASS）</b>で受付します。'
+            + '<a class="primary" href="' + esc(cardUrl(c.toCard)) + '">研修生のカードを開く</a></div>');
+        }
         var cu = { kind: 'user', no: c.no, name: c.name, union: c.union, referrer: c.referrer || '' };
         Object.keys(c).forEach(function(k){ if(k.indexOf('pz_') === 0) cu[k] = c[k]; });
         try{ localStorage.setItem('bci_card_' + token, JSON.stringify(cu)); }catch(e4){}
@@ -7865,13 +7873,17 @@ function renderUserRoster(){
     shown++;
     html += '<tr>'
       + '<td class="rc-nm"><b>' + esc(u.name || '') + '</b>' + (u.active === false ? ' <span class="pill n">無効</span>' : '')
-      + (u.prysm != null ? ' ' + ckPrysmChip(u.prysm) + ' <span class="mono" style="font-size:12.5px;">' + Number(u.prysm).toLocaleString() + '</span>' : '') + '</td>'
+      + (u.prysm != null ? ' ' + ckPrysmChip(u.prysm) + ' <span class="mono" style="font-size:12.5px;">' + Number(u.prysm).toLocaleString() + '</span>' : '')
+      + (u.toMember ? ' <span class="pill n">研修生 ' + esc(u.toMember) + '</span>' : '') + '</td>'
       + '<td class="rc-gr">' + (u.referrer ? '紹介: ' + esc(u.referrer) : '') + '</td>'
       + '<td class="rc-no">来場 ' + (u.visits || 0) + '回</td>'
       + '<td class="rc-st">' + esc(ckUserDay(u.lastAt)) + '</td>'
       + '<td class="rc-op"><div class="rowbtns">'
       + '<button data-ua="qr" data-uid="' + esc(u.uid) + '">QR</button>'
       + '<button data-ua="edit" data-uid="' + esc(u.uid) + '">編集</button>'
+      + (canEditUnion(un) && u.active !== false
+        ? (u.toMember ? '<button data-ua="back" data-uid="' + esc(u.uid) + '">ユーザーに戻す</button>'
+                      : '<button data-ua="tr" data-uid="' + esc(u.uid) + '">🎓 研修生にする</button>') : '')
       + '<button data-ua="tog" data-uid="' + esc(u.uid) + '">' + (u.active === false ? '有効化' : '無効化') + '</button>'
       + '<button data-ua="del" data-uid="' + esc(u.uid) + '" class="danger ghost">削除</button>'
       + '</div></td></tr>';
@@ -7898,6 +7910,86 @@ function ckUserSave(u, up, msg){
     renderUserRoster();
     if(msg) toast(msg);
   }).catch(function(e){ toast(permMsg(e, 'ユーザーの保存に失敗しました')); });
+}
+/* 🎓 段階7: ユーザー → 研修生。同じ人なので、ユーザーの記録（来場・測定・購入）はそのまま残し、
+   ビジネスの名簿に研修生を作ってつなぐ（checkinUsers.toMember＝研修生の番号・研修生の名簿に fromUser）。
+   本人の同意を確かめてから。紹介者はユーザーの紹介者のまま（NAVIGATORのMAPでは紹介者の下の研修生になる）。
+   研修生のあいだ・研修生をやめた時は「ユーザーに戻す」（研修生の名簿はそのまま＝消すのは研修担当） */
+function ckUserToTrainee(u){
+  var un = gRosterUnion;
+  if(!canEditUnion(un)){ toast('研修生にできるのは、このユニオンの管理者です'); return; }
+  var ref = null;
+  gMembers.forEach(function(m){ if(!ref && u.referrerNo && m.no === u.referrerNo) ref = m; });
+  var cnt = {};
+  gMembers.forEach(function(m){ if(m.group && !ckMemberOff(m)) cnt[m.group] = (cnt[m.group] || 0) + 1; });
+  var gs = Object.keys(cnt).sort(), def = ref && ref.group ? ref.group : '';
+  modal('<h2>🎓 研修生にする</h2>'
+    + '<p style="font-size:13.5px;margin:0 0 6px;">' + esc(u.name || '') + ' さんを、<b>' + esc(un) + '</b> の研修生として名簿に入れます。'
+    + 'ユーザーの記録（来場 ' + (u.visits || 0) + '回・測定・お買い上げ）はそのまま残ります。</p>'
+    + '<label>氏名</label><input type="text" id="utName" value="' + esc(u.name || '') + '">'
+    + '<label>ふりがな <small style="font-weight:400;color:var(--sub);">（なくても可）</small></label><input type="text" id="utKana">'
+    + '<label>紹介者</label><input type="text" id="utRef" value="' + esc(u.referrer || '') + '">'
+    + '<label>UPルビー（系列）</label><select id="utUp">' + (def ? '' : '<option value="">選んでください</option>')
+    + gs.map(function(g){ return '<option value="' + esc(g) + '"' + (g === def ? ' selected' : '') + '>' + esc(g) + '</option>'; }).join('') + '</select>'
+    + '<label style="display:flex;align-items:flex-start;gap:8px;margin-top:14px;cursor:pointer;font-weight:700;">'
+    + '<input type="checkbox" id="utOk" style="width:auto;margin:3px 0 0;">本人に、研修生（ビジネスメンバー）になることの同意をもらいました</label>'
+    + '<div class="btns"><button id="utCancel">キャンセル</button><button class="primary" id="utGo">研修生にする</button></div>');
+  $('utCancel').onclick = closeModal;
+  $('utGo').onclick = function(){
+    var name = $('utName').value.trim(), refName = $('utRef').value.trim(), up = $('utUp').value;
+    if(!$('utOk').checked){ toast('本人の同意を確かめてから、チェックを入れてください'); return; }
+    if(!name){ toast('氏名を入れてください'); return; }
+    if(!refName){ toast('紹介者を入れてください'); return; }
+    if(!up){ toast('UPルビーを選んでください'); return; }
+    $('utGo').disabled = true;
+    fetchMembers(un, true).then(function(list){
+      var no = nextMemberNo(list, un);
+      if(!no) throw { code: 'nopre' };
+      var data = { no: no, union: un, name: name, group: up, kana: $('utKana').value.trim(), sex: '', referrer: refName,
+        grade: '', active: true, trainee: true, trainings: {}, fromUser: u.uid,
+        regBy: gUser.uid, regByName: (gProf && gProf.name) || '', createdAt: FV.serverTimestamp(), updatedAt: FV.serverTimestamp() };
+      return db.collection('checkinMembers').doc(no).get().then(function(sn){
+        if(sn.exists) throw { code: 'dup' };
+        return db.collection('checkinMembers').doc(no).set(data);
+      }).then(function(){
+        return new Promise(function(res){ issueCard(data, function(tok){ res(tok); }).then(function(){ res(data.cardToken || ''); }); });
+      }).then(function(tok){
+        var now = Date.now(), b = db.batch();
+        b.set(db.collection('checkinUsers').doc(u.uid), { toMember: no, toMemberAt: now }, { merge: true });
+        if(u.cardToken) b.set(db.collection('cards').doc(u.cardToken), { toMember: no, toCard: tok || '' }, { merge: true });
+        return b.commit().then(function(){
+          u.toMember = no; u.toMemberAt = now;
+          gMembers.push(data); delete gMemCache[un];
+          renderUserRoster();
+          modal('<h2>🎓 研修生にしました</h2>'
+            + '<p style="font-size:13.5px;">' + esc(name) + ' さん（<b class="mono">' + esc(no) + '</b>）。本人のスマホでこのQRを読んでもらうと、研修生のカード（VISITOR PASS）が開きます。'
+            + '前のユーザーのQRで受付しても、研修生として受付されます。</p>'
+            + '<div id="utQr" style="display:flex;justify-content:center;background:#fff;padding:14px;border-radius:12px;"></div>'
+            + '<div class="btns"><button id="utDone" class="primary">閉じる</button></div>', true);
+          if(tok) makeQr($('utQr'), cardUrl(tok), 220); else $('utQr').innerHTML = '<p style="color:#555;">会員証は名簿の「会員証」から発行してください</p>';
+          $('utDone').onclick = closeModal;
+          toast(name + ' さんを研修生にしました（' + no + '）');
+        });
+      });
+    }).catch(function(e){
+      $('utGo').disabled = false;
+      if(e && e.code === 'dup') toast('番号が重なりました。もう一度押してください');
+      else if(e && e.code === 'nopre') toast('番号の自動発番に失敗しました。ユニオンの番号の頭文字を確認してください');
+      else toast(permMsg(e, '研修生にできませんでした'));
+    });
+  };
+}
+// 研修生をやめた（流れた）時など: ユーザーに戻す。研修生の名簿は消さない（消すのは研修担当・管理者）
+function ckUserBackToUser(u){
+  if(!window.confirm(u.name + ' さんをユーザーに戻しますか？\nユーザーのQRで、ユーザーとして受付されるようになります。研修生の名簿（' + u.toMember + '）はそのまま残ります（必要なら名簿から無効化・削除してください）。')) return;
+  var b = db.batch();
+  b.set(db.collection('checkinUsers').doc(u.uid), { toMember: FV.delete(), toMemberAt: FV.delete(), backAt: Date.now() }, { merge: true });
+  if(u.cardToken) b.set(db.collection('cards').doc(u.cardToken), { toMember: FV.delete(), toCard: FV.delete() }, { merge: true });
+  b.commit().then(function(){
+    delete u.toMember; delete u.toMemberAt; u.backAt = Date.now();
+    renderUserRoster();
+    toast(u.name + ' さんをユーザーに戻しました');
+  }).catch(function(e){ toast(permMsg(e, 'ユーザーに戻せませんでした')); });
 }
 function ckUserEditModal(u){
   modal('<h2>ユーザーの編集</h2>'
@@ -7927,6 +8019,10 @@ $('rosterBody').addEventListener('click', function(e){
     ckUserQrModal(u.name, u.cardToken);
   } else if(a === 'edit'){
     ckUserEditModal(u);
+  } else if(a === 'tr'){
+    ckUserToTrainee(u);
+  } else if(a === 'back'){
+    ckUserBackToUser(u);
   } else if(a === 'tog'){
     var on = u.active === false;
     if(!on && !window.confirm(u.name + ' さんを無効にしますか？\nカードのQRで受付できなくなります（記録は残ります）。')) return;
@@ -13523,6 +13619,19 @@ function ckUserScan(uid, sig, method){
       beep('ng');
       setStage('ng', '<span class="hit-badge">使えないユーザーQR</span><div class="hit-name">' + esc(r.c.name || '') + '</div>'
         + '<p class="stage-sub">このユーザーは名簿で無効になっています。</p>');
+      return;
+    }
+    if(r.c.toMember){
+      // 🎓 研修生になった人: 前のユーザーQRでも、研修生として受付する
+      var tn = String(r.c.toMember), tm = gRec.roster[tn];
+      if(tm){ checkinMember(tm, method, null); return; }
+      ckVisitorLookup(tn, null).then(function(v){
+        if(!gRec || gRec.ev !== ev0) return;
+        if(v && v.active){ gRec.roster[tn] = v; checkinMember(v, method, null); return; }
+        beep('ng');
+        setStage('ng', '<span class="hit-badge">研修生の会員証が見つかりません</span><div class="hit-name">' + esc(r.c.name || '') + '</div>'
+          + '<p class="stage-sub">研修生の番号 ' + esc(tn) + ' で受付してください（手入力で番号を入れても受付できます）。</p>');
+      });
       return;
     }
     if(gRec.att[uid]){ ckUserScan(uid, sig, method); return; }   // 読み込みのあいだに別の端末で受付済み

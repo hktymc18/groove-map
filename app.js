@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v864';
+var APP_JS_VERSION = 'v865';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4574,7 +4574,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v864';
+  var DATA_VERSION = 'v865';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6686,6 +6686,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v865', d:'2026-11-03', items:['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v:'v864', d:'2026-11-03', items:['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v:'v863', d:'2026-11-02', items:['カレンダーを縦（連続）にしている時、iPhoneで予定を追加すると1年後の月まで飛んでしまうことがあったのを直しました'] },
   { v:'v862', d:'2026-11-02', items:['カレンダー（月）の予定の帯を、最初から「時間の長さで伸ばす」にしました（⋯の設定で「固定（1行）」を選んだ人はそのまま）'] },
@@ -23237,7 +23238,7 @@ function _uxIb(k) { return UX_INFO[k] ? '<span class="ux-ib" onclick="uxInfo(\''
 //   ユーザー側は一覧（スマホ）／表（PC）で、ADP・購入・ニーズ・プロフィールを持つ。「研修生にする」でビジネスのMAPへ。
 //   項目：adp {on, next}／buys [{t, d}]（新しい順・20件まで）／needs [タグ]／needMemo／uMemo／fromUser（研修生にした日）
 //   あとで（ユーザー用QR会員証）：ckNo・cardToken・uVisits（イベント来場回数）・uGrade（グレード）を受付から入れる予定（今は画面に出さない）
-var UM_KEYS = ['adp', 'buys', 'needs', 'needMemo', 'uMemo', 'fromUser', 'toUser', 'ckNo', 'cardToken', 'uVisits', 'uGrade', 'uLastAt', 'uPrysm', 'uPrysmD', 'uCkAt']; // メンバー画面の保存で落とさない（v864: 受付から）
+var UM_KEYS = ['adp', 'buys', 'needs', 'needMemo', 'uMemo', 'fromUser', 'toUser', 'ckNo', 'cardToken', 'uVisits', 'uGrade', 'uLastAt', 'uPrysm', 'uPrysmD', 'uCkAt', 'ckToMember']; // メンバー画面の保存で落とさない（v864: 受付から）
 var _umMode = false, _umFlt = 'all', _umRef = '', _umSort = 'ref', _umOpenId = '', _umBuyF = false;
 try { _umMode = localStorage.getItem('gm_umMode') === '1'; } catch (e) {}
 function isUserM(m) { if (!m || m.deleted) return false; var t = String(m.title || '').trim(); return t === 'ユーザー' || /^U$/i.test(t); }
@@ -23564,7 +23565,7 @@ function umCkSync(force) {
       var ref = refByNo[cu.referrerNo || ''];
       if (!ref) { res.noRef++; return; }
       if (gone[cu.uid]) return;
-      var L = _umList(), u = L.filter(function(x) { return x.ckNo === cu.uid; })[0];
+      var L = _umList(), u = (state.members || []).filter(function(x) { return !x.deleted && !x._foreign && x.ckNo === cu.uid; })[0]; // v865: 研修生になった人も（ユーザーでなくても）
       if (!u) {
         var nm = _ckNorm(cu.name || '');
         u = L.filter(function(x) { return !x.ckNo && x.parentId === ref.id && _ckNorm((x.lastName || '') + (x.firstName || '')) === nm; })[0];
@@ -23582,7 +23583,10 @@ function umCkSync(force) {
       u.uVisits = cu.visits || 0; u.uLastAt = cu.lastAt || 0;
       if (cu.prysm != null) { u.uPrysm = cu.prysm; u.uPrysmD = cu.prysmAt || 0; }
       u.uCkAt = Date.now();
-      if (JSON.stringify([u.ckNo, u.cardToken, u.uVisits, u.uLastAt, u.uPrysm]) !== before) res.upd++;
+      // v865: 受付で研修生にした人 → MAPでも紹介者の下の研修生に（受付の研修生の番号でつなぐ＝研修の記録も入る）。戻したらユーザーに
+      if (cu.toMember && isUserM(u)) { u.title = ''; u.trainee = true; u.cat = '研修生'; u.fromUser = evTodayYmd(); u.checkinNo = cu.toMember; u.ckToMember = cu.toMember; res.tr = (res.tr || 0) + 1; }
+      else if (!cu.toMember && u.ckToMember && !isUserM(u) && u.checkinNo === u.ckToMember && _ckIsTrainee(u)) { u.title = 'ユーザー'; u.trainee = false; u.cat = (typeof detectCategory === 'function' ? detectCategory('ユーザー') : '') || ''; delete u.checkinNo; delete u.ckToMember; u.toUser = evTodayYmd(); res.back = (res.back || 0) + 1; }
+      if (JSON.stringify([u.ckNo, u.cardToken, u.uVisits, u.uLastAt, u.uPrysm]) !== before || res.tr || res.back) res.upd++;
       if (cu.cardToken) jobs.push(db.doc('cards/' + cu.cardToken).get().then(function(c) { // 会場でのお買い上げ
         var cd = c.exists ? (c.data() || {}) : {}, B = (Array.isArray(u.buys) ? u.buys : []).slice(), had = {}, n0 = B.length;
         B.forEach(function(b) { if (b.ck) had[b.ck] = 1; });
@@ -23596,7 +23600,10 @@ function umCkSync(force) {
       _umCkBusy = false;
       var nb = bs.reduce(function(a, b) { return a + (b || 0); }, 0);
       if (res.add || res.link || res.upd || nb) { _memMap = null; _umSaved(true); }
-      if (res.add || res.link) toast('🎫 受付からユーザーを取り込みました（新しく ' + res.add + '人' + (res.link ? '・つないだ ' + res.link + '人' : '') + '）');
+      if (res.add || res.link || res.tr || res.back) { _umRepaint(); try { renderCurrentView(); } catch (eR) {} }
+      if (res.tr) toast('🎓 受付で研修生になった人を、MAPの研修生にしました（' + res.tr + '人）');
+      else if (res.back) toast('受付でユーザーに戻した人を、ユーザー台帳に戻しました（' + res.back + '人）');
+      else if (res.add || res.link) toast('🎫 受付からユーザーを取り込みました（新しく ' + res.add + '人' + (res.link ? '・つないだ ' + res.link + '人' : '') + '）');
       else if (force) toast('🎫 受付と同じです' + (res.noRef ? '（紹介者がMAPで受付とつながっていない人 ' + res.noRef + '人）' : ''));
       return res;
     });
