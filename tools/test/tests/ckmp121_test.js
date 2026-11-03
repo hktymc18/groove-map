@@ -19,12 +19,12 @@ const ago = n => { const d = new Date(); d.setDate(d.getDate() - n); return ymd(
     c('バッジ: 来場・測定・色が上がった（受付の記録から）', /3回来場/.test(t0) && (await ev(`[].filter.call(document.querySelectorAll('#mpArea .mp-bd span.on'),function(x){return 1;}).length`)) === 4, t0);
     await page.screenshot({ path: OUT + '/ckmp121_start.png', fullPage: true });
     await ev(`document.querySelector('#mpArea [data-co="yuragi"]').click()`); await wt();
-    const q0 = await ev(`[].map.call(document.querySelectorAll('#mpQs input'),function(x){return x.checked?1:0;}).join('')`);
+    const q0 = await ev(`[].map.call(document.querySelectorAll('#mypQs input'),function(x){return x.checked?1:0;}).join('')`);
     c('コースを押すと設定の画面（はじめは3つのクエストにチェック）', q0 === '11100', q0);
-    c('目標の候補に「次の測定で（次の色）にする」', /次の測定でプラチナメダリオンにする/.test(await ev(`document.getElementById('mpGoalSug').innerText`)));
-    await ev(`(function(){ [].forEach.call(document.querySelectorAll('#mpQs input'),function(x){ x.checked=false; }); document.getElementById('mpGo').click(); })()`); await wt(200);
+    c('目標の候補に「次の測定で（次の色）にする」', /次の測定でプラチナメダリオンにする/.test(await ev(`document.getElementById('mypGoalSug').innerText`)));
+    await ev(`(function(){ [].forEach.call(document.querySelectorAll('#mypQs input'),function(x){ x.checked=false; }); document.getElementById('mypGo').click(); })()`); await wt(200);
     c('クエストが0こなら始めない', /1つ以上/.test(await ev(`document.getElementById('toast').textContent`)));
-    await ev(`(function(){ var q=document.querySelectorAll('#mpQs input'); q[0].checked=true; q[1].checked=true; q[3].checked=true; document.querySelector('#mpGoalSug button').click(); document.getElementById('mpGo').click(); })()`); await wt(400);
+    await ev(`(function(){ var q=document.querySelectorAll('#mypQs input'); q[0].checked=true; q[1].checked=true; q[3].checked=true; document.querySelector('#mypGoalSug button').click(); document.getElementById('mypGo').click(); })()`); await wt(400);
     const pl = JSON.parse(await ev(`window.__FBDATA ? JSON.stringify(window.__FBDATA['cards/${tok}/plan/me']) : 'null'`));
     c('保存: コース・選んだクエスト・目標・始めた日', pl && pl.course === 'yuragi' && pl.qs.join() === 'am,pm,sleep' && pl.goal === '30日つづける' && pl.start === ymd(new Date()), JSON.stringify(pl));
     const t1 = await ev(`document.getElementById('mpArea').innerText`);
@@ -57,9 +57,9 @@ const ago = n => { const d = new Date(); d.setDate(d.getDate() - n); return ymd(
     await ev(`document.getElementById('mpArea').scrollIntoView()`);
     await page.screenshot({ path: OUT + '/ckmp121_plan' + (dark ? '_d' : '') + '.png', fullPage: true });
     // プランを変える（記録は残る）
-    await ev(`document.getElementById('mpEdit').click()`); await wt();
-    await ev(`(function(){ document.querySelector('#mpCo [data-k="inner"]').click(); })()`); await wt(200);
-    await ev(`document.getElementById('mpGo').click()`); await wt(400);
+    await ev(`document.getElementById('mypEdit').click()`); await wt();
+    await ev(`(function(){ document.querySelector('#mypCo [data-k="inner"]').click(); })()`); await wt(200);
+    await ev(`document.getElementById('mypGo').click()`); await wt(400);
     const p4 = JSON.parse(await ev(`JSON.stringify(window.__FBDATA['cards/${tok}/plan/me'])`));
     c('コースを変えても、今までの記録（日ごとのチェック）は残る', p4.course === 'inner' && Object.keys(p4.days).length === 8 && p4.start === ago(12), JSON.stringify(p4).slice(0, 200));
     c('エラーなし' + (dark ? '（ダーク）' : ''), !errs.length, errs.join('/'));
