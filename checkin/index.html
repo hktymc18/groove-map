@@ -310,6 +310,14 @@ tr:last-child td{border-bottom:none;}
    見出し行をその中に貼り付ける（横スクロールも維持。集計マトリクスと同方式） */
 #pRoster .tblwrap{max-height:calc(100vh - var(--tbh, 56px) - var(--phh, 120px) - 64px);overflow-y:auto;}
 #pRoster .tblwrap thead th{position:sticky;top:0;z-index:5;box-shadow:0 1px 0 var(--line);}
+/* 💜 名簿の「ビジネス｜ユーザー」切りかえ（ユニオン管理者・受付管理者だけに見える） */
+.rkseg{display:inline-flex;gap:2px;padding:3px;margin:0 0 8px;background:var(--paper);border:1px solid var(--line);border-radius:99px;}
+.rkseg.hide{display:none;}
+.rkseg button{border:none;background:none;border-radius:99px;padding:7px 20px;font-weight:700;font-size:14px;color:var(--sub);box-shadow:none;}
+.rkseg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.14);}
+/* ユーザーの名簿では、ビジネス用のボタン（会員証・CSV・任命など）をしまう */
+#pRoster.umode .toolrow > *:not(#rosterUnionSel):not([for=rosterUnionSel]):not(#q){display:none !important;}
+#pRoster.umode #bulkRow{display:none !important;}
 /* 集計: 未終了イベントの説明を出す?ボタン */
 /* ❔ v105: 説明は「？」に（PCはマウスを乗せる・スマホはタップで吹き出し） */
 button.hq{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;min-width:18px;border-radius:50%;padding:0;margin:0 0 0 6px;
@@ -432,6 +440,13 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .membercard.visitor .mc-union::before{content:'BASE CHECK-IN';display:block;font-size:10px;letter-spacing:.34em;color:#b09a45;font-weight:700;margin:8px 0 10px;}
 .membercard.visitor .mc-group,.membercard.visitor .mc-no{color:#8a7a2f;}
 .membercard.visitor #mcQr img,.membercard.visitor #mcQr canvas{outline:3px solid #2361e8;}
+/* 💜 ユーザー（ビジネスではないお客さま）のカード。ラベンダーの地・紫の文字 */
+.membercard.mc-user{background:linear-gradient(150deg,#ece8fd,#ffffff 46%,#f6effb);color:#16171c;}
+.membercard.mc-user .mc-deco{display:none;}
+.membercard.mc-user .mc-brand{color:#4a3bc4;letter-spacing:.2em;}
+.membercard.mc-user .mc-union{color:#2f2390;}
+.membercard.mc-user .mc-group,.membercard.mc-user .mc-no{color:#5e6270;}
+.membercard.mc-user #mcQr img,.membercard.mc-user #mcQr canvas{outline:2px solid #4a3bc4;}
 .mc-err{color:var(--accent);font-weight:700;font-size:14px;margin-top:14px;}
 /* 🎟 予約受付中のお知らせバー（QR直下・タップでUPCOMINGの該当行へ） */
 .rsvptop{display:flex;align-items:center;gap:8px;background:var(--card);border:2px solid var(--amber);border-radius:12px;padding:11px 14px;margin-top:14px;font-size:13.5px;cursor:pointer;text-align:left;}
@@ -1155,6 +1170,7 @@ body.practice .topbar{top:var(--pxh,36px);}
   #pRoster thead tr{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 8px;}
   #pRoster thead th{position:static;box-shadow:none;border:1px solid var(--line);border-radius:99px;padding:5px 12px;background:var(--card);}
   #pRoster thead th:last-child{display:none;}
+  #pRoster.umode thead{display:none;}   /* ユーザーの名簿は並べ替えが無い（来場が新しい順） */
   #pRoster tbody{display:grid;gap:8px;}
   #pRoster tbody tr{display:grid;grid-template-columns:auto 1fr auto;grid-template-areas:"sel nm st" "sel no gr" "op op op";
     column-gap:10px;row-gap:2px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;}
@@ -1340,6 +1356,9 @@ body.practice .topbar{top:var(--pxh,36px);}
   <section class="pane" id="pRoster">
     <div class="panehead">
     <div id="coOverdue"></div>
+    <div class="rkseg hide" id="rosterKind" role="tablist" aria-label="名簿の種類">
+      <button type="button" data-k="biz" class="on" role="tab" aria-selected="true">ビジネス</button><button type="button" data-k="user" role="tab" aria-selected="false">ユーザー</button>
+    </div>
     <div class="toolrow">
       <label for="rosterUnionSel" style="font-weight:700;font-size:13px;">ユニオン:</label>
       <select id="rosterUnionSel"></select>
@@ -2282,10 +2301,13 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v116';
+var APP_VER = 'v117';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v117', d: '2026/11/03', items: ['💜 ゲスト受付に「ユーザーとして登録する」を追加しました。ビジネスではないお客さまをユーザーの名簿に入れて、本人にQRを渡すと次からそのQRで受付できます',
+    '📋 名簿に「ビジネス｜ユーザー」の切りかえを追加しました（ユニオン管理者・受付管理者だけ）。ユーザーの来場回数・紹介者が見られます',
+    '📊 ユーザーの出席はユニオンの稼働率・NAVIGATORの稼働に入りません（お金の集計と出席者一覧には入ります）'] },
   { v: 'v116', d: '2026/11/01', items: ['🔁 ユニオン名の変更（LOAD → ALTAIR）に対応しました。旧名（LOAD・LIEN LOAD）のままのアカウントも ALTAIR として扱います'] },
   { v: 'v115', d: '2026/11/01', items: ['✏ ユニオン名の変更（オーナー）で、NAVIGATORの登録画面のユニオン一覧（ユニオンとUPBD）も一緒に新しい名前に直すようにしました'] },
   { v: 'v114', d: '2026/11/01', items: ['🔁 ユニオン名を変える前の名前（LIEN LOAD・BASE ANTARES・BASE REVE）のままのアカウントも、研修生登録の担当・受付管理者の任命などの一覧に出るようにしました（オーナーが受付を開くと、新しい名前に自動で直します）'] },
@@ -3093,7 +3115,12 @@ function pxMakeDb(store){
   Doc.prototype.set = function(data, opts){
     var p = this.path, cur = (opts && opts.merge && store[p]) ? store[p] : {}, out = {};
     Object.keys(cur).forEach(function(k){ out[k] = cur[k]; });
-    Object.keys(data || {}).forEach(function(k){ if(data[k] === DEL) delete out[k]; else out[k] = data[k]; });
+    Object.keys(data || {}).forEach(function(k){
+      var v = data[k];
+      if(v === DEL) delete out[k];
+      else if(v && v.__pxInc != null) out[k] = (typeof out[k] === 'number' ? out[k] : 0) + v.__pxInc;   // FV.increment
+      else out[k] = v;
+    });
     store[p] = clean(out); notify(parentOf(p)); notify(p);
     return Promise.resolve();
   };
@@ -3130,7 +3157,7 @@ function pxMakeDb(store){
   Batch.prototype.commit = function(){ return Promise.all(this.ops.map(function(f){ return f(); })); };
   return {
     db: { collection: function(n){ return new Coll(n, []); }, batch: function(){ return new Batch(); } },
-    FV: { serverTimestamp: function(){ return { __pxTs: 1 }; }, 'delete': function(){ return DEL; } }
+    FV: { serverTimestamp: function(){ return { __pxTs: 1 }; }, 'delete': function(){ return DEL; }, increment: function(n){ return { __pxInc: n }; } }
   };
 }
 var PX_MEMBERS = [
@@ -3442,6 +3469,7 @@ function renderCard(c){
   card.className = 'membercard';
   // 🐤 研修生は VISITOR PASS デザイン（ヒヨコ色）。昇格すると同じURLで通常デザインに戻る
   var brand = card.querySelector('.mc-brand');
+  if(c.kind === 'user'){ ckRenderUserCard(c, card, brand); return; }
   if(c.trainee){
     card.classList.add('visitor');
     if(brand) brand.textContent = 'VISITOR PASS';
@@ -3532,6 +3560,30 @@ function renderCard(c){
     setTimeout(fit, 0);
     if(document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
   }
+}
+/* 💜 ユーザー（ビジネスではないお客さま）のカード。checkinUsers/{ID} と cards/{トークン}（kind:'user'）。
+   QRは 'u:' + ID + ':' + トークンの先頭6文字（会員証と同じく、URLのトークンそのものは出さない） */
+function ckUserQrText(uid, token){ return 'u:' + uid + ':' + String(token || '').slice(0, 6); }
+function ckRenderUserCard(c, card, brand){
+  gCardLast = c;
+  card.classList.add('mc-user');
+  if(brand) brand.textContent = 'NAVIGATOR Beauty';
+  $('mcName').textContent = c.name || '';
+  $('mcName').style.fontSize = '';
+  $('mcGroup').textContent = c.referrer ? '紹介: ' + c.referrer : '';
+  $('mcNo').textContent = 'USER PASS';
+  $('mcUnion').textContent = c.union || '';
+  ['mcGrade', 'mcAbTx', 'mcAtkTx'].forEach(function(id){ $(id).textContent = ''; });
+  ['mcBadge', 'mcHp', 'mcRare', 'mcAb', 'mcAtk'].forEach(function(id){ $(id).innerHTML = ''; });
+  var tilt = $('mcTilt');
+  tilt.className = 'mc-tilt';
+  tilt.style.transform = '';
+  tilt.classList.remove('still');
+  var qr = $('mcQr');
+  qr.classList.remove('big');
+  qr.onclick = null;
+  $('mcQrBtn').onclick = null;
+  makeQr(qr, ckUserQrText(c.no, gCardToken), 180);
 }
 // 🃏 カード裏面（ユニオンごと）。共通の背景（skins/back-base.webp）＋ロゴ＋ユニオン名の文字を重ねて作る。
 //   logo: ロゴ画像（背景透明・skins/）。無いユニオンは文字だけ
@@ -4277,6 +4329,20 @@ function showCardView(token){
         $('mcGroup').textContent = ''; $('mcUnion').textContent = c.union || '';
         $('mcQr').innerHTML = '<div style="font-size:40px;">🧾</div>';
         renderReceipts(c);
+        return;
+      }
+      if(c.kind === 'user'){
+        // 💜 ユーザーのカード: カードと領収書の控えだけ（研修・予約・プロフィールなどのビジネスの機能は出さない）
+        if(c.active === false){
+          try{ localStorage.removeItem('bci_card_' + token); }catch(e3){}
+          $('mcQr').innerHTML = '';
+          $('mcErr').textContent = 'このカードは使えなくなっています。紹介してくれた人に確認してください。';
+          renderReceipts(c);
+          return;
+        }
+        renderCard(c);
+        renderReceipts(c);
+        try{ localStorage.setItem('bci_card_' + token, JSON.stringify({ kind: 'user', no: c.no, name: c.name, union: c.union, referrer: c.referrer || '' })); }catch(e4){}
         return;
       }
       renderCard(c);
@@ -7195,6 +7261,11 @@ function loadMembers(cb){
 function renderRoster(){
   var edit = canEditRoster();
   var q = ($('q').value || '').trim();
+  // 💜 ユーザーの名簿は管理者だけ（ビジネスの名簿のようにユニオンの全員には見せない）
+  $('rosterKind').classList.toggle('hide', !edit);
+  if(!edit) gRosterKind = 'biz';
+  ckRosterKindSync();
+  if(gRosterKind === 'user'){ renderUserRoster(); return; }
   function sth(k, label){
     var cur = gRosterSort.k === k;
     return '<th data-sk="' + k + '" style="cursor:pointer;white-space:nowrap;" title="タップで並べ替え">'
@@ -7603,6 +7674,143 @@ $('rosterBody').addEventListener('click', function(e){
   gMembers.forEach(function(x){ if(x.no === no) m = x; });
   if(!m) return;
   memberAction(m, a);
+});
+/* 💜 ユーザーの名簿（checkinUsers・ユニオンの管理者だけ） */
+var gRosterKind = 'biz', gUserCache = {};
+function ckRosterKindSync(){
+  $('pRoster').classList.toggle('umode', gRosterKind === 'user');
+  Array.prototype.forEach.call($('rosterKind').querySelectorAll('button'), function(b){
+    var on = b.getAttribute('data-k') === gRosterKind;
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-selected', on ? 'true' : 'false');
+  });
+  $('q').placeholder = gRosterKind === 'user' ? '氏名・紹介者で検索' : '氏名・番号・系列で検索';
+}
+$('rosterKind').onclick = function(e){
+  var b = e.target.closest ? e.target.closest('button[data-k]') : null;
+  if(!b) return;
+  gRosterKind = b.getAttribute('data-k');
+  if(gRosterKind === 'user') delete gUserCache[gRosterUnion];   // 開くたびに最新を読む
+  renderRoster();
+};
+function fetchUsers(union){
+  return db.collection('checkinUsers').where('union', '==', union).get().then(function(qs){
+    var arr = [];
+    qs.forEach(function(d){ var u = d.data(); u.uid = d.id; arr.push(u); });
+    return arr;
+  });
+}
+function ckUserDay(ms){
+  if(!ms) return '';
+  var d = new Date(ms);
+  return isNaN(d.getTime()) ? '' : (d.getMonth() + 1) + '/' + d.getDate();
+}
+function renderUserRoster(){
+  var un = gRosterUnion, c = gUserCache[un];
+  var tb = $('rosterBody');
+  $('rosterHead').innerHTML = '<th>氏名</th><th>紹介者</th><th>来場</th><th>最後の来場</th><th>操作</th>';
+  if(!c){
+    tb.innerHTML = '<tr><td colspan="5" style="color:var(--sub)">読み込み中…</td></tr>';
+    gUserCache[un] = { list: null };
+    fetchUsers(un).then(function(arr){
+      gUserCache[un] = { list: arr };
+      if(gRosterKind === 'user' && gRosterUnion === un) renderUserRoster();
+    }).catch(function(e){
+      delete gUserCache[un];
+      tb.innerHTML = '<tr><td colspan="5" style="color:var(--accent)">' + esc(permMsg(e, 'ユーザーの名簿を読めませんでした（ルールの反映前の可能性があります）')) + '</td></tr>';
+    });
+    setTbh();
+    return;
+  }
+  if(!c.list) return;
+  var q = ($('q').value || '').trim().replace(/[ 　]/g, ''), shown = 0, off = 0;
+  var list = c.list.slice().sort(function(a, b){ return (b.lastAt || 0) - (a.lastAt || 0); });
+  var html = '';
+  list.forEach(function(u){
+    if(u.active === false){ off++; if(!gRosterShowOff) return; }
+    var hay = (String(u.name || '') + String(u.referrer || '')).replace(/[ 　]/g, '');
+    if(q && hay.indexOf(q) < 0) return;
+    shown++;
+    html += '<tr>'
+      + '<td class="rc-nm"><b>' + esc(u.name || '') + '</b>' + (u.active === false ? ' <span class="pill n">無効</span>' : '') + '</td>'
+      + '<td class="rc-gr">' + (u.referrer ? '紹介: ' + esc(u.referrer) : '') + '</td>'
+      + '<td class="rc-no">来場 ' + (u.visits || 0) + '回</td>'
+      + '<td class="rc-st">' + esc(ckUserDay(u.lastAt)) + '</td>'
+      + '<td class="rc-op"><div class="rowbtns">'
+      + '<button data-ua="qr" data-uid="' + esc(u.uid) + '">QR</button>'
+      + '<button data-ua="edit" data-uid="' + esc(u.uid) + '">編集</button>'
+      + '<button data-ua="tog" data-uid="' + esc(u.uid) + '">' + (u.active === false ? '有効化' : '無効化') + '</button>'
+      + '<button data-ua="del" data-uid="' + esc(u.uid) + '" class="danger ghost">削除</button>'
+      + '</div></td></tr>';
+  });
+  tb.innerHTML = html || '<tr><td colspan="5" style="color:var(--sub)">ユーザーはまだいません。受付の「ゲスト受付」で「ユーザーとして登録する」にチェックすると、ここに入ります。</td></tr>';
+  $('rosterCount').textContent = un + '：ユーザー ' + c.list.length + '名（表示 ' + shown + '名' + (off && !gRosterShowOff ? '・無効 ' + off + '名は非表示' : '') + '）'
+    + '　※ユーザーはユニオンの稼働率に入りません';
+  var so = $('qShowOff'); if(so) so.checked = gRosterShowOff;
+  setTbh();
+}
+function ckUserByUid(uid){
+  var c = gUserCache[gRosterUnion], hit = null;
+  ((c && c.list) || []).forEach(function(u){ if(u.uid === uid) hit = u; });
+  return hit;
+}
+// 名簿の写し（cards）にも同じ名前・紹介者・有効を入れる（本人のカードの表示が変わる）
+function ckUserSave(u, up, msg){
+  var batch = db.batch(), cu = {};
+  ['name', 'referrer', 'referrerNo', 'active'].forEach(function(k){ if(k in up) cu[k] = up[k]; });
+  batch.set(db.collection('checkinUsers').doc(u.uid), up, { merge: true });
+  if(u.cardToken && Object.keys(cu).length) batch.set(db.collection('cards').doc(u.cardToken), cu, { merge: true });
+  return batch.commit().then(function(){
+    Object.keys(up).forEach(function(k){ u[k] = up[k]; });
+    renderUserRoster();
+    if(msg) toast(msg);
+  }).catch(function(e){ toast(permMsg(e, 'ユーザーの保存に失敗しました')); });
+}
+function ckUserEditModal(u){
+  modal('<h2>ユーザーの編集</h2>'
+    + '<label>氏名</label><input type="text" id="ueName" value="' + esc(u.name || '') + '">'
+    + '<label>紹介者（ビジネスメンバー）</label><input type="text" id="ueRef" list="ueRefList" autocomplete="off" value="' + esc(u.referrer || '') + '">'
+    + '<datalist id="ueRefList">' + gMembers.filter(function(m){ return !ckMemberOff(m) && m.name; })
+        .map(function(m){ return '<option value="' + esc(m.name) + '"></option>'; }).join('') + '</datalist>'
+    + '<p style="font-size:12.5px;color:var(--sub);">来場 ' + (u.visits || 0) + '回・最後の来場 ' + esc(ckUserDay(u.lastAt) || '—')
+    + (u.byName ? '・登録: ' + esc(u.byName) : '') + '</p>'
+    + '<div class="btns"><button id="ueCancel">キャンセル</button><button class="primary" id="ueGo">保存</button></div>');
+  $('ueCancel').onclick = closeModal;
+  $('ueGo').onclick = function(){
+    var nm = $('ueName').value.trim(), rf = $('ueRef').value.trim(), rno = '';
+    if(!nm){ toast('氏名を入れてください'); return; }
+    gMembers.forEach(function(m){ if(!rno && m.name && m.name.replace(/[ 　]/g, '') === rf.replace(/[ 　]/g, '')) rno = m.no; });
+    closeModal();
+    ckUserSave(u, { name: nm, referrer: rf, referrerNo: rno }, '保存しました');
+  };
+}
+$('rosterBody').addEventListener('click', function(e){
+  var b = e.target.closest ? e.target.closest('button[data-ua]') : null;
+  if(!b) return;
+  var u = ckUserByUid(b.getAttribute('data-uid')), a = b.getAttribute('data-ua');
+  if(!u) return;
+  if(a === 'qr'){
+    if(!u.cardToken){ toast('このユーザーのカードがありません'); return; }
+    ckUserQrModal(u.name, u.cardToken);
+  } else if(a === 'edit'){
+    ckUserEditModal(u);
+  } else if(a === 'tog'){
+    var on = u.active === false;
+    if(!on && !window.confirm(u.name + ' さんを無効にしますか？\nカードのQRで受付できなくなります（記録は残ります）。')) return;
+    ckUserSave(u, { active: on }, on ? '有効にしました' : '無効にしました');
+  } else if(a === 'del'){
+    if(!window.confirm(u.name + ' さんをユーザーの名簿から削除しますか？\nカードも開けなくなります（今までの出席の記録は残ります）。')) return;
+    var batch = db.batch();
+    batch.delete(db.collection('checkinUsers').doc(u.uid));
+    if(u.cardToken) batch.delete(db.collection('cards').doc(u.cardToken));
+    batch.delete(db.collection('cardClaims').doc(u.uid));
+    batch.commit().then(function(){
+      var c = gUserCache[gRosterUnion];
+      if(c && c.list) c.list = c.list.filter(function(x){ return x.uid !== u.uid; });
+      renderUserRoster();
+      toast('削除しました');
+    }).catch(function(e2){ toast(permMsg(e2, '削除に失敗しました')); });
+  }
 });
 // 名簿の行の操作（会員証・編集・昇格・無効化/有効化・削除）。集計タブの操作シートからも同じ処理を使う
 function memberAction(m, a){
@@ -8824,6 +9032,7 @@ function renderEvents(){
 var CK_METHOD_LABEL = { scan: 'QR', manual: '手入力', self: 'セルフ', online: '💻 オンライン', guest: 'ゲスト受付', 'import': '取込' };
 function evAttCat(ev, a){
   var u = a.union || '';
+  if(ckIsUserAtt(a)) return 'ユーザー';   // 💜 ユーザー（稼働率には入らない）
   if(!u) return a.guest ? 'その他（ユニオン外）' : 'ゲスト';
   return (ev.unions || []).indexOf(u) >= 0 ? u : 'ビジター（' + u + '）';
 }
@@ -8886,12 +9095,13 @@ function evAttShow(ev, rows, info){
           var tags = '';
           if(a.role) tags += '<span class="pill g">' + esc(roleLabel(a.role)) + '</span> ';
           if(a.guest) tags += '<span class="pill n">ゲスト</span> ';
+          if(ckIsUserAtt(a)) tags += '<span class="pill n">ユーザー</span> ';
           if((a.addon || 0) > 0) tags += '<span class="pill a">🎓 ' + esc(a.addonName || 'オプション') + '</span> ';
           if(a._cat.indexOf('ビジター') === 0) tags += '<span class="pill a">ビジター</span> ';
           tags += '<span style="font-size:11.5px;color:var(--sub);">' + esc(CK_METHOD_LABEL[a.method] || a.method || '') + '</span>';
           return '<tr><td class="mono">' + esc(a.atLocal || '') + '</td><td><b>' + esc(a.name || '') + '</b>'
             + (a.group ? '<div style="font-size:11.5px;color:var(--sub);">' + esc(a.group) + '</div>' : '') + '</td>'
-            + '<td>' + esc(a.union || (a.guest ? 'その他' : '')) + '</td><td>' + tags + '</td>'
+            + '<td>' + esc(a.union || a.uUnion || (a.guest ? 'その他' : '')) + '</td><td>' + tags + '</td>'
             + '<td style="font-size:12.5px;">' + esc(a._by) + '</td>'
             + (rcCol ? '<td>' + (rcOk(a) ? '<button data-ear="' + esc(a._id) + '" style="padding:4px 10px;font-size:12px;white-space:nowrap;">🧾 ' + (a.rcptToken ? '再表示' : '発行') + '</button>' : '') + '</td>' : '')
             + '</tr>';
@@ -8912,8 +9122,8 @@ function evAttShow(ev, rows, info){
     var out = [['受付時刻', '番号', '氏名', '系列', 'ユニオン', '区分', '役割', '受付方法', '徴収額', '受付担当', 'オプション']];
     cur().forEach(function(a){
       var fee = (a.fee || 0) > 0 && a.paid !== false ? (a.fee || 0) - (a.refund || 0) : 0;
-      out.push([a.atLocal || '', a.guest ? '' : (a.no || a._id), a.name || '', a.group || '', a.union || (a.guest ? 'その他' : ''),
-        a.guest ? 'ゲスト' : (a._cat.indexOf('ビジター') === 0 ? 'ビジター' : '参加'),
+      out.push([a.atLocal || '', a.guest ? '' : (a.no || a._id), a.name || '', a.group || '', a.union || a.uUnion || (a.guest ? 'その他' : ''),
+        ckIsUserAtt(a) ? 'ユーザー' : a.guest ? 'ゲスト' : (a._cat.indexOf('ビジター') === 0 ? 'ビジター' : '参加'),
         roleLabel(a.role || ''), CK_METHOD_LABEL[a.method] || a.method || '', fee, a._by, (a.addon || 0) > 0 ? (a.addonName || 'オプション') : '']);
     });
     csvDownload('出席者_' + (ev.date || '') + '_' + (ev.name || '').replace(/[\\/:*?"<>|\s]/g, '') + ($('eaSel').value ? '_' + $('eaSel').value.replace(/[\\/:*?"<>|\s]/g, '') : '') + '.csv', out);
@@ -12113,7 +12323,7 @@ function syncReceipt(no){
   var m = gRec.roster[no];
   var a = gRec.att[no];
   // 会員証の人はその会員証へ。会員証がない人はその場QRで発行済みの領収書（rcptToken）へ
-  var tok = (m && m.cardToken) || (a && a.rcptToken) || '';
+  var tok = (m && m.cardToken) || (ckIsUserAtt(a) && a.cardToken) || (a && a.rcptToken) || '';   // 💜 ユーザーはユーザーのカードへ
   if(!tok) return;
   var key = 'rcpt_' + gRec.ev.id, u = {};
   if(a && (a.fee || 0) > 0 && a.paid !== false && !a.rcptNone){
@@ -12378,6 +12588,9 @@ function staleCardStage(member, method){
 function scan(raw, method){
   if(!gRec) return;
   raw = normalizeScan(raw);
+  // 💜 ユーザーのQR "u:u1730000000000:xxxxxx"（ID＋トークンの先頭6文字）
+  var um = /^u[:;+](u\d{8,})(?:[:;+](\w*))?/i.exec(raw);
+  if(um){ ckUserScan(um[1].toLowerCase(), (um[2] || '').toLowerCase(), method); return; }
   // スマホ会員証形式 "m:412211:xxxx"（番号+署名）にも対応。
   // スキャナのShift取りこぼしやJIS/US配列ズレで「:」が「;」「+」に化けることがあるため、区切りは3種を許容する
   var no = raw, sig = null;
@@ -12941,6 +13154,126 @@ function ckNoCardRec(id, a){
   var m = gRec && gRec.roster[id];
   return !!(m && !m.cardToken);
 }
+/* 💜 ユーザー（ビジネスではないお客さま）
+   ビジネスの名簿（checkinMembers）とは別の checkinUsers/{ID} に置く:
+   ・ビジネスの名簿はユニオンの全員が見られる・NAVIGATORの稼働や研修の連携も名簿を読む → ユーザーが混ざらない
+   ・出席の記録は union を空にして、ユーザーのユニオンは uUnion に入れる
+     → ユニオンの稼働率・NAVIGATORの稼働には入らない（お金の集計と出席者一覧には入る）
+   ・ユーザーから研修生になる時は、名簿に研修生を作ってつなぐ（来場の記録はそのまま残す・段階7） */
+function ckIsUserAtt(a){ return !!a && a.kind === 'user'; }
+function ckNewUserId(){
+  var r = new Uint8Array(2);
+  (window.crypto || window.msCrypto).getRandomValues(r);
+  return 'u' + Date.now() + String(1000 + (r[0] * 256 + r[1]) % 9000);
+}
+// 新しいユーザーを作る（名簿・カード・番号→カードの3つを1回で書く）
+function ckCreateUser(o){
+  var uid = ckNewUserId(), token = randToken(), batch = db.batch(), now = Date.now();
+  var who = { name: o.name || '', union: o.union || '', referrer: o.referrer || '', referrerNo: o.referrerNo || '' };
+  var u = { uid: uid, cardToken: token, active: true, visits: 1, firstEv: o.evId || '', lastEv: o.evId || '', lastAt: now,
+            createdAt: FV.serverTimestamp(), createdBy: gUser.uid, byName: (gProf && gProf.name) || '' };
+  var c = { kind: 'user', no: uid, active: true, visits: 1, createdAt: FV.serverTimestamp() };
+  Object.keys(who).forEach(function(k){ u[k] = who[k]; c[k] = who[k]; });
+  batch.set(db.collection('checkinUsers').doc(uid), u);
+  batch.set(db.collection('cards').doc(token), c);
+  batch.set(db.collection('cardClaims').doc(uid), { t: token });
+  return { uid: uid, token: token, user: u, p: batch.commit() };
+}
+// ユーザーの出席の記録（union は空・uUnion にユーザーのユニオン）
+function ckUserAttData(uid, u, token, method){
+  var fee = currentFee();
+  var d = { no: uid, name: u.name || '', group: 'ユーザー', union: '', uUnion: u.union || '', kind: 'user',
+            referrer: u.referrer || '', method: method || 'user', cardToken: token, fee: fee, paid: true, refund: 0 };
+  if(fee > 0 && gRec.payMode) d.payMethod = 'paypay';
+  return d;
+}
+// 来場の回数を数える（名簿の閲覧は管理者だけ。受付の人は回数と最後の来場だけ書ける）
+function ckUserVisit(uid, token){
+  var up = { visits: FV.increment(1), lastAt: Date.now(), lastEv: gRec.ev.id };
+  db.collection('checkinUsers').doc(uid).set(up, { merge: true }).catch(function(){});
+  db.collection('cards').doc(token).set({ visits: FV.increment(1) }, { merge: true }).catch(function(){});
+}
+function ckUserStage(uid, data, opt){
+  var fee = data.fee || 0, pick = fee > 0 && !gRec.payMode && gRec.payBoth;
+  setStage('ok', '<span class="hit-badge">✓ 出席（ユーザー' + (opt.isNew ? '登録' : '') + '）</span>'
+    + '<div class="hit-name">' + esc(data.name) + '</div>'
+    + '<div class="hit-group">' + (data.referrer ? '紹介: ' + esc(data.referrer) : 'ユーザー') + '</div>'
+    + (opt.visits ? '<p class="hit-meta">来場 ' + opt.visits + '回目</p>' : '')
+    + (fee > 0 ? '<p class="hit-meta"><b id="stgFeeTxt">' + (data.payMethod ? '💳 PayPay ' : (pick ? '💴 現金 ' : '')) + yen(fee) + ' 徴収</b></p>' : '')
+    + (pick ? ckPayPickHtml() : '')
+    + (fee > 0 ? ckAddonBtnHtml(uid) : '')
+    + (opt.isNew ? '<button id="stgUserQr" class="primary" style="margin-top:8px;">📱 ユーザーQRを渡す</button>' : ''),
+    opt.isNew || pick);
+  if(pick) ckBindPayPick(uid, fee);
+  else if(gRec.addon && fee > 0) ckStageHold();
+  ckBindAddon(uid);
+  var b = $('stgUserQr');
+  if(b) b.onclick = function(){ ckUserQrModal(data.name, opt.token, focusScan); };
+}
+// 本人のスマホで読んでもらう（カードのページが開く → ホーム画面に追加 → 次からそのQRで受付）
+function ckUserQrModal(name, token, onClose){
+  modal('<h2>📱 ユーザーQR</h2>'
+    + '<p style="font-size:13.5px;">' + esc(name || '') + ' さん本人のスマホのカメラで読んでもらってください。'
+    + 'ユーザーのカードが開きます。<b>ホーム画面に追加</b>してもらうと、次からはそのカードのQRで受付できます。</p>'
+    + '<div id="uqQr" style="display:flex;justify-content:center;background:#fff;padding:14px;border-radius:12px;"></div>'
+    + '<div class="btns"><button id="uqClose">閉じる</button></div>', true);
+  makeQr($('uqQr'), cardUrl(token), 220);
+  $('uqClose').onclick = function(){ closeModal(); if(onClose) onClose(); };
+}
+// 受付でユーザーのQRを読んだ時
+function ckUserScan(uid, sig, method){
+  if(!gRec) return;
+  if(gRec.att[uid]){
+    beep('dup');
+    setStage('dup', '<span class="hit-badge">出席済み</span><div class="hit-name">' + esc(gRec.att[uid].name || '') + '</div>'
+      + '<div class="hit-group">ユーザー</div>'
+      + '<p class="hit-meta">' + esc(gRec.att[uid].atLocal || '') + ' に受付済みです（記録は増えません）</p>');
+    return;
+  }
+  var ev0 = gRec.ev;
+  db.collection('cardClaims').doc(uid).get().then(function(s){
+    var t = s.exists ? (s.data().t || '') : '';
+    if(!t || (sig && /^[0-9a-f]{4,}$/.test(sig) && t.indexOf(sig) !== 0)) return null;
+    return db.collection('cards').doc(t).get().then(function(c){
+      var d = c.exists ? c.data() : null;
+      return d && d.kind === 'user' && String(d.no || '') === uid ? { c: d, t: t } : null;
+    });
+  }).then(function(r){
+    if(!gRec || gRec.ev !== ev0) return;
+    if(!r){
+      beep('ng');
+      setStage('ng', '<span class="hit-badge">読めないユーザーQR</span>'
+        + '<p class="stage-sub">古いQR（作り直す前のもの）か、まだ登録が届いていない可能性があります。「ゲスト受付」から受付できます。</p>');
+      return;
+    }
+    if(r.c.active === false){
+      beep('ng');
+      setStage('ng', '<span class="hit-badge">使えないユーザーQR</span><div class="hit-name">' + esc(r.c.name || '') + '</div>'
+        + '<p class="stage-sub">このユーザーは名簿で無効になっています。</p>');
+      return;
+    }
+    if(gRec.att[uid]){ ckUserScan(uid, sig, method); return; }   // 読み込みのあいだに別の端末で受付済み
+    var data = ckUserAttData(uid, r.c, r.t, method);
+    writeAttendance(uid, data);
+    ckUserVisit(uid, r.t);
+    beep('ok');
+    ckUserStage(uid, data, { visits: (r.c.visits || 1) + 1 });
+  }).catch(function(e){ beep('ng'); toast(permMsg(e, 'ユーザーQRの照会に失敗しました')); });
+}
+// ゲスト受付の「ユーザーとして登録する」: ユーザーを作って、そのまま出席に入れる
+function ckGuestAsUser(name, union, refName){
+  var ref = null;
+  Object.keys(gRec.roster).forEach(function(no){
+    var m = gRec.roster[no];
+    if(!ref && m.union === union && !ckMemberOff(m) && String(m.name || '').replace(/[ 　]/g, '') === refName.replace(/[ 　]/g, '')) ref = m;
+  });
+  var nu = ckCreateUser({ name: name, union: union, referrer: ref ? ref.name : refName, referrerNo: ref ? ref.no : '', evId: gRec.ev.id });
+  var data = ckUserAttData(nu.uid, nu.user, nu.token, 'guest');
+  writeAttendance(nu.uid, data);
+  nu.p.catch(function(e){ toast(permMsg(e, 'ユーザーの登録に失敗しました（出席は記録済み）。ルールの反映をオーナーに確認してください')); });
+  beep('ok');
+  ckUserStage(nu.uid, data, { isNew: true, token: nu.token });
+}
 $('btnGuest').onclick = function(){
   if(!gRec){ toast('先に受付を開始してください'); return; }
   // 所属ユニオンはイベント参加ユニオンを先頭に、登録済みの全ユニオンから選択できる
@@ -12970,16 +13303,47 @@ $('btnGuest').onclick = function(){
     + unions.map(function(u){ return '<option>' + esc(u) + '</option>'; }).join('')
     + '<option value="">その他（ユニオン外）</option>'
     + '</select>'
-    + '<label>系列（紹介者の系列を選択）</label><select id="gGroupSel">' + groupOptions(unions[0]) + '</select>'
+    + '<div id="gGroupBox"><label>系列（紹介者の系列を選択）</label><select id="gGroupSel">' + groupOptions(unions[0]) + '</select></div>'
+    // 💜 ユーザー（ビジネスではないお客さま）として登録すると、QRを渡して次からQRで受付できる。稼働率には入らない
+    + '<label style="display:flex;align-items:center;gap:8px;margin-top:12px;cursor:pointer;font-weight:700;">'
+    + '<input type="checkbox" id="gAsUser" style="width:auto;margin:0;">ユーザーとして登録する'
+    + hq('ビジネスではないお客さま（製品を使う人）の時に選びます。ユーザーの名簿に入り、本人にQRを渡すと次からそのQRで受付できます。ユニオンの稼働率には入りません。') + '</label>'
+    + '<div id="gUserBox" class="hide"><label>紹介者（ビジネスメンバー）</label>'
+    + '<input type="text" id="gRef" list="gRefList" placeholder="名前を入れると候補が出ます" autocomplete="off"><datalist id="gRefList"></datalist>'
+    + '<p style="font-size:12px;color:var(--sub);margin:4px 0 0;">ユーザーは「所属ユニオン」の名簿（ユーザー）に入ります。</p></div>'
     + '<div class="btns"><button id="gCancel">キャンセル</button><button class="primary" id="gGo">受付</button></div>'
   );
+  function refOptions(un){
+    return Object.keys(gRec.roster).map(function(no){ return gRec.roster[no]; })
+      .filter(function(m){ return m.union === un && !ckMemberOff(m) && m.name; })
+      .sort(function(x, y){ return String(x.kana || x.name).localeCompare(String(y.kana || y.name), 'ja'); })
+      .map(function(m){ return '<option value="' + esc(m.name) + '"></option>'; }).join('');
+  }
+  function syncUserBox(){
+    var on = $('gAsUser').checked;
+    $('gUserBox').classList.toggle('hide', !on);
+    $('gGroupBox').classList.toggle('hide', on);
+    $('gGo').textContent = on ? 'ユーザー登録して受付' : '受付';
+    if(on) $('gRefList').innerHTML = refOptions($('gUnion').value);
+  }
+  $('gAsUser').onchange = syncUserBox;
   $('gUnion').onchange = function(){
     $('gGroupSel').innerHTML = groupOptions($('gUnion').value);
+    syncUserBox();
   };
   $('gCancel').onclick = function(){ closeModal(); focusScan(); };
   $('gGo').onclick = function(){
     var name = $('gName').value.trim();
     if(!name){ toast('氏名を入力してください'); return; }
+    if($('gAsUser').checked){
+      var uun = $('gUnion').value, uref = $('gRef').value.trim();
+      if(!uun){ toast('ユーザーは所属ユニオンを選んでください（「その他」では登録できません）'); return; }
+      if(!uref){ toast('紹介者を入れてください'); return; }
+      closeModal();
+      ckGuestAsUser(name, uun, uref);
+      focusScan();
+      return;
+    }
     var ggroup = $('gGroupSel').value;
     var id = 'g' + Date.now();
     var gfee = currentFee();
@@ -13017,17 +13381,18 @@ function renderTallies(){
   // 系列別: 単独開催はそのユニオン、合同は自ユニオン分を表示
   var tallyUnion = (gRec.ev.unions || []).length === 1 ? gRec.ev.unions[0] : gUnion;
   var roles = [], cash = 0, paypay = 0, paidCount = 0, refundCount = 0, unpaid = [], hist = [], addonN = 0;
-  var sexM = 0, sexF = 0;
+  var sexM = 0, sexF = 0, userN = 0;
   Object.keys(gRec.att).forEach(function(id){
     var a = gRec.att[id];
     // オンライン申請の承認待ち・却下は集計に含めない
     if(a.status === 'pending' || a.status === 'rejected') return;
     hist.push({ id: id, a: a });
     total++;
+    if(ckIsUserAtt(a)) userN++;
     var sx = a.sex || (gRec.roster[id] && gRec.roster[id].sex) || '';
     if(sx === 'm') sexM++;
     else if(sx === 'f') sexF++;
-    var uk = a.union || (a.guest ? 'その他' : 'ゲスト');   // ゲスト受付で「その他（ユニオン外）」を選んだ人はどのユニオンの集計にも入らない
+    var uk = ckIsUserAtt(a) ? 'ユーザー' : (a.union || (a.guest ? 'その他' : 'ゲスト'));   // 💜 ユーザーは「ユーザー」にまとめる   // ゲスト受付で「その他（ユニオン外）」を選んだ人はどのユニオンの集計にも入らない
     byUnion[uk] = (byUnion[uk] || 0) + 1;
     if(a.role) roles.push(a);
     var fee = a.fee || 0;
@@ -13085,9 +13450,9 @@ function renderTallies(){
       + esc(a.guest ? 'ゲスト' : (a.union || '')) + '</span></div>';
   }).join('');
   $('total').textContent = total;
-  $('totalSub').textContent = (sexM || sexF)
+  $('totalSub').textContent = ((sexM || sexF)
     ? '男 ' + sexM + '・女 ' + sexF + (total - sexM - sexF ? '・未設定 ' + (total - sexM - sexF) : '')
-    : '';
+    : '') + (userN ? ((sexM || sexF) ? '　' : '') + 'うちユーザー ' + userN : '');
   $('ctr').textContent = total + '名';
   // 合同イベント、またはビジターがいる場合はユニオン別を表示
   $('unionTallyTile').classList.toggle('hide',
@@ -13098,7 +13463,7 @@ function renderTallies(){
   hist.sort(function(x, y){ return attSortKey(y.a) - attSortKey(x.a); });
   $('recent').innerHTML = hist.slice(0, 8).map(function(x){
     var a = x.a;
-    var sub = a.guest ? 'ゲスト' : (attGroup(x.id, a) || a.union || '');
+    var sub = ckIsUserAtt(a) ? 'ユーザー' : a.guest ? 'ゲスト' : (attGroup(x.id, a) || a.union || '');
     if(a.role) sub = roleShort(a.role) + ' ' + sub;
     if(a.method === 'online') sub = '💻 ' + sub;
     return '<li data-no="' + esc(x.id) + '" style="cursor:pointer;" title="タップで会計操作（未徴収・返金）">'
