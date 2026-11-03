@@ -1,6 +1,6 @@
 // Firebase compat の最小スタブ（メモリ上のFirestore・ログイン済みオーナー）
 (function () {
-  var OWNER = 'j2DPDAccCygHmR9i5K3bTvHnH0V2';
+  var OWNER = window.__FBUID || 'j2DPDAccCygHmR9i5K3bTvHnH0V2';   // window.__FBUID で別の人としてログイン（既定はオーナー）
   var store = window.__FBDATA || {};
   store['users/' + OWNER] = store['users/' + OWNER] || { name: '山内北斗', org: '山内北斗', area: '福岡', union: 'GRANT', upRuby: 'テスト', upBd: 'テスト', unionSelectedV2: true, status: 'active', email: 't@example.com', privacy: { ver: '2026-10', at: '2026-10-01T00:00:00Z' } };
   function cp(d) { return d === undefined ? undefined : JSON.parse(JSON.stringify(d)); }

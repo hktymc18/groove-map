@@ -1401,6 +1401,7 @@ body.practice .topbar{top:var(--pxh,36px);}
       <button id="btnFreeMembers" class="hide rmore" title="いつも徴収なしで出席に入れる人（ユニオン管理者など）">🆓 徴収なしメンバー</button>
       <button id="btnTrainers" class="hide rmore">🎓 研修生登録の担当</button>
       <button id="btnUnionAdmins" class="hide rmore" title="ユニオン管理者の任命（オーナーのみ）">🛡 ユニオン管理者</button>
+      <button id="btnBeautyTesters" class="hide rmore" title="準備中のユーザー機能（NAVIGATOR Beauty）を見られる人（オーナーのみ）">💜 ユーザー機能の確認メンバー</button>
       <button id="btnLeaders" class="hide rmore" title="名簿・集計の閲覧と研修生登録の担当の任命ができる人（オーナーのみ指定）">⭐ リーダー</button>
       <button id="btnAdminsView" class="rmore">👥 管理者一覧</button>
       <button id="btnAddUnion" class="ghost hide rmore" title="ユニオンを追加">＋ユニオン</button>
@@ -1976,6 +1977,13 @@ var FEATURE_PAYPAY = true;    // 2026-09-30 復活（オーナー指示）
 var RSVP_UNIONS = ['REVE', 'BASE REVE'];   // 2026-10 ユニオン名変更（BASE REVE→REVE）。旧名は移行が終わるまでの互換
 var gCkAdmins = {};         // ユニオン名 → 受付管理者UIDの配列（checkinUnions.admins）
 var gUnionAdmins = {};      // 🔒 ユニオン名 → 受付のユニオン管理者のUID（checkinUnions.unionAdmins・オーナーが受付で任命）
+var gBeautyTesters = [];    // 💜 ユーザー機能（NAVIGATOR Beauty・準備中）を見られる確認メンバーのUID（checkinConfig/beauty.testers・オーナーが指定）
+function ckBeautyOn(){ return isOwner() || !!(gUser && gBeautyTesters.indexOf(gUser.uid) >= 0); }
+function ckBeautyLoad(){
+  return db.collection('checkinConfig').doc('beauty').get().then(function(s){
+    gBeautyTesters = (s.exists && s.data().testers) || [];
+  }).catch(function(){ gBeautyTesters = []; });
+}
 var gLeaders = {};          // ⭐ ユニオン名 → リーダーのUID（checkinUnions.leaders・オーナーが指定）。名簿・集計の閲覧と研修担当の任命ができる
 var gUnionAddon = {};       // ユニオン名 → 追加オプションの設定（checkinUnions.addon・有効なものだけ）
 var gUnionPrefix = {};      // ユニオン名 → 会員番号プレフィックス（checkinUnions.noPrefix）
@@ -2336,10 +2344,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v118';
+var APP_VER = 'v119';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v119', d: '2026/11/03', items: ['💜 準備中のユーザー機能（ユーザー登録・ユーザーの名簿・測定・体験・購入）は、オーナーと「確認メンバー」だけに出すようにしました（名簿の⚙管理メニュー → 💜 ユーザー機能の確認メンバー・オーナーのみ）'] },
   { v: 'v118', d: '2026/11/03', items: ['💜 ユーザーの受付で「📋 測定・体験・購入」を記録できるようにしました。PRYSMiOの数値を入れると色が自動で付き、本人のカードに色・前回からの変化・次の色まで、が出ます',
     '🧾 会場でのお買い上げは、製品名・数・単価と販売者を入れると、本人のカードに領収書（お品代）が届きます（紙の領収書はいりません）',
     '📋 名簿のユーザー一覧に、最新のPRYSMiOの色を出しました'] },
@@ -5868,6 +5877,7 @@ function ckMig33(list){
 
 /* ---------- 起動 ---------- */
 function afterLogin(){
+  ckBeautyLoad().then(function(){ if(gMembersLoaded) renderRoster(); });   // 💜 ユーザー機能の確認メンバー
   db.collection('checkinUnions').get().then(function(qs){
     gUnions = [];
     gCkAdmins = {};
@@ -6292,6 +6302,20 @@ function ckOwnerListOpen(key){
   .catch(function(e){ toast('読込エラー: ' + e.message); });
 }
 $('btnLeaders').onclick = function(){ ckOwnerListOpen('leaders'); };
+// 💜 ユーザー機能の確認メンバー（全ユニオン共通・checkinConfig/beauty.testers）
+$('btnBeautyTesters').onclick = function(){
+  if(!isOwner()) return;
+  db.collection('checkinConfig').doc('beauty').get().then(function(sn){
+    var cur = (sn.exists && sn.data().testers) || [];
+    return Promise.all(cur.map(function(uid){
+      return db.collection('users').doc(uid).get().then(function(u){
+        var d = u.exists ? u.data() : {};
+        return { uid: uid, name: d.name || uid.slice(0, 8), union: d.union || '?', role: d.role || '', checked: true };
+      }).catch(function(){ return { uid: uid, name: uid.slice(0, 8), union: '?', role: '', checked: true }; });
+    }));
+  }).then(function(rows){ coreAdminsModal(gRosterUnion, rows, 'beauty'); })
+  .catch(function(e){ toast('読込エラー: ' + e.message); });
+};
 $('btnUnionAdmins').onclick = function(){ ckOwnerListOpen('unionAdmins'); };
 /* 👥 管理者一覧（閲覧用）: 誰がユニオン管理者・受付管理者・研修生登録の担当なのかを誰でも確認できる */
 $('btnAdminsView').onclick = function(){
@@ -6357,9 +6381,12 @@ $('btnAdminsView').onclick = function(){
 // ⭐ kind === 'leaders' のときは「リーダー」の設定（checkinUnions/{un}.leaders・オーナーのみ）。同じユニオンの人も選べる
 function coreAdminsModal(un, rows, kind){
   if(!isOwner()) return;
-  var lead = kind === 'leaders';
+ var lead = kind === 'leaders', bty = kind === 'beauty';
   var others = [un].concat(gUnions.filter(function(u){ return u !== un; }));
-  modal((lead
+  modal((bty
+      ? '<h2>💜 ユーザー機能の確認メンバー' + hq('準備中のユーザー機能（ゲスト受付の「ユーザーとして登録する」・名簿の「ビジネス｜ユーザー」・測定・体験・購入の記録）を見られる人です。オーナーは指定しなくても見られます。全ユニオン共通です。') + '</h2>'
+        + '<p style="font-size:12.5px;color:var(--sub);margin:-4px 0 8px;">チェックした人だけに、準備中のユーザー機能が出ます（本人は再読み込みのあとに出ます）。</p>'
+      : lead
       ? '<h2>⭐ リーダー — ' + esc(un) + hq('チェックした人は、このユニオンの名簿と集計を見られて（編集はできません）、研修生登録の担当を任命できます。研修生の登録もできます。イベント・会計・受付管理者の任命はできません。1人を複数のユニオンのリーダーにもできます。設定できるのはオーナーだけです。') + '</h2>'
       : '<h2>🛡 ユニオン管理者 — ' + esc(un) + hq('チェックした人は、このユニオンのユニオン管理者になります（名簿の編集・イベント・会計・受付管理者や研修担当の任命など）。所属ユニオンに関係なく選べます。任命できるのはオーナーだけです。\nNAVIGATORで管理者になっていても、ここで任命しない限り受付のユニオン管理者にはなりません。') + '</h2>')
     + '<div id="caList"></div>'
@@ -6402,12 +6429,14 @@ function coreAdminsModal(un, rows, kind){
   $('caSave').onclick = function(){
     var arr = rows.filter(function(r){ return r.checked; }).map(function(r){ return r.uid; });
     $('caSave').disabled = true;
-    db.collection('checkinUnions').doc(un).set(lead ? { leaders: arr } : { unionAdmins: arr }, { merge: true }).then(function(){
-      if(lead) gLeaders[un] = arr; else gUnionAdmins[un] = arr;
+    var w = bty ? db.collection('checkinConfig').doc('beauty').set({ testers: arr, by: gUser.uid, at: FV.serverTimestamp() })
+      : db.collection('checkinUnions').doc(un).set(lead ? { leaders: arr } : { unionAdmins: arr }, { merge: true });
+    w.then(function(){
+      if(bty) gBeautyTesters = arr; else if(lead) gLeaders[un] = arr; else gUnionAdmins[un] = arr;
       closeModal();
-      toast((lead ? 'リーダー' : 'ユニオン管理者') + 'を保存しました（' + arr.length + '名）。本人は再読み込み後に反映されます');
+      toast((bty ? 'ユーザー機能の確認メンバー' : lead ? 'リーダー' : 'ユニオン管理者') + 'を保存しました（' + arr.length + '名）。本人は再読み込み後に反映されます');
       refreshUnionSelectors(); ckApplyFinUi(); renderRoster();
-    }).catch(function(e){ $('caSave').disabled = false; toast(permMsg(e, (lead ? 'リーダー' : 'ユニオン管理者') + 'の任命はオーナーのみ可能です')); });
+    }).catch(function(e){ $('caSave').disabled = false; toast(permMsg(e, (bty ? '確認メンバー' : lead ? 'リーダー' : 'ユニオン管理者') + 'の指定はオーナーのみ可能です')); });
   };
 }
 $('btnAddUnion').onclick = function(){
@@ -7361,9 +7390,12 @@ function loadMembers(cb){
 function renderRoster(){
   var edit = canEditRoster();
   var q = ($('q').value || '').trim();
-  // 💜 ユーザーの名簿は管理者だけ（ビジネスの名簿のようにユニオンの全員には見せない）
-  $('rosterKind').classList.toggle('hide', !edit);
-  if(!edit) gRosterKind = 'biz';
+  // 💜 ユーザーの名簿は管理者だけ（ビジネスの名簿のようにユニオンの全員には見せない）。
+  //   準備中のあいだは、オーナーと確認メンバー（checkinConfig/beauty）だけに見せる
+  var ukOn = ckBeautyOn();   // 確認メンバーは管理者でなくても見られる（名簿のルールで、自分が関わるユニオンの分だけ）
+  $('rosterKind').classList.toggle('hide', !ukOn);
+  if(!ukOn) gRosterKind = 'biz';
+  $('btnBeautyTesters').classList.toggle('hide', !isOwner());
   ckRosterKindSync();
   if(gRosterKind === 'user'){ renderUserRoster(); return; }
   function sth(k, label){
@@ -13546,7 +13578,7 @@ $('btnGuest').onclick = function(){
     + '</select>'
     + '<div id="gGroupBox"><label>系列（紹介者の系列を選択）</label><select id="gGroupSel">' + groupOptions(unions[0]) + '</select></div>'
     // 💜 ユーザー（ビジネスではないお客さま）として登録すると、QRを渡して次からQRで受付できる。稼働率には入らない
-    + '<label style="display:flex;align-items:center;gap:8px;margin-top:12px;cursor:pointer;font-weight:700;">'
+    + '<label id="gAsUserRow" class="' + (ckBeautyOn() ? '' : 'hide') + '" style="display:flex;align-items:center;gap:8px;margin-top:12px;cursor:pointer;font-weight:700;">'
     + '<input type="checkbox" id="gAsUser" style="width:auto;margin:0;">ユーザーとして登録する'
     + hq('ビジネスではないお客さま（製品を使う人）の時に選びます。ユーザーの名簿に入り、本人にQRを渡すと次からそのQRで受付できます。ユニオンの稼働率には入りません。') + '</label>'
     + '<div id="gUserBox" class="hide"><label>紹介者（ビジネスメンバー）</label>'
@@ -13576,7 +13608,7 @@ $('btnGuest').onclick = function(){
   $('gGo').onclick = function(){
     var name = $('gName').value.trim();
     if(!name){ toast('氏名を入力してください'); return; }
-    if($('gAsUser').checked){
+    if($('gAsUser').checked && ckBeautyOn()){
       var uun = $('gUnion').value, uref = $('gRef').value.trim();
       if(!uun){ toast('ユーザーは所属ユニオンを選んでください（「その他」では登録できません）'); return; }
       if(!uref){ toast('紹介者を入れてください'); return; }

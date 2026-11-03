@@ -1,5 +1,6 @@
 // 受付（checkin/index.html）を Chromium で開く（Firebase はスタブ・架空データだけ）。
 //   const P = require('../lib/ckpage.js'); const b = await P.browser(); const { page, errs } = await P.open(b, { hash: '', data: {…}, dark: false });
+//   uid: 'xxx' でオーナー以外としてログイン（既定はオーナー）
 //   expose: true で window.__ck に practiceStart・scan・rec()（受付中のデータ）・db()（今のデータベース）を出す
 const fs = require('fs'), path = require('path');
 const R = path.join(__dirname, '../../..'), ST = R + '/tools/test/shot';
@@ -16,7 +17,7 @@ async function open(b, o) {
   const page = await ctx.newPage(), errs = [];
   page.on('pageerror', e => errs.push(e.message));
   page.on('dialog', d => d.accept());
-  await page.addInitScript(d => { window.__FBDATA = d; }, o.data || {});
+  await page.addInitScript(d => { window.__FBDATA = d.data; if (d.uid) window.__FBUID = d.uid; }, { data: o.data || {}, uid: o.uid || '' });   // uid: 別の人としてログイン
   await page.route('**/*', async (route) => {
     const u = route.request().url();
     if (u.indexOf('firebase-app-compat.js') >= 0) return route.fulfill({ status: 200, contentType: 'application/javascript', body: fs.readFileSync(ST + '/fbstub.js', 'utf8') });
