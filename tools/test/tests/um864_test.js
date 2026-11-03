@@ -52,6 +52,10 @@ T.run(async () => {
   w.umCkSync(true); await sleep(80);
   c('受付の変更（回数・数値）が入る', by('u1').uVisits === 4 && by('u1').uPrysm === 1150);
   c('受付で取り下げたお買い上げは消え、新しいものが入る', by('u1').buys.length === 1 && by('u1').buys[0].t === '見本のパック');
+  // 台帳で消した人は足し直さない
+  by('u2').deleted = true; const n1 = w.state.members.length;
+  w.umCkSync(true); await sleep(80);
+  c('台帳で消したユーザーは、次の取り込みで足し直さない', w.state.members.length === n1 && w.state.members.filter(m => m.ckNo === 'u2' && !m.deleted).length === 0);
   // 30分は自動で読み直さない
   const r0 = reads.length;
   w.umCkSync(false); await sleep(40);

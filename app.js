@@ -23558,11 +23558,12 @@ function umCkSync(force) {
     if (!qs) { _umCkBusy = false; if (force) toast(_bxOn() ? '受付にあなたのユニオンが見つかりません' : 'この機能は準備中です'); return; }
     try { localStorage.setItem(key, String(Date.now())); } catch (e1) {}
     var cus = []; qs.forEach(function(d) { var r = d.data() || {}; r.uid = d.id; if (r.active !== false) cus.push(r); });
-    var refByNo = {}; (state.members || []).forEach(function(m) { if (!m.deleted && !m._foreign && m.checkinNo && !isUserM(m)) refByNo[m.checkinNo] = m; });
+    var refByNo = {}, gone = {}; (state.members || []).forEach(function(m) { if (!m.deleted && !m._foreign && m.checkinNo && !isUserM(m)) refByNo[m.checkinNo] = m; if (m.deleted && m.ckNo) gone[m.ckNo] = 1; }); // 台帳で消した人は足し直さない
     var res = { add: 0, link: 0, upd: 0, noRef: 0 }, jobs = [];
     cus.forEach(function(cu) {
       var ref = refByNo[cu.referrerNo || ''];
       if (!ref) { res.noRef++; return; }
+      if (gone[cu.uid]) return;
       var L = _umList(), u = L.filter(function(x) { return x.ckNo === cu.uid; })[0];
       if (!u) {
         var nm = _ckNorm(cu.name || '');
