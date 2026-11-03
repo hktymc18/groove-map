@@ -929,6 +929,23 @@ service cloud.firestore {
             || (signedIn() && notDisabled(request.auth.uid)));   // 再発行の引き継ぎ（受付・管理者）
       allow delete: if signedIn();
     }
+    // 💜 受付v121: ユーザーのマイプラン（コース・目標・毎日のクエストのチェック）。パスに会員証トークンが入る＝本人だけが開ける・書ける（ログインなし）
+    //   ユーザーのカード（kind=user・有効・研修生になっていない）だけ。消すのは受付・管理者（ログインした人）
+    match /cards/{token}/plan/{pid} {
+      allow get: if true;
+      allow list: if false;
+      allow create, update: if pid == 'me'
+        && request.resource.data.keys().hasOnly(['course', 'goal', 'qs', 'start', 'days', 'atMs'])
+        && request.resource.data.course in ['diet', 'yuragi', 'inner']
+        && request.resource.data.get('goal', '') is string && request.resource.data.get('goal', '').size() <= 40
+        && request.resource.data.qs is list && request.resource.data.qs.size() >= 1 && request.resource.data.qs.size() <= 5
+        && request.resource.data.get('days', {}) is map && request.resource.data.get('days', {}).size() <= 400
+        && request.resource.data.atMs is int
+        && exists(/databases/$(database)/documents/cards/$(token))
+        && get(/databases/$(database)/documents/cards/$(token)).data.get('kind', '') == 'user'
+        && get(/databases/$(database)/documents/cards/$(token)).data.get('active', true) != false;
+      allow delete: if signedIn();
+    }
     function ckProfSame(p, d) {
       return existsAfter(p)
         && getAfter(p).data.get('intro', '') == d.get('intro', '')
