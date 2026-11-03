@@ -527,6 +527,12 @@ service cloud.firestore {
         || t.get('EXP', {}).get('by', '') == u || t.get('CO', {}).get('by', '') == u || t.get('BPC済み', {}).get('by', '') == u;
     }
     // 自分のプロフィールの所属ユニオン
+    // 💜 受付v119: 準備中のユーザー機能の確認メンバー（checkinConfig/beauty.testers・オーナーが指定）
+    function ckBeautyTester() {
+      return signedIn() && notDisabled(request.auth.uid)
+        && exists(/databases/$(database)/documents/checkinConfig/beauty)
+        && get(/databases/$(database)/documents/checkinConfig/beauty).data.get('testers', []).hasAny([request.auth.uid]);
+    }
     function ckMyUnion() {
       return profileExists(request.auth.uid)
         ? profile(request.auth.uid).get('union','') : '';
@@ -668,9 +674,13 @@ service cloud.firestore {
     // 💜 受付v117: ユーザー（ビジネスではないお客さま）の名簿。ビジネスの名簿（checkinMembers）とは別にする
     //   ・見られる・直せる・消せるのは、そのユニオンの管理者（コア・受付管理者）だけ（ユニオンの全員には見せない）
     //   ・受付の人（どこかのユニオンの有効なメンバー＝合同イベントの受付も）は、ゲスト受付からの新規登録と、
-    //     来場の回数（1ずつ）・最後の来場の更新だけ
+    //     来場の回数（1ずつ）・最後の来場・最新の PRYSMiO の数値（受付v118）の更新だけ
     match /checkinUsers/{uid} {
       allow get, list: if isCkAdmin(resource.data.get('union', ''));
+      // 💜 受付v119: 準備中は、オーナーが指定した確認メンバーも、自分が関わるユニオンのユーザーを見て・直して・消せる
+      allow get, list, update, delete: if ckBeautyTester() && ckCanSee(resource.data.get('union', ''))
+                    && (request.method in ['get', 'list', 'delete']
+                        || request.resource.data.get('union', '') == resource.data.get('union', ''));
       allow create: if request.resource.data.get('uid', '') == uid
                     && request.resource.data.keys().hasOnly(['uid', 'name', 'union', 'referrer', 'referrerNo', 'cardToken',
                          'active', 'visits', 'firstEv', 'lastEv', 'lastAt', 'createdAt', 'createdBy', 'byName'])
@@ -683,8 +693,11 @@ service cloud.firestore {
       allow update: if isCkAdmin(resource.data.get('union', ''))
                     && request.resource.data.get('union', '') == resource.data.get('union', '');
       allow update: if signedIn() && notDisabled(request.auth.uid) && ckMyUnion() != ''
-                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['visits', 'lastAt', 'lastEv'])
-                    && request.resource.data.get('visits', 0) == resource.data.get('visits', 0) + 1;
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['visits', 'lastAt', 'lastEv', 'prysm', 'prysmAt'])
+                    && (request.resource.data.get('visits', 0) == resource.data.get('visits', 0)
+                        || request.resource.data.get('visits', 0) == resource.data.get('visits', 0) + 1)
+                    && (!('prysm' in request.resource.data)
+                        || (request.resource.data.prysm is int && request.resource.data.prysm >= 0 && request.resource.data.prysm <= 3000));
       allow delete: if isCkAdmin(resource.data.get('union', ''));
     }
 
@@ -813,6 +826,12 @@ service cloud.firestore {
     match /checkinConfig/{id} {
       allow get: if true;
       allow list: if false;
+      // 💜 受付v119: 準備中のユーザー機能を見られる確認メンバー（オーナーだけが指定）
+      allow create, update: if isOwnerUid() && id == 'beauty'
+        && request.resource.data.keys().hasOnly(['testers', 'by', 'at'])
+        && request.resource.data.testers is list && request.resource.data.testers.size() <= 100
+        && request.resource.data.by == request.auth.uid
+        && request.resource.data.at == request.time;
       allow create, update: if isOwnerUid() && id == 'launch'
         && request.resource.data.keys().hasOnly(['platinum', 'platinumAt', 'by', 'at'])
         && request.resource.data.platinum is bool
