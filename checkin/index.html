@@ -2371,10 +2371,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v122';
+var APP_VER = 'v123';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v123', d: '2026/11/05', items: ['⚡ 読み込みをさらに軽くしました（受付終了の後の稼働率の作り直し・集計タブ・会計で、同じイベントや出席を何度も読まない／稼働率の確かめは1日1回）'] },
   { v: 'v122', d: '2026/11/05', items: ['⚡ 読み込みを軽くしました（会員証のこれからのイベント・裏面・解禁の設定を端末に少し覚える／会計タブを押すたびに読み直さない／受付の名簿は参加ユニオンと自分のユニオンだけ）'] },
   { v: 'v121', d: '2026/11/03', items: ['📝 準備中のユーザー機能：ユーザーのカードに「マイプラン」（コース・毎日のクエスト・連続日数・レベル・バッジ）を追加しました'] },
   { v: 'v120', d: '2026/11/03', items: ['🎓 準備中のユーザー機能：ユーザーの名簿から「研修生にする」（本人の同意を確かめてから）・「ユーザーに戻す」ができるようにしました（オーナーと確認メンバーだけ）'] },
@@ -7593,7 +7594,7 @@ function loadMembers(cb){
     gMembers = arr;
     gMembersLoaded = true;
     renderRoster();
-    coOverdueLoad();   // ⏰ 24時間以上承認されていない面談シート
+    coOverdueLoad(true);   // ⏰ 24時間以上承認されていない面談シート（v123: 名簿を読み直すたびではなく5分に1回）
     ckClaimSync(arr, gRosterUnion);   // 🔑 受け取りキーの作成・名前変更の反映（管理者のみ・裏で）
     // 集計タブから編集・無効化等をした場合は集計も描き直す（氏名・系列・状態の変更を反映）
     if(gStat && $('pStats').classList.contains('on')) loadStats();
@@ -9377,7 +9378,7 @@ function loadEvents(){
   var key = monthKey(gMonth.y, gMonth.m);
   $('evMonthLabel').textContent = monthLabel(gMonth.y, gMonth.m);
   $('stMonthLabel').textContent = monthLabel(gMonth.y, gMonth.m);
-  db.collection('checkinEvents').where('month', '==', key).get().then(function(qs){
+  ckMonthEvents(key, true).then(function(qs){   // v123: イベント一覧は毎回サーバーから（その結果を会計・集計が1分使い回す）
     gEvents = [];
     qs.forEach(function(d){
       var ev = d.data(); ev.id = d.id;
@@ -11252,11 +11253,14 @@ function inboxListModal(items, after){
   });
 }
 // 🧑‍💼 受付管理: そのユニオンで24時間以上承認されていない面談シート（ユニオン管理者・受付管理者に出す）
-function coOverdueLoad(){
+var gCoOverAt = {};
+function coOverdueLoad(lazy){
   var el = $('coOverdue');
   if(!el) return;
   var un = gRosterUnion;
   if(!un || !canEditUnion(un)){ el.innerHTML = ''; return; }
+  if(lazy && gCoOverAt[un] && Date.now() - gCoOverAt[un] < 300000) return;
+  gCoOverAt[un] = Date.now();
   db.collection('coSheetInbox').where('union', '==', un).get().then(function(qs){
     var L = coDocs(qs).filter(coOverdue);
     if(un !== gRosterUnion) return;
@@ -12299,7 +12303,7 @@ function loadFinanceTab(){
   $('btnRcptCsv').classList.toggle('hide', !canEditUnion(gFinUnion));
   $('btnFinCsv').classList.toggle('hide', !canEditUnion(gFinUnion));
   var key = monthKey(gMonth.y, gMonth.m), body = $('finBody');
-  db.collection('checkinEvents').where('month', '==', key).get().then(function(qs){
+  ckMonthEvents(key).then(function(qs){   // v123: イベント一覧で読んだ結果を1分使い回す
     var evs = [];
     qs.forEach(function(d){
       var ev = d.data(); ev.id = d.id;
@@ -14495,11 +14499,34 @@ function ckRecentRange(){
   var f = new Date(y, m - 1, Math.min(day, lastPrev) + 1);          // 先月の同じ日（無ければ月末）の翌日
   return { from: f.getFullYear() + '-' + pad(f.getMonth() + 1) + '-' + pad(f.getDate()), to: todayStr() };
 }
+/* v123: 読み取りを減らす。同じ数分のあいだに、同じ月のイベント・同じイベントの出席を何度も読まない
+   （受付終了の後の「今月」と「直近1ヶ月」の作り直し、集計タブ、会計、イベント一覧で同じものを読んでいた）
+   ・月のイベント: 1分。イベント一覧（loadEvents）は毎回サーバーから読み、その結果をここに入れる
+   ・出席: 2分。受付を終了・再開したイベントは読み直す（ckAttForget） */
+var gMonthEvCache = {}, gAttCache = {};
+function ckMonthEvents(key, fresh){
+  var c = gMonthEvCache[key];
+  if(!fresh && c && Date.now() - c.at < 60000) return c.p;
+  var p = db.collection('checkinEvents').where('month', '==', key).get();
+  gMonthEvCache[key] = { at: Date.now(), p: p };
+  p.catch(function(){ if(gMonthEvCache[key] && gMonthEvCache[key].p === p) delete gMonthEvCache[key]; });
+  return p;
+}
+function ckMonthForget(key){ if(key) delete gMonthEvCache[key]; else gMonthEvCache = {}; }
+function ckAttOf(evId, union, fresh){
+  var k = evId + '|' + union, c = gAttCache[k];
+  if(!fresh && c && Date.now() - c.at < 120000) return c.p;
+  var p = db.collection('checkinEvents').doc(evId).collection('attendance').where('union', '==', union).get();
+  gAttCache[k] = { at: Date.now(), p: p };
+  p.catch(function(){ if(gAttCache[k] && gAttCache[k].p === p) delete gAttCache[k]; });
+  return p;
+}
+function ckAttForget(evId){ Object.keys(gAttCache).forEach(function(k){ if(k.indexOf(evId + '|') === 0) delete gAttCache[k]; }); }
 function ckRefreshRecentSnapshot(union){
   if(!union) return Promise.resolve();
   var rg = ckRecentRange(), keys = [rg.from.slice(0, 7)];
   if(keys.indexOf(rg.to.slice(0, 7)) < 0) keys.push(rg.to.slice(0, 7));
-  return Promise.all(keys.map(function(k){ return db.collection('checkinEvents').where('month', '==', k).get(); })).then(function(qss){
+  return Promise.all(keys.map(function(k){ return ckMonthEvents(k); })).then(function(qss){
     var evs = [];
     qss.forEach(function(qs){ qs.forEach(function(d){ var ev = d.data(); ev.id = d.id;
       if((ev.unions || []).indexOf(union) >= 0 && (ev.date || '') >= rg.from && (ev.date || '') <= rg.to) evs.push(ev); }); });
@@ -14507,8 +14534,7 @@ function ckRefreshRecentSnapshot(union){
     evs = ckHeldEvents(evs);
     var attMaps = {};
     var reads = evs.map(function(ev){
-      return db.collection('checkinEvents').doc(ev.id).collection('attendance')
-        .where('union', '==', union).get().then(function(aqs){
+      return ckAttOf(ev.id, union).then(function(aqs){
           var m = {};
           aqs.forEach(function(d){ var a = d.data(); if(a.status === 'pending' || a.status === 'rejected') return; m[d.id] = a; });
           attMaps[ev.id] = m;
@@ -14535,15 +14561,14 @@ function ckRecentSnapCached(union){
 // 画面に出さずに集計だけやり直して保存（受付終了・受付再開・起動時の日付変わりに呼ぶ）
 function ckRefreshRateSnapshot(union, key){
   if(!union || !key) return Promise.resolve();
-  return db.collection('checkinEvents').where('month', '==', key).get().then(function(qs){
+  return ckMonthEvents(key).then(function(qs){
     var evs = [];
     qs.forEach(function(d){ var ev = d.data(); ev.id = d.id; if((ev.unions || []).indexOf(union) >= 0) evs.push(ev); });
     evs.sort(function(a,b){ return (a.date || '') < (b.date || '') ? -1 : 1; });
     evs = ckHeldEvents(evs);
     var attMaps = {};
     var reads = evs.map(function(ev){
-      return db.collection('checkinEvents').doc(ev.id).collection('attendance')
-        .where('union', '==', union).get().then(function(aqs){
+      return ckAttOf(ev.id, union).then(function(aqs){
           var m = {};
           aqs.forEach(function(d){ var a = d.data(); if(a.status === 'pending' || a.status === 'rejected') return; m[d.id] = a; });
           attMaps[ev.id] = m;
@@ -14558,11 +14583,15 @@ function ckRefreshRateSnapshot(union, key){
 function ckRefreshForEvent(ev){
   if(!ev) return;
   var key = ev.month || String(ev.date || '').slice(0, 7);
+  ckAttForget(ev.id); ckMonthForget();   // v123: 受付を終了・再開したイベントの出席と、受付終了の印（recClosed）は読み直す（ほかのイベントの分は使い回す）
   (ev.unions || []).forEach(function(un){ ckRefreshRateSnapshot(un, key); delete gRecentCache[un]; gRecentCache[un] = { at: Date.now(), p: ckRefreshRecentSnapshot(un) }; });
 }
 // 起動時：自分のユニオンの今月の集計が今日より前のまま（日付が変わって前日の開催が分母に入った等）なら作り直す
 function ckRefreshIfStale(union){
   var d = new Date(), key = monthKey(d.getFullYear(), d.getMonth() + 1);
+  // v123: この端末で今日すでに確かめた・作り直したユニオンは、もう読まない（前はログインのたびに確かめ、同じ日に何台も作り直していた）
+  var gk = 'bci_rf_' + union;
+  try{ if(localStorage.getItem(gk) === todayStr()) return; localStorage.setItem(gk, todayStr()); }catch(e0){}
   db.collection('checkinStats').doc(ckStatDocId(union, key)).get().then(function(s){
     if(!s.exists || (s.data() || {}).calcDay !== todayStr()) ckRefreshRateSnapshot(union, key);
   }).catch(function(){});
@@ -14578,13 +14607,14 @@ var gStat = null;
 var gStatDirty = true;
 function ckStatsOpen(){ var p = $('pStats'); return !!(p && p.classList.contains('on')); }
 function loadStats(){ if(ckStatsOpen()) loadStatsNow(); else gStatDirty = true; }
-$('btnStatReload').onclick = function(){ loadStatsNow(); };
-function loadStatsNow(){
+$('btnStatReload').onclick = function(){ loadStatsNow(true); };
+function loadStatsNow(fresh){
   gStatDirty = false;
   if(!ckCanView(gStatUnion)) gStatUnion = gUnion;
   var key = monthKey(gMonth.y, gMonth.m);
   $('statBody').innerHTML = '<p style="color:var(--sub)">集計中…</p>';
-  db.collection('checkinEvents').where('month', '==', key).get().then(function(qs){
+  if(fresh){ ckMonthForget(key); gAttCache = {}; }   // 「再集計」は全部読み直す
+  ckMonthEvents(key).then(function(qs){
     var evs = [], otherEvs = [];
     qs.forEach(function(d){
       var ev = d.data(); ev.id = d.id;
@@ -14608,8 +14638,7 @@ function loadStatsNow(){
     }
     var attMaps = {};   // eventId -> {no: att}
     var reads = evs.map(function(ev){
-      return db.collection('checkinEvents').doc(ev.id).collection('attendance')
-        .where('union', '==', gStatUnion).get().then(function(aqs){
+      return ckAttOf(ev.id, gStatUnion).then(function(aqs){
           var m = {};
           aqs.forEach(function(d){
             var a = d.data();
