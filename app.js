@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v866';
+var APP_JS_VERSION = 'v867';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4574,7 +4574,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v866';
+  var DATA_VERSION = 'v867';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6686,6 +6686,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v867', d:'2026-11-05', items:['読み込みをさらに軽くしました（分析の過去の月・共有の確認・結合したメンバーの予定）'] },
   { v:'v866', d:'2026-11-05', items:['読み込みを軽くしました（予定・ユニオンの予定を少しのあいだ端末に覚える／受付との連携・通知の登録の読み直しを減らす）。ほかの端末で足した予定は、最大10分おくれて出ることがあります'] },
   { v:'v865', d:'2026-11-03', items:['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v:'v864', d:'2026-11-03', items:['新しい機能の準備をしました（今は画面の変化はありません）'] },
@@ -13523,6 +13524,14 @@ var DT_AUTO_KEY = {'S':'S','A':'A','B':'B','C':'C','B1':'B1','B1平均GSV':'b1g'
 //   従来は表示中の月の保存データに入っている12ヶ月分の欄だけを読んでいたため、翌月コピーで引き継がれなかった月や
 //   あとから増えた行（総人数など）は、データがあってもグラフに出なかった
 var _dtHist = null; // { key, mon: { 'YYYY.MM': { auto: counts|null, man: {行名: 値} } } }
+// v867: 読み取りを減らす。分析の推移に使う「先月より前の月」のMAP・数字は、まず端末の控えから読む（なければサーバー）。
+//   先月より前の月はほとんど変わらないため。fsGet を通さない（_fsMeta＝今の月の「控えを表示中（保存しない）」の判定に入れない）
+function _fsGetPast(path, mon) {
+  var cur = state.currentMonth || currentMonthStr();
+  var srv = function() { return fsGet(path); }; // 控えに無い時は、いつもの読み方（サーバー）
+  if (!db || !mon || mon >= addMonths(cur, -1)) return fsGet(path);
+  return db.doc(path).get({ source: 'cache' }).then(function(d) { return d && d.exists ? d.data() : srv(); }, srv);
+}
 function _dtHistLoad() {
   if ((typeof _aggActive !== 'undefined' && _aggActive) || typeof fsGet !== 'function') return;
   var uid = _regTrendUid();
@@ -13535,8 +13544,8 @@ function _dtHistLoad() {
   var mons = [];
   for (var i = 11; i >= 1; i--) mons.push(addMonths(cur, -i));
   Promise.all(mons.map(function(mon) {
-    var pC = fsGet('maps/' + uid + '/months/' + mon + '_current').catch(function() { return null; });
-    var pS = fsGet('maps/' + uid + '/stats/' + mon).catch(function() { return null; });
+    var pC = _fsGetPast('maps/' + uid + '/months/' + mon + '_current', mon).catch(function() { return null; });
+    var pS = _fsGetPast('maps/' + uid + '/stats/' + mon, mon).catch(function() { return null; });
     return Promise.all([pC, pS]).then(function(r) {
       var ms = (r[0] && r[0].members) || [];
       var ent = { auto: null, man: {} };
@@ -14728,7 +14737,7 @@ function _dtRegLnFill() {
     var key = uid + '|' + mon;
     if (_regTrendCache[key]) return Promise.resolve(_regTrendCache[key]);
     if (!uid || typeof fsGet !== 'function') return Promise.resolve([]);
-    return fsGet('maps/' + uid + '/months/' + mon + '_current').then(function(d) { var a = (d && d.members) ? d.members : []; _regTrendCache[key] = a; return a; }).catch(function() { return []; });
+    return _fsGetPast('maps/' + uid + '/months/' + mon + '_current', mon).then(function(d) { var a = (d && d.members) ? d.members : []; _regTrendCache[key] = a; return a; }).catch(function() { return []; });
   };
   Promise.all(mons.map(get)).then(function(all) {
     var el = document.getElementById('dtRegLnBody'); if (!el) return;
@@ -14856,7 +14865,7 @@ function regTrendRender() {
   Promise.all(mons.map(function(mon){
     var key = uid + '|' + mon;
     if (_regTrendCache[key]) return Promise.resolve(_regTrendCache[key]);
-    return fsGet('maps/' + uid + '/months/' + mon + '_current').then(function(d){
+    return _fsGetPast('maps/' + uid + '/months/' + mon + '_current', mon).then(function(d){
       var arr = (d && d.members) ? d.members : [];
       _regTrendCache[key] = arr;
       return arr;
@@ -39756,9 +39765,17 @@ function _shLoadTop(force) {
   return fsGet('appShare/top').then(function(d) { _shTop = { uids: (d && d.uids) ? d.uids.slice() : SH_TOP0.slice() }; return _shTop; })
     .catch(function() { return _shTop || { uids: SH_TOP0.slice() }; });
 }
+// v867: 読み取りを減らす。アップかどうかの判定に使う全員の名前・紹介者は、端末に3日覚える（前は毎日、全員のプロフィールを読んでいた）。
+//   覚えるのは判定に使う項目だけ（メールアドレスなどは覚えない）
 function _shLoadUsers(force) {
   if (_shUsers && !force && Date.now() - _shUsersAt < 300000) return Promise.resolve(_shUsers);
-  return fsGetCol('users').then(function(L) { _shUsers = L || []; _shUsersAt = Date.now(); return _shUsers; });
+  var k = 'gm_shUsers';
+  if (!force) { try { var c = JSON.parse(localStorage.getItem(k) || 'null'); if (c && c.at && Date.now() - c.at < 3 * 86400000 && Array.isArray(c.L) && c.L.length) { _shUsers = c.L; _shUsersAt = Date.now(); return Promise.resolve(_shUsers); } } catch (e) {} }
+  return fsGetCol('users').then(function(L) {
+    _shUsers = L || []; _shUsersAt = Date.now();
+    try { localStorage.setItem(k, JSON.stringify({ at: Date.now(), L: _shUsers.map(function(u) { return { id: u.id, name: u.name || '', displayName: u.displayName || '', referrer: u.referrer || '', upRuby: u.upRuby || '', upBd: u.upBd || '', union: u.union || '', status: u.status || '' }; }) })); } catch (e2) {}
+    return _shUsers;
+  });
 }
 // 自分のMAPで、自分より下にいる人の名前
 function _shMapDown(me) {
@@ -40553,7 +40570,7 @@ function loadMergedConfig() {
   fsGet(mergedConfigPath()).then(function(d) {
     state.mergedMaps = (d && d.maps) ? d.maps : [];
     startAllMergeListeners();
-    propagateDerivedShares(); // v355: ログイン時に連鎖共有の配布状態を同期
+    try { var _pk = 'gm_pds_' + currentUser.uid; if (localStorage.getItem(_pk) !== evTodayYmd()) { localStorage.setItem(_pk, evTodayYmd()); propagateDerivedShares(); } } catch (ePd) { propagateDerivedShares(); } // v355: ログイン時に連鎖共有の配布状態を同期（v867: ログイン時は1日1回。共有・結合を変えた時は今までどおりその場で）
     _reapproachEnsure(); // v361: メニューの件数表示用に先読み
   }).catch(function() { state.mergedMaps = []; });
 }
@@ -40707,7 +40724,7 @@ function _fgnEvents(mid, onLoad) {
   if (c && !c.busy && Date.now() - c.at < 300000) return c.err ? false : pick();
   if (!c || !c.busy) {
     c = _fgnEv[p.uid] = { at: 0, busy: true, cbs: [], list: c ? c.list : null };
-    fsGetCol('maps/' + p.uid + '/events').then(function(list) { c.list = list || []; c.err = false; })
+    _evFetchRecent(p.uid).then(function(list) { c.list = list || []; c.err = false; }) // v867: 直近の分だけ（前はその人の予定を全部読んでいた）・10分は端末の控えから
       .catch(function() { c.err = true; })
       .then(function() { c.busy = false; c.at = Date.now(); var cb = c.cbs; c.cbs = []; cb.forEach(function(f) { try { f(); } catch (e) {} }); });
   }
