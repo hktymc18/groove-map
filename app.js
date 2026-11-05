@@ -13528,7 +13528,7 @@ var _dtHist = null; // { key, mon: { 'YYYY.MM': { auto: counts|null, man: {行�
 //   先月より前の月はほとんど変わらないため。fsGet を通さない（_fsMeta＝今の月の「控えを表示中（保存しない）」の判定に入れない）
 function _fsGetPast(path, mon) {
   var cur = state.currentMonth || currentMonthStr();
-  var srv = function() { return db.doc(path).get().then(function(d) { return d.exists ? d.data() : null; }); };
+  var srv = function() { return fsGet(path); }; // 控えに無い時は、いつもの読み方（サーバー）
   if (!db || !mon || mon >= addMonths(cur, -1)) return fsGet(path);
   return db.doc(path).get({ source: 'cache' }).then(function(d) { return d && d.exists ? d.data() : srv(); }, srv);
 }

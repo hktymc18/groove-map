@@ -10,8 +10,9 @@ T.run(async () => {
   w.state.mergedData = { [OU]: [{ id: 's1', lastName: '試験', firstName: '二郎', title: 'BR', parentId: '' }, { id: 's2', lastName: '見本', firstName: '三郎', title: 'B3', parentId: 's1' }] };
   const mid = 'MG_abcdef_s2', today = w.evTodayYmd();
   let ownerEv = [], deny = false;
-  const fg = w.fsGetCol;
+  const fg = w.fsGetCol, fr = w._evFetchRecent;
   w.fsGetCol = p => p === 'maps/' + OU + '/events' ? (deny ? Promise.reject(new Error('denied')) : Promise.resolve(ownerEv)) : fg(p);
+  w._evFetchRecent = uid => uid === OU ? (deny ? Promise.reject(new Error('denied')) : Promise.resolve(ownerEv)) : fr(uid); // v867: 持ち主の予定は直近の分だけ読む
   const tipTx = async () => { w._mgFindCache = null; w._fgnEv = {}; w.showPcTooltip(mid, { clientX: 50, clientY: 50 }); await sleep(30); const t = w.document.getElementById('pcTooltip'); return t ? t.textContent : ''; };
   // ① 持ち主のMAPには無く、自分のMAPで付けたタスクだけある
   w.state.events = [{ id: 'e1', type: 'task', title: 'フォローの電話', date: today, done: false, memberId: mid }];
@@ -32,5 +33,5 @@ T.run(async () => {
   w.state.events = [{ id: 'e3', type: 'task', title: '自分だけのメモ', date: today, memberId: mid, vis: 'self' }];
   tx = await tipTx();
   c('「自分のみ」の予定は出さない', !/自分だけのメモ/.test(tx));
-  w.fsGetCol = fg;
+  w.fsGetCol = fg; w._evFetchRecent = fr;
 });
