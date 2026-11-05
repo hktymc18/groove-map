@@ -471,6 +471,32 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .pz-hist .dot{width:10px;height:10px;border-radius:50%;}
 .pz-hist .nm{margin-left:auto;color:var(--sub);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
 .pz-note{font-size:11.5px;color:var(--sub);margin:8px 0 0;}
+.mpwrap{margin-top:24px;text-align:left;}
+.mp-lead{font-size:13.5px;color:var(--sub);line-height:1.7;margin:10px 0;}
+.mpco{display:block;width:100%;text-align:left;margin-top:8px;padding:14px;border-radius:14px;border:1.5px solid var(--line);border-left:6px solid var(--mc);background:var(--card);}
+.mpco b{display:block;font-size:15.5px;}.mpco span{font-size:12.5px;color:var(--sub);font-weight:400;}
+.mp-top{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px;}
+.mp-co{font-weight:800;font-size:14px;padding:4px 12px;border-radius:99px;background:var(--mc);color:#fff;}
+.mp-goal{font-size:13px;color:var(--sub);}
+.mp-st{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px;}
+.mp-st div{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center;}
+.mp-st b{display:block;font-size:22px;}.mp-st small{font-size:11px;color:var(--sub);}
+.mp-lvbar{height:6px;border-radius:99px;background:var(--line);margin-top:8px;overflow:hidden;}.mp-lvbar i{display:block;height:100%;background:var(--mc);border-radius:99px;}
+.mp-h{font-size:13px;font-weight:800;margin:16px 0 6px;}.mp-h small{color:var(--sub);font-weight:700;margin-left:4px;}
+.mpq{display:flex;align-items:center;gap:10px;width:100%;text-align:left;margin-top:6px;padding:12px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);font-size:14.5px;font-weight:700;color:var(--ink);}
+.mpq i{flex:0 0 26px;height:26px;border-radius:50%;border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-style:normal;font-size:15px;color:#fff;}
+.mpq.on{border-color:var(--mc);}.mpq.on i{background:var(--mc);border-color:var(--mc);}
+.mp-all{font-size:13.5px;font-weight:700;margin:10px 0 0;}
+.mp-week{display:flex;justify-content:space-between;gap:4px;margin-top:12px;}
+.mp-week span{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;color:var(--sub);}
+.mp-week i{width:22px;height:22px;border-radius:50%;background:var(--line);}.mp-week span.on i{background:var(--mc);}.mp-week span.td{color:var(--ink);font-weight:800;}
+.mp-bd{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;}
+.mp-bd span{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 2px;border-radius:12px;background:var(--card);border:1px solid var(--line);font-size:10.5px;text-align:center;color:var(--sub);line-height:1.3;}
+.mp-bd span.on{color:var(--ink);font-weight:700;}.mp-bd i{font-style:normal;font-size:20px;filter:grayscale(1);opacity:.45;}.mp-bd span.on i{filter:none;opacity:1;}
+.mp-edit{width:100%;margin-top:14px;}
+.mpqs{display:flex;align-items:center;gap:8px;font-weight:400;color:var(--ink);margin:6px 0;cursor:pointer;}.mpqs input{width:auto;margin:0;}
+.utnote{margin:20px 0 0;padding:14px;border-radius:14px;background:#fff6cc;color:#33290a;font-size:13.5px;line-height:1.7;text-align:left;}
+.utnote a{display:block;margin-top:10px;padding:11px;border-radius:10px;background:#2361e8;color:#fff;font-weight:800;text-align:center;text-decoration:none;}
 .rc-items{margin:10px auto 0;max-width:260px;font-size:12.5px;color:#4f4b42;text-align:left;}
 .rc-items div{display:flex;justify-content:space-between;gap:10px;padding:3px 0;border-bottom:1px dashed #d8d4c8;}
 /* 受付の「測定・体験・購入」 */
@@ -1535,6 +1561,7 @@ body.practice .topbar{top:var(--pxh,36px);}
     </div></div>
     <div id="mcProf"></div><!-- 👤 #21 プロフィール（ルビー以上・ふだんは閉じる） -->
     <div id="pzArea"></div><!-- 💜 ユーザーの PRYSMiO（色・前回から・記録） -->
+    <div id="mpArea"></div><!-- 💜 ユーザーのマイプラン（コース・毎日のクエスト・連続・レベル・バッジ） -->
     <div id="rsvpTop"></div>
     <div id="selfArea"></div>
     <div id="hwArea"></div><!-- 📝 宿題は受講記録の一覧より上（記録が増えても埋もれないように） -->
@@ -2344,10 +2371,13 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v119';
+var APP_VER = 'v122';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v122', d: '2026/11/05', items: ['⚡ 読み込みを軽くしました（会員証のこれからのイベント・裏面・解禁の設定を端末に少し覚える／会計タブを押すたびに読み直さない／受付の名簿は参加ユニオンと自分のユニオンだけ）'] },
+  { v: 'v121', d: '2026/11/03', items: ['📝 準備中のユーザー機能：ユーザーのカードに「マイプラン」（コース・毎日のクエスト・連続日数・レベル・バッジ）を追加しました'] },
+  { v: 'v120', d: '2026/11/03', items: ['🎓 準備中のユーザー機能：ユーザーの名簿から「研修生にする」（本人の同意を確かめてから）・「ユーザーに戻す」ができるようにしました（オーナーと確認メンバーだけ）'] },
   { v: 'v119', d: '2026/11/03', items: ['💜 準備中のユーザー機能（ユーザー登録・ユーザーの名簿・測定・体験・購入）は、オーナーと「確認メンバー」だけに出すようにしました（名簿の⚙管理メニュー → 💜 ユーザー機能の確認メンバー・オーナーのみ）'] },
   { v: 'v118', d: '2026/11/03', items: ['💜 ユーザーの受付で「📋 測定・体験・購入」を記録できるようにしました。PRYSMiOの数値を入れると色が自動で付き、本人のカードに色・前回からの変化・次の色まで、が出ます',
     '🧾 会場でのお買い上げは、製品名・数・単価と販売者を入れると、本人のカードに領収書（お品代）が届きます（紙の領収書はいりません）',
@@ -3476,8 +3506,19 @@ function ckPlatSet(live){
   if(gPlatLive !== was && gCardLast) renderCard(gCardLast);
 }
 function ckPlatSync(){
+  // v122: 解禁の設定は端末に30分覚える（会員証を開くたびに読まない）。オーナーは毎回読む
+  var lk = 'bci_launch_c', cached = null;
+  try{ cached = JSON.parse(localStorage.getItem(lk) || 'null'); }catch(e0){}
+  var use = function(d){
+    ckPlatSet(ckPlatLiveOf(d));
+    clearTimeout(gPlatTimer);
+    var wait = (d.platinumAt || 0) - Date.now();
+    if(!gPlatLive && wait > 0 && wait < 864e5) gPlatTimer = setTimeout(function(){ ckPlatSet(true); }, wait + 500);
+  };
+  if(cached && Date.now() - cached.at < 30 * 60000 && !ckIsOwnerNow()){ use(cached.d || {}); return; }
   db.collection('checkinConfig').doc('launch').get().then(function(s){
     var d = s.exists ? s.data() : {};
+    try{ localStorage.setItem(lk, JSON.stringify({ at: Date.now(), d: { platinum: !!d.platinum, platinumAt: d.platinumAt || 0 } })); }catch(e1){}
     ckPlatSet(ckPlatLiveOf(d));
     // 予約の時刻まで開きっぱなしでも、その時刻に切り替わる（24時間以内の予約のみ）
     clearTimeout(gPlatTimer);
@@ -3663,6 +3704,142 @@ function renderPrysm(c){
       }).join('') + '</div>' : '')
     + '<p class="pz-note">測定は会場（DAY）でできます</p></div>';
 }
+/* 💜 段階5: マイプラン（ユーザーのカードの上で。本人＝カードのリンクを持っている人だけが書ける）
+   cards/{トークン}/plan/me = { course, goal, qs:[使うクエスト], start, days:{ 'YYYY-MM-DD': [できたクエスト] }, atMs }
+   ※ 効果をうたわない（薬機法）。クエストは「習慣」だけ。製品の名前はスタッフが会場で伝える */
+var MP_COURSES = [
+  { k: 'diet', n: 'ダイエット編', sub: '体を動かす・食事のリズムを整える', c: '#f28c28',
+    q: [['water', '朝、コップ1杯の水を飲む'], ['walk', '15分歩く'], ['dinner', '夜ごはんは寝る3時間前までに'], ['stretch', '5分ストレッチ'], ['care', 'いつものボディケアをした']] },
+  { k: 'yuragi', n: 'ゆらぎ肌ケア編', sub: '毎日のスキンケアと生活リズム', c: '#e5484d',
+    q: [['am', '朝のスキンケア'], ['pm', '夜のスキンケア'], ['moist', 'しっかり保湿した'], ['sleep', '7時間眠った'], ['water2', '水分をこまめにとった']] },
+  { k: 'inner', n: '体内（インナービューティ）編', sub: '食事・水分・睡眠を整える', c: '#3fb950',
+    q: [['supp', 'いつものサプリメントをとった'], ['veg', '野菜を1皿食べた'], ['water3', '水を1.5L飲んだ'], ['walk2', '20分歩く'], ['early', '日付が変わる前に寝た']] }
+];
+function mpCourse(k){ for(var i = 0; i < MP_COURSES.length; i++) if(MP_COURSES[i].k === k) return MP_COURSES[i]; return null; }
+function mpYmd(d){ return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+function mpAddDays(ymd, n){ var p = ymd.split('-'), d = new Date(+p[0], +p[1] - 1, +p[2] + n); return mpYmd(d); }
+// 連続日数（今日できていなければ昨日までの連続）・合計・レベル
+function mpStats(plan, today){
+  var days = (plan && plan.days) || {}, ok = function(d){ return (days[d] || []).length > 0; };
+  var cur = 0, d = ok(today) ? today : mpAddDays(today, -1);
+  while(ok(d) && cur < 1000){ cur++; d = mpAddDays(d, -1); }
+  var best = 0, run = 0, keys = Object.keys(days).filter(ok).sort(), prev = '';
+  keys.forEach(function(k){ run = (prev && mpAddDays(prev, 1) === k) ? run + 1 : 1; if(run > best) best = run; prev = k; });
+  var total = 0; Object.keys(days).forEach(function(k){ total += (days[k] || []).length; });
+  return { streak: cur, best: best, total: total, daysDone: keys.length, lv: Math.floor(total / 15) + 1, xp: total % 15 };
+}
+// バッジ（来場・測定は受付の記録から、続ける系はマイプランから）
+function mpBadges(c, plan, st){
+  var h = ckPrysmHist(c), up = false;
+  for(var i = 1; i < h.length; i++) if(ckPrysmIdx(h[i].v) > ckPrysmIdx(h[i - 1].v)) up = true;
+  var v = c.visits || 0;
+  return [
+    ['first', '🎉', 'はじめての来場', v >= 1],
+    ['visit3', '🎟', '3回来場', v >= 3],
+    ['visit5', '🌟', '5回来場', v >= 5],
+    ['pz1', '🌈', 'はじめての測定', h.length >= 1],
+    ['pzup', '⬆️', '色が上がった', up],
+    ['plat', '🏅', 'プラチナメダリオン', h.length && h[h.length - 1].v >= 1100],
+    ['plan', '📝', 'プランを始めた', !!(plan && plan.course)],
+    ['s3', '🔥', '3日連続', st.best >= 3],
+    ['s7', '💪', '7日連続', st.best >= 7],
+    ['s30', '👑', '30日連続', st.best >= 30],
+    ['t50', '✨', 'チェック50回', st.total >= 50]
+  ];
+}
+var gMp = null;   // { token, c, plan }
+function renderMyPlan(c, token){
+  var el = $('mpArea');
+  if(!el) return;
+  if(!c || c.kind !== 'user' || c.active === false || c.toMember){ el.innerHTML = ''; return; }
+  gMp = { token: token, c: c, plan: gMp && gMp.token === token ? gMp.plan : null };
+  db.collection('cards').doc(token).collection('plan').doc('me').get().then(function(s){
+    gMp.plan = s.exists ? s.data() : null;
+    mpDraw();
+  }).catch(function(){ mpDraw(); });
+}
+function mpDraw(){
+  var el = $('mpArea'), c = gMp.c, plan = gMp.plan, today = todayStr();
+  var co = plan && mpCourse(plan.course);
+  if(!co){
+    el.innerHTML = '<div class="mpwrap"><div class="next-head">MY PLAN</div>'
+      + '<p class="mp-lead">コースを選ぶと、毎日のクエスト（ケアの習慣）が決まります。できたらチェックして、連続記録とバッジを集めよう。</p>'
+      + MP_COURSES.map(function(x){ return '<button class="mpco" data-co="' + x.k + '" style="--mc:' + x.c + ';"><b>' + esc(x.n) + '</b><span>' + esc(x.sub) + '</span></button>'; }).join('')
+      + mpBadgeHtml(c, plan) + '</div>';
+    Array.prototype.forEach.call(el.querySelectorAll('[data-co]'), function(b){ b.onclick = function(){ mpSetup(b.getAttribute('data-co')); }; });
+    return;
+  }
+  var qs = co.q.filter(function(q){ return (plan.qs || []).indexOf(q[0]) >= 0; });
+  if(!qs.length) qs = co.q.slice(0, 3);
+  var done = (plan.days && plan.days[today]) || [], st = mpStats(plan, today);
+  var week = []; for(var i = 6; i >= 0; i--){ var d = mpAddDays(today, -i); week.push({ d: d, n: ((plan.days || {})[d] || []).length }); }
+  var wd = ['日', '月', '火', '水', '木', '金', '土'];
+  el.innerHTML = '<div class="mpwrap" style="--mc:' + co.c + ';"><div class="next-head">MY PLAN</div>'
+    + '<div class="mp-top"><span class="mp-co">' + esc(co.n) + '</span>' + (plan.goal ? '<span class="mp-goal">目標：' + esc(plan.goal) + '</span>' : '') + '</div>'
+    + '<div class="mp-st"><div><b class="mono">' + st.streak + '</b><small>日連続</small></div><div><b class="mono">Lv.' + st.lv + '</b><small>次まで ' + (15 - st.xp) + '</small></div><div><b class="mono">' + st.daysDone + '</b><small>日できた</small></div></div>'
+    + '<div class="mp-lvbar"><i style="width:' + Math.round(st.xp / 15 * 100) + '%;"></i></div>'
+    + '<div class="mp-h">今日のクエスト <small>' + done.length + '/' + qs.length + '</small></div>'
+    + qs.map(function(q){ var on = done.indexOf(q[0]) >= 0; return '<button class="mpq' + (on ? ' on' : '') + '" data-q="' + q[0] + '" aria-pressed="' + on + '"><i>' + (on ? '✓' : '') + '</i>' + esc(q[1]) + '</button>'; }).join('')
+    + (done.length === qs.length ? '<p class="mp-all">🎉 今日のクエストは全部できました！</p>' : '')
+    + '<div class="mp-week">' + week.map(function(x){ var p = x.d.split('-'), dt = new Date(+p[0], +p[1] - 1, +p[2]); return '<span class="' + (x.n ? 'on' : '') + (x.d === today ? ' td' : '') + '"><i></i>' + wd[dt.getDay()] + '</span>'; }).join('') + '</div>'
+    + mpBadgeHtml(c, plan)
+    + '<button class="mp-edit" id="mypEdit">プランを変える</button></div>';
+  Array.prototype.forEach.call(el.querySelectorAll('[data-q]'), function(b){ b.onclick = function(){ mpToggle(b.getAttribute('data-q')); }; });
+  $('mypEdit').onclick = function(){ mpSetup(plan.course); };
+}
+function mpBadgeHtml(c, plan){
+  var bs = mpBadges(c, plan, mpStats(plan, todayStr())), n = bs.filter(function(b){ return b[3]; }).length;
+  return '<div class="mp-h">バッジ <small>' + n + '/' + bs.length + '</small></div><div class="mp-bd">'
+    + bs.map(function(b){ return '<span class="' + (b[3] ? 'on' : '') + '" title="' + esc(b[2]) + '"><i>' + (b[3] ? b[1] : '🔒') + '</i>' + esc(b[2]) + '</span>'; }).join('') + '</div>';
+}
+function mpSave(plan){
+  plan.atMs = Date.now();
+  return db.collection('cards').doc(gMp.token).collection('plan').doc('me').set(plan).then(function(){ gMp.plan = plan; mpDraw(); })
+    .catch(function(){ toast('保存できませんでした。電波の良いところでもう一度お試しください'); });
+}
+function mpToggle(qk){
+  var plan = JSON.parse(JSON.stringify(gMp.plan)), today = todayStr(), days = plan.days || {}, L = (days[today] || []).slice();
+  var i = L.indexOf(qk);
+  if(i >= 0) L.splice(i, 1); else L.push(qk);
+  if(L.length) days[today] = L; else delete days[today];
+  // 古い日（400日より前）は消す（データを小さく保つ）
+  var cut = mpAddDays(today, -400);
+  Object.keys(days).forEach(function(k){ if(k < cut) delete days[k]; });
+  plan.days = days;
+  var before = mpStats(gMp.plan, today).streak;
+  mpSave(plan).then(function(){
+    var st = mpStats(plan, today);
+    if(i < 0 && st.streak > before && (st.streak === 3 || st.streak === 7 || st.streak === 30)) toast('🔥 ' + st.streak + '日連続！バッジをもらいました');
+  });
+}
+function mpSetup(courseK){
+  var cur = gMp.plan || {}, sel = courseK || cur.course || 'diet';
+  var draw = function(){
+    var co = mpCourse(sel), qs = (cur.course === sel && cur.qs && cur.qs.length) ? cur.qs : co.q.slice(0, 3).map(function(q){ return q[0]; });
+    var h = ckPrysmHist(gMp.c), nx = h.length ? ckPrysmNext(h[h.length - 1].v) : null;
+    modal('<h2>📝 マイプラン</h2>'
+      + '<label>コース</label><div class="ulg-chips" id="mypCo">' + MP_COURSES.map(function(x){ return '<button type="button" data-k="' + x.k + '"' + (x.k === sel ? ' class="on"' : '') + '>' + esc(x.n) + '</button>'; }).join('') + '</div>'
+      + '<label style="margin-top:14px;">毎日のクエスト <small style="font-weight:400;color:var(--sub);">（1〜5こ選ぶ）</small></label><div id="mypQs">'
+      + co.q.map(function(q){ return '<label class="mpqs"><input type="checkbox" value="' + q[0] + '"' + (qs.indexOf(q[0]) >= 0 ? ' checked' : '') + '>' + esc(q[1]) + '</label>'; }).join('') + '</div>'
+      + '<label style="margin-top:14px;">目標 <small style="font-weight:400;color:var(--sub);">（なくても可）</small></label>'
+      + '<input type="text" id="mypGoal" maxlength="40" value="' + esc(cur.goal || '') + '" placeholder="例: 30日つづける">'
+      + '<div class="ulg-chips" id="mypGoalSug">' + ['30日つづける', '毎日1つはやる'].concat(nx ? ['次の測定で' + nx.b.n + 'にする'] : []).map(function(t){ return '<button type="button" data-g="' + esc(t) + '">' + esc(t) + '</button>'; }).join('') + '</div>'
+      + '<p style="font-size:11.5px;color:var(--sub);margin:12px 0 0;">クエストは毎日の習慣のチェックです。使う製品やケアの方法は、会場でスタッフに聞いてください。</p>'
+      + '<div class="btns"><button id="mypCancel">キャンセル</button><button class="primary" id="mypGo">' + (cur.course ? '保存' : 'はじめる') + '</button></div>');
+    $('mypCo').onclick = function(e){ var b = e.target.closest ? e.target.closest('button[data-k]') : null; if(b){ cur.goal = $('mypGoal').value; sel = b.getAttribute('data-k'); draw(); } };
+    $('mypGoalSug').onclick = function(e){ var b = e.target.closest ? e.target.closest('button[data-g]') : null; if(b) $('mypGoal').value = b.getAttribute('data-g'); };
+    $('mypCancel').onclick = closeModal;
+    $('mypGo').onclick = function(){
+      var pick = [].map.call(document.querySelectorAll('#mypQs input:checked'), function(x){ return x.value; });
+      if(!pick.length){ toast('クエストを1つ以上選んでください'); return; }
+      if(pick.length > 5){ toast('クエストは5つまでです'); return; }
+      var plan = { course: sel, goal: $('mypGoal').value.trim().slice(0, 40), qs: pick, start: (gMp.plan && gMp.plan.start) || todayStr(), days: (gMp.plan && gMp.plan.days) || {} };
+      closeModal();
+      mpSave(plan).then(function(){ toast(gMp.plan && gMp.plan.course ? 'プランを保存しました' : 'マイプランを始めました'); });
+    };
+  };
+  draw();
+}
 function ckRenderUserCard(c, card, brand){
   gCardLast = c;
   card.classList.add('mc-user');
@@ -3701,19 +3878,23 @@ var CARD_BACK_BASE = 'skins/back-base.webp';
 function ckBackCfg(union){
   var c = null;
   try{ c = JSON.parse(localStorage.getItem('bci_cbk_' + (union || '')) || 'null'); }catch(e){}
-  if(c) return { logo: c.logo || '', all: !!c.all, img: c.img || '' };
-  return CARD_BACKS[union || ''] || {};
+  if(c && !c.none) return { logo: c.logo || '', all: !!c.all, img: c.img || '' };
+  return CARD_BACKS[union || ''] || {};   // 設定なし（v122: none の印＝確認済み）は組み込みのまま
 }
 var gBackSynced = {};
 function ckBackSync(union, after){
   if(!union) return;
   var key = 'bci_cbk_' + union, old = null;
   try{ old = JSON.parse(localStorage.getItem(key) || 'null'); }catch(e){}
+  var noAt = function(o){ if(!o) return o; var x = {}; Object.keys(o).forEach(function(k){ if(k !== 'at') x[k] = o[k]; }); return x; };
   var done = function(nc){
-    var was = JSON.stringify(old), now = JSON.stringify(nc);
-    try{ if(nc) localStorage.setItem(key, now); else localStorage.removeItem(key); }catch(e){}
+    var was = JSON.stringify(noAt(old)), now = JSON.stringify(noAt(nc));
+    try{ if(nc){ nc.at = Date.now(); localStorage.setItem(key, JSON.stringify(nc)); } else localStorage.setItem(key, JSON.stringify({ none: true, at: Date.now() })); }catch(e){}
     if(was !== now && after) after();
   };
+  // v122: 裏面の設定は6時間覚える（会員証を開くたびに読まない。オーナーが変えた時は最大6時間おくれて出る・オーナーは毎回読む）
+  if(old && old.at && Date.now() - old.at < 6 * 3600000 && !ckIsOwnerNow()) return;
+  if(old && old.none) old = null;
   (gBackSynced[union] || (gBackSynced[union] = db.collection('cardBacks').doc(union).get())).then(function(s){
     if(!s.exists){ done(null); return; }
     var d = s.data();
@@ -4443,7 +4624,13 @@ function showCardView(token){
         }
         renderCard(c);
         renderPrysm(c);
+        renderMyPlan(c, token);
         renderReceipts(c);
+        if(c.toMember && c.toCard){
+          // 🎓 研修生になった人: 研修生のカード（VISITOR PASS）へ案内（このページの記録はそのまま見られる）
+          $('pzArea').insertAdjacentHTML('afterbegin', '<div class="utnote">🎓 研修生になりました。これからは<b>研修生のカード（VISITOR PASS）</b>で受付します。'
+            + '<a class="primary" href="' + esc(cardUrl(c.toCard)) + '">研修生のカードを開く</a></div>');
+        }
         var cu = { kind: 'user', no: c.no, name: c.name, union: c.union, referrer: c.referrer || '' };
         Object.keys(c).forEach(function(k){ if(k.indexOf('pz_') === 0) cu[k] = c[k]; });
         try{ localStorage.setItem('bci_card_' + token, JSON.stringify(cu)); }catch(e4){}
@@ -5457,11 +5644,33 @@ function renderRsvpTop(c, all){
 }
 // 読み取りを減らす：自分のユニオンの予定だけを読む（前は全ユニオンのこれからの予定を全部読んで、画面側で絞っていた）。
 // この読み方にはFirestoreの複合インデックス（unions＋date。firestore.indexes.json）が要る。まだ無い時は今までの読み方に戻す
+// v122: 読み取りを減らす。会員証を開くたびに読むので、
+//   ・これからのイベントは日付の近い順に最大30件まで（索引 unions+date がある時）
+//   ・索引が無い時の代わりの読み方は「90日先まで・40件まで」（前は全ユニオンのこれからのイベントを全部読んでいた）
+//   ・読んだ結果は端末に10分覚える（予約・受講の状態は会員証の側にあるので、最新のまま）
+var CK_UP_MS = 10 * 60000;
 function ckUpcomingQuery(c){
-  var t = todayStr();
-  return db.collection('checkinEvents').where('unions', 'array-contains', c.union || '').where('date', '>=', t).get()
-    .catch(function(){ return db.collection('checkinEvents').where('date', '>=', t).get(); });
+  var t = todayStr(), un = c.union || '', key = 'bci_up_' + un;
+  try{
+    var o = JSON.parse(localStorage.getItem(key) || 'null');
+    if(o && o.d === t && Date.now() - o.at < CK_UP_MS && Array.isArray(o.list)) return Promise.resolve(ckFakeQs(o.list));
+  }catch(e){}
+  var end = (function(){ var d = new Date(); d.setDate(d.getDate() + 90); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); })();
+  return db.collection('checkinEvents').where('unions', 'array-contains', un).where('date', '>=', t).orderBy('date').limit(30).get()
+    .catch(function(){ return db.collection('checkinEvents').where('date', '>=', t).where('date', '<=', end).orderBy('date').limit(40).get(); })
+    .then(function(qs){
+      var list = [];
+      qs.forEach(function(d){ var ev = d.data(); if((ev.unions || []).indexOf(un) >= 0) list.push({ id: d.id, d: ev }); });
+      try{ localStorage.setItem(key, JSON.stringify({ at: Date.now(), d: t, list: list })); }catch(e2){}
+      return ckFakeQs(list);
+    });
 }
+// 覚えておいた結果を、Firestore の結果と同じ形（forEach / d.id / d.data()）で返す
+function ckFakeQs(list){
+  return { size: list.length, empty: !list.length, forEach: function(f){ list.forEach(function(x){ f({ id: x.id, data: function(){ return JSON.parse(JSON.stringify(x.d)); } }); }); } };
+}
+// 予約・受講の申請をした時などは、覚えておいた結果を消して読み直す
+function ckUpcomingForget(un){ try{ localStorage.removeItem('bci_up_' + (un || '')); }catch(e){} }
 function renderUpcoming(c, openId){
   ckUpcomingQuery(c).then(function(qs){
     var t = todayStr(), all = [];
@@ -7352,7 +7561,11 @@ Array.prototype.forEach.call(tabs, function(b){
     $(b.getAttribute('data-pane')).classList.add('on');
     setTimeout(setTbh, 0);   // 非表示中は高さ0で測れないため、表示後にヘッダー高さを再計測
     if(b.getAttribute('data-pane') === 'pKiosk' && gRec) focusScan();
-    if(b.getAttribute('data-pane') === 'pFin') loadFinanceTab();
+    // v122: 会計タブは、同じユニオン・同じ月を2分以内に読んでいれば読み直さない（前はタブを押すたびに月のイベント全部と会計を読んでいた）
+    if(b.getAttribute('data-pane') === 'pFin'){
+      var fk = gFinUnion + '|' + monthKey(gMonth.y, gMonth.m);
+      if(!(gFinLoaded.k === fk && Date.now() - gFinLoaded.at < 120000)) loadFinanceTab();
+    }
     if(b.getAttribute('data-pane') === 'pStats' && (gStatDirty || !gStat)) loadStatsNow();
   };
 });
@@ -7865,13 +8078,17 @@ function renderUserRoster(){
     shown++;
     html += '<tr>'
       + '<td class="rc-nm"><b>' + esc(u.name || '') + '</b>' + (u.active === false ? ' <span class="pill n">無効</span>' : '')
-      + (u.prysm != null ? ' ' + ckPrysmChip(u.prysm) + ' <span class="mono" style="font-size:12.5px;">' + Number(u.prysm).toLocaleString() + '</span>' : '') + '</td>'
+      + (u.prysm != null ? ' ' + ckPrysmChip(u.prysm) + ' <span class="mono" style="font-size:12.5px;">' + Number(u.prysm).toLocaleString() + '</span>' : '')
+      + (u.toMember ? ' <span class="pill n">研修生 ' + esc(u.toMember) + '</span>' : '') + '</td>'
       + '<td class="rc-gr">' + (u.referrer ? '紹介: ' + esc(u.referrer) : '') + '</td>'
       + '<td class="rc-no">来場 ' + (u.visits || 0) + '回</td>'
       + '<td class="rc-st">' + esc(ckUserDay(u.lastAt)) + '</td>'
       + '<td class="rc-op"><div class="rowbtns">'
       + '<button data-ua="qr" data-uid="' + esc(u.uid) + '">QR</button>'
       + '<button data-ua="edit" data-uid="' + esc(u.uid) + '">編集</button>'
+      + (canEditUnion(un) && u.active !== false
+        ? (u.toMember ? '<button data-ua="back" data-uid="' + esc(u.uid) + '">ユーザーに戻す</button>'
+                      : '<button data-ua="tr" data-uid="' + esc(u.uid) + '">🎓 研修生にする</button>') : '')
       + '<button data-ua="tog" data-uid="' + esc(u.uid) + '">' + (u.active === false ? '有効化' : '無効化') + '</button>'
       + '<button data-ua="del" data-uid="' + esc(u.uid) + '" class="danger ghost">削除</button>'
       + '</div></td></tr>';
@@ -7898,6 +8115,86 @@ function ckUserSave(u, up, msg){
     renderUserRoster();
     if(msg) toast(msg);
   }).catch(function(e){ toast(permMsg(e, 'ユーザーの保存に失敗しました')); });
+}
+/* 🎓 段階7: ユーザー → 研修生。同じ人なので、ユーザーの記録（来場・測定・購入）はそのまま残し、
+   ビジネスの名簿に研修生を作ってつなぐ（checkinUsers.toMember＝研修生の番号・研修生の名簿に fromUser）。
+   本人の同意を確かめてから。紹介者はユーザーの紹介者のまま（NAVIGATORのMAPでは紹介者の下の研修生になる）。
+   研修生のあいだ・研修生をやめた時は「ユーザーに戻す」（研修生の名簿はそのまま＝消すのは研修担当） */
+function ckUserToTrainee(u){
+  var un = gRosterUnion;
+  if(!canEditUnion(un)){ toast('研修生にできるのは、このユニオンの管理者です'); return; }
+  var ref = null;
+  gMembers.forEach(function(m){ if(!ref && u.referrerNo && m.no === u.referrerNo) ref = m; });
+  var cnt = {};
+  gMembers.forEach(function(m){ if(m.group && !ckMemberOff(m)) cnt[m.group] = (cnt[m.group] || 0) + 1; });
+  var gs = Object.keys(cnt).sort(), def = ref && ref.group ? ref.group : '';
+  modal('<h2>🎓 研修生にする</h2>'
+    + '<p style="font-size:13.5px;margin:0 0 6px;">' + esc(u.name || '') + ' さんを、<b>' + esc(un) + '</b> の研修生として名簿に入れます。'
+    + 'ユーザーの記録（来場 ' + (u.visits || 0) + '回・測定・お買い上げ）はそのまま残ります。</p>'
+    + '<label>氏名</label><input type="text" id="utName" value="' + esc(u.name || '') + '">'
+    + '<label>ふりがな <small style="font-weight:400;color:var(--sub);">（なくても可）</small></label><input type="text" id="utKana">'
+    + '<label>紹介者</label><input type="text" id="utRef" value="' + esc(u.referrer || '') + '">'
+    + '<label>UPルビー（系列）</label><select id="utUp">' + (def ? '' : '<option value="">選んでください</option>')
+    + gs.map(function(g){ return '<option value="' + esc(g) + '"' + (g === def ? ' selected' : '') + '>' + esc(g) + '</option>'; }).join('') + '</select>'
+    + '<label style="display:flex;align-items:flex-start;gap:8px;margin-top:14px;cursor:pointer;font-weight:700;">'
+    + '<input type="checkbox" id="utOk" style="width:auto;margin:3px 0 0;">本人に、研修生（ビジネスメンバー）になることの同意をもらいました</label>'
+    + '<div class="btns"><button id="utCancel">キャンセル</button><button class="primary" id="utGo">研修生にする</button></div>');
+  $('utCancel').onclick = closeModal;
+  $('utGo').onclick = function(){
+    var name = $('utName').value.trim(), refName = $('utRef').value.trim(), up = $('utUp').value;
+    if(!$('utOk').checked){ toast('本人の同意を確かめてから、チェックを入れてください'); return; }
+    if(!name){ toast('氏名を入れてください'); return; }
+    if(!refName){ toast('紹介者を入れてください'); return; }
+    if(!up){ toast('UPルビーを選んでください'); return; }
+    $('utGo').disabled = true;
+    fetchMembers(un, true).then(function(list){
+      var no = nextMemberNo(list, un);
+      if(!no) throw { code: 'nopre' };
+      var data = { no: no, union: un, name: name, group: up, kana: $('utKana').value.trim(), sex: '', referrer: refName,
+        grade: '', active: true, trainee: true, trainings: {}, fromUser: u.uid,
+        regBy: gUser.uid, regByName: (gProf && gProf.name) || '', createdAt: FV.serverTimestamp(), updatedAt: FV.serverTimestamp() };
+      return db.collection('checkinMembers').doc(no).get().then(function(sn){
+        if(sn.exists) throw { code: 'dup' };
+        return db.collection('checkinMembers').doc(no).set(data);
+      }).then(function(){
+        return new Promise(function(res){ issueCard(data, function(tok){ res(tok); }).then(function(){ res(data.cardToken || ''); }); });
+      }).then(function(tok){
+        var now = Date.now(), b = db.batch();
+        b.set(db.collection('checkinUsers').doc(u.uid), { toMember: no, toMemberAt: now }, { merge: true });
+        if(u.cardToken) b.set(db.collection('cards').doc(u.cardToken), { toMember: no, toCard: tok || '' }, { merge: true });
+        return b.commit().then(function(){
+          u.toMember = no; u.toMemberAt = now;
+          gMembers.push(data); delete gMemCache[un];
+          renderUserRoster();
+          modal('<h2>🎓 研修生にしました</h2>'
+            + '<p style="font-size:13.5px;">' + esc(name) + ' さん（<b class="mono">' + esc(no) + '</b>）。本人のスマホでこのQRを読んでもらうと、研修生のカード（VISITOR PASS）が開きます。'
+            + '前のユーザーのQRで受付しても、研修生として受付されます。</p>'
+            + '<div id="utQr" style="display:flex;justify-content:center;background:#fff;padding:14px;border-radius:12px;"></div>'
+            + '<div class="btns"><button id="utDone" class="primary">閉じる</button></div>', true);
+          if(tok) makeQr($('utQr'), cardUrl(tok), 220); else $('utQr').innerHTML = '<p style="color:#555;">会員証は名簿の「会員証」から発行してください</p>';
+          $('utDone').onclick = closeModal;
+          toast(name + ' さんを研修生にしました（' + no + '）');
+        });
+      });
+    }).catch(function(e){
+      $('utGo').disabled = false;
+      if(e && e.code === 'dup') toast('番号が重なりました。もう一度押してください');
+      else if(e && e.code === 'nopre') toast('番号の自動発番に失敗しました。ユニオンの番号の頭文字を確認してください');
+      else toast(permMsg(e, '研修生にできませんでした'));
+    });
+  };
+}
+// 研修生をやめた（流れた）時など: ユーザーに戻す。研修生の名簿は消さない（消すのは研修担当・管理者）
+function ckUserBackToUser(u){
+  if(!window.confirm(u.name + ' さんをユーザーに戻しますか？\nユーザーのQRで、ユーザーとして受付されるようになります。研修生の名簿（' + u.toMember + '）はそのまま残ります（必要なら名簿から無効化・削除してください）。')) return;
+  var b = db.batch();
+  b.set(db.collection('checkinUsers').doc(u.uid), { toMember: FV.delete(), toMemberAt: FV.delete(), backAt: Date.now() }, { merge: true });
+  if(u.cardToken) b.set(db.collection('cards').doc(u.cardToken), { toMember: FV.delete(), toCard: FV.delete() }, { merge: true });
+  b.commit().then(function(){
+    delete u.toMember; delete u.toMemberAt; u.backAt = Date.now();
+    renderUserRoster();
+    toast(u.name + ' さんをユーザーに戻しました');
+  }).catch(function(e){ toast(permMsg(e, 'ユーザーに戻せませんでした')); });
 }
 function ckUserEditModal(u){
   modal('<h2>ユーザーの編集</h2>'
@@ -7927,6 +8224,10 @@ $('rosterBody').addEventListener('click', function(e){
     ckUserQrModal(u.name, u.cardToken);
   } else if(a === 'edit'){
     ckUserEditModal(u);
+  } else if(a === 'tr'){
+    ckUserToTrainee(u);
+  } else if(a === 'back'){
+    ckUserBackToUser(u);
   } else if(a === 'tog'){
     var on = u.active === false;
     if(!on && !window.confirm(u.name + ' さんを無効にしますか？\nカードのQRで受付できなくなります（記録は残ります）。')) return;
@@ -11983,8 +12284,10 @@ $('btnFinCsv').onclick = function(){
 };
 
 /* 会計タブ: 月内イベントの会計状況一覧 */
+var gFinLoaded = { k: '', at: 0 };
 function loadFinanceTab(){
   if(!ckCanView(gFinUnion)) gFinUnion = gUnion;
+  gFinLoaded = { k: gFinUnion + '|' + monthKey(gMonth.y, gMonth.m), at: Date.now() };
   // 会計はユニオン管理者・受付管理者・オーナーだけ。自分が管理するユニオンを優先して開く
   if(!isOwner() && !canEditUnion(gFinUnion)){
     var mine = gUnions.filter(function(u){ return canEditUnion(u); })[0];
@@ -12253,8 +12556,9 @@ function startReception(ev){
 
   // 見られるユニオンの名簿をロード（他ユニオンの名簿はDBルールで読めないため、
   // 他ユニオンのメンバーはスキャン時に会員証（番号→カード）から照会してビジター受付する）
-  var unionSet = ckViewableUnions();
-  if(unionSet.indexOf(gUnion) < 0) unionSet.push(gUnion);
+  // v122: 読むのは「このイベントの参加ユニオン（見られるもの）＋自分のユニオン」だけ
+  //   （前はオーナーだと全ユニオンの名簿を読んでいた。ほかのユニオンの人はスキャン時に会員証から照会できる）
+  var unionSet = [gUnion];
   (ev.unions || []).forEach(function(u){ if(unionSet.indexOf(u) < 0 && ckCanView(u)) unionSet.push(u); });
   var loads = unionSet.map(function(u){
     return db.collection('checkinMembers').where('union', '==', u).get().then(function(qs){
@@ -13523,6 +13827,19 @@ function ckUserScan(uid, sig, method){
       beep('ng');
       setStage('ng', '<span class="hit-badge">使えないユーザーQR</span><div class="hit-name">' + esc(r.c.name || '') + '</div>'
         + '<p class="stage-sub">このユーザーは名簿で無効になっています。</p>');
+      return;
+    }
+    if(r.c.toMember){
+      // 🎓 研修生になった人: 前のユーザーQRでも、研修生として受付する
+      var tn = String(r.c.toMember), tm = gRec.roster[tn];
+      if(tm){ checkinMember(tm, method, null); return; }
+      ckVisitorLookup(tn, null).then(function(v){
+        if(!gRec || gRec.ev !== ev0) return;
+        if(v && v.active){ gRec.roster[tn] = v; checkinMember(v, method, null); return; }
+        beep('ng');
+        setStage('ng', '<span class="hit-badge">研修生の会員証が見つかりません</span><div class="hit-name">' + esc(r.c.name || '') + '</div>'
+          + '<p class="stage-sub">研修生の番号 ' + esc(tn) + ' で受付してください（手入力で番号を入れても受付できます）。</p>');
+      });
       return;
     }
     if(gRec.att[uid]){ ckUserScan(uid, sig, method); return; }   // 読み込みのあいだに別の端末で受付済み

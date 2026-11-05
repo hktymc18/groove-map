@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v864';
+var APP_JS_VERSION = 'v866';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4574,7 +4574,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v864';
+  var DATA_VERSION = 'v866';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6686,6 +6686,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v866', d:'2026-11-05', items:['読み込みを軽くしました（予定・ユニオンの予定を少しのあいだ端末に覚える／受付との連携・通知の登録の読み直しを減らす）。ほかの端末で足した予定は、最大10分おくれて出ることがあります'] },
+  { v:'v865', d:'2026-11-03', items:['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v:'v864', d:'2026-11-03', items:['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v:'v863', d:'2026-11-02', items:['カレンダーを縦（連続）にしている時、iPhoneで予定を追加すると1年後の月まで飛んでしまうことがあったのを直しました'] },
   { v:'v862', d:'2026-11-02', items:['カレンダー（月）の予定の帯を、最初から「時間の長さで伸ばす」にしました（⋯の設定で「固定（1行）」を選んだ人はそのまま）'] },
@@ -8246,6 +8248,16 @@ function _ckTrSyncAll(roster) {
   });
   return out;
 }
+// v866: 受付のユニオンの一覧（checkinUnions・ほとんど変わらない）は端末に1日覚える（研修の取り込み・ユーザー台帳・受付連携で共通）
+function _ckUnionsList(force) {
+  var k = 'gm_ckUnions';
+  if (!force) { try { var c = JSON.parse(localStorage.getItem(k) || 'null'); if (c && c.at && Date.now() - c.at < 86400000 && Array.isArray(c.list) && c.list.length) return Promise.resolve(c.list); } catch (e) {} }
+  return db.collection('checkinUnions').get().then(function(qs) {
+    var unions = []; qs.forEach(function(d) { var u = d.data() || {}; unions.push({ id: d.id, area: u.area || '' }); });
+    try { if (unions.length) localStorage.setItem(k, JSON.stringify({ at: Date.now(), list: unions })); } catch (e2) {}
+    return unions;
+  });
+}
 // MAPを開いた時に自動で（1日1回）。自分のMAPを編集できる時だけ
 function ckTrAuto(force) {
   try {
@@ -8254,8 +8266,7 @@ function ckTrAuto(force) {
     if (!force) { try { if (localStorage.getItem(key) === today) return; } catch (e0) {} }
     if (window._ckTrBusy) return; window._ckTrBusy = true;
     var un = '';
-    db.collection('checkinUnions').get().then(function(qs) {
-      var unions = []; qs.forEach(function(d) { var u = d.data() || {}; unions.push({ id: d.id, area: u.area || '' }); });
+    _ckUnionsList(force).then(function(unions) {
       un = _ckPickUnion(unions, ''); if (!un) { try { localStorage.setItem(key, today); } catch (eK) {} return null; } // v807: 受付に自分のユニオンが無い時も「今日は確認済み」に（前は開くたび・MAPを開くたびに読み直していた）
       return db.collection('checkinMembers').where('union', '==', un).get();
     }).then(function(qs) {
@@ -8271,7 +8282,7 @@ function ckTrAuto(force) {
       _memMap = null; autoSave(); try { renderCurrentView(); } catch (e2) {}
       if (o.n) toast('🎓 受付から研修の記録を取り込みました（' + o.ppl + '人・' + o.n + '件）');
       if (o.promo.length) setTimeout(function() { toast('⭐ 受付で昇格した人：' + o.promo.slice(0, 3).join('・') + (o.promo.length > 3 ? ' ほか' + (o.promo.length - 3) + '人' : '') + '（MAPの研修結果は必要なら直してください）'); }, o.n ? 3200 : 0);
-    }).catch(function() { window._ckTrBusy = false; });
+    }).catch(function() { window._ckTrBusy = false; try { localStorage.setItem(key, today); } catch (eF) {} }); // v866: 読めなかった日も「今日は確認済み」に（前はMAPを開くたびに読み直していた）
   } catch (e) { window._ckTrBusy = false; }
 }
 var _ckLink = null;
@@ -23237,7 +23248,7 @@ function _uxIb(k) { return UX_INFO[k] ? '<span class="ux-ib" onclick="uxInfo(\''
 //   ユーザー側は一覧（スマホ）／表（PC）で、ADP・購入・ニーズ・プロフィールを持つ。「研修生にする」でビジネスのMAPへ。
 //   項目：adp {on, next}／buys [{t, d}]（新しい順・20件まで）／needs [タグ]／needMemo／uMemo／fromUser（研修生にした日）
 //   あとで（ユーザー用QR会員証）：ckNo・cardToken・uVisits（イベント来場回数）・uGrade（グレード）を受付から入れる予定（今は画面に出さない）
-var UM_KEYS = ['adp', 'buys', 'needs', 'needMemo', 'uMemo', 'fromUser', 'toUser', 'ckNo', 'cardToken', 'uVisits', 'uGrade', 'uLastAt', 'uPrysm', 'uPrysmD', 'uCkAt']; // メンバー画面の保存で落とさない（v864: 受付から）
+var UM_KEYS = ['adp', 'buys', 'needs', 'needMemo', 'uMemo', 'fromUser', 'toUser', 'ckNo', 'cardToken', 'uVisits', 'uGrade', 'uLastAt', 'uPrysm', 'uPrysmD', 'uCkAt', 'ckToMember']; // メンバー画面の保存で落とさない（v864: 受付から）
 var _umMode = false, _umFlt = 'all', _umRef = '', _umSort = 'ref', _umOpenId = '', _umBuyF = false;
 try { _umMode = localStorage.getItem('gm_umMode') === '1'; } catch (e) {}
 function isUserM(m) { if (!m || m.deleted) return false; var t = String(m.title || '').trim(); return t === 'ユーザー' || /^U$/i.test(t); }
@@ -23549,8 +23560,7 @@ function umCkSync(force) {
   var un = '';
   _bxLoad().then(function() {
     if (!_bxOn()) return null;
-    return db.collection('checkinUnions').get().then(function(qs) {
-      var unions = []; qs.forEach(function(d) { var u = d.data() || {}; unions.push({ id: d.id, area: u.area || '' }); });
+    return _ckUnionsList(force).then(function(unions) {
       un = _ckPickUnion(unions, ''); if (!un) return null;
       return db.collection('checkinUsers').where('union', '==', un).get();
     });
@@ -23564,7 +23574,7 @@ function umCkSync(force) {
       var ref = refByNo[cu.referrerNo || ''];
       if (!ref) { res.noRef++; return; }
       if (gone[cu.uid]) return;
-      var L = _umList(), u = L.filter(function(x) { return x.ckNo === cu.uid; })[0];
+      var L = _umList(), u = (state.members || []).filter(function(x) { return !x.deleted && !x._foreign && x.ckNo === cu.uid; })[0]; // v865: 研修生になった人も（ユーザーでなくても）
       if (!u) {
         var nm = _ckNorm(cu.name || '');
         u = L.filter(function(x) { return !x.ckNo && x.parentId === ref.id && _ckNorm((x.lastName || '') + (x.firstName || '')) === nm; })[0];
@@ -23582,7 +23592,10 @@ function umCkSync(force) {
       u.uVisits = cu.visits || 0; u.uLastAt = cu.lastAt || 0;
       if (cu.prysm != null) { u.uPrysm = cu.prysm; u.uPrysmD = cu.prysmAt || 0; }
       u.uCkAt = Date.now();
-      if (JSON.stringify([u.ckNo, u.cardToken, u.uVisits, u.uLastAt, u.uPrysm]) !== before) res.upd++;
+      // v865: 受付で研修生にした人 → MAPでも紹介者の下の研修生に（受付の研修生の番号でつなぐ＝研修の記録も入る）。戻したらユーザーに
+      if (cu.toMember && isUserM(u)) { u.title = ''; u.trainee = true; u.cat = '研修生'; u.fromUser = evTodayYmd(); u.checkinNo = cu.toMember; u.ckToMember = cu.toMember; res.tr = (res.tr || 0) + 1; }
+      else if (!cu.toMember && u.ckToMember && !isUserM(u) && u.checkinNo === u.ckToMember && _ckIsTrainee(u)) { u.title = 'ユーザー'; u.trainee = false; u.cat = (typeof detectCategory === 'function' ? detectCategory('ユーザー') : '') || ''; delete u.checkinNo; delete u.ckToMember; u.toUser = evTodayYmd(); res.back = (res.back || 0) + 1; }
+      if (JSON.stringify([u.ckNo, u.cardToken, u.uVisits, u.uLastAt, u.uPrysm]) !== before || res.tr || res.back) res.upd++;
       if (cu.cardToken) jobs.push(db.doc('cards/' + cu.cardToken).get().then(function(c) { // 会場でのお買い上げ
         var cd = c.exists ? (c.data() || {}) : {}, B = (Array.isArray(u.buys) ? u.buys : []).slice(), had = {}, n0 = B.length;
         B.forEach(function(b) { if (b.ck) had[b.ck] = 1; });
@@ -23596,7 +23609,10 @@ function umCkSync(force) {
       _umCkBusy = false;
       var nb = bs.reduce(function(a, b) { return a + (b || 0); }, 0);
       if (res.add || res.link || res.upd || nb) { _memMap = null; _umSaved(true); }
-      if (res.add || res.link) toast('🎫 受付からユーザーを取り込みました（新しく ' + res.add + '人' + (res.link ? '・つないだ ' + res.link + '人' : '') + '）');
+      if (res.add || res.link || res.tr || res.back) { _umRepaint(); try { renderCurrentView(); } catch (eR) {} }
+      if (res.tr) toast('🎓 受付で研修生になった人を、MAPの研修生にしました（' + res.tr + '人）');
+      else if (res.back) toast('受付でユーザーに戻した人を、ユーザー台帳に戻しました（' + res.back + '人）');
+      else if (res.add || res.link) toast('🎫 受付からユーザーを取り込みました（新しく ' + res.add + '人' + (res.link ? '・つないだ ' + res.link + '人' : '') + '）');
       else if (force) toast('🎫 受付と同じです' + (res.noRef ? '（紹介者がMAPで受付とつながっていない人 ' + res.noRef + '人）' : ''));
       return res;
     });
@@ -26701,13 +26717,13 @@ function _p2ActRow(ym, key, kind, lb, need) {
 function p2TsOpen(mid) { try { ppOpen(mid, 'current'); if (_pp && _pp.id === mid) ppGo('tr'); } catch (e) {} } // v570: 研修履歴の結果を入れる（v783: 新しいメンバー画面の研修へ）
 // v550: ATTACK LIST（同じFirebaseの users/{uid}/people）から「手元のリスト」＝未着手・連絡中の人数を読む（10分キャッシュ）
 var _p2Al = { n: null, apo: null, at: 0, err: false, busy: false };
-// v807: 読み取りを減らす。結果は端末に6時間覚える（開き直しても読み直さない。ATTACK LISTを開いて戻った時は読み直す＝p2OpenAL）。
+// v807: 読み取りを減らす。結果は端末に6時間覚える（v866: 24時間）（開き直しても読み直さない。ATTACK LISTを開いて戻った時は読み直す＝p2OpenAL）。
 //   「数えるだけ」の読み方（count：1,000件まで1回分）が使えるSDKならそれで、使えない時（今のcompat 10.12）は今までどおり全員を読む
 function _p2AlLsKey() { return 'gm_p2Al_' + ((currentUser && currentUser.uid) || ''); }
 function _p2AlLoad(force) {
   if (!db || !currentUser || viewingOwnerUid || _p2Al.busy) return;
-  if (!force && !_p2Al.at) { try { var c0 = JSON.parse(localStorage.getItem(_p2AlLsKey()) || 'null'); if (c0 && c0.at && Date.now() - c0.at < 21600000) { _p2Al = { n: c0.n, apo: c0.apo, at: c0.at, err: false, busy: false }; return; } } catch (eL) {} }
-  if (!force && _p2Al.at && Date.now() - _p2Al.at < 21600000) return;
+  if (!force && !_p2Al.at) { try { var c0 = JSON.parse(localStorage.getItem(_p2AlLsKey()) || 'null'); if (c0 && c0.at && Date.now() - c0.at < 86400000) { _p2Al = { n: c0.n, apo: c0.apo, at: c0.at, err: false, busy: false }; return; } } catch (eL) {} }
+  if (!force && _p2Al.at && Date.now() - _p2Al.at < 86400000) return;
   _p2Al.busy = true;
   var col = db.collection('users/' + currentUser.uid + '/people');
   var done = function(n, apo) {
@@ -26724,11 +26740,14 @@ function _p2AlLoad(force) {
     });
   };
   var cnt = function(q) { return q.count().get().then(function(r) { return r.data().count || 0; }); };
-  if (typeof col.count !== 'function') { full().catch(fail); return; }
-  // 未着手・連絡中＋状態が未設定（＝未着手）＝ 全員 − 状態が入っている人 ＋ 未着手・連絡中の人
-  Promise.all([cnt(col), cnt(col.where('status', '>=', '')), cnt(col.where('status', 'in', ['未着手', '連絡中'])), cnt(col.where('status', '==', 'CT予定'))])
-    .then(function(r) { done(r[2] + Math.max(0, r[0] - r[1]), r[3]); })
-    .catch(function() { full().catch(fail); });
+  // v866: ATTACK LIST が書いておく人数のまとめ（users/{uid}/appData/alSummary）があれば、それを1件読むだけ（前はリストの全員を読んでいた）
+  var old = function() { if (typeof col.count !== 'function') return full(); return Promise.all([cnt(col), cnt(col.where('status', '>=', '')), cnt(col.where('status', 'in', ['未着手', '連絡中'])), cnt(col.where('status', '==', 'CT予定'))])
+    .then(function(r) { done(r[2] + Math.max(0, r[0] - r[1]), r[3]); }).catch(function() { return full(); }); };
+  db.doc('users/' + currentUser.uid + '/appData/alSummary').get().then(function(d) {
+    var x = d && d.exists ? (d.data() || {}) : null;
+    if (x && typeof x.n === 'number' && x.at && Date.now() - x.at < 30 * 86400000) { done(x.n, typeof x.apo === 'number' ? x.apo : null); return; }
+    return old();
+  }).catch(function() { return old(); }).catch(fail);
 }
 function _p2ListN() { // 連携できればATTACK LIST、できなければ手入力
   if (_p2Al.n !== null && !_p2Al.err) return { n: _p2Al.n, apo: _p2Al.apo, src: 'al' };
@@ -29377,14 +29396,29 @@ function glMsQual(id, delta){
 var EV_WIN_DAYS = 120;
 function _evCut() { return evYmd(new Date(Date.now() - EV_WIN_DAYS * 86400000)); }
 function _evQsList(qs) { var L = []; qs.forEach(function(d) { L.push(Object.assign({ id: d.id }, d.data())); }); return L; }
+// v866: 読み取りを減らす。サーバーから読んでから一定時間のあいだは、端末の控え（オフラインの保存）から読む（0回分）。
+//   控えが空の時（はじめての端末など）はサーバーから。localStorage に「最後にサーバーから読んだ時刻」をキーごとに覚える
+function _rdFresh(key, ms) { try { var t = +localStorage.getItem('gm_rd_' + key) || 0; return t && Date.now() - t < ms; } catch (e) { return false; } }
+function _rdMark(key) { try { localStorage.setItem('gm_rd_' + key, String(Date.now())); } catch (e) {} }
+function _rdGet(q, useCache) {
+  if (!useCache) return q.get();
+  return q.get({ source: 'cache' }).then(function(qs) { return qs && !qs.empty ? qs : q.get(); }, function() { return q.get(); });
+}
+var EV_CACHE_MS = 10 * 60000; // 予定・ToDo：サーバーから読んで10分のあいだは端末の控えから（ほかの端末で足した分は最大10分おくれて出る）
 function _evFetchRecent(uid) {
-  var col = db.collection('maps/' + uid + '/events'), cut = _evCut();
-  var pA = col.where('date', '>=', cut).get().then(_evQsList);
-  // 古い未完了タスク（期限切れ・期限なし）。複合インデックス type+done+date が無い間は「未完了」で読んで絞る
-  var pB = col.where('type', '==', 'task').where('done', '==', false).where('date', '<', cut).get().then(_evQsList)
-    .catch(function() { return col.where('done', '==', false).get().then(_evQsList).then(function(L) { return L.filter(function(e) { return e.type === 'task' && (e.date || '') < cut; }); }); });
-  var pC = col.where('deleted', '==', true).get().then(_evQsList); // ゴミ箱（30日で完全削除）
-  return Promise.all([pA, pB, pC]).then(function(r) { var by = {}, out = []; r.forEach(function(L) { L.forEach(function(e) { if (e && e.id && !by[e.id]) { by[e.id] = 1; out.push(e); } }); }); return out; });
+  var col = db.collection('maps/' + uid + '/events'), cut = _evCut(), rk = 'ev_' + uid, cache = _rdFresh(rk, EV_CACHE_MS);
+  var pA = _rdGet(col.where('date', '>=', cut), cache).then(_evQsList);
+  // 古い未完了タスク（期限切れ・期限なし）。複合インデックス type+done+date が無い時は「タスク・未完了」で読んで絞る
+  //   v866: 前は「未完了」だけで読んでいた（新しい予定は done:false なので、ほぼ全部の予定を毎回読んでいた）
+  var noIdx = false; try { noIdx = localStorage.getItem('gm_evNoIdx') === evTodayYmd(); } catch (eI) {}
+  var fbB = function() { return _rdGet(col.where('type', '==', 'task').where('done', '==', false), cache).then(_evQsList).then(function(L) { return L.filter(function(e) { return (e.date || '') < cut; }); }); };
+  var pB = noIdx ? fbB() : _rdGet(col.where('type', '==', 'task').where('done', '==', false).where('date', '<', cut), cache).then(_evQsList)
+    .catch(function() { try { localStorage.setItem('gm_evNoIdx', evTodayYmd()); } catch (eJ) {} return fbB(); });
+  var pC = _rdGet(col.where('deleted', '==', true), cache).then(_evQsList); // ゴミ箱（30日で完全削除）
+  return Promise.all([pA, pB, pC]).then(function(r) {
+    if (!cache) _rdMark(rk);
+    var by = {}, out = []; r.forEach(function(L) { L.forEach(function(e) { if (e && e.id && !by[e.id]) { by[e.id] = 1; out.push(e); } }); }); return out;
+  });
 }
 var _evOlder = { uid: '', st: '' }; // st: '' | 'loading' | 'done'
 function _evEnsureOlder() {
@@ -31153,7 +31187,8 @@ function loadUnionEvents() {
   if (un.indexOf('/') >= 0) un = '';
   // v807: 読み取りを減らす。表示に使うのは過去120日〜これからの予定だけなので、その分と設定（plan_meta）だけ読む（前はユニオンの予定を全部読んでいた）
   var cut0 = evYmd(new Date(Date.now() - 120 * 86400000)), base = 'unions/' + un + '/events';
-  var rd = function(u0) { return db.collection('unions/' + u0 + '/events').where('date', '>=', cut0).get().then(function(qs) { var L = []; qs.forEach(function(d) { L.push(Object.assign({ id: d.id, union: u0 }, d.data())); }); return L; }); };
+  // v866: ユニオンの予定は、サーバーから読んで30分のあいだは端末の控えから（管理者が足した予定は最大30分おくれて出る）
+  var rd = function(u0) { var rk = 'un_' + u0, c = _rdFresh(rk, 30 * 60000); return _rdGet(db.collection('unions/' + u0 + '/events').where('date', '>=', cut0), c).then(function(qs) { if (!c) _rdMark(rk); var L = []; qs.forEach(function(d) { L.push(Object.assign({ id: d.id, union: u0 }, d.data())); }); return L; }); };
   Promise.all([
     un ? rd(un) : Promise.resolve([]),
     fsGet('maps/' + currentUser.uid + '/meta/unionPrefs'),
@@ -31514,6 +31549,8 @@ function fcmRegister() {
     if (_oldTok && _oldTok !== tok) {
       db.doc('users/' + currentUser.uid + '/fcmTokens/' + _oldTok).delete().catch(function(){});
     }
+    // v866: トークンが前と同じで、今日もう登録してあれば、書き込み・掃除の読み取りはしない（前は起動のたびに書いて全部読んでいた）
+    try { if (_oldTok === tok && localStorage.getItem('gm_fcmRegDay') === evTodayYmd() + '|' + currentUser.uid) { _fcmBusy = false; return true; } } catch(eR) {}
     try { localStorage.setItem('gm_fcmToken', tok); } catch(eT) {} // オフ切替時の削除用に保持
     // v375: 端末ID（この画面のストレージに固定）でトークンを紐付け、同じ端末の残骸を自動掃除
     var _dev = '';
@@ -31535,6 +31572,7 @@ function fcmRegister() {
           });
         }).catch(function(){});
       }
+      try { localStorage.setItem('gm_fcmRegDay', evTodayYmd() + '|' + currentUser.uid); } catch(eW) {}
       _fcmBusy = false; return true;
     });
   }).catch(function(err){ _fcmBusy = false; window._fcmLastErr = String(err && err.message || err); return false; }); // v333: 失敗理由を保持して表示

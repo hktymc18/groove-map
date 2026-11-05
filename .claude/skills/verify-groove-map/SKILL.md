@@ -91,7 +91,7 @@ NODE_PATH=$E/node_modules node tools/test/rules/ckpf109_rules.js     # 既存の
 |---|---|
 | NAVIGATOR 本体（app.js・ルートの index.html） | `run.sh` が PASS N FAIL 0／変えた動きのテストを足して PASS／見た目を変えたら `shot.js` の写真（スマホ縦・必要なら横・ライト/ダーク）／版を上げたら `smoke_test.js` が ALL PASS（`tools/test/bump.py` で上げる）／`grep -c "url.pathname.indexOf('/checkin') >= 0" sw.js` が 1 |
 | 受付（checkin/index.html） | `run.sh` が PASS N FAIL 0（ck*_test.js を含む）／見た目を変えたら `ckcard.js` の写真／ユーザーに見える変更なら `APP_VER` を1つ上げ `CHANGELOG` 先頭に追記したこと／`grep -c "url.pathname.indexOf('/checkin') >= 0" sw.js` が 1 |
-| firestore.rules | エミュレータのルールテスト（許す・拒むの両方）が全部 PASS。環境で無理なら「未確認（理由）」／`run.sh` が PASS N FAIL 0／オーナーへ Cloud Shell の `firebase deploy --only firestore:rules` を依頼（CLAUDE.md の手順）／`grep -c "url.pathname.indexOf('/checkin') >= 0" sw.js` が 1 |
+| firestore.rules | エミュレータのルールテスト（許す・拒むの両方）が全部 PASS。環境で無理なら「未確認（理由）」／`run.sh` が PASS N FAIL 0／オーナーへ Cloud Shell の `firebase deploy --only firestore:rules,firestore:indexes` を依頼（CLAUDE.md の手順）／`grep -c "url.pathname.indexOf('/checkin') >= 0" sw.js` が 1 |
 | sw.js | **`grep -c "url.pathname.indexOf('/checkin') >= 0" sw.js` が 1**／CACHE 名を上げた（`smoke_test.js` で版がそろう）／`run.sh` が PASS N FAIL 0 |
 
 ## 5. 片付け
