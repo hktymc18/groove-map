@@ -17,4 +17,4 @@
 <!-- 壊れるとしたらどこか・迷って安全な方を選んだ所 -->
 
 ## オーナーがやること（デプロイ・実機確認など）
-<!-- 例：firestore.rules を変えた → Cloud Shell で firebase deploy --only firestore:rules ／ マージ（自動の実行ではマージしない） -->
+<!-- 例：firestore.rules を変えた → Cloud Shell で firebase deploy --only firestore:rules,firestore:indexes ／ マージ（自動の実行ではマージしない） -->

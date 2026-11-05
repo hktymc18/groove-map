@@ -2371,10 +2371,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v121';
+var APP_VER = 'v122';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v122', d: '2026/11/05', items: ['⚡ 読み込みを軽くしました（会員証のこれからのイベント・裏面・解禁の設定を端末に少し覚える／会計タブを押すたびに読み直さない／受付の名簿は参加ユニオンと自分のユニオンだけ）'] },
   { v: 'v121', d: '2026/11/03', items: ['📝 準備中のユーザー機能：ユーザーのカードに「マイプラン」（コース・毎日のクエスト・連続日数・レベル・バッジ）を追加しました'] },
   { v: 'v120', d: '2026/11/03', items: ['🎓 準備中のユーザー機能：ユーザーの名簿から「研修生にする」（本人の同意を確かめてから）・「ユーザーに戻す」ができるようにしました（オーナーと確認メンバーだけ）'] },
   { v: 'v119', d: '2026/11/03', items: ['💜 準備中のユーザー機能（ユーザー登録・ユーザーの名簿・測定・体験・購入）は、オーナーと「確認メンバー」だけに出すようにしました（名簿の⚙管理メニュー → 💜 ユーザー機能の確認メンバー・オーナーのみ）'] },
@@ -3505,8 +3506,19 @@ function ckPlatSet(live){
   if(gPlatLive !== was && gCardLast) renderCard(gCardLast);
 }
 function ckPlatSync(){
+  // v122: 解禁の設定は端末に30分覚える（会員証を開くたびに読まない）。オーナーは毎回読む
+  var lk = 'bci_launch_c', cached = null;
+  try{ cached = JSON.parse(localStorage.getItem(lk) || 'null'); }catch(e0){}
+  var use = function(d){
+    ckPlatSet(ckPlatLiveOf(d));
+    clearTimeout(gPlatTimer);
+    var wait = (d.platinumAt || 0) - Date.now();
+    if(!gPlatLive && wait > 0 && wait < 864e5) gPlatTimer = setTimeout(function(){ ckPlatSet(true); }, wait + 500);
+  };
+  if(cached && Date.now() - cached.at < 30 * 60000 && !ckIsOwnerNow()){ use(cached.d || {}); return; }
   db.collection('checkinConfig').doc('launch').get().then(function(s){
     var d = s.exists ? s.data() : {};
+    try{ localStorage.setItem(lk, JSON.stringify({ at: Date.now(), d: { platinum: !!d.platinum, platinumAt: d.platinumAt || 0 } })); }catch(e1){}
     ckPlatSet(ckPlatLiveOf(d));
     // 予約の時刻まで開きっぱなしでも、その時刻に切り替わる（24時間以内の予約のみ）
     clearTimeout(gPlatTimer);
@@ -3866,19 +3878,23 @@ var CARD_BACK_BASE = 'skins/back-base.webp';
 function ckBackCfg(union){
   var c = null;
   try{ c = JSON.parse(localStorage.getItem('bci_cbk_' + (union || '')) || 'null'); }catch(e){}
-  if(c) return { logo: c.logo || '', all: !!c.all, img: c.img || '' };
-  return CARD_BACKS[union || ''] || {};
+  if(c && !c.none) return { logo: c.logo || '', all: !!c.all, img: c.img || '' };
+  return CARD_BACKS[union || ''] || {};   // 設定なし（v122: none の印＝確認済み）は組み込みのまま
 }
 var gBackSynced = {};
 function ckBackSync(union, after){
   if(!union) return;
   var key = 'bci_cbk_' + union, old = null;
   try{ old = JSON.parse(localStorage.getItem(key) || 'null'); }catch(e){}
+  var noAt = function(o){ if(!o) return o; var x = {}; Object.keys(o).forEach(function(k){ if(k !== 'at') x[k] = o[k]; }); return x; };
   var done = function(nc){
-    var was = JSON.stringify(old), now = JSON.stringify(nc);
-    try{ if(nc) localStorage.setItem(key, now); else localStorage.removeItem(key); }catch(e){}
+    var was = JSON.stringify(noAt(old)), now = JSON.stringify(noAt(nc));
+    try{ if(nc){ nc.at = Date.now(); localStorage.setItem(key, JSON.stringify(nc)); } else localStorage.setItem(key, JSON.stringify({ none: true, at: Date.now() })); }catch(e){}
     if(was !== now && after) after();
   };
+  // v122: 裏面の設定は6時間覚える（会員証を開くたびに読まない。オーナーが変えた時は最大6時間おくれて出る・オーナーは毎回読む）
+  if(old && old.at && Date.now() - old.at < 6 * 3600000 && !ckIsOwnerNow()) return;
+  if(old && old.none) old = null;
   (gBackSynced[union] || (gBackSynced[union] = db.collection('cardBacks').doc(union).get())).then(function(s){
     if(!s.exists){ done(null); return; }
     var d = s.data();
@@ -5628,11 +5644,33 @@ function renderRsvpTop(c, all){
 }
 // 読み取りを減らす：自分のユニオンの予定だけを読む（前は全ユニオンのこれからの予定を全部読んで、画面側で絞っていた）。
 // この読み方にはFirestoreの複合インデックス（unions＋date。firestore.indexes.json）が要る。まだ無い時は今までの読み方に戻す
+// v122: 読み取りを減らす。会員証を開くたびに読むので、
+//   ・これからのイベントは日付の近い順に最大30件まで（索引 unions+date がある時）
+//   ・索引が無い時の代わりの読み方は「90日先まで・40件まで」（前は全ユニオンのこれからのイベントを全部読んでいた）
+//   ・読んだ結果は端末に10分覚える（予約・受講の状態は会員証の側にあるので、最新のまま）
+var CK_UP_MS = 10 * 60000;
 function ckUpcomingQuery(c){
-  var t = todayStr();
-  return db.collection('checkinEvents').where('unions', 'array-contains', c.union || '').where('date', '>=', t).get()
-    .catch(function(){ return db.collection('checkinEvents').where('date', '>=', t).get(); });
+  var t = todayStr(), un = c.union || '', key = 'bci_up_' + un;
+  try{
+    var o = JSON.parse(localStorage.getItem(key) || 'null');
+    if(o && o.d === t && Date.now() - o.at < CK_UP_MS && Array.isArray(o.list)) return Promise.resolve(ckFakeQs(o.list));
+  }catch(e){}
+  var end = (function(){ var d = new Date(); d.setDate(d.getDate() + 90); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); })();
+  return db.collection('checkinEvents').where('unions', 'array-contains', un).where('date', '>=', t).orderBy('date').limit(30).get()
+    .catch(function(){ return db.collection('checkinEvents').where('date', '>=', t).where('date', '<=', end).orderBy('date').limit(40).get(); })
+    .then(function(qs){
+      var list = [];
+      qs.forEach(function(d){ var ev = d.data(); if((ev.unions || []).indexOf(un) >= 0) list.push({ id: d.id, d: ev }); });
+      try{ localStorage.setItem(key, JSON.stringify({ at: Date.now(), d: t, list: list })); }catch(e2){}
+      return ckFakeQs(list);
+    });
 }
+// 覚えておいた結果を、Firestore の結果と同じ形（forEach / d.id / d.data()）で返す
+function ckFakeQs(list){
+  return { size: list.length, empty: !list.length, forEach: function(f){ list.forEach(function(x){ f({ id: x.id, data: function(){ return JSON.parse(JSON.stringify(x.d)); } }); }); } };
+}
+// 予約・受講の申請をした時などは、覚えておいた結果を消して読み直す
+function ckUpcomingForget(un){ try{ localStorage.removeItem('bci_up_' + (un || '')); }catch(e){} }
 function renderUpcoming(c, openId){
   ckUpcomingQuery(c).then(function(qs){
     var t = todayStr(), all = [];
@@ -7523,7 +7561,11 @@ Array.prototype.forEach.call(tabs, function(b){
     $(b.getAttribute('data-pane')).classList.add('on');
     setTimeout(setTbh, 0);   // 非表示中は高さ0で測れないため、表示後にヘッダー高さを再計測
     if(b.getAttribute('data-pane') === 'pKiosk' && gRec) focusScan();
-    if(b.getAttribute('data-pane') === 'pFin') loadFinanceTab();
+    // v122: 会計タブは、同じユニオン・同じ月を2分以内に読んでいれば読み直さない（前はタブを押すたびに月のイベント全部と会計を読んでいた）
+    if(b.getAttribute('data-pane') === 'pFin'){
+      var fk = gFinUnion + '|' + monthKey(gMonth.y, gMonth.m);
+      if(!(gFinLoaded.k === fk && Date.now() - gFinLoaded.at < 120000)) loadFinanceTab();
+    }
     if(b.getAttribute('data-pane') === 'pStats' && (gStatDirty || !gStat)) loadStatsNow();
   };
 });
@@ -12242,8 +12284,10 @@ $('btnFinCsv').onclick = function(){
 };
 
 /* 会計タブ: 月内イベントの会計状況一覧 */
+var gFinLoaded = { k: '', at: 0 };
 function loadFinanceTab(){
   if(!ckCanView(gFinUnion)) gFinUnion = gUnion;
+  gFinLoaded = { k: gFinUnion + '|' + monthKey(gMonth.y, gMonth.m), at: Date.now() };
   // 会計はユニオン管理者・受付管理者・オーナーだけ。自分が管理するユニオンを優先して開く
   if(!isOwner() && !canEditUnion(gFinUnion)){
     var mine = gUnions.filter(function(u){ return canEditUnion(u); })[0];
@@ -12512,8 +12556,9 @@ function startReception(ev){
 
   // 見られるユニオンの名簿をロード（他ユニオンの名簿はDBルールで読めないため、
   // 他ユニオンのメンバーはスキャン時に会員証（番号→カード）から照会してビジター受付する）
-  var unionSet = ckViewableUnions();
-  if(unionSet.indexOf(gUnion) < 0) unionSet.push(gUnion);
+  // v122: 読むのは「このイベントの参加ユニオン（見られるもの）＋自分のユニオン」だけ
+  //   （前はオーナーだと全ユニオンの名簿を読んでいた。ほかのユニオンの人はスキャン時に会員証から照会できる）
+  var unionSet = [gUnion];
   (ev.unions || []).forEach(function(u){ if(unionSet.indexOf(u) < 0 && ckCanView(u)) unionSet.push(u); });
   var loads = unionSet.map(function(u){
     return db.collection('checkinMembers').where('union', '==', u).get().then(function(qs){

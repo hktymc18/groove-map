@@ -9,11 +9,13 @@ PR → main へマージし、オーナーが **Cloud Shell から `firebase dep
 # Cloud Shell での適用手順（オーナーが実行）
 # 初回のみ: git clone https://github.com/hktymc18/groove-map.git
 git -C groove-map pull
-cd groove-map && firebase deploy --only firestore:rules
+cd groove-map && firebase deploy --only firestore:rules,firestore:indexes
 # ※ deploy は必ず groove-map フォルダの中で実行（外だと firebase.json が見つからずエラーになる）
 cd ~
 ```
 
+- **ルールと一緒に索引（`firestore.indexes.json`）も必ずデプロイする**（2026/11 に、索引が本番に入っていない可能性が見つかった。
+  索引が無いとアプリは代わりの読み方で多めに読むので、読み取りの無料枠を使い切る原因になる）。
 - **Firebaseコンソールにルール全文を貼り付ける運用は廃止**。コンソールで直接変えた内容は、
   次に誰かがファイルからデプロイした時に上書きされて消えるため。
 - ルールを変更したPRの完了報告では、上記のCloud Shellコマンドの実行を依頼すること
