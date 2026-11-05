@@ -1700,6 +1700,20 @@ var db = firebase.firestore();
 // ブラウザに止められると、このタブの新しい読み込み（受付管理者・研修担当・管理者一覧など）が最大1分ほど待たされていた。
 // 受付中の書き込みは、このページを開いている間はメモリで再送されるので、通信が切れても消えない。
 var FV = firebase.firestore.FieldValue;
+// 🪪 v124: 会員証から本人として送る分（セルフチェックイン・オンライン受講申請・予約・予約の取消申請）は、
+//  ログインしていない別の接続で送る。同じサイトの NAVIGATOR・ATTACK LIST に別ユニオン（またはユニオン未設定）の
+//  アカウントでログインしたままのスマホだと、ルールが「ログインした人」として判定して弾いていた
+//  （会員証のトークンで本人と認めるルールは、ログインしていない時だけ）
+var gAnonDb = null;
+function ckAnonDb(){
+  if(gAnonDb) return gAnonDb;
+  try{
+    var ap = (firebase.apps || []).filter(function(a){ return a.name === 'cardAnon'; })[0]
+      || firebase.initializeApp(firebaseConfig, 'cardAnon');
+    gAnonDb = ap.firestore();
+  }catch(e){ gAnonDb = db; }
+  return gAnonDb;
+}
 
 /* ---------- utils ---------- */
 function $(id){ return document.getElementById(id); }
@@ -2371,10 +2385,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v123';
+var APP_VER = 'v124';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v124', d: '2026/11/05', items: ['🛠 会員証からのオンライン受講申請・セルフチェックイン・予約が、NAVIGATOR や ATTACK LIST にログインしたままのスマホだと「申請できません」になることがあったのを直しました'] },
   { v: 'v123', d: '2026/11/05', items: ['⚡ 読み込みをさらに軽くしました（受付終了の後の稼働率の作り直し・集計タブ・会計で、同じイベントや出席を何度も読まない／稼働率の確かめは1日1回）'] },
   { v: 'v122', d: '2026/11/05', items: ['⚡ 読み込みを軽くしました（会員証のこれからのイベント・裏面・解禁の設定を端末に少し覚える／会計タブを押すたびに読み直さない／受付の名簿は参加ユニオンと自分のユニオンだけ）'] },
   { v: 'v121', d: '2026/11/03', items: ['📝 準備中のユーザー機能：ユーザーのカードに「マイプラン」（コース・毎日のクエスト・連続日数・レベル・バッジ）を追加しました'] },
@@ -5283,7 +5298,7 @@ function renderSelfEvents(c){
         var code = ev.requireCode ? ($('seCode_' + i).value || '').trim() : '';
         if(ev.requireCode && code.length < 4){ $('seMsg_' + i).textContent = '会場コード（4桁）を入力してください'; return; }
         btn.disabled = true;
-        db.collection('checkinEvents').doc(ev.id).collection('attendance').doc(c.no).set({
+        ckAnonDb().collection('checkinEvents').doc(ev.id).collection('attendance').doc(c.no).set({
           no: c.no, name: c.name || '', group: c.group || '', union: c.union || '',
           method: 'self', cardToken: gCardToken, code: code,
           at: FV.serverTimestamp(), atLocal: nowHM(), atMs: Date.now(), by: 'self'
@@ -5534,7 +5549,7 @@ function upBindOnline(c, ev, i, st){
       at: FV.serverTimestamp(), atLocal: pledgeLocal, atMs: Date.now(), cardToken: gCardToken
     }).catch(function(){});
     try{ localStorage.setItem('bci_pl_' + c.no, pledgeLocal); }catch(e){}
-    db.collection('checkinEvents').doc(ev.id).collection('attendance').doc(c.no).set({
+    ckAnonDb().collection('checkinEvents').doc(ev.id).collection('attendance').doc(c.no).set({
       no: c.no, name: c.name || '', group: c.group || '', union: c.union || '',
       method: 'online', status: 'pending',
       fee: ev.onlineFee || 1000, paid: false, refund: 0, payMethod: 'paypay',
@@ -5545,7 +5560,7 @@ function upBindOnline(c, ev, i, st){
       renderUpcoming(c, ev.id);
     }).catch(function(){
       go.disabled = false;
-      $('olMsg_' + i).textContent = '申請できません。すでに申請済みか、受付が終了しています。';
+      $('olMsg_' + i).textContent = '申請できません。すでに申請済みか、受付で登録済みの可能性があります。会員番号を受付担当に伝えて確認してください。';
     });
   };
 }
@@ -5574,7 +5589,7 @@ function upRsvpBody(c, ev, i, rs){
 function upBindRsvp(c, ev, i){
   // 予約の取消申請（予約済みのときだけ表示される）。送信に失敗したら「申請中」にはせず、その旨を表示する
   function sendCancel(){
-    return db.collection('checkinEvents').doc(ev.id).collection('rsvpCancels').doc(c.no).set({
+    return ckAnonDb().collection('checkinEvents').doc(ev.id).collection('rsvpCancels').doc(c.no).set({
       no: c.no, name: c.name || '', group: c.group || '', union: c.union || '',
       eventDate: ev.date || '', eventName: ev.name || '',
       cardToken: gCardToken, at: FV.serverTimestamp(), atLocal: nowHM(), atMs: Date.now()
@@ -5607,7 +5622,7 @@ function upBindRsvp(c, ev, i){
   if(!b) return;
   b.onclick = function(){
     b.disabled = true;
-    db.collection('checkinEvents').doc(ev.id).collection('rsvps').doc(c.no).set({
+    ckAnonDb().collection('checkinEvents').doc(ev.id).collection('rsvps').doc(c.no).set({
       no: c.no, name: c.name || '', group: c.group || '', union: c.union || '',
       eventDate: ev.date || '', eventName: ev.name || '',
       cardToken: gCardToken, at: FV.serverTimestamp(), atLocal: nowHM(), atMs: Date.now()
