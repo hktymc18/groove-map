@@ -2385,10 +2385,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v124';
+var APP_VER = 'v125';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v125', d: '2026/11/06', items: ['🛠 研修生のDLR予約で、名前が「P＆P」（＆が全角）のイベントが日程に出なかったのを直しました'] },
   { v: 'v124', d: '2026/11/05', items: ['🛠 会員証からのオンライン受講申請・セルフチェックイン・予約が、NAVIGATOR や ATTACK LIST にログインしたままのスマホだと「申請できません」になることがあったのを直しました'] },
   { v: 'v123', d: '2026/11/05', items: ['⚡ 読み込みをさらに軽くしました（受付終了の後の稼働率の作り直し・集計タブ・会計で、同じイベントや出席を何度も読まない／稼働率の確かめは1日1回）'] },
   { v: 'v122', d: '2026/11/05', items: ['⚡ 読み込みを軽くしました（会員証のこれからのイベント・裏面・解禁の設定を端末に少し覚える／会計タブを押すたびに読み直さない／受付の名簿は参加ユニオンと自分のユニオンだけ）'] },
@@ -10980,7 +10981,8 @@ function dlrRsvModal(m, back){
   // 🐞 v113: 今月＋この先2か月。月は必ず「1日」を起点に足す（前は今日に1か月足していたので、
   //   10/31 だと「11/31」→12/1 になり、11月のイベントが候補から丸ごと抜けていた）
   var d0 = new Date(), mks = [0, 1, 2].map(function(k){ var d = new Date(d0.getFullYear(), d0.getMonth() + k, 1); return d.getFullYear() + '-' + pad(d.getMonth() + 1); });
-  function isDlrEvent(name){ return /DLR|P\s*&\s*P|Ｐ＆Ｐ/i.test(String(name || '')); }
+  // 🐞 v125: 全角・半角の混ざった名前（「P＆P」＝Pは半角・＆は全角、「ＤＬＲ」など）も拾う
+  function isDlrEvent(name){ return /[DＤ][LＬ][RＲ]|[PＰ]\s*[&＆]\s*[PＰ]/i.test(String(name || '')); }
   var noQs = { forEach: function(){} };
   Promise.all(mks.map(function(mk){ return db.collection('checkinEvents').where('month', '==', mk).get().catch(function(){ return noQs; }); })
     .concat([db.collection('checkinUnions').get().catch(function(){ return noQs; })])).then(function(res){
