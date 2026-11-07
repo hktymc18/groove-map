@@ -1039,6 +1039,19 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .ap-row{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px;}
 .ap-row span{color:var(--sub);}
 .uiwrap,.fiwrap{margin-top:24px;text-align:left;}
+.nwwrap{margin-top:22px;text-align:left;}
+.nw-a2hs{position:relative;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 34px 10px 12px;border-radius:12px;background:#fff4e6;color:#7a3e0c;font-size:13px;font-weight:700;line-height:1.5;margin-bottom:14px;}
+.nw-a2hs span{flex:1 1 160px;min-width:0;}
+.nw-a2hs button{padding:6px 10px;font-size:12.5px;}
+.nw-a2hs .nw-x{position:absolute;top:4px;right:4px;border:none;background:transparent;color:inherit;padding:4px 8px;}
+.nw-box{display:grid;gap:3px;padding:10px 12px;margin-top:8px;border:1px solid var(--line);border-radius:12px;background:var(--card);font-size:13.5px;line-height:1.6;}
+.nw-box.nw-next{border:2px solid #f0892b;}
+.nw-k{font-size:11.5px;color:var(--sub);font-weight:700;}
+.nw-i{font-size:13px;color:var(--sub);}
+.nw-cal{display:flex;align-items:center;gap:12px;margin-top:6px;flex-wrap:wrap;}
+.nw-cal a{color:var(--focus);font-size:12.5px;}
+.nw-how{margin-top:10px;font-size:13.5px;line-height:1.7;}
+.nw-how ol{margin:4px 0 0;padding-left:1.3em;}
 .fi-list{margin-top:6px;}
 .fi-row{display:flex;justify-content:space-between;gap:10px;padding:8px 2px;border-bottom:1px solid var(--line);font-size:13.5px;}
 .fi-row b{color:var(--green);font-size:12.5px;white-space:nowrap;}
@@ -1454,6 +1467,7 @@ body.practice .topbar{top:var(--pxh,36px);}
       <button id="btnFreeMembers" class="hide rmore" title="いつも徴収なしで出席に入れる人（ユニオン管理者など）">🆓 徴収なしメンバー</button>
       <button id="btnTrainers" class="hide rmore">🎓 研修生登録の担当</button>
       <button id="btnUnionAdmins" class="hide rmore" title="ユニオン管理者の任命（オーナーのみ）">🛡 ユニオン管理者</button>
+      <button id="btnUserNotice" class="hide">📣 ユーザーにお知らせ</button>
       <button id="btnBeautyTesters" class="hide rmore" title="準備中のユーザー機能（NAVIGATOR Beauty）を見られる人（オーナーのみ）">💜 ユーザー機能の確認メンバー</button>
       <button id="btnLeaders" class="hide rmore" title="名簿・集計の閲覧と研修生登録の担当の任命ができる人（オーナーのみ指定）">⭐ リーダー</button>
       <button id="btnAdminsView" class="rmore">👥 管理者一覧</button>
@@ -1587,6 +1601,7 @@ body.practice .topbar{top:var(--pxh,36px);}
     </div>
     </div></div>
     <div id="mcProf"></div><!-- 👤 #21 プロフィール（ルビー以上・ふだんは閉じる） -->
+    <div id="nwArea"></div><!-- 💜 ユーザーのお知らせ（ホーム画面に追加・次のDAY・来場のお礼・スタッフから） -->
     <div id="pzArea"></div><!-- 💜 ユーザーの PRYSMiO（色・前回から・記録） -->
     <div id="mpArea"></div><!-- 💜 ユーザーのマイプラン（コース・毎日のクエスト・連続・レベル・バッジ） -->
     <div id="fiArea"></div><!-- 💜 ユーザーの「友だちを招待」（招待リンク・来てくれた友だち） -->
@@ -2423,10 +2438,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v127';
+var APP_VER = 'v128';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v128', d: '2026/11/07', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v127', d: '2026/11/07', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v126', d: '2026/11/07', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v125', d: '2026/11/06', items: ['🛠 研修生のDLR予約で、名前が「P＆P」（＆が全角）のイベントが日程に出なかったのを直しました'] },
@@ -4680,6 +4696,7 @@ function showCardView(token){
           return;
         }
         renderCard(c);
+        renderUserNews(c, token);
         renderPrysm(c);
         renderMyPlan(c, token);
         renderFriendInvite(c, token);
@@ -6572,6 +6589,7 @@ function ckOwnerListOpen(key){
   .catch(function(e){ toast('読込エラー: ' + e.message); });
 }
 $('btnLeaders').onclick = function(){ ckOwnerListOpen('leaders'); };
+$('btnUserNotice').onclick = function(){ ckUserNoticeModal(); };
 // 💜 ユーザー機能の確認メンバー（全ユニオン共通・checkinConfig/beauty.testers）
 $('btnBeautyTesters').onclick = function(){
   if(!isOwner()) return;
@@ -7678,6 +7696,7 @@ function renderRoster(){
   if(!ukOn) gRosterKind = 'biz';
   $('btnBeautyTesters').classList.toggle('hide', !isOwner());
   ckRosterKindSync();
+  $('btnUserNotice').classList.toggle('hide', !(ukOn && gRosterKind === 'user'));
   if(gRosterKind === 'user'){ renderUserRoster(); return; }
   function sth(k, label){
     var cur = gRosterSort.k === k;
@@ -9941,6 +9960,12 @@ function eventForm(ev){
     + '<div class="chkrow" style="margin-top:8px;"><input type="checkbox" id="evRcpt"' + (ckEvRcptOn(ev || { hostUnion: host }) ? ' checked' : '') + '>'
     + '<label for="evRcpt" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">🧾 このイベントは領収書を発行する'
     + hq(host + 'の初期値は「' + (gRcptDef[host] !== false ? '発行する' : '発行しない') + '」です。初期値は会計タブの「🧾 領収書設定」で変えられます。') + '</label></div>'
+    // 💜 v128: ユーザーのカードの「次のDAY」に出す（準備中はオーナーと確認メンバーだけに出す項目）
+    + (ckBeautyOn() ? '<div class="chkrow" style="margin-top:8px;"><input type="checkbox" id="evUDay"' + (ev && ev.uDay === true ? ' checked' : '') + '>'
+        + '<label for="evUDay" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">💜 ユーザーのカードに「次のDAY」として出す'
+        + hq('ユーザー（お客さん）のカードのお知らせに、次のDAYとして出ます。研修など、ビジネスのメンバーだけのイベントにはチェックしないでください。') + '</label></div>'
+        + '<div id="rowUDay" class="' + (ev && ev.uDay === true ? '' : 'hide') + '"><label for="evUInfo">ユーザーに出す時間・場所（なくてもOK）</label>'
+        + '<input type="text" id="evUInfo" maxlength="60" placeholder="例: 13:00〜 見本ホール" value="' + esc((ev && ev.uInfo) || '') + '"></div>' : '')
     + '<div class="chkrow" style="margin-top:8px;"><input type="checkbox" id="evNoStat"' + (ev && ev.noStat === true ? ' checked' : '') + '>'
     + '<label for="evNoStat" style="margin:0;font-weight:400;color:var(--ink);font-size:14px;">📊 集計（稼働率）に入れない'
     + hq('参加必須でないイベントや、間違って立てたイベントに使います。開催数にも出席回数にも入りません。受付・会計はふつうにできます。') + '</label></div>'
@@ -9953,6 +9978,7 @@ function eventForm(ev){
   $('evModeSelf').onchange = updModeRow;
   $('evOnline').onchange = function(){ $('rowOnline').classList.toggle('hide', !$('evOnline').checked); };
   if($('evRsvp')) $('evRsvp').onchange = function(){ $('rowRsvp').classList.toggle('hide', !$('evRsvp').checked); };
+  if($('evUDay')) $('evUDay').onchange = function(){ $('rowUDay').classList.toggle('hide', !$('evUDay').checked); };
   // 受け取りリンクが未入力なら、ユニオン設定の共通リンクをプリセット
   if(!(ev && ev.onlinePayLink)){
     db.collection('checkinUnions').doc(host).get().then(function(s){
@@ -10007,7 +10033,9 @@ function eventForm(ev){
       onlineEnvName: envName,
       zoomUrl: $('evZoom').value.trim(),
       rcpt: $('evRcpt').checked,
-      noStat: $('evNoStat').checked
+      noStat: $('evNoStat').checked,
+      uDay: $('evUDay') ? $('evUDay').checked : !!(ev && ev.uDay === true),
+      uInfo: $('evUInfo') ? $('evUInfo').value.trim().slice(0, 60) : ((ev && ev.uInfo) || '')
     };
     // 🧾 途中で切り替えた時: 発行しない→発行済みを取り下げ / 発行する→受付済みの人にも発行
     var wasRcpt = isNew ? null : ckEvRcptOn(ev);
@@ -13700,6 +13728,7 @@ function ckCreateUser(o){
             createdAt: FV.serverTimestamp(), createdBy: gUser.uid, byName: (gProf && gProf.name) || '' };
   if(o.invUid){ u.invUid = o.invUid; u.invName = o.invName || ''; }   // 💜 v127: 友だちの招待で来た人（招待した人）
   var c = { kind: 'user', no: uid, active: true, visits: 1, createdAt: FV.serverTimestamp() };
+  if(gRec && gRec.ev) c.lastVisit = { d: gRec.ev.date || todayStr(), ev: gRec.ev.name || '' };   // 💜 v128: カードの「来場のお礼」
   Object.keys(who).forEach(function(k){ u[k] = who[k]; c[k] = who[k]; });
   batch.set(db.collection('checkinUsers').doc(uid), u);
   batch.set(db.collection('cards').doc(token), c);
@@ -13719,7 +13748,7 @@ function ckUserAttData(uid, u, token, method){
 function ckUserVisit(uid, token){
   var up = { visits: FV.increment(1), lastAt: Date.now(), lastEv: gRec.ev.id };
   db.collection('checkinUsers').doc(uid).set(up, { merge: true }).catch(function(){});
-  db.collection('cards').doc(token).set({ visits: FV.increment(1) }, { merge: true }).catch(function(){});
+  db.collection('cards').doc(token).set({ visits: FV.increment(1), lastVisit: { d: gRec.ev.date || todayStr(), ev: gRec.ev.name || '' } }, { merge: true }).catch(function(){});
 }
 function ckUserStage(uid, data, opt){
   var fee = data.fee || 0, pick = fee > 0 && !gRec.payMode && gRec.payBoth;
@@ -14367,6 +14396,147 @@ function ckJoinFriendGo(c, token, how){
     ['fiSend', 'fiQr'].forEach(function(id){ if($(id)) $(id).disabled = false; });
     toast('招待リンクを作れませんでした。電波の良いところで、もう一度押してください');
   });
+}
+/* 💜 v128: ユーザーのカードの「お知らせ」（NAVIGATOR Beauty・準備中）。カードのすぐ下に出す
+   ・ホーム画面に追加の案内（追加して開いた時と、閉じた時は出さない）
+   ・次のDAY: イベントの設定で「ユーザーのカードに次のDAYとして出す」にした、いちばん近いイベント（uDay・uInfo）。カレンダーに追加できる
+   ・来場のお礼: 受付した日から7日（カードの lastVisit）。その日に測っていれば「測定の結果が届いています」
+   ・スタッフからのお知らせ: ckNotice/{ユニオン}（名簿 → ユーザー → 📣 ユーザーにお知らせ）。端末に30分覚える */
+function ckIsStandalone(){ return window.navigator.standalone === true || !!(window.matchMedia && window.matchMedia('(display-mode: standalone)').matches); }
+function ckYmdDays(a, b){
+  var p = function(s){ var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || ''); return m ? Date.UTC(+m[1], +m[2] - 1, +m[3]) : NaN; };
+  return Math.round((p(b) - p(a)) / 864e5);
+}
+function ckMd(s){ var m = /^\d{4}-(\d{2})-(\d{2})$/.exec(s || ''); return m ? (+m[1]) + '/' + (+m[2]) : ''; }
+function ckNoticeGet(un){
+  var key = 'bci_ntc_' + un;
+  try{ var o = JSON.parse(localStorage.getItem(key) || 'null'); if(o && Date.now() - o.at < 30 * 60000) return Promise.resolve(o.items || []); }catch(e){}
+  return ckAnonDb().collection('ckNotice').doc(un || '_').get().then(function(s){
+    var items = (s.exists && s.data().items) || [];
+    try{ localStorage.setItem(key, JSON.stringify({ at: Date.now(), items: items })); }catch(e){}
+    return items;
+  }).catch(function(){ return []; });
+}
+function renderUserNews(c, token){
+  var el = $('nwArea');
+  if(!el) return;
+  el.innerHTML = '';
+  if(!c || c.kind !== 'user' || c.active === false || c.toMember) return;
+  var t = todayStr();
+  Promise.all([ckUpcomingQuery(c).catch(function(){ return null; }), ckNoticeGet(c.union || '')]).then(function(r){
+    var next = null;
+    if(r[0]) r[0].forEach(function(d){
+      var ev = d.data(); ev.id = d.id;
+      if(ev.uDay === true && (ev.unions || []).indexOf(c.union) >= 0 && (ev.date || '') >= t && (!next || ev.date < next.date)) next = ev;
+    });
+    var items = [], lv = c.lastVisit;
+    if(lv && lv.d && ckYmdDays(lv.d, t) >= 0 && ckYmdDays(lv.d, t) <= 7){
+      var meas = Object.keys(c).some(function(k){ return k.indexOf('pz_') === 0 && c[k] && c[k].d === lv.d; });
+      items.push({ d: lv.d, t: 'ご来場ありがとうございました。' + (meas ? '測定の結果が、このカードに届いています。' : '') });
+    }
+    (r[1] || []).forEach(function(n){ if(n && n.t) items.push({ d: n.d || '', t: n.t, staff: true }); });
+    items.sort(function(a, b){ return String(b.d).localeCompare(String(a.d)); });
+    items = items.slice(0, 5);
+    var a2hs = !ckIsStandalone();
+    try{ if(localStorage.getItem('bci_a2hs_off') === '1') a2hs = false; }catch(e){}
+    if(!next && !items.length && !a2hs) return;
+    el.innerHTML = '<div class="nwwrap">'
+      + (a2hs ? '<div class="nw-a2hs" id="nwA2hs"><span>ホーム画面に追加すると、次からアプリのようにすぐ開けます</span>'
+          + '<button type="button" id="nwA2hsHow">やり方を見る</button><button type="button" class="nw-x" id="nwA2hsX" aria-label="閉じる">✕</button></div>' : '')
+      + ((next || items.length) ? '<div class="next-head">NEWS</div>' : '')
+      + (next ? '<div class="nw-box nw-next"><span class="nw-k">次のDAY</span><b>' + esc(ckMd(next.date)) + '（' + '日月火水木金土'.charAt(new Date(next.date + 'T00:00:00').getDay()) + '）' + esc(next.name || '') + '</b>'
+          + (next.uInfo ? '<span class="nw-i">' + esc(next.uInfo) + '</span>' : '')
+          + '<div class="nw-cal"><button type="button" id="nwCal">カレンダーに追加</button><a id="nwGcal" target="_blank" rel="noopener" href="' + esc(ckGcalUrl(next, c)) + '">Googleカレンダー</a></div></div>' : '')
+      + items.map(function(n){
+          return '<div class="nw-box"><span class="nw-k">' + esc(ckMd(n.d)) + (n.staff ? ' ・ お知らせ' : '') + '</span><span class="nw-t">' + esc(n.t) + '</span></div>';
+        }).join('')
+      + '</div>';
+    if($('nwA2hsHow')) $('nwA2hsHow').onclick = ckA2hsHowModal;
+    if($('nwA2hsX')) $('nwA2hsX').onclick = function(){ try{ localStorage.setItem('bci_a2hs_off', '1'); }catch(e){} var b = $('nwA2hs'); if(b) b.parentNode.removeChild(b); };
+    if($('nwCal')) $('nwCal').onclick = function(){ ckIcsDownload(next, c); };
+  });
+}
+function ckA2hsHowModal(){
+  var ua = navigator.userAgent || '', ios = /iPhone|iPad|iPod/.test(ua), inApp = /Line\/|FBAN|FBAV|Instagram/i.test(ua);
+  var iosHtml = '<div class="nw-how"><b>iPhone</b><ol>'
+    + (inApp ? '<li>LINE などのアプリの中で開いている時は、右下か右上のメニューから「Safariで開く」を押します</li>' : '')
+    + '<li>画面の下（または上）の <b>共有ボタン</b>（四角から上に矢印）を押します</li>'
+    + '<li><b>「ホーム画面に追加」</b>を押します（見つからない時は、下にずらすと出ます）</li>'
+    + '<li>右上の<b>「追加」</b>を押します</li></ol></div>';
+  var andHtml = '<div class="nw-how"><b>Android</b><ol>'
+    + '<li>Chrome の右上の <b>︙</b> を押します</li>'
+    + '<li><b>「ホーム画面に追加」</b>（または「アプリをインストール」）を押します</li>'
+    + '<li><b>「追加」</b>を押します</li></ol></div>';
+  modal('<h2>ホーム画面に追加するやり方</h2>'
+    + '<p style="font-size:13px;color:var(--sub);margin:-4px 0 8px;">追加すると、ホーム画面のアイコンから、このカードがすぐ開きます。</p>'
+    + (ios ? iosHtml + andHtml : andHtml + iosHtml)
+    + '<div class="btns"><button class="primary" id="nwHowOk">閉じる</button></div>', true);
+  $('nwHowOk').onclick = closeModal;
+}
+function ckIcsEsc(s){ return String(s || '').replace(/\\/g, '\\\\').replace(/([,;])/g, '\\$1').replace(/\r?\n/g, '\\n'); }
+function ckIcsDay(ymd, add){ var d = new Date(ymd + 'T00:00:00'); d.setDate(d.getDate() + (add || 0)); return d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()); }
+function ckIcsText(ev, c){
+  var now = new Date(), st = now.getUTCFullYear() + pad(now.getUTCMonth() + 1) + pad(now.getUTCDate()) + 'T' + pad(now.getUTCHours()) + pad(now.getUTCMinutes()) + '00Z';
+  return ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//NAVIGATOR Beauty//BASE CHECK-IN//JA', 'CALSCALE:GREGORIAN', 'BEGIN:VEVENT',
+    'UID:' + ev.id + '@navigator-beauty', 'DTSTAMP:' + st,
+    'DTSTART;VALUE=DATE:' + ckIcsDay(ev.date, 0), 'DTEND;VALUE=DATE:' + ckIcsDay(ev.date, 1),
+    'SUMMARY:' + ckIcsEsc(ev.name || 'DAY'),
+    'DESCRIPTION:' + ckIcsEsc((ev.uInfo ? ev.uInfo + '\n' : '') + 'NAVIGATOR Beauty（' + (c.union || '') + '）。受付ではカードのQRを見せてください。'),
+    'END:VEVENT', 'END:VCALENDAR'].join('\r\n') + '\r\n';
+}
+function ckIcsDownload(ev, c){
+  try{
+    var blob = new Blob([ckIcsText(ev, c)], { type: 'text/calendar;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = 'day-' + (ev.date || '') + '.ics';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+  }catch(e){ toast('カレンダーに追加できませんでした。「Googleカレンダー」から追加してください'); }
+}
+function ckGcalUrl(ev, c){
+  return 'https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent(ev.name || 'DAY')
+    + '&dates=' + ckIcsDay(ev.date, 0) + '/' + ckIcsDay(ev.date, 1)
+    + '&details=' + encodeURIComponent((ev.uInfo ? ev.uInfo + '\n' : '') + 'NAVIGATOR Beauty（' + (c.union || '') + '）');
+}
+// 名簿 → ユーザー →「📣 ユーザーにお知らせ」: そのユニオンのユーザーのカードに出すお知らせ（新しい5件まで）
+function ckUserNoticeModal(){
+  var un = gRosterUnion;
+  if(!ckBeautyOn()) return;
+  db.collection('ckNotice').doc(un).get().then(function(s){
+    var items = ((s.exists && s.data().items) || []).slice(0, 5);
+    function paint(){
+      $('unList').innerHTML = items.length ? items.map(function(n, i){
+        return '<div class="ap-row"><span style="flex:1;min-width:0;color:var(--ink);">' + esc(ckMd(n.d)) + '　' + esc(n.t) + '</span>'
+          + '<button type="button" data-del="' + i + '" class="danger ghost" style="flex:0 0 auto;">消す</button></div>';
+      }).join('') : '<p style="font-size:12.5px;color:var(--sub);margin:4px 0;">まだありません。</p>';
+    }
+    modal('<h2>📣 ユーザーにお知らせ — ' + esc(un) + hq('このユニオンのユーザーのカードの「お知らせ」に出ます。新しい5件まで出ます。カードには30分ほどで届きます。効果をうたう言葉（治る・やせる など）は書かないでください。') + '</h2>'
+      + '<label for="unText">新しいお知らせ（100文字まで）</label>'
+      + '<textarea id="unText" rows="3" maxlength="100" placeholder="例: 12月のDAYは、14時からの開始です。"></textarea>'
+      + '<label style="margin-top:12px;">今出ているお知らせ</label><div id="unList"></div>'
+      + '<div class="btns"><button id="unCancel">閉じる</button><button class="primary" id="unGo">送る</button></div>', true);
+    paint();
+    function save(msg){
+      return db.collection('ckNotice').doc(un).set({ items: items, by: gUser.uid, at: FV.serverTimestamp() }).then(function(){ paint(); toast(msg); })
+        .catch(function(e){ toast(permMsg(e, 'お知らせを保存できませんでした。ルールの反映をオーナーに確認してください')); });
+    }
+    $('unList').onclick = function(e){
+      var b = e.target.closest ? e.target.closest('button[data-del]') : null;
+      if(!b) return;
+      items.splice(+b.getAttribute('data-del'), 1);
+      save('お知らせを消しました');
+    };
+    $('unCancel').onclick = closeModal;
+    $('unGo').onclick = function(){
+      var tx = $('unText').value.replace(/\s+/g, ' ').trim();
+      if(!tx){ toast('お知らせを入れてください'); return; }
+      if(tx.length > 100){ toast('100文字までで入れてください'); return; }
+      items.unshift({ t: tx, d: todayStr() });
+      items = items.slice(0, 5);
+      $('unText').value = '';
+      save('送りました。ユーザーのカードに届きます');
+    };
+  }).catch(function(e){ toast(permMsg(e, 'お知らせを読めませんでした')); });
 }
 $('btnGuest').onclick = function(){
   if(!gRec){ toast('先に受付を開始してください'); return; }
