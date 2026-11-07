@@ -683,7 +683,7 @@ service cloud.firestore {
                         || request.resource.data.get('union', '') == resource.data.get('union', ''));
       allow create: if request.resource.data.get('uid', '') == uid
                     && request.resource.data.keys().hasOnly(['uid', 'name', 'union', 'referrer', 'referrerNo', 'cardToken',
-                         'active', 'visits', 'firstEv', 'lastEv', 'lastAt', 'createdAt', 'createdBy', 'byName'])
+                         'active', 'visits', 'firstEv', 'lastEv', 'lastAt', 'createdAt', 'createdBy', 'byName', 'invUid', 'invName'])
                     && request.resource.data.get('name', '') is string
                     && request.resource.data.get('name', '').size() > 0
                     && (isCkAdmin(request.resource.data.get('union', ''))
@@ -971,7 +971,30 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/cardClaims/$(request.resource.data.refNo))
         && ckJoinRefOk(key, request.resource.data,
              get(/databases/$(database)/documents/cardClaims/$(request.resource.data.refNo)).data.get('t', '_'));
+      // 💜 受付v127: 友だちの招待リンク（ユーザーのカードから・ログインなし。キー f_20文字）。紹介者はそのユーザーの紹介者、招待した人はそのユーザー
+      allow create: if request.resource.data.get('kind', '') == 'friend'
+        && key.matches('^f_[a-z0-9]{20}$')
+        && request.resource.data.keys().hasOnly(['kind', 'union', 'refNo', 'refName', 'invUid', 'invName', 'at'])
+        && request.resource.data.get('invUid', '') is string && request.resource.data.get('invUid', '') != ''
+        && exists(/databases/$(database)/documents/cardClaims/$(request.resource.data.invUid))
+        && ckJoinFriendOk(key, request.resource.data,
+             get(/databases/$(database)/documents/cardClaims/$(request.resource.data.invUid)).data.get('t', '_'));
       allow delete: if signedIn();
+    }
+    // 友だちの招待リンク: ユーザーのカード（今のカード・有効・研修生になっていない）の本人だけ
+    function ckJoinFriendOk(key, d, tk) {
+      return tk is string && tk != '_'
+        && exists(/databases/$(database)/documents/cards/$(tk))
+        && get(/databases/$(database)/documents/cards/$(tk)).data.get('kind', '') == 'user'
+        && get(/databases/$(database)/documents/cards/$(tk)).data.get('no', '') == d.invUid
+        && get(/databases/$(database)/documents/cards/$(tk)).data.get('active', true) != false
+        && get(/databases/$(database)/documents/cards/$(tk)).data.get('toMember', '') == ''
+        && get(/databases/$(database)/documents/cards/$(tk)).data.get('union', '') == d.get('union', '')
+        && get(/databases/$(database)/documents/cards/$(tk)).data.get('name', '') == d.get('invName', '')
+        && get(/databases/$(database)/documents/cards/$(tk)).data.get('referrer', '') == d.get('refName', '')
+        && get(/databases/$(database)/documents/cards/$(tk)).data.get('referrerNo', '') == d.get('refNo', '')
+        && existsAfter(/databases/$(database)/documents/cards/$(tk)/join/me)
+        && getAfter(/databases/$(database)/documents/cards/$(tk)/join/me).data.get('k', '') == key;
     }
     // 紹介者のQR: 会員証（今の会員証＝番号→カードが指すもの）の本人だけ。ビジネスメンバー（ユーザー・研修生・無効は不可）
     function ckJoinRefOk(key, d, tk) {
@@ -992,10 +1015,14 @@ service cloud.firestore {
       allow list: if false;
       allow create: if pid == 'me'
         && request.resource.data.keys().hasOnly(['k', 'at'])
-        && request.resource.data.get('k', '') is string && request.resource.data.get('k', '').matches('^r_[a-z0-9]{20}$')
+        && request.resource.data.get('k', '') is string
         && exists(/databases/$(database)/documents/cards/$(token))
-        && get(/databases/$(database)/documents/cards/$(token)).data.get('kind', '') != 'user'
         && get(/databases/$(database)/documents/cards/$(token)).data.get('active', true) != false
+        && ((get(/databases/$(database)/documents/cards/$(token)).data.get('kind', '') != 'user'
+             && request.resource.data.k.matches('^r_[a-z0-9]{20}$'))
+            || (get(/databases/$(database)/documents/cards/$(token)).data.get('kind', '') == 'user'
+             && get(/databases/$(database)/documents/cards/$(token)).data.get('toMember', '') == ''
+             && request.resource.data.k.matches('^f_[a-z0-9]{20}$')))
         && existsAfter(/databases/$(database)/documents/ckJoin/$(request.resource.data.k));
       allow update: if false;
       allow delete: if signedIn();
@@ -1004,7 +1031,7 @@ service cloud.firestore {
       allow get: if true;
       allow list: if false;
       allow create: if id.matches('^[a-z0-9]{24}$')
-        && request.resource.data.keys().hasOnly(['join', 'name', 'kana', 'union', 'refNo', 'refName', 'evId', 'ok', 'st', 'at'])
+        && request.resource.data.keys().hasOnly(['join', 'name', 'kana', 'union', 'refNo', 'refName', 'invUid', 'invName', 'evId', 'ok', 'st', 'at'])
         && request.resource.data.get('name', '') is string
         && request.resource.data.get('name', '').size() > 0 && request.resource.data.get('name', '').size() <= 40
         && request.resource.data.get('kana', '') is string && request.resource.data.get('kana', '').size() <= 40
@@ -1031,9 +1058,14 @@ service cloud.firestore {
     // 申し込みの中身が入口と合っている（会場のQR＝そのイベント・紹介者は本人が書く／紹介者のQR＝紹介者はQRのとおり）
     function ckApplyJoinOk(d, j) {
       return d.get('union', '') == j.get('union', '_')
-        && ((j.get('kind', '') == 'venue' && d.get('refNo', '') == '' && d.get('evId', '') == j.get('evId', '_'))
+        && ((j.get('kind', '') == 'venue' && d.get('refNo', '') == '' && d.get('evId', '') == j.get('evId', '_')
+             && d.get('invUid', '') == '' && d.get('invName', '') == '')
             || (j.get('kind', '') == 'ref' && d.get('refNo', '') == j.get('refNo', '_')
-                && d.get('refName', '') == j.get('refName', '_') && d.get('evId', '') == ''));
+                && d.get('refName', '') == j.get('refName', '_') && d.get('evId', '') == ''
+                && d.get('invUid', '') == '' && d.get('invName', '') == '')
+            || (j.get('kind', '') == 'friend' && d.get('refNo', '') == j.get('refNo', '_')
+                && d.get('refName', '') == j.get('refName', '_') && d.get('evId', '') == ''
+                && d.get('invUid', '') == j.get('invUid', '_') && d.get('invName', '') == j.get('invName', '_')));
     }
     function ckProfSame(p, d) {
       return existsAfter(p)

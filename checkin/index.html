@@ -1038,7 +1038,11 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .ap-st.ng{color:#b45309;}
 .ap-row{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px;}
 .ap-row span{color:var(--sub);}
-.uiwrap{margin-top:24px;text-align:left;}
+.uiwrap,.fiwrap{margin-top:24px;text-align:left;}
+.fi-list{margin-top:6px;}
+.fi-row{display:flex;justify-content:space-between;gap:10px;padding:8px 2px;border-bottom:1px solid var(--line);font-size:13.5px;}
+.fi-row b{color:var(--green);font-size:12.5px;white-space:nowrap;}
+.jv-poster #fiQrBox{display:flex;justify-content:center;}
 .ui-s{font-size:13px;color:var(--sub);line-height:1.7;margin:8px 0 10px;}
 .ol-get{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:#fff;overflow:hidden;
   background:radial-gradient(circle at 50% 42%,rgba(122,58,214,.7),rgba(10,6,20,.95) 62%);animation:olFade .3s ease;}
@@ -1585,6 +1589,7 @@ body.practice .topbar{top:var(--pxh,36px);}
     <div id="mcProf"></div><!-- 👤 #21 プロフィール（ルビー以上・ふだんは閉じる） -->
     <div id="pzArea"></div><!-- 💜 ユーザーの PRYSMiO（色・前回から・記録） -->
     <div id="mpArea"></div><!-- 💜 ユーザーのマイプラン（コース・毎日のクエスト・連続・レベル・バッジ） -->
+    <div id="fiArea"></div><!-- 💜 ユーザーの「友だちを招待」（招待リンク・来てくれた友だち） -->
     <div id="rsvpTop"></div>
     <div id="selfArea"></div>
     <div id="hwArea"></div><!-- 📝 宿題は受講記録の一覧より上（記録が増えても埋もれないように） -->
@@ -2418,10 +2423,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v126';
+var APP_VER = 'v127';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v127', d: '2026/11/07', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v126', d: '2026/11/07', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v125', d: '2026/11/06', items: ['🛠 研修生のDLR予約で、名前が「P＆P」（＆が全角）のイベントが日程に出なかったのを直しました'] },
   { v: 'v124', d: '2026/11/05', items: ['🛠 会員証からのオンライン受講申請・セルフチェックイン・予約が、NAVIGATOR や ATTACK LIST にログインしたままのスマホだと「申請できません」になることがあったのを直しました'] },
@@ -4676,6 +4682,7 @@ function showCardView(token){
         renderCard(c);
         renderPrysm(c);
         renderMyPlan(c, token);
+        renderFriendInvite(c, token);
         renderReceipts(c);
         if(c.toMember && c.toCard){
           // 🎓 研修生になった人: 研修生のカード（VISITOR PASS）へ案内（このページの記録はそのまま見られる）
@@ -13691,6 +13698,7 @@ function ckCreateUser(o){
   var who = { name: o.name || '', union: o.union || '', referrer: o.referrer || '', referrerNo: o.referrerNo || '' };
   var u = { uid: uid, cardToken: token, active: true, visits: 1, firstEv: o.evId || '', lastEv: o.evId || '', lastAt: now,
             createdAt: FV.serverTimestamp(), createdBy: gUser.uid, byName: (gProf && gProf.name) || '' };
+  if(o.invUid){ u.invUid = o.invUid; u.invName = o.invName || ''; }   // 💜 v127: 友だちの招待で来た人（招待した人）
   var c = { kind: 'user', no: uid, active: true, visits: 1, createdAt: FV.serverTimestamp() };
   Object.keys(who).forEach(function(k){ u[k] = who[k]; c[k] = who[k]; });
   batch.set(db.collection('checkinUsers').doc(uid), u);
@@ -13983,7 +13991,7 @@ function ckJoinStart(){
   box.innerHTML = '<p class="ol-load">読み込み中…</p>';
   adb.collection('ckJoin').doc(gJoinKey).get().then(function(s){
     var j = s.exists ? s.data() : null;
-    if(!j || (j.kind !== 'venue' && j.kind !== 'ref')){
+    if(!j || (j.kind !== 'venue' && j.kind !== 'ref' && j.kind !== 'friend')){
       box.innerHTML = ckJoinMsg('このQRは使えません', '紹介してくれた人か、会場の受付に確かめてください。');
       return;
     }
@@ -14005,11 +14013,12 @@ function ckJoinStart(){
   });
 }
 function ckJoinForm(box, j, ev){
-  var isRef = j.kind === 'ref';
+  var isRef = j.kind === 'ref' || j.kind === 'friend', isFr = j.kind === 'friend';   // 💜 v127: 友だちの招待リンクも紹介者は決まっている
   box.innerHTML = '<div class="gate jn">'
     + '<p class="jn-br">NAVIGATOR Beauty</p>'
-    + '<h1>はじめての方の申し込み</h1>'
+    + '<h1>' + (isFr ? esc(j.invName || '') + ' さんからの招待' : 'はじめての方の申し込み') + '</h1>'
     + '<p class="s">' + esc(j.union || '') + (ev ? ' ・ ' + ckEvDayLabel(ev) : '') + (isRef ? '<br>紹介：<b>' + esc(j.refName || '') + '</b> さん' : '') + '</p>'
+    + (isFr ? '<p class="jn-note" style="margin-top:-8px;">次のDAYの日時と場所は、招待してくれた人に聞いてください。</p>' : '')
     + '<label for="jnName">お名前</label><input type="text" id="jnName" maxlength="40" autocomplete="name" placeholder="例: 山田 花子">'
     + '<label for="jnKana">ふりがな（なくてもOK）</label><input type="text" id="jnKana" maxlength="40" autocomplete="off" placeholder="例: やまだ はなこ">'
     + (isRef ? '' : '<label for="jnRef">紹介者（あなたを誘ってくれた人）</label><input type="text" id="jnRef" maxlength="40" autocomplete="off" placeholder="例: 山田 太郎">'
@@ -14030,6 +14039,7 @@ function ckJoinForm(box, j, ev){
     var id = ckApplyNewId(24);
     ckAnonDb().collection('ckApply').doc(id).set({
       join: gJoinKey, name: name, kana: kana, union: j.union || '', refNo: isRef ? String(j.refNo || '') : '', refName: ref,
+      invUid: isFr ? String(j.invUid || '') : '', invName: isFr ? String(j.invName || '') : '',
       evId: isRef ? '' : String(j.evId || ''), ok: true, st: 'wait', at: FV.serverTimestamp()
     }).then(function(){
       ckApplyRemember(gJoinKey, id);
@@ -14071,7 +14081,7 @@ function ckApplyDraw(box, a){
   box.innerHTML = '<div class="gate jn">'
     + '<p class="jn-br">NAVIGATOR Beauty ・ 受付票</p>'
     + '<h1>' + esc(a.name || '') + ' さん</h1>'
-    + '<p class="s">' + esc(a.union || '') + (a.refName ? ' ・ 紹介：' + esc(a.refName) : '') + '</p>'
+    + '<p class="s">' + esc(a.union || '') + (a.refName ? ' ・ 紹介：' + esc(a.refName) : '') + (a.invName ? '<br>' + esc(a.invName) + ' さんからの招待' : '') + '</p>'
     + '<div class="jn-qr" id="jnQr"></div>'
     + '<p class="jn-big">受付でこの画面を見せてください</p>'
     + '<div class="jn-wait">受付が終わると、この画面があなたのカードに変わります。閉じずにお待ちください。</div>'
@@ -14149,12 +14159,13 @@ function ckApplyConfirm(id, a, method){
     + '<input type="text" id="apRef" list="apRefList" maxlength="40" autocomplete="off" value="' + esc(a.refName || '') + '"' + (fixed ? ' readonly' : ' placeholder="名前を入れると候補が出ます"') + '>'
     + '<datalist id="apRefList">' + (fixed ? '' : opts) + '</datalist>'
     + '<p id="apRefSt" class="ap-st"></p>'
+    + (a.invName ? '<div class="ap-row"><span>招待した人</span><b>' + esc(a.invName) + '</b></div>' : '')
     + '<div class="ap-row"><span>ユニオン</span><b>' + esc(a.union) + '</b></div>'
     + '<div class="ap-row"><span>参加費</span><b>' + (fee > 0 ? yen(fee) : 'なし') + '</b></div>'
     + '<div class="btns"><button id="apCancel">キャンセル</button><button class="primary" id="apGo">登録して受付</button></div>', true);
   function refSt(){
     var el = $('apRefSt');
-    if(fixed){ el.className = 'ap-st ok'; el.textContent = '✓ 紹介者のQRから申し込みました（' + a.refNo + '）'; return; }
+    if(fixed){ el.className = 'ap-st ok'; el.textContent = '✓ ' + (a.invName ? '友だちの招待リンク' : '紹介者のQR') + 'から申し込みました（' + a.refNo + '）'; return; }
     var v = $('apRef').value.trim(), m = ckApplyRefFind(a.union, v);
     if(!v){ el.className = 'ap-st ng'; el.textContent = '紹介者を本人に聞いて、入れてください'; return; }
     el.className = 'ap-st ' + (m ? 'ok' : 'ng');
@@ -14175,9 +14186,23 @@ function ckApplyConfirm(id, a, method){
   };
 }
 function ckApplyRegister(id, a, o, method){
+  // 💜 v127: 友だちの招待で来た人 → 招待した人のカードに「来てくれた」を入れる（カードのトークンは番号→カードから）
+  if(a.invUid && o.invTok === undefined){
+    db.collection('cardClaims').doc(a.invUid).get().then(function(s){
+      var tk = (s.exists && s.data().t) || '';
+      if(!tk) return '';
+      return db.collection('cards').doc(tk).get().then(function(cs){ var d = cs.exists ? cs.data() : null; return d && d.kind === 'user' && String(d.no || '') === a.invUid ? tk : ''; });
+    }).then(function(tk){ o.invTok = tk || ''; }, function(){ o.invTok = ''; })
+      .then(function(){ ckApplyRegister(id, a, o, method); });
+    return;
+  }
   var ev0 = gRec.ev;
-  var nu = ckCreateUser({ name: o.name, union: a.union, referrer: o.refName, referrerNo: o.refNo, evId: ev0.id,
+  var nu = ckCreateUser({ name: o.name, union: a.union, referrer: o.refName, referrerNo: o.refNo, evId: ev0.id, invUid: a.invUid || '', invName: a.invName || '',
     withBatch: function(batch, uid, token){
+      if(o.invTok){
+        var fr = {}; fr['inv_' + uid] = { n: o.name, d: ev0.date || todayStr(), ev: ev0.name || '' };
+        batch.set(db.collection('cards').doc(o.invTok), fr, { merge: true });
+      }
       // 同じ一括書き込みで申し込みを done に（ほかの端末で先に登録されていたら、まるごと弾かれる＝二重に登録しない）
       batch.update(db.collection('ckApply').doc(id), { st: 'done', tok: token, uid: uid, doneAt: FV.serverTimestamp(), by: gUser.uid,
         name: o.name, refName: o.refName, refNo: o.refNo });
@@ -14288,6 +14313,61 @@ function ckJoinRefOpen(c, token){
   });
 }
 
+/* 💜 v127: ユーザーのカードの「友だちを招待」。招待リンク（キー f_20文字）から申し込むと、紹介者はこのユーザーの紹介者、
+   招待した人はこのユーザーになる。受付で登録されると、このカードに「来てくれた」（inv_{ID}）が入る */
+function renderFriendInvite(c, token){
+  var el = $('fiArea');
+  if(!el) return;
+  el.innerHTML = '';
+  if(!c || c.kind !== 'user' || c.active === false || c.toMember || !c.no) return;
+  var fr = Object.keys(c).filter(function(k){ return k.indexOf('inv_') === 0 && c[k] && c[k].n; })
+    .map(function(k){ return c[k]; }).sort(function(x, y){ return String(y.d || '').localeCompare(String(x.d || '')); });
+  el.innerHTML = '<div class="fiwrap"><div class="next-head">INVITE</div>'
+    + '<p class="ui-s">友だちを DAY に誘えます。招待リンクから申し込んでもらうと、紹介者が自動で入って、受付が早く終わります。</p>'
+    + '<button class="primary" id="fiSend" style="width:100%;">招待リンクを送る</button>'
+    + '<button id="fiQr" style="width:100%;margin-top:8px;">その場でQRを見せる</button>'
+    + '<div class="fi-list"><div class="mp-h">招待した友だち' + (fr.length ? '<small>' + fr.length + '人</small>' : '') + '</div>'
+    + (fr.length ? fr.map(function(f){
+        var m = /^\d{4}-(\d{2})-(\d{2})$/.exec(f.d || '');
+        return '<div class="fi-row"><span>' + esc(f.n) + ' さん</span><b>' + (m ? (+m[1]) + '/' + (+m[2]) + ' ' : '') + '来てくれた</b></div>';
+      }).join('') : '<p class="pz-note">まだいません。招待した友だちが来てくれると、ここに出ます。</p>')
+    + '</div></div>';
+  $('fiSend').onclick = function(){ ckJoinFriendGo(c, token, 'send'); };
+  $('fiQr').onclick = function(){ ckJoinFriendGo(c, token, 'qr'); };
+}
+function ckJoinFriendGo(c, token, how){
+  var adb = ckAnonDb(), jr = adb.collection('cards').doc(token).collection('join').doc('me');
+  ['fiSend', 'fiQr'].forEach(function(id){ if($(id)) $(id).disabled = true; });
+  jr.get().then(function(s){
+    var k = s.exists ? (s.data().k || '') : '';
+    if(k) return k;
+    k = 'f_' + ckApplyNewId(20);
+    var b = adb.batch();
+    b.set(jr, { k: k, at: FV.serverTimestamp() });
+    b.set(adb.collection('ckJoin').doc(k), { kind: 'friend', union: c.union || '', refNo: String(c.referrerNo || ''), refName: c.referrer || '',
+      invUid: String(c.no), invName: c.name || '', at: FV.serverTimestamp() });
+    return b.commit().then(function(){ return k; });
+  }).then(function(k){
+    ['fiSend', 'fiQr'].forEach(function(id){ if($(id)) $(id).disabled = false; });
+    var url = ckJoinUrl(k);
+    if(how === 'send'){
+      var msg = (c.name || '') + ' さんから、NAVIGATOR Beauty のDAYへの招待です。お名前を入れると受付票が出るので、当日、受付で見せてください。\n' + url;
+      if(navigator.share){ navigator.share({ text: msg }).catch(function(){}); return; }
+      try{ navigator.clipboard.writeText(msg).then(function(){ toast('招待の文をコピーしました。LINEやメールに貼って送ってください'); }, function(){ toast(url); }); }catch(e){ toast(url); }
+      return;
+    }
+    modal('<h2>💜 友だちを招待</h2>'
+      + '<p style="font-size:13px;color:var(--sub);margin:-4px 0 8px;">友だちのスマホのカメラで読んでもらってください。申し込みページが開きます。</p>'
+      + '<div class="jv-poster"><p class="jv-br">NAVIGATOR Beauty</p><p class="jv-t">' + esc(c.name || '') + ' さんからの招待</p><div id="fiQrBox"></div>'
+      + '<p class="jv-s">スマホのカメラで読んで、お名前を入れてください</p></div>'
+      + '<div class="btns"><button class="primary" id="fiClose">閉じる</button></div>', true);
+    makeQr($('fiQrBox'), url, 220);
+    $('fiClose').onclick = closeModal;
+  }).catch(function(){
+    ['fiSend', 'fiQr'].forEach(function(id){ if($(id)) $(id).disabled = false; });
+    toast('招待リンクを作れませんでした。電波の良いところで、もう一度押してください');
+  });
+}
 $('btnGuest').onclick = function(){
   if(!gRec){ toast('先に受付を開始してください'); return; }
   // 所属ユニオンはイベント参加ユニオンを先頭に、登録済みの全ユニオンから選択できる
