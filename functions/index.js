@@ -208,3 +208,17 @@ exports.sendReminders = onSchedule(
     }
   }
 );
+
+// 💜 NAVIGATOR Beauty（受付 v129）: ユーザー（お客さん）のスマホの通知。中身は beauty.js
+//   毎日20時に1回だけ動く（来場のお礼＝今日来た人／前日のお知らせ＝明日のDAY）。
+//   定時の実行（Cloud Scheduler）は3つまで無料なので、2つに分けずに1つにまとめている（今は overdueReminders・sendReminders と合わせて3つ）
+//   デプロイ: firebase deploy --only functions:beautyDaily
+const beauty = require('./beauty');
+exports.beautyDaily = onSchedule(
+  { schedule: '0 20 * * *', region: 'asia-northeast1', timeZone: 'Asia/Tokyo', memory: '256MiB' },
+  async () => {
+    const db = admin.firestore(), m = admin.messaging(), now = Date.now();
+    try { console.log('beauty thanks ' + JSON.stringify(await beauty.thanks(db, m, now))); } catch (e) { console.log('beauty thanks error ' + e); }
+    try { console.log('beauty dayEve ' + JSON.stringify(await beauty.dayEve(db, m, now))); } catch (e) { console.log('beauty dayEve error ' + e); }
+  }
+);

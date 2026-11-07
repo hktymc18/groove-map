@@ -1037,6 +1037,21 @@ service cloud.firestore {
         && request.resource.data.get('by', '') == request.auth.uid;
       allow delete: if isOwnerAdmin() || isCkAdmin(un);
     }
+    // 💜 受付v129: ユーザーのスマホの通知の送り先（ckPush/{ユーザーのID}）。カードの本人だけが書ける（だれも読めない＝サーバーだけ）
+    match /ckPush/{uid} {
+      allow get, list: if false;
+      allow create, update: if request.resource.data.keys().hasOnly(['card', 'union', 't', 'on', 'ua', 'at'])
+        && request.resource.data.get('card', '') is string && request.resource.data.get('card', '').size() == 32
+        && request.resource.data.get('t', '') is string && request.resource.data.get('t', '').size() > 0 && request.resource.data.get('t', '').size() <= 400
+        && request.resource.data.get('on', null) is bool
+        && request.resource.data.get('ua', '') is string && request.resource.data.get('ua', '').size() <= 180
+        && exists(/databases/$(database)/documents/cards/$(request.resource.data.card))
+        && get(/databases/$(database)/documents/cards/$(request.resource.data.card)).data.get('kind', '') == 'user'
+        && get(/databases/$(database)/documents/cards/$(request.resource.data.card)).data.get('no', '') == uid
+        && get(/databases/$(database)/documents/cards/$(request.resource.data.card)).data.get('active', true) != false
+        && get(/databases/$(database)/documents/cards/$(request.resource.data.card)).data.get('union', '') == request.resource.data.get('union', '_');
+      allow delete: if isOwnerAdmin();
+    }
     match /ckApply/{id} {
       allow get: if true;
       allow list: if false;

@@ -33,6 +33,7 @@ async function open(b, o) {
     }
     return route.fulfill({ status: 404, body: '' });
   });
+  if (o.init) await page.addInitScript(o.init);   // init: ページより先に動かすスクリプト（端末の種類・通知の許可などを試す時）
   await page.goto('https://hktymc18.github.io/groove-map/checkin/index.html' + (o.hash || ''));
   await page.waitForTimeout(o.wait || 1600);
   const ev = s => page.evaluate(s), wt = n => page.waitForTimeout(n || 350);

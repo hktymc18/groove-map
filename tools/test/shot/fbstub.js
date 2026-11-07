@@ -36,6 +36,6 @@
   window.firebase = { apps: [], initializeApp: function () { return {}; }, app: function () { return {}; },
     firestore: Object.assign(function () { return db; }, { FieldValue: FV, CACHE_SIZE_UNLIMITED: -1, Timestamp: { now: function () { return { toDate: function () { return new Date(); } }; }, fromDate: function (d) { return { toDate: function () { return d; } }; } } }),
     auth: Object.assign(function () { return authObj; }, { GoogleAuthProvider: function () {}, Auth: { Persistence: { LOCAL: 'local' } } }),
-    messaging: Object.assign(function () { return { getToken: function () { return Promise.resolve(''); }, onMessage: function () {} }; }, { isSupported: function () { return false; } }),
+    messaging: Object.assign(function () { return { getToken: function () { return Promise.resolve(window.__FBMSG || ''); }, onMessage: function () {} }; }, { isSupported: function () { return !!window.__FBMSG; } }),   // window.__FBMSG＝通知の宛先（テスト用）
     functions: function () { return { httpsCallable: function () { return function () { return Promise.resolve({ data: {} }); }; } }; } };
 })();
