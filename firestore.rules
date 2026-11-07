@@ -1027,6 +1027,16 @@ service cloud.firestore {
       allow update: if false;
       allow delete: if signedIn();
     }
+    // 💜 受付v128: ユーザーのカードの「お知らせ」（ユニオンごと・新しい5件まで）。カードはログインなしで読む
+    match /ckNotice/{un} {
+      allow get: if true;
+      allow list: if false;
+      allow create, update: if (isOwnerAdmin() || isCkAdmin(un) || (ckBeautyTester() && ckCanSee(un)))
+        && request.resource.data.keys().hasOnly(['items', 'by', 'at'])
+        && request.resource.data.items is list && request.resource.data.items.size() <= 5
+        && request.resource.data.get('by', '') == request.auth.uid;
+      allow delete: if isOwnerAdmin() || isCkAdmin(un);
+    }
     match /ckApply/{id} {
       allow get: if true;
       allow list: if false;
