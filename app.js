@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v867';
+var APP_JS_VERSION = 'v868';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4574,7 +4574,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v867';
+  var DATA_VERSION = 'v868';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6686,6 +6686,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v868', d:'2026-11-07', items:['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v:'v867', d:'2026-11-05', items:['読み込みをさらに軽くしました（分析の過去の月・共有の確認・結合したメンバーの予定）'] },
   { v:'v866', d:'2026-11-05', items:['読み込みを軽くしました（予定・ユニオンの予定を少しのあいだ端末に覚える／受付との連携・通知の登録の読み直しを減らす）。ほかの端末で足した予定は、最大10分おくれて出ることがあります'] },
   { v:'v865', d:'2026-11-03', items:['新しい機能の準備をしました（今は画面の変化はありません）'] },
@@ -23554,7 +23555,8 @@ function _umCkLine(u, tbl) {
   if (!u || !u.ckNo) return '';
   var p = u.uPrysm != null && u.uPrysm !== '' ? umPrysmBand(u.uPrysm) : null;
   return '<span class="umck' + (tbl ? ' t' : '') + '">' + (u.uVisits ? '来場 ' + u.uVisits + '回' : '受付で登録') + (u.uLastAt > 1e11 ? '・' + (new Date(u.uLastAt).getMonth() + 1) + '/' + new Date(u.uLastAt).getDate() : '')
-    + (p ? '<i style="--pz:' + p.c + '"></i>' + evEsc(p.n) + ' ' + (+u.uPrysm).toLocaleString() : '') + '</span>';
+    + (p ? '<i style="--pz:' + p.c + '"></i>' + evEsc(p.n) + ' ' + (+u.uPrysm).toLocaleString() : '')
+    + (u.uInvName ? '<span class="umck-inv">・招待: ' + evEsc(u.uInvName) + '</span>' : '') + '</span>';
 }
 // 会場でのお買い上げ（カードの rcpt_b_{イベント}）→ buys の1行
 function _umCkBuy(k, r) {
@@ -23596,15 +23598,16 @@ function umCkSync(force) {
           startMonth: state.currentMonth || '', month: state.currentMonth || '', adp: { on: false, next: '' }, buys: [], needs: [] };
         state.members.push(u); res.add++;
       }
-      var before = JSON.stringify([u.ckNo, u.cardToken, u.uVisits, u.uLastAt, u.uPrysm]);
+      var before = JSON.stringify([u.ckNo, u.cardToken, u.uVisits, u.uLastAt, u.uPrysm, u.uInvName]);
       u.ckNo = cu.uid; if (cu.cardToken) u.cardToken = cu.cardToken;
       u.uVisits = cu.visits || 0; u.uLastAt = cu.lastAt || 0;
+      if (cu.invName) u.uInvName = String(cu.invName).slice(0, 40); // v868: 友だちの招待で来た人（招待した人）
       if (cu.prysm != null) { u.uPrysm = cu.prysm; u.uPrysmD = cu.prysmAt || 0; }
       u.uCkAt = Date.now();
       // v865: 受付で研修生にした人 → MAPでも紹介者の下の研修生に（受付の研修生の番号でつなぐ＝研修の記録も入る）。戻したらユーザーに
       if (cu.toMember && isUserM(u)) { u.title = ''; u.trainee = true; u.cat = '研修生'; u.fromUser = evTodayYmd(); u.checkinNo = cu.toMember; u.ckToMember = cu.toMember; res.tr = (res.tr || 0) + 1; }
       else if (!cu.toMember && u.ckToMember && !isUserM(u) && u.checkinNo === u.ckToMember && _ckIsTrainee(u)) { u.title = 'ユーザー'; u.trainee = false; u.cat = (typeof detectCategory === 'function' ? detectCategory('ユーザー') : '') || ''; delete u.checkinNo; delete u.ckToMember; u.toUser = evTodayYmd(); res.back = (res.back || 0) + 1; }
-      if (JSON.stringify([u.ckNo, u.cardToken, u.uVisits, u.uLastAt, u.uPrysm]) !== before || res.tr || res.back) res.upd++;
+      if (JSON.stringify([u.ckNo, u.cardToken, u.uVisits, u.uLastAt, u.uPrysm, u.uInvName]) !== before || res.tr || res.back) res.upd++;
       if (cu.cardToken) jobs.push(db.doc('cards/' + cu.cardToken).get().then(function(c) { // 会場でのお買い上げ
         var cd = c.exists ? (c.data() || {}) : {}, B = (Array.isArray(u.buys) ? u.buys : []).slice(), had = {}, n0 = B.length;
         B.forEach(function(b) { if (b.ck) had[b.ck] = 1; });
@@ -23641,7 +23644,7 @@ function _umCss() {
     + '.umf{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px}.umc{position:relative;font-size:12.5px;font-weight:800;border:1px solid var(--border);border-radius:999px;padding:6px 11px;color:var(--text-mid);cursor:pointer;white-space:nowrap}.umc.on{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,transparent)}.umc select{position:absolute;inset:0;opacity:0;width:100%;cursor:pointer}'
     + '.umadd-pc{margin-left:auto;color:var(--accent);font-weight:900;cursor:pointer}'
     + '.umg{font-size:12px;font-weight:900;color:var(--text-dim);margin:10px 2px 6px}'
-    + '.umck{display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;color:var(--text-mid);margin-top:3px}.umck.t{margin:0;white-space:nowrap}.umck i{width:9px;height:9px;border-radius:50%;background:var(--pz);margin-left:4px;flex:none}.umck-hub{margin:8px 2px 0}'
+    + '.umck{display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;color:var(--text-mid);margin-top:3px}.umck.t{margin:0;white-space:nowrap}.umck i{width:9px;height:9px;border-radius:50%;background:var(--pz);margin-left:4px;flex:none}.umck-inv{color:var(--text-dim)}.umck-hub{margin:8px 2px 0}'
     + '.umdel{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:10px;cursor:pointer;opacity:.75}.umdel:hover{opacity:1;background:color-mix(in srgb,var(--red) 12%,transparent)}.umdel .lic{width:18px;height:18px}.umtb td.umdelc{width:40px;padding:4px 6px}'
     + '.umcd{display:grid;grid-template-columns:42px 1fr auto auto;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:10px 12px;margin-bottom:8px;cursor:pointer}'
     + '.umav{width:42px;height:42px;border-radius:50%;border:2px solid #E08A1D;display:flex;align-items:center;justify-content:center;font-weight:900;color:#E08A1D;overflow:hidden}.umav img{width:100%;height:100%;object-fit:cover}'
