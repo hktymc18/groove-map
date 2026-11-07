@@ -828,8 +828,9 @@ service cloud.firestore {
       allow list: if false;
       // 💜 受付v119: 準備中のユーザー機能を見られる確認メンバー（オーナーだけが指定）
       allow create, update: if isOwnerUid() && id == 'beauty'
-        && request.resource.data.keys().hasOnly(['testers', 'by', 'at'])
+        && request.resource.data.keys().hasOnly(['testers', 'cardNos', 'by', 'at'])
         && request.resource.data.testers is list && request.resource.data.testers.size() <= 100
+        && request.resource.data.get('cardNos', []) is list && request.resource.data.get('cardNos', []).size() <= 300
         && request.resource.data.by == request.auth.uid
         && request.resource.data.at == request.time;
       allow create, update: if isOwnerUid() && id == 'launch'
@@ -945,6 +946,94 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/cards/$(token)).data.get('kind', '') == 'user'
         && get(/databases/$(database)/documents/cards/$(token)).data.get('active', true) != false;
       allow delete: if signedIn();
+    }
+    // 💜 受付v126: ユーザーの申し込み（NAVIGATOR Beauty）
+    //   ckJoin/{キー}  = 申し込みの入口。会場のQR（キー v_イベントID・受付の人が作る）と、紹介者のQR（キー r_20文字・会員証から作る）
+    //   ckApply/{キー} = 本人の申し込み（受付票）。キー（24文字）を知っている本人と、受付票を読んだ受付の人だけが開ける。
+    //     申し込みだけでは名簿に入らない。受付で読んで「登録して受付」を押した時に、ユーザーの名簿・カードと同じ一括書き込みで done にする
+    match /ckJoin/{key} {
+      allow get: if true;
+      allow list: if false;
+      allow create, update: if request.resource.data.get('kind', '') == 'venue'
+        && key == 'v_' + request.resource.data.get('evId', '')
+        && request.resource.data.keys().hasOnly(['kind', 'union', 'evId', 'by', 'at'])
+        && request.resource.data.get('union', '') is string && request.resource.data.get('union', '') != ''
+        && signedIn() && request.resource.data.get('by', '') == request.auth.uid
+        && exists(/databases/$(database)/documents/checkinEvents/$(request.resource.data.evId))
+        && get(/databases/$(database)/documents/checkinEvents/$(request.resource.data.evId)).data.get('unions', []).hasAny([request.resource.data.union])
+        && (isOwnerAdmin()
+            || (notDisabled(request.auth.uid)
+                && get(/databases/$(database)/documents/checkinEvents/$(request.resource.data.evId)).data.get('unions', []).hasAny([ckMyUnion()])));
+      allow create: if request.resource.data.get('kind', '') == 'ref'
+        && key.matches('^r_[a-z0-9]{20}$')
+        && request.resource.data.keys().hasOnly(['kind', 'union', 'refNo', 'refName', 'at'])
+        && request.resource.data.get('refNo', '') is string && request.resource.data.get('refNo', '') != ''
+        && exists(/databases/$(database)/documents/cardClaims/$(request.resource.data.refNo))
+        && ckJoinRefOk(key, request.resource.data,
+             get(/databases/$(database)/documents/cardClaims/$(request.resource.data.refNo)).data.get('t', '_'));
+      allow delete: if signedIn();
+    }
+    // 紹介者のQR: 会員証（今の会員証＝番号→カードが指すもの）の本人だけ。ビジネスメンバー（ユーザー・研修生・無効は不可）
+    function ckJoinRefOk(key, d, tk) {
+      return tk is string && tk != '_'
+        && exists(/databases/$(database)/documents/cards/$(tk))
+        && get(/databases/$(database)/documents/cards/$(tk)).data.get('no', '') == d.refNo
+        && get(/databases/$(database)/documents/cards/$(tk)).data.get('kind', '') != 'user'
+        && get(/databases/$(database)/documents/cards/$(tk)).data.get('trainee', false) != true
+        && get(/databases/$(database)/documents/cards/$(tk)).data.get('active', true) != false
+        && get(/databases/$(database)/documents/cards/$(tk)).data.get('union', '') == d.get('union', '')
+        && get(/databases/$(database)/documents/cards/$(tk)).data.get('name', '') == d.get('refName', '')
+        && existsAfter(/databases/$(database)/documents/cards/$(tk)/join/me)
+        && getAfter(/databases/$(database)/documents/cards/$(tk)/join/me).data.get('k', '') == key;
+    }
+    // 会員証の「ユーザーを招待」のキー（パスに会員証トークン＝本人だけが書ける。同じ一括書き込みで ckJoin を作る）
+    match /cards/{token}/join/{pid} {
+      allow get: if true;
+      allow list: if false;
+      allow create: if pid == 'me'
+        && request.resource.data.keys().hasOnly(['k', 'at'])
+        && request.resource.data.get('k', '') is string && request.resource.data.get('k', '').matches('^r_[a-z0-9]{20}$')
+        && exists(/databases/$(database)/documents/cards/$(token))
+        && get(/databases/$(database)/documents/cards/$(token)).data.get('kind', '') != 'user'
+        && get(/databases/$(database)/documents/cards/$(token)).data.get('active', true) != false
+        && existsAfter(/databases/$(database)/documents/ckJoin/$(request.resource.data.k));
+      allow update: if false;
+      allow delete: if signedIn();
+    }
+    match /ckApply/{id} {
+      allow get: if true;
+      allow list: if false;
+      allow create: if id.matches('^[a-z0-9]{24}$')
+        && request.resource.data.keys().hasOnly(['join', 'name', 'kana', 'union', 'refNo', 'refName', 'evId', 'ok', 'st', 'at'])
+        && request.resource.data.get('name', '') is string
+        && request.resource.data.get('name', '').size() > 0 && request.resource.data.get('name', '').size() <= 40
+        && request.resource.data.get('kana', '') is string && request.resource.data.get('kana', '').size() <= 40
+        && request.resource.data.get('refName', '') is string && request.resource.data.get('refName', '').size() <= 40
+        && request.resource.data.get('ok', false) == true
+        && request.resource.data.get('st', '') == 'wait'
+        && request.resource.data.get('at', null) == request.time
+        && request.resource.data.get('join', '') is string
+        && exists(/databases/$(database)/documents/ckJoin/$(request.resource.data.get('join', '_')))
+        && ckApplyJoinOk(request.resource.data, get(/databases/$(database)/documents/ckJoin/$(request.resource.data.join)).data);
+      // 受付で「登録して受付」: 待っている申し込みだけ。同じ一括書き込みで作ったユーザーのカードを入れる（2回目は弾く＝二重登録しない）
+      allow update: if signedIn() && notDisabled(request.auth.uid) && (isOwnerAdmin() || ckMyUnion() != '')
+        && resource.data.get('st', '') == 'wait'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['st', 'tok', 'uid', 'doneAt', 'by', 'name', 'refName', 'refNo'])
+        && request.resource.data.st == 'done'
+        && request.resource.data.get('by', '') == request.auth.uid
+        && request.resource.data.get('name', '') is string && request.resource.data.get('name', '').size() > 0
+        && request.resource.data.get('tok', '') is string && request.resource.data.get('tok', '').size() == 32
+        && existsAfter(/databases/$(database)/documents/cards/$(request.resource.data.tok))
+        && getAfter(/databases/$(database)/documents/cards/$(request.resource.data.tok)).data.get('kind', '') == 'user'
+        && getAfter(/databases/$(database)/documents/cards/$(request.resource.data.tok)).data.get('no', '') == request.resource.data.get('uid', '_');
+      allow delete: if signedIn();
+    }
+    // 申し込みの中身が入口と合っている（会場のQR＝そのイベント・紹介者は本人が書く／紹介者のQR＝紹介者はQRのとおり）
+    function ckApplyJoinOk(d, j) {
+      return d.get('union', '') == j.get('union', '_')
+        && ((j.get('kind', '') == 'venue' && d.get('refNo', '') == '' && d.get('evId', '') == j.get('evId', '_'))
+            || (j.get('kind', '') == 'ref' && d.get('refNo', '') == j.get('refNo', '_')
+                && d.get('refName', '') == j.get('refName', '_') && d.get('evId', '') == ''));
     }
     function ckProfSame(p, d) {
       return existsAfter(p)

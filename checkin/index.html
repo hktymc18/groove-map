@@ -1017,6 +1017,29 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .ol-ok-ic{width:64px;height:64px;border-radius:50%;background:var(--green);color:#fff;font-size:36px;line-height:64px;margin:0 auto 10px;}
 .ol-tocard{display:inline-block;margin-top:14px;padding:12px 22px;border-radius:12px;background:var(--accent);color:#fff;font-weight:800;text-decoration:none;}
 .ol-load{text-align:center;color:var(--sub);margin-top:30vh;}
+/* 💜 v126: ユーザーの申し込みページ・受付票・申し込みQR */
+.jn .jn-br{font-size:11px;font-weight:800;letter-spacing:.22em;color:#6d5ce8;margin:0 0 6px;}
+.jn-qr{display:flex;justify-content:center;background:#fff;padding:14px;border-radius:14px;margin:14px 0 6px;}
+.jn-big{font-size:16px;font-weight:800;text-align:center;margin:6px 0 0;}
+.jn-wait{margin-top:12px;padding:12px;border-radius:12px;background:#fff4e6;color:#7a3e0c;font-size:13.5px;font-weight:700;line-height:1.6;}
+.jn-note{font-size:12px;color:var(--sub);margin:10px 0 0;line-height:1.7;}
+.gate label.jn-ok{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--ink);font-size:13.5px;margin-top:16px;}
+.gate label.jn-ok input{width:auto;margin:0;}
+.jn-ok a{color:var(--focus);}
+.jn-alt{text-align:center;margin-top:14px;font-size:13px;}
+.jn-alt a{color:var(--focus);text-decoration:underline;cursor:pointer;}
+.jv-poster{background:#fff;color:#1d1c22;border-radius:16px;padding:18px;text-align:center;border:1px solid var(--line);}
+.jv-poster .jv-br{font-size:11px;letter-spacing:.22em;font-weight:800;color:#3b2fb5;margin:0;}
+.jv-poster .jv-t{font-size:20px;font-weight:900;margin:4px 0 10px;}
+.jv-poster #jvQr,.jv-poster #uiQr{display:flex;justify-content:center;}
+.jv-poster .jv-s{font-size:13px;margin:10px 0 0;color:#444;}
+.ap-st{font-size:12.5px;margin:4px 0 0;}
+.ap-st.ok{color:var(--green);}
+.ap-st.ng{color:#b45309;}
+.ap-row{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px;}
+.ap-row span{color:var(--sub);}
+.uiwrap{margin-top:24px;text-align:left;}
+.ui-s{font-size:13px;color:var(--sub);line-height:1.7;margin:8px 0 10px;}
 .ol-get{position:fixed;inset:0;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:#fff;overflow:hidden;
   background:radial-gradient(circle at 50% 42%,rgba(122,58,214,.7),rgba(10,6,20,.95) 62%);animation:olFade .3s ease;}
 .ol-get-burst{position:absolute;inset:-30%;pointer-events:none;background:repeating-conic-gradient(from 0deg at 50% 50%,rgba(255,230,150,.16) 0 6deg,transparent 6deg 18deg);
@@ -1571,6 +1594,7 @@ body.practice .topbar{top:var(--pxh,36px);}
     <div id="onlineArea"></div>
     <div id="rsvpArea"></div>
     <div id="nextArea"></div>
+    <div id="uiArea"></div><!-- 💜 ビジネスメンバーの「ユーザーを招待」（準備中は指定した会員番号だけ） -->
     <div id="rcptArea"></div>
     <div id="olArea"></div>
     <button class="mc-help" id="mcHelp" aria-label="ご利用ガイド">?</button>
@@ -1607,6 +1631,11 @@ body.practice .topbar{top:var(--pxh,36px);}
 <!-- 🃏 カードコレクション（#col・NAVIGATORのメニューから埋め込みで開く） -->
 <div id="vCol" class="hide">
   <div class="ol-page" id="colBox"></div>
+</div>
+
+<!-- 💜 ユーザーの申し込み（#uj=… 会場・紹介者のQRから／#ua=… 受付票・ログイン不要） -->
+<div id="vJoin" class="hide">
+  <div class="ol-page" id="joinBox"></div>
 </div>
 
 <!-- 🎓 研修生登録ページ（#trainer・ガイダンス担当のスマホ向け） -->
@@ -1823,7 +1852,7 @@ function beep(kind){
   }catch(e){}
 }
 function showView(id){
-  ['vLogin','vProfile','vActivate','vApp','vCard','vReceive','vTrainer','vOl','vCol'].forEach(function(v){
+  ['vLogin','vProfile','vActivate','vApp','vCard','vReceive','vTrainer','vOl','vCol','vJoin'].forEach(function(v){
     $(v).classList.toggle('hide', v !== id);
   });
   if(id === 'vApp') setTimeout(setTbh, 0);   // 固定ヘッダー位置の計測（表示後でないと高さが取れない）
@@ -2358,6 +2387,10 @@ if(gOlKey) gReceiveMode = false;
 // 🃏 カードコレクション（NAVIGATORのメニューから埋め込みで開く・ログイン中のアカウントのカード）
 var gColMode = !gCardToken && !gOlKey && /[#&]col\b/.test(location.hash);
 if(gColMode) gReceiveMode = false;
+// 💜 v126: ユーザーの申し込み（#uj=入口のキー → 申し込みページ／#ua=申し込みのキー → 受付票・ログイン不要）
+var gJoinKey = gCardToken ? null : (function(){ var m = /[#&]uj=([A-Za-z0-9_-]+)/.exec(location.hash); return m ? m[1] : null; })();
+var gApplyId = (gCardToken || gJoinKey) ? null : (function(){ var m = /[#&]ua=([a-z0-9]{24})/.exec(location.hash); return m ? m[1] : null; })();
+if(gJoinKey || gApplyId){ gReceiveMode = false; gColMode = false; }
 var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#trainer/.test(location.hash);   // 🎓 研修生登録ページ
 // 用途ごとに「ホーム画面に追加」用のアイコンと名前を差し替える
 // （同じHTMLを共有しているため、会員証（BASE CHECK-IN）と同じアイコン・名前が並んで
@@ -2367,7 +2400,7 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
 // ・それ以外＝受付システム本体（ログイン〜管理画面）: 受付管理（ベルアイコン）
 (function(){
   var sw = gTrainerMode ? { t: '研修受講カード', i: './icon-trainer-' }
-    : (!gCardToken && !gReceiveMode && !gOlKey && !gColMode) ? { t: '受付管理', i: './icon-admin-' }
+    : (!gCardToken && !gReceiveMode && !gOlKey && !gColMode && !gJoinKey && !gApplyId) ? { t: '受付管理', i: './icon-admin-' }
     : null;
   if(!sw) return;
   try{
@@ -2385,10 +2418,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v125';
+var APP_VER = 'v126';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v126', d: '2026/11/07', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v125', d: '2026/11/06', items: ['🛠 研修生のDLR予約で、名前が「P＆P」（＆が全角）のイベントが日程に出なかったのを直しました'] },
   { v: 'v124', d: '2026/11/05', items: ['🛠 会員証からのオンライン受講申請・セルフチェックイン・予約が、NAVIGATOR や ATTACK LIST にログインしたままのスマホだと「申請できません」になることがあったのを直しました'] },
   { v: 'v123', d: '2026/11/05', items: ['⚡ 読み込みをさらに軽くしました（受付終了の後の稼働率の作り直し・集計タブ・会計で、同じイベントや出席を何度も読まない／稼働率の確かめは1日1回）'] },
@@ -4660,6 +4694,7 @@ function showCardView(token){
       renderProfile(c);
       renderGoalHw(c);
       renderOlArea(c);
+      renderUserInvite(c, token);
       try{ localStorage.setItem('bci_me', token); }catch(e){}   // 🎓 OLチェックアウト（カメラで読んだ時）に使う「このスマホの会員証」
       if(c.active === false){
         // ⛔ 無効メンバー: 先のハウディの予定・受付系をすべて非表示。
@@ -6024,6 +6059,8 @@ function ckFindCardToken(no, nm, ok, miss){
 }
 if(gOlKey) olStart();
 if(gColMode) colStart();
+if(gJoinKey) ckJoinStart();
+else if(gApplyId) ckApplyStart();
 if(gReceiveMode){
   showView('vReceive');
   var rvOpen = function(){
@@ -6048,7 +6085,7 @@ if(gReceiveMode){
 }
 
 auth.onAuthStateChanged(function(u){
-  if(gCardToken || gReceiveMode || gOlKey || gColMode) return;   // 会員証・受け取り・OLチェックアウト中は通常画面に切り替えない
+  if(gCardToken || gReceiveMode || gOlKey || gColMode || gJoinKey || gApplyId) return;   // 会員証・受け取り・OLチェックアウト・申し込み中は通常画面に切り替えない
   gUser = u;
   if(!gTrainerMode && !ckAutoOutCheck(u)) return;   // ⏱ #24 受付は4時間で自動ログアウト
   if(!u){ gProf = null; showView('vLogin'); return; }
@@ -6531,15 +6568,17 @@ $('btnLeaders').onclick = function(){ ckOwnerListOpen('leaders'); };
 // 💜 ユーザー機能の確認メンバー（全ユニオン共通・checkinConfig/beauty.testers）
 $('btnBeautyTesters').onclick = function(){
   if(!isOwner()) return;
+  var nos = [];
   db.collection('checkinConfig').doc('beauty').get().then(function(sn){
     var cur = (sn.exists && sn.data().testers) || [];
+    nos = (sn.exists && sn.data().cardNos) || [];
     return Promise.all(cur.map(function(uid){
       return db.collection('users').doc(uid).get().then(function(u){
         var d = u.exists ? u.data() : {};
         return { uid: uid, name: d.name || uid.slice(0, 8), union: d.union || '?', role: d.role || '', checked: true };
       }).catch(function(){ return { uid: uid, name: uid.slice(0, 8), union: '?', role: '', checked: true }; });
     }));
-  }).then(function(rows){ coreAdminsModal(gRosterUnion, rows, 'beauty'); })
+  }).then(function(rows){ coreAdminsModal(gRosterUnion, rows, 'beauty', { cardNos: nos }); })
   .catch(function(e){ toast('読込エラー: ' + e.message); });
 };
 $('btnUnionAdmins').onclick = function(){ ckOwnerListOpen('unionAdmins'); };
@@ -6605,7 +6644,7 @@ $('btnAdminsView').onclick = function(){
    受付管理者の任命・会計の操作ログなど、ユニオン管理者だけの操作ができる。
    v102: NAVIGATORの管理者・NAVIGATORの兼務（coreAdmins）とは別。受付ではここで任命した人だけがユニオン管理者 */
 // ⭐ kind === 'leaders' のときは「リーダー」の設定（checkinUnions/{un}.leaders・オーナーのみ）。同じユニオンの人も選べる
-function coreAdminsModal(un, rows, kind){
+function coreAdminsModal(un, rows, kind, opt){
   if(!isOwner()) return;
  var lead = kind === 'leaders', bty = kind === 'beauty';
   var others = [un].concat(gUnions.filter(function(u){ return u !== un; }));
@@ -6621,6 +6660,9 @@ function coreAdminsModal(un, rows, kind){
         + '<select id="caUn" style="flex:1;min-width:0;">' + others.map(function(u){ return '<option>' + esc(u) + '</option>'; }).join('') + '</select>'
         + '<button id="caLoad">ユーザーを表示</button></div>'
       : '')
+    // 💜 v126: 会員証に「ユーザーを招待」を出す会員番号（準備中に試す人だけ）
+    + (bty ? '<label for="caNos" style="margin-top:14px;">会員証に「ユーザーを招待」を出す会員番号' + hq('ここに入れた会員番号の会員証にだけ、お客さんに読んでもらう招待のQR（紹介者として入る申し込みQR）が出ます。改行・カンマ・スペースで区切ります。会員証には6時間ほどで反映されます。') + '</label>'
+        + '<textarea id="caNos" rows="2" autocomplete="off" placeholder="例: ANT0012, RV0034">' + esc(((opt && opt.cardNos) || []).join(', ')) + '</textarea>' : '')
     + '<div class="btns"><button id="caCancel">キャンセル</button><button class="primary" id="caSave">保存</button></div>', true);
   function paint(){
     $('caList').innerHTML = rows.map(function(r, i){
@@ -6655,7 +6697,9 @@ function coreAdminsModal(un, rows, kind){
   $('caSave').onclick = function(){
     var arr = rows.filter(function(r){ return r.checked; }).map(function(r){ return r.uid; });
     $('caSave').disabled = true;
-    var w = bty ? db.collection('checkinConfig').doc('beauty').set({ testers: arr, by: gUser.uid, at: FV.serverTimestamp() })
+    var cnos = bty ? ($('caNos').value || '').split(/[\s,、，]+/).map(function(x){ return x.trim().toUpperCase(); })
+      .filter(function(x, i, a){ return x && a.indexOf(x) === i; }).slice(0, 300) : [];
+    var w = bty ? db.collection('checkinConfig').doc('beauty').set({ testers: arr, cardNos: cnos, by: gUser.uid, at: FV.serverTimestamp() })
       : db.collection('checkinUnions').doc(un).set(lead ? { leaders: arr } : { unionAdmins: arr }, { merge: true });
     w.then(function(){
       if(bty) gBeautyTesters = arr; else if(lead) gLeaders[un] = arr; else gUnionAdmins[un] = arr;
@@ -9438,6 +9482,7 @@ function renderEvents(){
       + (ev.rsvp && canRec ? '<button data-a="rsvps" data-id="' + esc(ev.id) + '">🎟 予約<span id="rvCt_' + esc(ev.id) + '"></span><span id="rcCt_' + esc(ev.id) + '"></span></button>' : '')
       + (canFinEv(ev) ? '<button data-a="fin" data-id="' + esc(ev.id) + '">会計</button>' : '')
       + (canRec ? '<button data-a="imp" data-id="' + esc(ev.id) + '">📥 取込</button>' : '')
+      + (canRec && ckBeautyOn() && (ev.date || '') >= t ? '<button data-a="ujqr" data-id="' + esc(ev.id) + '">💜 申し込みQR</button>' : '')
       + (canDel && ev.recClosed && ev.date === t ? '<button data-a="unclose" data-id="' + esc(ev.id) + '" title="押し間違いで終了したイベントを、受付前の状態に戻す（集計の分母から外れる）">↩ 終了を取り消す</button>' : '')
       + (canDel ? '<button data-a="editev" data-id="' + esc(ev.id) + '">編集</button>' : '')
       + (canDel ? '<button data-a="del" data-id="' + esc(ev.id) + '" class="danger ghost">削除</button>' : '')
@@ -9480,7 +9525,7 @@ function renderEvents(){
 }
 /* 📋 出席者一覧（イベント全体・全ユニオン）: 終わったイベントも受付を開き直さずに見られる。
    合同イベントは参加ユニオン別の人数、合同外から来た人はビジターとして別に数える */
-var CK_METHOD_LABEL = { scan: 'QR', manual: '手入力', self: 'セルフ', online: '💻 オンライン', guest: 'ゲスト受付', 'import': '取込' };
+var CK_METHOD_LABEL = { scan: 'QR', manual: '手入力', self: 'セルフ', online: '💻 オンライン', guest: 'ゲスト受付', 'import': '取込', apply: '申し込み' };
 function evAttCat(ev, a){
   var u = a.union || '';
   if(ckIsUserAtt(a)) return 'ユーザー';   // 💜 ユーザー（稼働率には入らない）
@@ -9589,6 +9634,7 @@ $('evList').addEventListener('click', function(e){
   if(a === 'rec'){ startReception(ev); }
   if(a === 'fin'){ financeModal(ev); }
   if(a === 'imp'){ importModal(ev); }
+  if(a === 'ujqr'){ ckJoinVenueModal(ev); }
   if(a === 'online'){ onlineModal(ev); }
   if(a === 'rsvps'){ rsvpListModal(ev); }
   if(a === 'atts'){ evAttModal(ev); }
@@ -13053,6 +13099,14 @@ function staleCardStage(member, method){
 function scan(raw, method){
   if(!gRec) return;
   raw = normalizeScan(raw);
+  // 💜 v126: ユーザーの申し込みの受付票 "ua:申し込みのキー（24文字）"
+  var am = /^ua[:;+]([a-z0-9]{24})$/i.exec(raw);
+  if(am){ ckApplyScan(am[1].toLowerCase(), method); return; }
+  if(/[#&]uj=/.test(raw)){
+    beep('ng');
+    setStage('ng', '<span class="hit-badge">申し込み用のQRです</span><p class="stage-sub">これは、お客さん本人のスマホのカメラで読んでもらうQRです。本人が申し込むと出る「受付票」のQRを読んでください。</p>');
+    return;
+  }
   // 💜 ユーザーのQR "u:u1730000000000:xxxxxx"（ID＋トークンの先頭6文字）
   var um = /^u[:;+](u\d{8,})(?:[:;+](\w*))?/i.exec(raw);
   if(um){ ckUserScan(um[1].toLowerCase(), (um[2] || '').toLowerCase(), method); return; }
@@ -13642,6 +13696,7 @@ function ckCreateUser(o){
   batch.set(db.collection('checkinUsers').doc(uid), u);
   batch.set(db.collection('cards').doc(token), c);
   batch.set(db.collection('cardClaims').doc(uid), { t: token });
+  if(o.withBatch) o.withBatch(batch, uid, token);   // 💜 v126: 申し込みからの登録は、申し込みの done も同じ一括書き込みで
   return { uid: uid, token: token, user: u, p: batch.commit() };
 }
 // ユーザーの出席の記録（union は空・uUnion にユーザーのユニオン）
@@ -13667,7 +13722,8 @@ function ckUserStage(uid, data, opt){
     + (fee > 0 ? '<p class="hit-meta"><b id="stgFeeTxt">' + (data.payMethod ? '💳 PayPay ' : (pick ? '💴 現金 ' : '')) + yen(fee) + ' 徴収</b></p>' : '')
     + (pick ? ckPayPickHtml() : '')
     + (fee > 0 ? ckAddonBtnHtml(uid) : '')
-    + (opt.isNew ? '<button id="stgUserQr" class="primary" style="margin-top:8px;">📱 ユーザーQRを渡す</button> ' : '')
+    + (opt.applied ? '<p class="hit-meta">📱 本人の受付票が、そのままカードに変わります</p>' : '')
+    + (opt.isNew ? '<button id="stgUserQr"' + (opt.applied ? '' : ' class="primary"') + ' style="margin-top:8px;">📱 ' + (opt.applied ? '変わらない時：ユーザーQRを渡す' : 'ユーザーQRを渡す') + '</button> ' : '')
     + '<button id="stgUserLog" style="margin-top:8px;"' + (opt.isNew ? '' : ' class="primary"') + '>📋 測定・体験・購入</button>',
     true);
   if(pick) ckBindPayPick(uid, fee);
@@ -13885,6 +13941,353 @@ function ckGuestAsUser(name, union, refName){
   beep('ok');
   ckUserStage(nu.uid, data, { isNew: true, token: nu.token });
 }
+/* 💜 v126: ユーザーの申し込み（NAVIGATOR Beauty・準備中）
+   入口のQR（ckJoin/{キー}）を本人のスマホで読む → 申し込みページで名前を入れる → 受付票（ckApply/{申し込みのキー}）
+   → 受付で受付票のQR（"ua:キー"）を読んで「登録して受付」→ ユーザー登録・カードの発行・今日の受付を一度に
+   → 本人の受付票の画面が、そのままカードに変わる。
+   ・入口は2つ: 会場のQR（イベントの一覧「💜 申し込みQR」・キー v_イベントID）／紹介者のQR（会員証の「ユーザーを招待」・キー r_20文字）
+   ・申し込みだけでは名簿に入らない（受付で読んだ人だけ）。申し込みから14日たつと使えない
+   ・本人の書き込みは、ログインしていない別の接続（ckAnonDb）で送る */
+function ckApplyNewId(n){
+  var a = new Uint8Array(n || 24), s = '', ch = 'abcdefghijkmnpqrstuvwxyz23456789';
+  (window.crypto || window.msCrypto).getRandomValues(a);
+  for(var i = 0; i < a.length; i++) s += ch.charAt(a[i] % 32);
+  return s;
+}
+function ckJoinUrl(key){ return location.href.split('#')[0] + '#uj=' + key; }
+function ckApplyUrl(id){ return location.href.split('#')[0] + '#ua=' + id; }
+function ckApplyQrText(id){ return 'ua:' + id; }
+function ckTsMs(v){
+  if(!v) return 0;
+  if(typeof v.toMillis === 'function') return v.toMillis();
+  if(typeof v === 'number') return v;
+  var t = Date.parse(v); return isNaN(t) ? 0 : t;
+}
+function ckApplyExpired(a){ var t = ckTsMs(a && a.at); return !!t && Date.now() - t > 14 * 864e5; }
+function ckApplyMine(joinKey){ try{ return localStorage.getItem('bci_apply_' + joinKey) || ''; }catch(e){ return ''; } }
+function ckApplyRemember(joinKey, id){ try{ localStorage.setItem('bci_apply_' + joinKey, id); }catch(e){} }
+function ckApplyForget(joinKey){ try{ localStorage.removeItem('bci_apply_' + joinKey); }catch(e){} }
+function ckJoinMsg(t, s){
+  return '<div class="gate jn"><p class="jn-br">NAVIGATOR Beauty</p><h1>' + esc(t) + '</h1><p class="s">' + esc(s) + '</p></div>';
+}
+function ckEvDayLabel(ev){
+  var d = String((ev && ev.date) || ''), m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d);
+  if(!m) return esc((ev && ev.name) || '');
+  var w = '日月火水木金土'.charAt(new Date(+m[1], +m[2] - 1, +m[3]).getDay());
+  return (+m[2]) + '/' + (+m[3]) + '（' + w + '）' + (ev.name ? ' ' + esc(ev.name) : '');
+}
+// 申し込みページ（#uj=入口のキー）
+function ckJoinStart(){
+  showView('vJoin');
+  var box = $('joinBox'), adb = ckAnonDb();
+  box.innerHTML = '<p class="ol-load">読み込み中…</p>';
+  adb.collection('ckJoin').doc(gJoinKey).get().then(function(s){
+    var j = s.exists ? s.data() : null;
+    if(!j || (j.kind !== 'venue' && j.kind !== 'ref')){
+      box.innerHTML = ckJoinMsg('このQRは使えません', '紹介してくれた人か、会場の受付に確かめてください。');
+      return;
+    }
+    var mine = ckApplyMine(gJoinKey);
+    if(mine){ gApplyId = mine; try{ history.replaceState(null, '', ckApplyUrl(mine)); }catch(e){} ckApplyStart(); return; }
+    if(j.kind === 'venue'){
+      return adb.collection('checkinEvents').doc(j.evId).get().then(function(es){
+        var ev = es.exists ? es.data() : null;
+        if(!ev || (ev.date && ev.date < todayStr())){
+          box.innerHTML = ckJoinMsg('このQRは使えません', 'このイベントの申し込みは終わりました。会場の受付に確かめてください。');
+          return;
+        }
+        ckJoinForm(box, j, ev);
+      });
+    }
+    ckJoinForm(box, j, null);
+  }).catch(function(){
+    box.innerHTML = ckJoinMsg('読み込めませんでした', '電波の良いところで、もう一度QRを読んでください。');
+  });
+}
+function ckJoinForm(box, j, ev){
+  var isRef = j.kind === 'ref';
+  box.innerHTML = '<div class="gate jn">'
+    + '<p class="jn-br">NAVIGATOR Beauty</p>'
+    + '<h1>はじめての方の申し込み</h1>'
+    + '<p class="s">' + esc(j.union || '') + (ev ? ' ・ ' + ckEvDayLabel(ev) : '') + (isRef ? '<br>紹介：<b>' + esc(j.refName || '') + '</b> さん' : '') + '</p>'
+    + '<label for="jnName">お名前</label><input type="text" id="jnName" maxlength="40" autocomplete="name" placeholder="例: 山田 花子">'
+    + '<label for="jnKana">ふりがな（なくてもOK）</label><input type="text" id="jnKana" maxlength="40" autocomplete="off" placeholder="例: やまだ はなこ">'
+    + (isRef ? '' : '<label for="jnRef">紹介者（あなたを誘ってくれた人）</label><input type="text" id="jnRef" maxlength="40" autocomplete="off" placeholder="例: 山田 太郎">'
+        + '<p class="jn-note" style="margin-top:4px;">分からない時は、空けたままで大丈夫です。受付で伝えてください。</p>')
+    + '<label class="jn-ok" for="jnOk"><input type="checkbox" id="jnOk"><span><a href="../privacy/" target="_blank" rel="noopener">プライバシーポリシー</a>に同意する</span></label>'
+    + '<button class="primary" id="jnGo">申し込む</button>'
+    + '<p class="mc-err" id="jnErr"></p>'
+    + '<p class="jn-note">お名前は、受付でスタッフが確かめます。電話番号やメールアドレスは聞きません。申し込むと「受付票」が出るので、受付で見せてください。</p>'
+    + '</div>';
+  $('jnGo').onclick = function(){
+    var name = $('jnName').value.replace(/\s+/g, ' ').trim(), kana = $('jnKana').value.replace(/\s+/g, ' ').trim();
+    var ref = isRef ? (j.refName || '') : $('jnRef').value.replace(/\s+/g, ' ').trim();
+    $('jnErr').textContent = '';
+    if(!name){ $('jnErr').textContent = 'お名前を入れてください'; return; }
+    if(name.length > 40 || kana.length > 40 || ref.length > 40){ $('jnErr').textContent = '40文字までで入れてください'; return; }
+    if(!$('jnOk').checked){ $('jnErr').textContent = 'プライバシーポリシーに同意してください'; return; }
+    $('jnGo').disabled = true;
+    var id = ckApplyNewId(24);
+    ckAnonDb().collection('ckApply').doc(id).set({
+      join: gJoinKey, name: name, kana: kana, union: j.union || '', refNo: isRef ? String(j.refNo || '') : '', refName: ref,
+      evId: isRef ? '' : String(j.evId || ''), ok: true, st: 'wait', at: FV.serverTimestamp()
+    }).then(function(){
+      ckApplyRemember(gJoinKey, id);
+      gApplyId = id;
+      try{ history.replaceState(null, '', ckApplyUrl(id)); }catch(e){}
+      ckApplyStart();
+    }).catch(function(){
+      $('jnGo').disabled = false;
+      $('jnErr').textContent = '申し込めませんでした。電波の良いところで、もう一度押してください。';
+    });
+  };
+}
+// 受付票（#ua=申し込みのキー）。受付で登録されると、そのままカードに変わる
+var gApplyUnsub = null;
+function ckApplyStart(){
+  showView('vJoin');
+  var box = $('joinBox'), ref = ckAnonDb().collection('ckApply').doc(gApplyId);
+  box.innerHTML = '<p class="ol-load">読み込み中…</p>';
+  ref.get().then(function(s){
+    var a = s.exists ? s.data() : null;
+    if(!a){ box.innerHTML = ckJoinMsg('受付票が見つかりません', 'もう一度QRを読んで、申し込んでください。'); return; }
+    if(a.st === 'done' && a.tok){ ckApplyToCard(a.tok); return; }
+    if(ckApplyExpired(a)){
+      if(a.join) ckApplyForget(a.join);
+      box.innerHTML = ckJoinMsg('この受付票は使えなくなりました', '申し込みから14日たちました。もう一度QRを読んで、申し込んでください。');
+      return;
+    }
+    ckApplyDraw(box, a);
+    if(gApplyUnsub) try{ gApplyUnsub(); }catch(e){}
+    gApplyUnsub = ref.onSnapshot(function(sn){
+      var x = sn.exists ? sn.data() : null;
+      if(x && x.st === 'done' && x.tok) ckApplyToCard(x.tok);
+    }, function(){});
+  }).catch(function(){
+    box.innerHTML = ckJoinMsg('読み込めませんでした', '電波の良いところで、このページを開き直してください。');
+  });
+}
+function ckApplyDraw(box, a){
+  box.innerHTML = '<div class="gate jn">'
+    + '<p class="jn-br">NAVIGATOR Beauty ・ 受付票</p>'
+    + '<h1>' + esc(a.name || '') + ' さん</h1>'
+    + '<p class="s">' + esc(a.union || '') + (a.refName ? ' ・ 紹介：' + esc(a.refName) : '') + '</p>'
+    + '<div class="jn-qr" id="jnQr"></div>'
+    + '<p class="jn-big">受付でこの画面を見せてください</p>'
+    + '<div class="jn-wait">受付が終わると、この画面があなたのカードに変わります。閉じずにお待ちください。</div>'
+    + '<button id="jnRe" style="width:100%;margin-top:12px;">画面が変わらない時は、ここを押してください</button>'
+    + '<p class="jn-note">このページをあとで開き直しても、同じ受付票が出ます。</p>'
+    + (a.join ? '<p class="jn-alt"><a id="jnOther">別の人が、このスマホで申し込む</a></p>' : '')
+    + '</div>';
+  makeQr($('jnQr'), ckApplyQrText(gApplyId), 220);
+  $('jnRe').onclick = function(){
+    $('jnRe').disabled = true;
+    ckAnonDb().collection('ckApply').doc(gApplyId).get().then(function(s){
+      $('jnRe').disabled = false;
+      var x = s.exists ? s.data() : null;
+      if(x && x.st === 'done' && x.tok){ ckApplyToCard(x.tok); return; }
+      toast('まだ受付が終わっていません。受付でこの画面を見せてください');
+    }).catch(function(){ $('jnRe').disabled = false; toast('読み込めませんでした。電波の良いところでもう一度押してください'); });
+  };
+  var o = $('jnOther');
+  if(o) o.onclick = function(){
+    if(gApplyUnsub) try{ gApplyUnsub(); }catch(e){}
+    gApplyUnsub = null;
+    ckApplyForget(a.join);
+    gJoinKey = a.join; gApplyId = null;
+    try{ history.replaceState(null, '', ckJoinUrl(a.join)); }catch(e){}
+    ckJoinStart();
+  };
+}
+function ckApplyToCard(tok){
+  if(gApplyUnsub) try{ gApplyUnsub(); }catch(e){}
+  gApplyUnsub = null;
+  try{ location.replace(cardUrl(tok)); }catch(e){}
+  location.reload();
+}
+
+/* 受付: 受付票のQR（"ua:キー"）を読んだ時 */
+function ckApplyScan(id, method){
+  if(!gRec) return;
+  var ng = function(t, s){ beep('ng'); setStage('ng', '<span class="hit-badge">' + esc(t) + '</span><p class="stage-sub">' + esc(s) + '</p>'); };
+  if(!ckBeautyOn()){ ng('まだ使えない受付票です', 'ユーザーの申し込みは準備中です。「ゲスト受付」から受付してください。'); return; }
+  var ev0 = gRec.ev;
+  db.collection('ckApply').doc(id).get().then(function(s){
+    if(!gRec || gRec.ev !== ev0) return;
+    var a = s.exists ? s.data() : null;
+    if(!a){ ng('見つからない受付票', '本人にもう一度申し込んでもらうか、「ゲスト受付」から受付してください。'); return; }
+    if(a.st === 'done'){
+      if(a.uid){ ckUserScan(a.uid, String(a.tok || '').slice(0, 6), method); return; }   // 登録済み＝ユーザーとして受付（出席済みならそう出る）
+      ng('登録済みの受付票', '本人のカード（USER PASS）のQRで受付してください。');
+      return;
+    }
+    if(ckApplyExpired(a)){ ng('使えなくなった受付票', '申し込みから14日たっています。本人にもう一度申し込んでもらってください。'); return; }
+    if(!a.union){ ng('読めない受付票', '本人にもう一度申し込んでもらうか、「ゲスト受付」から受付してください。'); return; }
+    ckApplyConfirm(id, a, method);
+  }).catch(function(e){ beep('ng'); toast(permMsg(e, '受付票の照会に失敗しました')); });
+}
+function ckApplyRefFind(union, name){
+  var key = String(name || '').replace(/[ 　]/g, ''), hit = null;
+  if(!key) return null;
+  Object.keys(gRec.roster).forEach(function(no){
+    var m = gRec.roster[no];
+    if(!hit && m.union === union && !ckMemberOff(m) && String(m.name || '').replace(/[ 　]/g, '') === key) hit = m;
+  });
+  return hit;
+}
+function ckApplyConfirm(id, a, method){
+  var fixed = !!a.refNo, fee = currentFee();
+  var opts = Object.keys(gRec.roster).map(function(no){ return gRec.roster[no]; })
+    .filter(function(m){ return m.union === a.union && !ckMemberOff(m) && m.name; })
+    .sort(function(x, y){ return String(x.kana || x.name).localeCompare(String(y.kana || y.name), 'ja'); })
+    .map(function(m){ return '<option value="' + esc(m.name) + '"></option>'; }).join('');
+  modal('<h2>💜 ユーザーの申し込み</h2>'
+    + '<p style="font-size:13px;color:var(--sub);margin:-4px 0 6px;">受付票を読みました。内容を確かめて「登録して受付」を押してください。</p>'
+    + '<label for="apName">お名前</label><input type="text" id="apName" maxlength="40" value="' + esc(a.name || '') + '">'
+    + (a.kana ? '<p style="font-size:12.5px;color:var(--sub);margin:4px 0 0;">ふりがな：' + esc(a.kana) + '</p>' : '')
+    + '<label for="apRef">紹介者（ビジネスメンバー）</label>'
+    + '<input type="text" id="apRef" list="apRefList" maxlength="40" autocomplete="off" value="' + esc(a.refName || '') + '"' + (fixed ? ' readonly' : ' placeholder="名前を入れると候補が出ます"') + '>'
+    + '<datalist id="apRefList">' + (fixed ? '' : opts) + '</datalist>'
+    + '<p id="apRefSt" class="ap-st"></p>'
+    + '<div class="ap-row"><span>ユニオン</span><b>' + esc(a.union) + '</b></div>'
+    + '<div class="ap-row"><span>参加費</span><b>' + (fee > 0 ? yen(fee) : 'なし') + '</b></div>'
+    + '<div class="btns"><button id="apCancel">キャンセル</button><button class="primary" id="apGo">登録して受付</button></div>', true);
+  function refSt(){
+    var el = $('apRefSt');
+    if(fixed){ el.className = 'ap-st ok'; el.textContent = '✓ 紹介者のQRから申し込みました（' + a.refNo + '）'; return; }
+    var v = $('apRef').value.trim(), m = ckApplyRefFind(a.union, v);
+    if(!v){ el.className = 'ap-st ng'; el.textContent = '紹介者を本人に聞いて、入れてください'; return; }
+    el.className = 'ap-st ' + (m ? 'ok' : 'ng');
+    el.textContent = m ? '✓ 名簿にいます（' + m.no + '）' : '名簿に見つかりません。候補から選び直してください（このままでも登録できます）';
+  }
+  refSt();
+  if(!fixed) $('apRef').oninput = refSt;
+  $('apCancel').onclick = function(){ closeModal(); focusScan(); };
+  $('apGo').onclick = function(){
+    var name = $('apName').value.replace(/\s+/g, ' ').trim(), refName = $('apRef').value.replace(/\s+/g, ' ').trim();
+    if(!name){ toast('お名前を入れてください'); return; }
+    if(!refName){ toast('紹介者を入れてください'); return; }
+    var m = fixed ? null : ckApplyRefFind(a.union, refName);
+    var refNo = fixed ? a.refNo : (m ? m.no : '');
+    if(m) refName = m.name;
+    $('apGo').disabled = true;
+    ckApplyRegister(id, a, { name: name, refName: refName, refNo: refNo }, method);
+  };
+}
+function ckApplyRegister(id, a, o, method){
+  var ev0 = gRec.ev;
+  var nu = ckCreateUser({ name: o.name, union: a.union, referrer: o.refName, referrerNo: o.refNo, evId: ev0.id,
+    withBatch: function(batch, uid, token){
+      // 同じ一括書き込みで申し込みを done に（ほかの端末で先に登録されていたら、まるごと弾かれる＝二重に登録しない）
+      batch.update(db.collection('ckApply').doc(id), { st: 'done', tok: token, uid: uid, doneAt: FV.serverTimestamp(), by: gUser.uid,
+        name: o.name, refName: o.refName, refNo: o.refNo });
+    } });
+  nu.p.then(function(){
+    closeModal();
+    if(!gRec || gRec.ev !== ev0) return;
+    var data = ckUserAttData(nu.uid, nu.user, nu.token, 'apply');
+    writeAttendance(nu.uid, data);
+    beep('ok');
+    ckUserStage(nu.uid, data, { isNew: true, token: nu.token, applied: true });
+    focusScan();
+  }).catch(function(e){
+    var b = $('apGo'); if(b) b.disabled = false;
+    beep('ng');
+    toast(permMsg(e, '登録できませんでした。ほかの受付で登録済みか、ルールの反映がまだの可能性があります。もう一度受付票を読んでください'));
+  });
+}
+
+/* 受付のイベント一覧「💜 申し込みQR」: 会場に映す・印刷するQR（キー v_イベントID） */
+function ckJoinVenueModal(ev){
+  var un = (ev.unions || []).indexOf(gUnion) >= 0 ? gUnion : (ev.hostUnion || gUnion), key = 'v_' + ev.id;
+  db.collection('ckJoin').doc(key).set({ kind: 'venue', union: un, evId: ev.id, by: gUser.uid, at: FV.serverTimestamp() }).then(function(){
+    var url = ckJoinUrl(key);
+    modal('<h2>💜 ユーザー申し込みQR' + hq('はじめて来た人（ユーザー）に、本人のスマホのカメラで読んでもらうQRです。本人が名前を入れると「受付票」のQRが出ます。受付の画面でその受付票を読むと、ユーザー登録・カードの発行・受付が一度に終わります。タブレットに映すか、印刷して受付の前に置いてください。') + '</h2>'
+      + '<p style="font-size:13px;color:var(--sub);margin:-4px 0 8px;">' + ckEvDayLabel(ev) + ' ・ ' + esc(un) + '</p>'
+      + '<div class="jv-poster" id="jvPoster"><p class="jv-br">NAVIGATOR Beauty</p><p class="jv-t">はじめての方はこちら</p><div id="jvQr"></div>'
+      + '<p class="jv-s">スマホのカメラで読んで、お名前を入れてください</p></div>'
+      + '<div class="btns"><button id="jvCopy">URLをコピー</button><button id="jvPrint">印刷する</button><button class="primary" id="jvClose">閉じる</button></div>', true);
+    makeQr($('jvQr'), url, 240);
+    $('jvClose').onclick = function(){ closeModal(); };
+    $('jvCopy').onclick = function(){
+      try{ navigator.clipboard.writeText(url).then(function(){ toast('URLをコピーしました'); }, function(){ toast(url); }); }catch(e){ toast(url); }
+    };
+    $('jvPrint').onclick = function(){
+      var img = document.querySelector('#jvQr img'), cv = document.querySelector('#jvQr canvas');
+      var src = (img && img.src && img.src.indexOf('data:') === 0) ? img.src : (cv && cv.toDataURL ? cv.toDataURL() : '');
+      var w = window.open('', '_blank');
+      if(!w){ toast('ポップアップがブロックされました。ブラウザの設定で許可してください'); return; }
+      w.document.write('<!DOCTYPE html><html><head><meta charset="utf-8"><title>ユーザー申し込みQR</title><style>'
+        + 'body{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;text-align:center;padding:24mm 10mm;color:#1d1c22;}'
+        + '.b{font-size:12pt;letter-spacing:.3em;font-weight:800;color:#3b2fb5;}.t{font-size:30pt;font-weight:900;margin:4mm 0 8mm;}'
+        + 'img{width:110mm;height:110mm;image-rendering:pixelated;}.s{font-size:15pt;margin-top:8mm;}.e{font-size:10pt;color:#777;margin-top:10mm;}'
+        + '</style></head><body><div class="b">NAVIGATOR Beauty</div><div class="t">はじめての方はこちら</div>'
+        + (src ? '<img src="' + src + '" alt="">' : '<p>' + esc(url) + '</p>')
+        + '<div class="s">スマホのカメラで読んで、お名前を入れてください</div>'
+        + '<div class="e">' + ckEvDayLabel(ev) + ' ・ ' + esc(un) + '</div>'
+        + '<' + 'script>setTimeout(function(){ window.print(); }, 300);</' + 'script></body></html>');
+      w.document.close();
+    };
+  }).catch(function(e){ toast(permMsg(e, '申し込みQRを作れませんでした。ルールの反映をオーナーに確認してください')); });
+}
+
+/* 会員証（ビジネスメンバー）の「💜 ユーザーを招待」: 自分が紹介者として入る申し込みQR（キー r_20文字）。
+   準備中は、オーナーが指定した会員番号（checkinConfig/beauty.cardNos）の会員証だけに出す。設定は端末に6時間覚える */
+function ckBeautyCardNos(cb){
+  var c = null;
+  try{ c = JSON.parse(localStorage.getItem('bci_bty_nos') || 'null'); }catch(e){}
+  if(c && c.at && Date.now() - c.at < 6 * 3600e3){ cb(c.nos || []); return; }
+  ckAnonDb().collection('checkinConfig').doc('beauty').get().then(function(s){
+    var nos = (s.exists && s.data().cardNos) || [];
+    try{ localStorage.setItem('bci_bty_nos', JSON.stringify({ nos: nos, at: Date.now() })); }catch(e){}
+    cb(nos);
+  }).catch(function(){ cb([]); });
+}
+function renderUserInvite(c, token){
+  var el = $('uiArea');
+  if(!el) return;
+  el.innerHTML = '';
+  if(!c || c.kind === 'user' || c.trainee || c.active === false || c.rcptOnly || !c.no) return;
+  ckBeautyCardNos(function(nos){
+    if(nos.map(function(x){ return String(x).toUpperCase(); }).indexOf(String(c.no).toUpperCase()) < 0) return;
+    el.innerHTML = '<div class="uiwrap"><div class="next-head">USER INVITE</div>'
+      + '<p class="ui-s">お客さん（ユーザー）にこのQRを読んでもらうと、あなたが紹介者として入った申し込みページが開きます。リンクで送って、前の日に申し込んでもらうこともできます。</p>'
+      + '<button class="primary" id="uiOpen" style="width:100%;">💜 ユーザーを招待する</button></div>';
+    $('uiOpen').onclick = function(){ ckJoinRefOpen(c, token); };
+  });
+}
+function ckJoinRefOpen(c, token){
+  var adb = ckAnonDb(), jr = adb.collection('cards').doc(token).collection('join').doc('me');
+  $('uiOpen').disabled = true;
+  jr.get().then(function(s){
+    var k = s.exists ? (s.data().k || '') : '';
+    if(k) return k;
+    k = 'r_' + ckApplyNewId(20);
+    var b = adb.batch();
+    b.set(jr, { k: k, at: FV.serverTimestamp() });
+    b.set(adb.collection('ckJoin').doc(k), { kind: 'ref', union: c.union || '', refNo: String(c.no), refName: c.name || '', at: FV.serverTimestamp() });
+    return b.commit().then(function(){ return k; });
+  }).then(function(k){
+    $('uiOpen').disabled = false;
+    var url = ckJoinUrl(k);
+    modal('<h2>💜 ユーザーを招待</h2>'
+      + '<p style="font-size:13px;color:var(--sub);margin:-4px 0 8px;">お客さんのスマホのカメラで読んでもらってください。紹介者に「' + esc(c.name || '') + '」さんが入った申し込みページが開きます。</p>'
+      + '<div class="jv-poster"><p class="jv-br">NAVIGATOR Beauty</p><p class="jv-t">' + esc(c.name || '') + ' さんの紹介</p><div id="uiQr"></div>'
+      + '<p class="jv-s">スマホのカメラで読んで、お名前を入れてください</p></div>'
+      + '<div class="btns"><button id="uiShare">リンクを送る</button><button class="primary" id="uiClose">閉じる</button></div>', true);
+    makeQr($('uiQr'), url, 220);
+    $('uiClose').onclick = closeModal;
+    $('uiShare').onclick = function(){
+      var msg = 'NAVIGATOR Beauty の申し込みページです。お名前を入れると受付票が出るので、当日、受付で見せてください。\n' + url;
+      if(navigator.share){ navigator.share({ text: msg }).catch(function(){}); return; }
+      try{ navigator.clipboard.writeText(msg).then(function(){ toast('案内文をコピーしました。LINEなどに貼ってください'); }, function(){ toast(url); }); }catch(e){ toast(url); }
+    };
+  }).catch(function(){
+    $('uiOpen').disabled = false;
+    toast('招待のQRを作れませんでした。電波の良いところで、もう一度押してください');
+  });
+}
+
 $('btnGuest').onclick = function(){
   if(!gRec){ toast('先に受付を開始してください'); return; }
   // 所属ユニオンはイベント参加ユニオンを先頭に、登録済みの全ユニオンから選択できる
