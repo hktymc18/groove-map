@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v870';
+var APP_JS_VERSION = 'v871';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4574,7 +4574,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v870';
+  var DATA_VERSION = 'v871';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6686,6 +6686,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v871', d:'2026-11-08', items:['🛠 パソコンのMAPの上の帯で、画面の幅が足りない時（全画面でも）右のボタン（課題・受付連携・全画面・⋯）が切れていたのを、2行に折り返して全部見えるようにしました'] },
   { v:'v870', d:'2026-11-08', items:['🎂 メンバーとユーザーの誕生日を、西暦がわからなくても「月・日」だけで登録できるようにしました（誕生日のお知らせはそのまま届きます。年齢は出ません）'] },
   { v:'v869', d:'2026-11-08', items:['ホームの「気になる人」に、ユーザー（お客さん）が「OL未着手」として出ていたのを出ないようにしました（OLはビジネスのメンバーだけ）'] },
   { v:'v868', d:'2026-11-07', items:['新しい機能の準備をしました（今は画面の変化はありません）'] },
@@ -41177,7 +41178,8 @@ function _px3Css() {
     + "body.px3 header{display:none!important}" // v706: PCは上の帯をなくす（年月・翌月コピー・共有MAPはMAPの上、版・保存は左下へ）
     + "#pcsVer{display:none}body.px3 #pcsVer{display:flex;align-items:center;justify-content:center;gap:6px;padding:6px 0 0;flex:none}body.px3 #pcsVer>div{flex-direction:row!important;gap:8px!important;align-items:center!important}body.px3 #pcsVer #versionTag,body.px3 #pcsVer #lastSavedTag{font-size:10px!important}"
     // v710: MAPの上の帯を1行に（LTSVは1行の札・表示の切りかえはアイコン・たまに使う物は「⋯」）
-    + "body.px3 .pc-toolbar{flex-wrap:nowrap;gap:8px}body.px3 .pc-toolbar .pt-ltsv{padding:5px 12px;gap:10px;box-shadow:none;flex:none}body.px3 .pc-toolbar .pt-ltsv>div{display:flex;align-items:baseline;gap:6px}body.px3 .pc-toolbar .pt-ltsv-val{font-size:16px}body.px3 .pc-toolbar .pt-act{white-space:nowrap}"
+    // v871 #41: 幅が足りない時（ウィンドウが狭い・全画面でも）は右のボタン（課題・受付連携・全画面・⋯）が切れていた。足りない時だけ2行に折り返す
+    + "body.px3 .pc-toolbar{flex-wrap:wrap;gap:8px;row-gap:8px}body.px3 .pc-toolbar .pt-ltsv{padding:5px 12px;gap:10px;box-shadow:none;flex:none}body.px3 .pc-toolbar .pt-ltsv>div{display:flex;align-items:baseline;gap:6px}body.px3 .pc-toolbar .pt-ltsv-val{font-size:16px}body.px3 .pc-toolbar .pt-act{white-space:nowrap}"
     + "body.px3 .pv-seg{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--border);border-radius:11px;background:var(--surface2);flex:none}body.px3 .pv-seg .pv-btn{padding:5px 9px;background:transparent;display:flex;align-items:center;box-shadow:none}body.px3 .pv-seg .pv-btn.active{background:var(--accent)}body.px3 .pc-toolbar-ideal .pv-seg .pv-btn.active{background:var(--purple)}body.px3 .pv-btn .pv-lb{display:none}body.px3 .pv-btn .lic{width:18px;height:18px}.pv-btn .lic{margin-right:4px}body.px3 .pv-btn .lic{margin-right:0}"
     + "body.px3 .pc-toolbar .pt-search{min-width:130px;max-width:230px}body.px3 .pc-toolbar .pt-ic{padding:5px 11px;font-size:15px;line-height:1.2}body.px3 .mapFsBtn .fs-lb{display:none}body.px3 .pt-modebadge{display:none}body.px3 #pcShareBtn{display:none!important}body.px3 .pc-toolbar .pt-mapseg .pt-ms{padding:6px 12px}"
     + "@media (max-width:1380px){body.px3 .pc-toolbar .pt-search{min-width:0;flex:0 0 auto;padding:0 11px}body.px3 #pcSearchText{display:none}}"
