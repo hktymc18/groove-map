@@ -1038,7 +1038,18 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .ap-st.ng{color:#b45309;}
 .ap-row{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px;}
 .ap-row span{color:var(--sub);}
-.uiwrap,.fiwrap{margin-top:24px;text-align:left;}
+.uiwrap,.fiwrap,.bdwrap{margin-top:24px;text-align:left;}
+.bd-list{display:grid;gap:8px;margin-top:4px;}
+.bd-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);}
+.bd-av{width:34px;height:34px;flex:none;border-radius:50%;display:grid;place-items:center;font-weight:900;background:#eeebff;color:#3b2fb5;}
+.bd-nm{flex:1;min-width:0;display:grid;gap:1px;}
+.bd-nm b{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.bd-nm small{font-size:12px;color:var(--sub);}
+.bd-td{font-size:11.5px;font-weight:700;color:var(--sub);white-space:nowrap;}
+.bd-td.on{color:var(--green);}
+.bd-x{padding:4px 8px;font-size:11.5px;flex:none;}
+.bd-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
+.jv-poster #bdQr{display:flex;justify-content:center;}
 .nwwrap{margin-top:22px;text-align:left;}
 .nw-a2hs{position:relative;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 34px 10px 12px;border-radius:12px;background:#fff4e6;color:#7a3e0c;font-size:13px;font-weight:700;line-height:1.5;margin-bottom:14px;}
 .nw-a2hs span{flex:1 1 160px;min-width:0;}
@@ -1605,6 +1616,7 @@ body.practice .topbar{top:var(--pxh,36px);}
     <div id="nwArea"></div><!-- 💜 ユーザーのお知らせ（ホーム画面に追加・次のDAY・来場のお礼・スタッフから） -->
     <div id="pzArea"></div><!-- 💜 ユーザーの PRYSMiO（色・前回から・記録） -->
     <div id="mpArea"></div><!-- 💜 ユーザーのマイプラン（コース・毎日のクエスト・連続・レベル・バッジ） -->
+    <div id="bdArea"></div><!-- 💜 ユーザーのバディ（QRを読み合う・連続日数とバッジだけ見える） -->
     <div id="fiArea"></div><!-- 💜 ユーザーの「友だちを招待」（招待リンク・来てくれた友だち） -->
     <div id="rsvpTop"></div>
     <div id="selfArea"></div>
@@ -2439,10 +2451,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v129';
+var APP_VER = 'v130';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v130', d: '2026/11/08', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v129', d: '2026/11/07', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v128', d: '2026/11/07', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v127', d: '2026/11/07', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
@@ -3869,7 +3882,10 @@ function mpBadgeHtml(c, plan){
 }
 function mpSave(plan){
   plan.atMs = Date.now();
-  return db.collection('cards').doc(gMp.token).collection('plan').doc('me').set(plan).then(function(){ gMp.plan = plan; mpDraw(); })
+  return db.collection('cards').doc(gMp.token).collection('plan').doc('me').set(plan).then(function(){
+    gMp.plan = plan; mpDraw();
+    if(gBd && gBd.me && gBd.token === gMp.token) ckBuddyEnsure().catch(function(){});   // 💜 v130: バディに見せる連続日数・バッジを新しく
+  })
     .catch(function(){ toast('保存できませんでした。電波の良いところでもう一度お試しください'); });
 }
 function mpToggle(qk){
@@ -4702,6 +4718,7 @@ function showCardView(token){
         renderUserNews(c, token);
         renderPrysm(c);
         renderMyPlan(c, token);
+        renderBuddy(c, token);
         renderFriendInvite(c, token);
         renderReceipts(c);
         if(c.toMember && c.toCard){
@@ -14622,6 +14639,214 @@ function ckPushToggle(c, token, wantOn, done){
       : e && e.code === 'na' ? 'このスマホでは通知を受け取れません（お知らせはカードで見られます）'
       : '通知の登録ができませんでした。電波の良いところで、もう一度押してください');
   });
+}
+/* 💜 v130: バディ（ユーザーのカード・MY PLAN の下）。会場で、おたがいのカードのQR（"bd:キー"）を読み合うとバディになる。
+   バディに見えるのは、名前・連続日数・バッジの数・今日できたかだけ（PRYSMiO の数値・購入は見えない）。20人まで。いつでも外せる
+   ・自分の分: cards/{トークン}/buddy/me = { k, list:[{k,n}] }（本人だけ）
+   ・見せる分: ckBuddy/{k} = { uid, n, st, bdg, td }（マイプランをチェックした時に書き直す）
+   ・知らせ:   ckBuddy/{相手のk}/in/{自分のk} = { del }（相手のカードが開いた時に読んで、自分のリストに入れる・外す） */
+var gBd = null;   // { token, c, me: { k, list }, sums: { k: 見せる分 } }
+function ckBuddyRef(token){ return ckAnonDb().collection('cards').doc(token).collection('buddy').doc('me'); }
+function ckBuddySum(c, token){
+  var plan = (gMp && gMp.token === token && gMp.plan) ? Promise.resolve(gMp.plan)
+    : db.collection('cards').doc(token).collection('plan').doc('me').get().then(function(s){ return s.exists ? s.data() : null; }).catch(function(){ return null; });
+  return plan.then(function(p){
+    var st = mpStats(p, todayStr()), days = (p && p.days) || {};
+    var td = Object.keys(days).filter(function(k){ return (days[k] || []).length > 0; }).sort().pop() || '';
+    var bdg = mpBadges(c, p, st).filter(function(b){ return b[3]; }).length;
+    return { uid: String(c.no), n: c.name || '', st: st.streak, bdg: bdg, td: td };
+  });
+}
+// 自分のキーがなければ作る（見せる分と一緒に）。あれば見せる分を新しくする（変わった時だけ書く）
+function ckBuddyEnsure(){
+  var B = gBd;
+  return ckBuddySum(B.c, B.token).then(function(sum){
+    var adb = ckAnonDb(), key = JSON.stringify(sum);
+    if(!B.me){
+      var k = 'b_' + ckApplyNewId(20), bt = adb.batch();
+      sum.at = FV.serverTimestamp();
+      bt.set(ckBuddyRef(B.token), { k: k, list: [], at: FV.serverTimestamp() });
+      bt.set(adb.collection('ckBuddy').doc(k), sum);
+      return bt.commit().then(function(){ B.me = { k: k, list: [] }; try{ localStorage.setItem('bci_bdsum_' + k, key); }catch(e){} return B.me; });
+    }
+    var last = '';
+    try{ last = localStorage.getItem('bci_bdsum_' + B.me.k) || ''; }catch(e){}
+    if(last === key) return B.me;
+    sum.at = FV.serverTimestamp();
+    return adb.collection('ckBuddy').doc(B.me.k).set(sum).then(function(){ try{ localStorage.setItem('bci_bdsum_' + B.me.k, key); }catch(e){} return B.me; });
+  });
+}
+function ckBuddySaveList(){
+  var B = gBd;
+  return ckBuddyRef(B.token).set({ k: B.me.k, list: B.me.list.slice(0, 20), at: FV.serverTimestamp() });
+}
+// 相手からの知らせ（バディになった・外した）を自分のリストに入れる
+function ckBuddyInbox(){
+  var B = gBd, adb = ckAnonDb(), inb = adb.collection('ckBuddy').doc(B.me.k).collection('in');
+  return inb.get().then(function(qs){
+    var jobs = [], changed = false;
+    qs.forEach(function(d){
+      var x = d.data() || {}, ok = d.id;
+      jobs.push((x.del ? Promise.resolve(null) : adb.collection('ckBuddy').doc(ok).get().then(function(s){ return s.exists ? s.data() : null; }).catch(function(){ return null; }))
+        .then(function(sum){
+          var i = -1; B.me.list.forEach(function(b, j){ if(b.k === ok) i = j; });
+          if(x.del && i >= 0){ B.me.list.splice(i, 1); changed = true; }
+          if(!x.del && i < 0 && sum && B.me.list.length < 20){ B.me.list.push({ k: ok, n: sum.n || '' }); B.sums[ok] = sum; changed = true; }
+          return inb.doc(ok)['delete']().catch(function(){});
+        }));
+    });
+    return Promise.all(jobs).then(function(){ return changed ? ckBuddySaveList() : null; });
+  }).catch(function(){});
+}
+function renderBuddy(c, token){
+  var el = $('bdArea');
+  if(!el) return;
+  el.innerHTML = '';
+  if(!c || c.kind !== 'user' || c.active === false || c.toMember || !c.no) return;
+  gBd = { token: token, c: c, me: null, sums: {} };
+  var B = gBd;
+  ckBuddyRef(token).get().then(function(s){
+    if(gBd !== B) return;
+    if(s.exists && s.data().k) B.me = { k: s.data().k, list: (s.data().list || []).slice(0, 20) };
+    if(!B.me){ bdDraw(); return; }
+    return ckBuddyInbox().then(function(){
+      return Promise.all(B.me.list.map(function(b){
+        return ckAnonDb().collection('ckBuddy').doc(b.k).get().then(function(x){ if(x.exists) B.sums[b.k] = x.data(); }).catch(function(){});
+      }));
+    }).then(function(){ if(gBd === B){ bdDraw(); ckBuddyEnsure().catch(function(){}); } });
+  }).catch(function(){ bdDraw(); });
+}
+function bdDraw(){
+  var B = gBd, el = $('bdArea'), t = todayStr(), y = mpAddDays(t, -1);
+  if(!el || !B) return;
+  var list = (B.me && B.me.list) || [];
+  el.innerHTML = '<div class="bdwrap"><div class="next-head">BUDDY</div>'
+    + '<p class="ui-s">会場で、おたがいのQRを読み合うとバディになれます。見えるのは、連続日数・バッジ・今日できたかだけです。</p>'
+    + (list.length ? '<div class="bd-list">' + list.map(function(b){
+        var s = B.sums[b.k] || {}, done = s.td === t, st = (s.td === t || s.td === y) ? (s.st || 0) : 0;
+        var nm = String(s.n || b.n || '');
+        return '<div class="bd-row"><span class="bd-av">' + esc(nm.replace(/[\s　]/g, '').charAt(0) || '？') + '</span>'
+          + '<div class="bd-nm"><b>' + esc(nm) + ' さん</b><small>🔥 ' + st + '日連続 ・ バッジ ' + (s.bdg || 0) + '</small></div>'
+          + '<span class="bd-td' + (done ? ' on' : '') + '">' + (done ? '今日できた' : 'まだ') + '</span>'
+          + '<button type="button" class="bd-x" data-bdx="' + esc(b.k) + '" aria-label="' + esc(nm) + 'さんをバディから外す">外す</button></div>';
+      }).join('') + '</div>' : '<p class="pz-note">まだバディはいません。</p>')
+    + '<div class="bd-btns"><button type="button" id="bdShow">わたしのQRを見せる</button><button type="button" class="primary" id="bdScan">相手のQRを読む</button></div>'
+    + '</div>';
+  $('bdShow').onclick = ckBuddyShowQr;
+  $('bdScan').onclick = ckBuddyScan;
+  Array.prototype.forEach.call(el.querySelectorAll('[data-bdx]'), function(bt){ bt.onclick = function(){ ckBuddyRemoveAsk(bt.getAttribute('data-bdx')); }; });
+}
+function ckBuddyShowQr(){
+  var B = gBd;
+  $('bdShow').disabled = true;
+  ckBuddyEnsure().then(function(me){
+    if($('bdShow')) $('bdShow').disabled = false;
+    modal('<h2>💜 わたしのバディQR</h2>'
+      + '<p style="font-size:13px;color:var(--sub);margin:-4px 0 8px;">相手に、カードの「相手のQRを読む」で読んでもらってください。読んでもらうと、おたがいにバディになります。</p>'
+      + '<div class="jv-poster"><p class="jv-br">NAVIGATOR Beauty ・ BUDDY</p><p class="jv-t">' + esc(B.c.name || '') + ' さん</p><div id="bdQr"></div></div>'
+      + '<div class="btns"><button class="primary" id="bdQrClose">閉じる</button></div>', true);
+    makeQr($('bdQr'), 'bd:' + me.k, 220);
+    // 開いているあいだに読んでもらったら、すぐリストに入れる
+    var unsub = null, n0 = me.list.length;
+    try{
+      unsub = ckAnonDb().collection('ckBuddy').doc(me.k).collection('in').onSnapshot(function(qs){
+        if(qs.empty) return;
+        ckBuddyInbox().then(function(){
+          if(gBd !== B) return;
+          if(B.me.list.length > n0){ var nb = B.me.list[B.me.list.length - 1]; toast(nb.n + ' さんとバディになりました'); if(unsub) unsub(); closeModal(); }
+          bdDraw();
+        });
+      }, function(){});
+    }catch(e){}
+    $('bdQrClose').onclick = function(){ if(unsub) try{ unsub(); }catch(e){} closeModal(); };
+  }).catch(function(){ if($('bdShow')) $('bdShow').disabled = false; toast('QRを作れませんでした。電波の良いところで、もう一度押してください'); });
+}
+// カメラで読む（読めたら parse の結果を渡す）
+function ckCamScan(title, hint, parse, wrong, onHit){
+  modal('<h2>' + esc(title) + '</h2>'
+    + '<div class="ol-cam"><video id="ckCamVid" playsinline muted autoplay></video><i class="ol-cam-f"></i></div>'
+    + '<p class="ol-cam-msg" id="ckCamMsg">' + esc(hint) + '</p>'
+    + '<div class="btns"><button id="ckCamClose">やめる</button></div>');
+  var stream = null, stop = false, cvs = document.createElement('canvas'), ctx = cvs.getContext('2d');
+  function msg(t){ var m = $('ckCamMsg'); if(m) m.textContent = t; }
+  function end(){ stop = true; if(stream) stream.getTracks().forEach(function(t){ t.stop(); }); }
+  $('ckCamClose').onclick = function(){ end(); closeModal(); };
+  var fail = function(){ msg('カメラを使えませんでした。スマホの設定で、この画面のカメラを許可してください。'); };
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ fail(); return; }
+  olLoadJsQr(function(ok){
+    if(!ok){ msg('読み取りの準備ができませんでした。電波の良いところでもう一度お試しください。'); return; }
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false }).then(function(s){
+      stream = s;
+      var v = $('ckCamVid');
+      if(!v){ end(); return; }
+      v.srcObject = s;
+      try{ v.play(); }catch(e){}
+      (function tick(){
+        if(stop) return;
+        var vv = $('ckCamVid');
+        if(!vv){ end(); return; }
+        if(vv.readyState >= 2 && vv.videoWidth){
+          var sc = Math.min(1, 640 / Math.max(vv.videoWidth, vv.videoHeight));
+          cvs.width = (vv.videoWidth * sc) | 0; cvs.height = (vv.videoHeight * sc) | 0;
+          ctx.drawImage(vv, 0, 0, cvs.width, cvs.height);
+          var img = ctx.getImageData(0, 0, cvs.width, cvs.height);
+          var r = window.jsQR(img.data, img.width, img.height, { inversionAttempts: 'dontInvert' });
+          if(r && r.data){
+            var hit = parse(r.data);
+            if(hit){ end(); closeModal(); onHit(hit); return; }
+            msg(wrong);
+          }
+        }
+        requestAnimationFrame(tick);
+      })();
+    }).catch(fail);
+  });
+}
+function ckBuddyScan(){
+  ckCamScan('📷 相手のバディQRを読む', '相手のカードの「わたしのQRを見せる」のQRを、枠の中に入れてください',
+    function(tx){ var m = /^bd:(b_[a-z0-9]{20})$/.exec(String(tx || '').trim()); return m ? m[1] : null; },
+    'これはバディのQRではありません。相手のカードの「わたしのQRを見せる」を読んでください',
+    ckBuddyAddAsk);
+}
+function ckBuddyAddAsk(ok){
+  var B = gBd;
+  if(B.me && ok === B.me.k){ toast('これは、あなたのQRです。相手に読んでもらってください'); return; }
+  if(B.me && B.me.list.some(function(b){ return b.k === ok; })){ toast('もうバディです'); return; }
+  if(B.me && B.me.list.length >= 20){ toast('バディは20人までです。だれかを外してから読んでください'); return; }
+  ckAnonDb().collection('ckBuddy').doc(ok).get().then(function(s){
+    var sum = s.exists ? s.data() : null;
+    if(!sum){ toast('このQRは使えません。相手にカードを開き直してもらってください'); return; }
+    modal('<h2>💜 バディになる</h2>'
+      + '<p style="font-size:14px;margin:0 0 6px;"><b>' + esc(sum.n || '') + ' さん</b>とバディになりますか？</p>'
+      + '<p style="font-size:12.5px;color:var(--sub);margin:0;">おたがいに、連続日数・バッジ・今日できたかが見えるようになります。</p>'
+      + '<div class="btns"><button id="bdAddNo">やめる</button><button class="primary" id="bdAddGo">バディになる</button></div>', true);
+    $('bdAddNo').onclick = closeModal;
+    $('bdAddGo').onclick = function(){
+      $('bdAddGo').disabled = true;
+      ckBuddyEnsure().then(function(me){
+        me.list.push({ k: ok, n: sum.n || '' }); B.sums[ok] = sum;
+        return Promise.all([ckBuddySaveList(), ckAnonDb().collection('ckBuddy').doc(ok).collection('in').doc(me.k).set({ del: false, at: FV.serverTimestamp() })]);
+      }).then(function(){ closeModal(); toast(sum.n + ' さんとバディになりました'); bdDraw(); })
+        .catch(function(){ $('bdAddGo').disabled = false; toast('バディになれませんでした。電波の良いところで、もう一度押してください'); });
+    };
+  }).catch(function(){ toast('読み込めませんでした。電波の良いところで、もう一度読んでください'); });
+}
+function ckBuddyRemoveAsk(ok){
+  var B = gBd, b = null;
+  B.me.list.forEach(function(x){ if(x.k === ok) b = x; });
+  if(!b) return;
+  var nm = (B.sums[ok] && B.sums[ok].n) || b.n || '';
+  modal('<h2>バディから外す</h2>'
+    + '<p style="font-size:14px;margin:0;"><b>' + esc(nm) + ' さん</b>をバディから外しますか？相手のバディからも外れます。</p>'
+    + '<div class="btns"><button id="bdRmNo">やめる</button><button class="danger" id="bdRmGo">外す</button></div>', true);
+  $('bdRmNo').onclick = closeModal;
+  $('bdRmGo').onclick = function(){
+    $('bdRmGo').disabled = true;
+    B.me.list = B.me.list.filter(function(x){ return x.k !== ok; });
+    Promise.all([ckBuddySaveList(), ckAnonDb().collection('ckBuddy').doc(ok).collection('in').doc(B.me.k).set({ del: true, at: FV.serverTimestamp() }).catch(function(){})])
+      .then(function(){ closeModal(); toast('バディから外しました'); bdDraw(); })
+      .catch(function(){ $('bdRmGo').disabled = false; toast('外せませんでした。電波の良いところで、もう一度押してください'); });
+  };
 }
 $('btnGuest').onclick = function(){
   if(!gRec){ toast('先に受付を開始してください'); return; }

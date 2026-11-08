@@ -1,0 +1,54 @@
+// 受付 v130（バディ: cards/{トークン}/buddy/me・ckBuddy/{キー}・ckBuddy/{キー}/in）の firestore.rules を、Firestore エミュレータで試す（架空のデータだけ）
+// 準備・実行は ckpf109_rules.js と同じ
+const fs = require('fs'), path = require('path');
+const { initializeTestEnvironment } = require('@firebase/rules-unit-testing');
+const { doc, setDoc, getDoc, getDocs, deleteDoc, collection, writeBatch, serverTimestamp } = require('firebase/firestore');
+let fails = 0;
+const c = (n, ok) => { console.log((ok ? 'PASS' : 'FAIL') + ': ' + n); if (!ok) fails++; };
+const ok = p => p.then(() => true, () => false);
+const _e = console.error; console.error = (...a) => { if (!/PERMISSION_DENIED|evaluation error/.test(String(a[0]) + String(a[1] || ''))) _e(...a); };
+const TA = 'abababababababababababababababab', TB = 'cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd', TM = '0123456789abcdef0123456789abcdef', TT = 'efefefefefefefefefefefefefefefef';
+const UA = 'u17620000000001', UB = 'u17620000000002', UT = 'u17620000000003';
+const KA = 'b_aaaaaaaaaaaaaaaaaaaa', KB = 'b_bbbbbbbbbbbbbbbbbbbb', KX = 'b_xxxxxxxxxxxxxxxxxxxx', KT = 'b_tttttttttttttttttttt';
+(async () => {
+  const env = await initializeTestEnvironment({ projectId: 'bd-test', firestore: { rules: fs.readFileSync(path.join(__dirname, '../../../firestore.rules'), 'utf8'), host: '127.0.0.1', port: +(process.env.PORT || 8089) } });
+  await env.clearFirestore();
+  await env.withSecurityRulesDisabled(async (cx) => {
+    const d = cx.firestore();
+    await setDoc(doc(d, 'cards/' + TA), { kind: 'user', no: UA, name: '見本 はなこ', union: 'U1', active: true });
+    await setDoc(doc(d, 'cardClaims/' + UA), { t: TA });
+    await setDoc(doc(d, 'cards/' + TB), { kind: 'user', no: UB, name: '見本 さくら', union: 'U1', active: true });
+    await setDoc(doc(d, 'cardClaims/' + UB), { t: TB });
+    await setDoc(doc(d, 'cards/' + TT), { kind: 'user', no: UT, name: '見本 研修', union: 'U1', active: true, toMember: 'P0006' });
+    await setDoc(doc(d, 'cardClaims/' + UT), { t: TT });
+    await setDoc(doc(d, 'cards/' + TM), { no: 'ZZ0001', name: '架空 太郎', union: 'U1', active: true });
+    await setDoc(doc(d, 'cardClaims/ZZ0001'), { t: TM });
+  });
+  const anon = env.unauthenticatedContext().firestore();
+  const S = (uid, n, x) => Object.assign({ uid, n, st: 3, bdg: 5, td: '2026-12-07', at: serverTimestamp() }, x);
+  const mk = (tok, k, sum) => { const b = writeBatch(anon);
+    b.set(doc(anon, 'cards/' + tok + '/buddy/me'), { k, list: [], at: serverTimestamp() });
+    b.set(doc(anon, 'ckBuddy/' + k), sum); return b.commit(); };
+  c('ほかの人の名前では作れない', !(await ok(mk(TA, KX, S(UA, '別の人')))));
+  c('ほかの人のIDでは作れない（カードとIDが違う）', !(await ok(mk(TA, KX, S(UB, '見本 さくら')))));
+  c('ビジネスの会員証からは作れない', !(await ok(mk(TM, KX, S('ZZ0001', '架空 太郎')))));
+  c('研修生になったユーザーのカードからは作れない', !(await ok(mk(TT, KT, S(UT, '見本 研修')))));
+  c('決まった項目以外（PRYSMiOなど）は入れられない', !(await ok(mk(TA, KX, S(UA, '見本 はなこ', { prysm: 820 })))));
+  c('ユーザーのカードの本人は、キーと見せる分を作れる', await ok(mk(TA, KA, S(UA, '見本 はなこ'))));
+  c('さくらも作れる', await ok(mk(TB, KB, S(UB, '見本 さくら'))));
+  c('見せる分を書き直せる（本人）', await ok(setDoc(doc(anon, 'ckBuddy/' + KA), S(UA, '見本 はなこ', { st: 4 }))));
+  c('ほかの人が、はなこの見せる分を書き直せない（IDを変えても）', !(await ok(setDoc(doc(anon, 'ckBuddy/' + KA), S(UB, '見本 さくら')))));
+  c('自分のキーは変えられない', !(await ok(setDoc(doc(anon, 'cards/' + TA + '/buddy/me'), { k: KX, list: [], at: serverTimestamp() }))));
+  c('リストを書ける（自分のキーのまま）', await ok(setDoc(doc(anon, 'cards/' + TA + '/buddy/me'), { k: KA, list: [{ k: KB, n: '見本 さくら' }], at: serverTimestamp() })));
+  c('21人以上は入れられない', !(await ok(setDoc(doc(anon, 'cards/' + TA + '/buddy/me'), { k: KA, list: Array.from({ length: 21 }, (_, i) => ({ k: KB, n: 'x' + i })), at: serverTimestamp() }))));
+  c('見せる分は1件ずつ読める（キーを知っている人）', await ok(getDoc(doc(anon, 'ckBuddy/' + KA))));
+  c('見せる分の一覧は見られない', !(await ok(getDocs(collection(anon, 'ckBuddy')))));
+  c('知らせを入れられる（どちらのキーもある時）', await ok(setDoc(doc(anon, 'ckBuddy/' + KA + '/in/' + KB), { del: false, at: serverTimestamp() })));
+  c('ないキーからの知らせは入れられない', !(await ok(setDoc(doc(anon, 'ckBuddy/' + KA + '/in/' + KX), { del: false, at: serverTimestamp() }))));
+  c('自分あての知らせ（同じキー）は入れられない', !(await ok(setDoc(doc(anon, 'ckBuddy/' + KA + '/in/' + KA), { del: false, at: serverTimestamp() }))));
+  c('知らせに決まった項目以外は入れられない', !(await ok(setDoc(doc(anon, 'ckBuddy/' + KA + '/in/' + KB), { del: false, msg: 'こんにちは', at: serverTimestamp() }))));
+  c('知らせを読んで消せる', await ok(getDocs(collection(anon, 'ckBuddy/' + KA + '/in'))) && await ok(deleteDoc(doc(anon, 'ckBuddy/' + KA + '/in/' + KB))));
+  c('見せる分は消せない', !(await ok(deleteDoc(doc(anon, 'ckBuddy/' + KA)))));
+  await env.cleanup();
+  console.log(fails ? 'FAIL ' + fails : 'ALL PASS'); process.exit(fails ? 1 : 0);
+})();
