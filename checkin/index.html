@@ -1038,7 +1038,28 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .ap-st.ng{color:#b45309;}
 .ap-row{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px;}
 .ap-row span{color:var(--sub);}
-.uiwrap,.fiwrap,.bdwrap{margin-top:24px;text-align:left;}
+.uiwrap,.fiwrap,.bdwrap,.lgwrap{margin-top:24px;text-align:left;}
+.lg-list{display:grid;gap:8px;margin-top:4px;}
+.lg-post{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);}
+.lg-who{grid-column:1;font-size:11.5px;font-weight:700;color:var(--sub);}
+.lg-post .lg-t{grid-column:1;font-size:14px;line-height:1.6;overflow-wrap:anywhere;}
+.lg-clap{grid-column:2;grid-row:1 / span 2;padding:6px 10px;font-size:13px;border-radius:999px;}
+.lg-clap.on{background:#fff4e6;border-color:#f0892b;color:#7a3e0c;opacity:1;}
+.lg-mine{display:grid;gap:6px;margin-top:10px;}
+.lg-mrow{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px dashed var(--line);border-radius:10px;font-size:13px;}
+.lg-mrow .lg-t{flex:1;min-width:0;overflow-wrap:anywhere;}
+.lg-st{font-size:11.5px;font-weight:700;color:#b45309;white-space:nowrap;}
+.lg-st.ng{color:var(--sub);}
+.lg-mrow button{padding:4px 8px;font-size:11.5px;flex:none;}
+.lg-lb{display:block;font-size:12.5px;font-weight:700;color:var(--sub);margin:14px 0 4px;}
+#lgText{width:100%;}
+.lg-q{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-top:8px;}
+.lg-q.warn{border-color:#e0a800;background:#fff9db;color:#33290a;}
+.lg-qh small{color:var(--sub);margin-left:4px;}
+.lg-qt{font-size:14px;margin-top:4px;overflow-wrap:anywhere;}
+.lg-warn{background:#ffe066;color:#33290a;padding:0 2px;border-radius:3px;}
+.lg-qw{font-size:12px;margin:6px 0 0;font-weight:700;}
+.lg-qb{display:flex;gap:8px;margin-top:8px;}
 .bd-list{display:grid;gap:8px;margin-top:4px;}
 .bd-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);}
 .bd-av{width:34px;height:34px;flex:none;border-radius:50%;display:grid;place-items:center;font-weight:900;background:#eeebff;color:#3b2fb5;}
@@ -1480,6 +1501,7 @@ body.practice .topbar{top:var(--pxh,36px);}
       <button id="btnTrainers" class="hide rmore">🎓 研修生登録の担当</button>
       <button id="btnUnionAdmins" class="hide rmore" title="ユニオン管理者の任命（オーナーのみ）">🛡 ユニオン管理者</button>
       <button id="btnUserNotice" class="hide">📣 ユーザーにお知らせ</button>
+      <button id="btnUserLounge" class="hide">💬 ラウンジの確認</button>
       <button id="btnBeautyTesters" class="hide rmore" title="準備中のユーザー機能（NAVIGATOR Beauty）を見られる人（オーナーのみ）">💜 ユーザー機能の確認メンバー</button>
       <button id="btnLeaders" class="hide rmore" title="名簿・集計の閲覧と研修生登録の担当の任命ができる人（オーナーのみ指定）">⭐ リーダー</button>
       <button id="btnAdminsView" class="rmore">👥 管理者一覧</button>
@@ -1618,6 +1640,7 @@ body.practice .topbar{top:var(--pxh,36px);}
     <div id="mpArea"></div><!-- 💜 ユーザーのマイプラン（コース・毎日のクエスト・連続・レベル・バッジ） -->
     <div id="bdArea"></div><!-- 💜 ユーザーのバディ（QRを読み合う・連続日数とバッジだけ見える） -->
     <div id="fiArea"></div><!-- 💜 ユーザーの「友だちを招待」（招待リンク・来てくれた友だち） -->
+    <div id="lgArea"></div><!-- 💜 ユーザーのラウンジ（同じユニオンのひとこと・スタッフが確認してから出る） -->
     <div id="rsvpTop"></div>
     <div id="selfArea"></div>
     <div id="hwArea"></div><!-- 📝 宿題は受講記録の一覧より上（記録が増えても埋もれないように） -->
@@ -2451,10 +2474,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v130';
+var APP_VER = 'v131';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v131', d: '2026/11/08', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v130', d: '2026/11/08', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v129', d: '2026/11/07', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v128', d: '2026/11/07', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
@@ -4720,6 +4744,7 @@ function showCardView(token){
         renderMyPlan(c, token);
         renderBuddy(c, token);
         renderFriendInvite(c, token);
+        renderLounge(c, token);
         renderReceipts(c);
         if(c.toMember && c.toCard){
           // 🎓 研修生になった人: 研修生のカード（VISITOR PASS）へ案内（このページの記録はそのまま見られる）
@@ -6610,6 +6635,7 @@ function ckOwnerListOpen(key){
 }
 $('btnLeaders').onclick = function(){ ckOwnerListOpen('leaders'); };
 $('btnUserNotice').onclick = function(){ ckUserNoticeModal(); };
+$('btnUserLounge').onclick = function(){ ckLoungeModal(); };
 // 💜 ユーザー機能の確認メンバー（全ユニオン共通・checkinConfig/beauty.testers）
 $('btnBeautyTesters').onclick = function(){
   if(!isOwner()) return;
@@ -7717,6 +7743,7 @@ function renderRoster(){
   $('btnBeautyTesters').classList.toggle('hide', !isOwner());
   ckRosterKindSync();
   $('btnUserNotice').classList.toggle('hide', !(ukOn && gRosterKind === 'user'));
+  $('btnUserLounge').classList.toggle('hide', !(ukOn && gRosterKind === 'user'));
   if(gRosterKind === 'user'){ renderUserRoster(); return; }
   function sth(k, label){
     var cur = gRosterSort.k === k;
@@ -14847,6 +14874,167 @@ function ckBuddyRemoveAsk(ok){
       .then(function(){ closeModal(); toast('バディから外しました'); bdDraw(); })
       .catch(function(){ $('bdRmGo').disabled = false; toast('外せませんでした。電波の良いところで、もう一度押してください'); });
   };
+}
+/* 💜 v131: ラウンジ（ユーザーのカード・友だちを招待の下）。同じユニオンのユーザーのひとこと（60文字まで・文字だけ）。
+   投稿はスタッフが「出す」を押してから出る（名簿 → ユーザー → 💬 ラウンジの確認）。返事はなく、👏（1人1回）だけ。
+   出ている投稿は端末に10分覚える（読み込みを減らす） */
+var CK_LG_WARN = ['治る', '治った', '治す', '治り', '完治', '効く', '効いた', '効き', '効果', 'やせ', '痩せ', '改善', '病気', '薬', 'アトピー', '副作用', '医師', '医者'];
+function ckLoungeOk(un, fresh){
+  var key = 'bci_lg_' + un;
+  if(!fresh){ try{ var o = JSON.parse(localStorage.getItem(key) || 'null'); if(o && Date.now() - o.at < 10 * 60000) return Promise.resolve(o.list); }catch(e){} }
+  var col = ckAnonDb().collection('ckLounge');
+  return col.where('union', '==', un).where('st', '==', 'ok').orderBy('okAt', 'desc').limit(10).get()
+    .catch(function(){ return col.where('union', '==', un).where('st', '==', 'ok').limit(40).get(); })   // 索引がまだの時
+    .then(function(qs){
+      var list = [];
+      qs.forEach(function(d){ var x = d.data(); if(x.st !== 'ok' || x.union !== un) return; list.push({ id: d.id, n: x.n || '', co: x.co || '', t: x.t || '', uid: x.uid || '', okAt: ckTsMs(x.okAt) }); });
+      list.sort(function(a, b){ return b.okAt - a.okAt; });
+      list = list.slice(0, 10);
+      return Promise.all(list.map(function(p){
+        var q = col.doc(p.id).collection('clap');
+        return (q.count ? q.count().get().then(function(s){ return s.data().count; }) : q.get().then(function(s){ return s.docs.length; }))
+          .then(function(n){ p.claps = n || 0; }, function(){ p.claps = 0; });
+      })).then(function(){
+        try{ localStorage.setItem(key, JSON.stringify({ at: Date.now(), list: list })); }catch(e){}
+        return list;
+      });
+    });
+}
+function ckLoungeForget(un){ try{ localStorage.removeItem('bci_lg_' + un); }catch(e){} }
+var gLg = null;   // { token, c, list, mine: [{ id, t, st }], claps: { id: 1 } }
+function renderLounge(c, token, fresh){
+  var el = $('lgArea');
+  if(!el) return;
+  if(!c || c.kind !== 'user' || c.active === false || c.toMember || !c.no){ el.innerHTML = ''; return; }
+  var L = gLg = { token: token, c: c, list: [], mine: [], claps: {} }, cr = ckAnonDb().collection('cards').doc(token);
+  Promise.all([
+    ckLoungeOk(c.union || '', fresh).catch(function(){ return []; }),
+    cr.collection('lounge').get().then(function(qs){
+      var ids = []; qs.forEach(function(d){ ids.push(d.id); });
+      return Promise.all(ids.map(function(id){
+        return ckAnonDb().collection('ckLounge').doc(id).get().then(function(s){ var x = s.exists ? s.data() : null; return x ? { id: id, t: x.t || '', st: x.st || '', at: ckTsMs(x.at) } : null; }).catch(function(){ return null; });
+      }));
+    }).catch(function(){ return []; }),
+    cr.collection('clap').get().then(function(qs){ var m = {}; qs.forEach(function(d){ m[d.id] = 1; }); return m; }).catch(function(){ return {}; })
+  ]).then(function(r){
+    if(gLg !== L) return;
+    L.list = r[0] || [];
+    L.mine = (r[1] || []).filter(function(x){ return x && x.st !== 'ok'; }).sort(function(a, b){ return b.at - a.at; }).slice(0, 5);
+    L.claps = r[2] || {};
+    lgDraw();
+  });
+}
+function lgDraw(){
+  var L = gLg, el = $('lgArea');
+  if(!el || !L) return;
+  el.innerHTML = '<div class="lgwrap"><div class="next-head">LOUNGE</div>'
+    + '<p class="ui-s">同じユニオンの人のひとこと。スタッフが確認してから出ます。</p>'
+    + (L.list.length ? '<div class="lg-list">' + L.list.map(function(p){
+        var mine = p.uid === String(L.c.no), on = !!L.claps[p.id];
+        return '<div class="lg-post"><span class="lg-who">' + esc(p.n) + ' さん' + (p.co ? ' ・ ' + esc(p.co) : '') + '</span>'
+          + '<span class="lg-t">' + esc(p.t) + '</span>'
+          + '<button type="button" class="lg-clap' + (on ? ' on' : '') + '" data-clap="' + esc(p.id) + '"' + (mine || on ? ' disabled' : '') + ' aria-label="拍手">👏 ' + (p.claps || 0) + '</button></div>';
+      }).join('') + '</div>' : '<p class="pz-note">まだ投稿はありません。</p>')
+    + (L.mine.length ? '<div class="lg-mine">' + L.mine.map(function(m){
+        return '<div class="lg-mrow"><span class="lg-t">' + esc(m.t) + '</span><span class="lg-st' + (m.st === 'ng' ? ' ng' : '') + '">' + (m.st === 'ng' ? '出せませんでした' : '確認待ち') + '</span>'
+          + '<button type="button" data-lgdel="' + esc(m.id) + '">' + (m.st === 'ng' ? '消す' : '取り消す') + '</button></div>';
+      }).join('') + '</div>' : '')
+    + '<label for="lgText" class="lg-lb">ひとこと投稿する</label>'
+    + '<textarea id="lgText" rows="2" maxlength="60" placeholder="例: 今週は毎日15分歩けました"></textarea>'
+    + '<button type="button" class="primary" id="lgGo" style="width:100%;margin-top:8px;">投稿する</button>'
+    + '<p class="pz-note">60文字まで。お名前と一緒に、同じユニオンの人に出ます。スタッフが確認してから出ます。</p>'
+    + '</div>';
+  $('lgGo').onclick = ckLoungePost;
+  Array.prototype.forEach.call(el.querySelectorAll('[data-clap]'), function(b){ b.onclick = function(){ ckLoungeClap(b.getAttribute('data-clap')); }; });
+  Array.prototype.forEach.call(el.querySelectorAll('[data-lgdel]'), function(b){ b.onclick = function(){ ckLoungeCancel(b.getAttribute('data-lgdel')); }; });
+}
+function ckLoungePost(){
+  var L = gLg, c = L.c, tx = $('lgText').value.replace(/\s+/g, ' ').trim();
+  if(!tx){ toast('ひとことを入れてください'); return; }
+  if(tx.length > 60){ toast('60文字までで入れてください'); return; }
+  var dk = 'bci_lgn_' + c.no + '_' + todayStr(), n = 0;
+  try{ n = +localStorage.getItem(dk) || 0; }catch(e){}
+  if(n >= 3){ toast('投稿は1日3回までです。また明日どうぞ'); return; }
+  var co = (gMp && gMp.token === L.token && gMp.plan && mpCourse(gMp.plan.course)) ? mpCourse(gMp.plan.course).n : '';
+  var id = ckApplyNewId(20), adb = ckAnonDb(), b = adb.batch();
+  b.set(adb.collection('ckLounge').doc(id), { union: c.union || '', uid: String(c.no), n: c.name || '', co: co, t: tx, st: 'wait', at: FV.serverTimestamp() });
+  b.set(adb.collection('cards').doc(L.token).collection('lounge').doc(id), { at: FV.serverTimestamp() });
+  $('lgGo').disabled = true;
+  b.commit().then(function(){
+    try{ localStorage.setItem(dk, String(n + 1)); }catch(e){}
+    L.mine.unshift({ id: id, t: tx, st: 'wait', at: Date.now() });
+    lgDraw();
+    toast('投稿しました。スタッフが確認してから出ます');
+  }).catch(function(){ $('lgGo').disabled = false; toast('投稿できませんでした。電波の良いところで、もう一度押してください'); });
+}
+function ckLoungeCancel(id){
+  var L = gLg, adb = ckAnonDb(), b = adb.batch();
+  b['delete'](adb.collection('ckLounge').doc(id));
+  b['delete'](adb.collection('cards').doc(L.token).collection('lounge').doc(id));
+  b.commit().catch(function(){
+    // スタッフがもう消していた時は、自分の印だけ消す
+    return adb.collection('cards').doc(L.token).collection('lounge').doc(id)['delete']();
+  }).then(function(){
+    L.mine = L.mine.filter(function(m){ return m.id !== id; });
+    lgDraw(); toast('取り消しました');
+  }).catch(function(){ toast('取り消せませんでした。電波の良いところで、もう一度押してください'); });
+}
+function ckLoungeClap(id){
+  var L = gLg, adb = ckAnonDb(), b = adb.batch(), uid = String(L.c.no);
+  if(L.claps[id]) return;
+  b.set(adb.collection('ckLounge').doc(id).collection('clap').doc(uid), { at: FV.serverTimestamp() });
+  b.set(adb.collection('cards').doc(L.token).collection('clap').doc(id), { at: FV.serverTimestamp() });
+  L.claps[id] = 1;
+  L.list.forEach(function(p){ if(p.id === id) p.claps = (p.claps || 0) + 1; });
+  lgDraw();
+  b.commit().then(function(){ ckLoungeForget(L.c.union || ''); }).catch(function(){
+    delete L.claps[id];
+    L.list.forEach(function(p){ if(p.id === id) p.claps = Math.max(0, (p.claps || 1) - 1); });
+    lgDraw(); toast('👏 できませんでした。電波の良いところで、もう一度押してください');
+  });
+}
+// 名簿 → ユーザー →「💬 ラウンジの確認」（スタッフ）
+function ckLgMark(t){
+  var s = esc(t);
+  CK_LG_WARN.forEach(function(w){ s = s.split(esc(w)).join('<mark class="lg-warn">' + esc(w) + '</mark>'); });
+  return s;
+}
+function ckLoungeModal(){
+  var un = gRosterUnion;
+  if(!ckBeautyOn()) return;
+  var col = db.collection('ckLounge');
+  Promise.all([col.where('union', '==', un).where('st', '==', 'wait').get(), col.where('union', '==', un).where('st', '==', 'ok').get()]).then(function(r){
+    var wait = [], ok = [];
+    r[0].forEach(function(d){ var x = d.data(); x.id = d.id; if(x.st === 'wait' && x.union === un) wait.push(x); });
+    r[1].forEach(function(d){ var x = d.data(); x.id = d.id; if(x.st === 'ok' && x.union === un) ok.push(x); });
+    wait.sort(function(a, b){ return ckTsMs(a.at) - ckTsMs(b.at); });
+    ok.sort(function(a, b){ return ckTsMs(b.okAt) - ckTsMs(a.okAt); });
+    ok = ok.slice(0, 20);
+    var row = function(x, btns){
+      var warn = CK_LG_WARN.some(function(w){ return String(x.t || '').indexOf(w) >= 0; });
+      return '<div class="lg-q' + (warn ? ' warn' : '') + '"><div class="lg-qh"><b>' + esc(x.n || '') + '</b>' + (x.co ? ' <small>' + esc(x.co) + '</small>' : '') + '</div>'
+        + '<div class="lg-qt">' + ckLgMark(x.t || '') + '</div>'
+        + (warn ? '<p class="lg-qw">⚠️ 効果をうたう言葉が入っています。出さないでください</p>' : '')
+        + '<div class="lg-qb">' + btns + '</div></div>';
+    };
+    modal('<h2>💬 ラウンジの確認 — ' + esc(un) + hq('ユーザーのカードの「ラウンジ」に出す投稿を決めます。「出す」を押した投稿だけが、同じユニオンのユーザーに出ます。治る・やせる・効く など、効果をうたう言葉が入った投稿は出さないでください（黄色で目立たせています）。') + '</h2>'
+      + '<label>確認待ち（' + wait.length + '件）</label>'
+      + (wait.length ? wait.map(function(x){ return row(x, '<button data-lgok="' + esc(x.id) + '" class="primary">出す</button><button data-lgng="' + esc(x.id) + '">出さない</button>'); }).join('') : '<p style="font-size:12.5px;color:var(--sub);margin:4px 0;">ありません。</p>')
+      + '<label style="margin-top:14px;">出ている投稿（新しい20件）</label>'
+      + (ok.length ? ok.map(function(x){ return row(x, '<button data-lgng="' + esc(x.id) + '" class="danger ghost">取り下げる</button>'); }).join('') : '<p style="font-size:12.5px;color:var(--sub);margin:4px 0;">ありません。</p>')
+      + '<div class="btns"><button id="lgqClose">閉じる</button></div>', true);
+    $('lgqClose').onclick = closeModal;
+    Array.prototype.forEach.call(document.querySelectorAll('.modal [data-lgok],.modal [data-lgng]'), function(b){
+      b.onclick = function(){
+        var okk = b.hasAttribute('data-lgok'), id = b.getAttribute(okk ? 'data-lgok' : 'data-lgng');
+        var up = { st: okk ? 'ok' : 'ng', by: gUser.uid };
+        if(okk) up.okAt = FV.serverTimestamp();
+        b.disabled = true;
+        col.doc(id).update(up).then(function(){ toast(okk ? '出しました。ユーザーのカードには10分ほどで出ます' : '出さないにしました'); ckLoungeModal(); })
+          .catch(function(e){ b.disabled = false; toast(permMsg(e, '保存できませんでした。ルールの反映をオーナーに確認してください')); });
+      };
+    });
+  }).catch(function(e){ toast(permMsg(e, 'ラウンジの投稿を読めませんでした')); });
 }
 $('btnGuest').onclick = function(){
   if(!gRec){ toast('先に受付を開始してください'); return; }
