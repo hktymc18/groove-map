@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v868';
+var APP_JS_VERSION = 'v869';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4574,7 +4574,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v868';
+  var DATA_VERSION = 'v869';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6686,6 +6686,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v869', d:'2026-11-08', items:['ホームの「気になる人」に、ユーザー（お客さん）が「OL未着手」として出ていたのを出ないようにしました（OLはビジネスのメンバーだけ）'] },
   { v:'v868', d:'2026-11-07', items:['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v:'v867', d:'2026-11-05', items:['読み込みをさらに軽くしました（分析の過去の月・共有の確認・結合したメンバーの予定）'] },
   { v:'v866', d:'2026-11-05', items:['読み込みを軽くしました（予定・ユニオンの予定を少しのあいだ端末に覚える／受付との連携・通知の登録の読み直しを減らす）。ほかの端末で足した予定は、最大10分おくれて出ることがあります'] },
@@ -7667,6 +7668,7 @@ var CK_FRESH_MONTHS = 6; // v419: フレッシュ＝登録6ヶ月以内に変更
 var CK_EXAM_TITLES = ['LOI','Q2','Q3','Q4']; // 審査期間中
 function ckIsFreshByStart(m) {
   try {
+    if (typeof isUserM === 'function' && isUserM(m)) return false; // v869: ユーザー（お客さん）はビジネスの新しいメンバーではない＝OL・フレッシュの対象外
     var sm = (typeof memberStartMonth === 'function') ? memberStartMonth(m) : '';
     if (!sm) return false;
     var p = String(sm).replace('-', '.').split('.');
