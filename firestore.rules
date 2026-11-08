@@ -1103,6 +1103,83 @@ service cloud.firestore {
         && existsAfter(/databases/$(database)/documents/cards/$(tk)/buddy/me)
         && getAfter(/databases/$(database)/documents/cards/$(tk)/buddy/me).data.get('k', '') == k;
     }
+    // 💜 受付v131: ラウンジ（同じユニオンのユーザーのひとこと）。スタッフが「出す」を押した投稿だけが出る
+    //   ckLounge/{投稿のキー} = { union, uid, n, co, t, st: wait|ok|ng, at, okAt, by }
+    //   cards/{トークン}/lounge/{投稿のキー} … 自分の投稿の印（パスにトークン＝本人だけ。投稿・取り消しと同じ一括書き込み）
+    //   ckLounge/{投稿のキー}/clap/{ユーザーのID} と cards/{トークン}/clap/{投稿のキー} … 👏（1人1回）
+    match /ckLounge/{pid} {
+      allow get: if true;
+      allow list: if resource.data.st == 'ok' || ckLoungeStaff(resource.data.get('union', ''));
+      allow create: if pid.matches('^[a-z0-9]{20}$')
+        && request.resource.data.keys().hasOnly(['union', 'uid', 'n', 'co', 't', 'st', 'at'])
+        && request.resource.data.get('st', '') == 'wait'
+        && request.resource.data.get('at', null) == request.time
+        && request.resource.data.get('t', '') is string && request.resource.data.get('t', '').size() > 0 && request.resource.data.get('t', '').size() <= 60
+        && request.resource.data.get('co', '') is string && request.resource.data.get('co', '').size() <= 30
+        && request.resource.data.get('uid', '') is string && request.resource.data.get('uid', '') != ''
+        && exists(/databases/$(database)/documents/cardClaims/$(request.resource.data.uid))
+        && ckLoungeOwn(pid, request.resource.data, get(/databases/$(database)/documents/cardClaims/$(request.resource.data.uid)).data.get('t', '_'));
+      // スタッフ：出す・出さない・取り下げ
+      allow update: if ckLoungeStaff(resource.data.get('union', ''))
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['st', 'okAt', 'by'])
+        && request.resource.data.st in ['ok', 'ng']
+        && request.resource.data.get('by', '') == request.auth.uid;
+      // 本人の取り消し（同じ一括書き込みで自分の印を消す）・スタッフの削除
+      allow delete: if ckLoungeStaff(resource.data.get('union', ''))
+        || (exists(/databases/$(database)/documents/cardClaims/$(resource.data.get('uid', '_')))
+            && ckLoungeMineGone(pid, get(/databases/$(database)/documents/cardClaims/$(resource.data.uid)).data.get('t', '_')));
+      match /clap/{uid} {
+        allow get, list: if true;
+        allow create: if request.resource.data.keys().hasOnly(['at'])
+          && get(/databases/$(database)/documents/ckLounge/$(pid)).data.get('st', '') == 'ok'
+          && exists(/databases/$(database)/documents/cardClaims/$(uid))
+          && ckClapOwn(pid, uid, get(/databases/$(database)/documents/cardClaims/$(uid)).data.get('t', '_'));
+        allow delete: if ckLoungeStaff(get(/databases/$(database)/documents/ckLounge/$(pid)).data.get('union', ''));
+      }
+    }
+    function ckLoungeStaff(un) {
+      return isOwnerAdmin() || isCkAdmin(un) || (ckBeautyTester() && ckCanSee(un));
+    }
+    function ckLoungeOwn(pid, d, tk) {
+      return tk is string && tk != '_'
+        && exists(/databases/$(database)/documents/cards/$(tk))
+        && get(/databases/$(database)/documents/cards/$(tk)).data.get('kind', '') == 'user'
+        && get(/databases/$(database)/documents/cards/$(tk)).data.get('no', '') == d.uid
+        && get(/databases/$(database)/documents/cards/$(tk)).data.get('active', true) != false
+        && get(/databases/$(database)/documents/cards/$(tk)).data.get('toMember', '') == ''
+        && get(/databases/$(database)/documents/cards/$(tk)).data.get('name', '') == d.get('n', '')
+        && get(/databases/$(database)/documents/cards/$(tk)).data.get('union', '') == d.get('union', '')
+        && existsAfter(/databases/$(database)/documents/cards/$(tk)/lounge/$(pid));
+    }
+    function ckLoungeMineGone(pid, tk) {
+      return tk is string && tk != '_'
+        && exists(/databases/$(database)/documents/cards/$(tk)/lounge/$(pid))
+        && !existsAfter(/databases/$(database)/documents/cards/$(tk)/lounge/$(pid));
+    }
+    function ckClapOwn(pid, uid, tk) {
+      return tk is string && tk != '_'
+        && exists(/databases/$(database)/documents/cards/$(tk))
+        && get(/databases/$(database)/documents/cards/$(tk)).data.get('kind', '') == 'user'
+        && get(/databases/$(database)/documents/cards/$(tk)).data.get('no', '') == uid
+        && get(/databases/$(database)/documents/cards/$(tk)).data.get('active', true) != false
+        && existsAfter(/databases/$(database)/documents/cards/$(tk)/clap/$(pid));
+    }
+    match /cards/{token}/lounge/{pid} {
+      allow get, list: if true;
+      allow create: if request.resource.data.keys().hasOnly(['at'])
+        && exists(/databases/$(database)/documents/cards/$(token))
+        && get(/databases/$(database)/documents/cards/$(token)).data.get('kind', '') == 'user'
+        && existsAfter(/databases/$(database)/documents/ckLounge/$(pid));
+      allow delete: if !existsAfter(/databases/$(database)/documents/ckLounge/$(pid));
+    }
+    match /cards/{token}/clap/{pid} {
+      allow get, list: if true;
+      allow create: if request.resource.data.keys().hasOnly(['at'])
+        && exists(/databases/$(database)/documents/cards/$(token))
+        && get(/databases/$(database)/documents/cards/$(token)).data.get('kind', '') == 'user'
+        && existsAfter(/databases/$(database)/documents/ckLounge/$(pid)/clap/$(get(/databases/$(database)/documents/cards/$(token)).data.no));
+      allow delete: if false;
+    }
     match /ckApply/{id} {
       allow get: if true;
       allow list: if false;

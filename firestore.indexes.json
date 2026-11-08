@@ -4,17 +4,50 @@
       "collectionGroup": "events",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "type", "order": "ASCENDING" },
-        { "fieldPath": "done", "order": "ASCENDING" },
-        { "fieldPath": "date", "order": "ASCENDING" }
+        {
+          "fieldPath": "type",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "done",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "date",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "checkinEvents",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "unions", "arrayConfig": "CONTAINS" },
-        { "fieldPath": "date", "order": "ASCENDING" }
+        {
+          "fieldPath": "unions",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "date",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "ckLounge",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "union",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "st",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "okAt",
+          "order": "DESCENDING"
+        }
       ]
     }
   ],
