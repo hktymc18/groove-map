@@ -1051,6 +1051,7 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .nw-cal{display:flex;align-items:center;gap:12px;margin-top:6px;flex-wrap:wrap;}
 .nw-cal a{color:var(--focus);font-size:12.5px;}
 .nw-how{margin-top:10px;font-size:13.5px;line-height:1.7;}
+.nw-push button{justify-self:start;margin-top:6px;}
 .nw-how ol{margin:4px 0 0;padding-left:1.3em;}
 .fi-list{margin-top:6px;}
 .fi-row{display:flex;justify-content:space-between;gap:10px;padding:8px 2px;border-bottom:1px solid var(--line);font-size:13.5px;}
@@ -2438,10 +2439,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v128';
+var APP_VER = 'v129';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v129', d: '2026/11/07', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v128', d: '2026/11/07', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v127', d: '2026/11/07', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v126', d: '2026/11/07', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
@@ -4696,6 +4698,7 @@ function showCardView(token){
           return;
         }
         renderCard(c);
+        if(!c.toMember) ckUserAppHead(token);
         renderUserNews(c, token);
         renderPrysm(c);
         renderMyPlan(c, token);
@@ -14439,18 +14442,26 @@ function renderUserNews(c, token){
     items = items.slice(0, 5);
     var a2hs = !ckIsStandalone();
     try{ if(localStorage.getItem('bci_a2hs_off') === '1') a2hs = false; }catch(e){}
-    if(!next && !items.length && !a2hs) return;
+    var ps = ckPushState(c), pushRow = ps === 'on' || ps === 'off' || ps === 'denied';   // 💜 v129: スマホの通知
+    if(!next && !items.length && !a2hs && !pushRow) return;
     el.innerHTML = '<div class="nwwrap">'
-      + (a2hs ? '<div class="nw-a2hs" id="nwA2hs"><span>ホーム画面に追加すると、次からアプリのようにすぐ開けます</span>'
+      + (a2hs ? '<div class="nw-a2hs" id="nwA2hs"><span>ホーム画面に追加すると、次からアプリのようにすぐ開けます' + (ckIsIos() ? '。お知らせの通知も受け取れます' : '') + '</span>'
           + '<button type="button" id="nwA2hsHow">やり方を見る</button><button type="button" class="nw-x" id="nwA2hsX" aria-label="閉じる">✕</button></div>' : '')
-      + ((next || items.length) ? '<div class="next-head">NEWS</div>' : '')
+      + ((next || items.length || pushRow) ? '<div class="next-head">NEWS</div>' : '')
       + (next ? '<div class="nw-box nw-next"><span class="nw-k">次のDAY</span><b>' + esc(ckMd(next.date)) + '（' + '日月火水木金土'.charAt(new Date(next.date + 'T00:00:00').getDay()) + '）' + esc(next.name || '') + '</b>'
           + (next.uInfo ? '<span class="nw-i">' + esc(next.uInfo) + '</span>' : '')
           + '<div class="nw-cal"><button type="button" id="nwCal">カレンダーに追加</button><a id="nwGcal" target="_blank" rel="noopener" href="' + esc(ckGcalUrl(next, c)) + '">Googleカレンダー</a></div></div>' : '')
       + items.map(function(n){
           return '<div class="nw-box"><span class="nw-k">' + esc(ckMd(n.d)) + (n.staff ? ' ・ お知らせ' : '') + '</span><span class="nw-t">' + esc(n.t) + '</span></div>';
         }).join('')
+      + (pushRow ? '<div class="nw-box nw-push"><span class="nw-k">スマホの通知</span><span class="nw-t">'
+          + (ps === 'on' ? '受け取っています（DAYの前日のお知らせ・来場のお礼）' : ps === 'denied' ? 'スマホの設定で、この画面の通知が止められています。受け取る時は、設定から許可してください' : 'DAYの前日のお知らせと、来場のお礼が届きます（どちらも夜8時ごろ）')
+          + '</span>' + (ps === 'denied' ? '' : '<button type="button" id="nwPush"' + (ps === 'on' ? '' : ' class="primary"') + '>' + (ps === 'on' ? '通知をやめる' : '通知を受け取る') + '</button>') + '</div>' : '')
       + '</div>';
+    if($('nwPush')) $('nwPush').onclick = function(){
+      $('nwPush').disabled = true;
+      ckPushToggle(c, token, ps !== 'on', function(){ renderUserNews(c, token); });
+    };
     if($('nwA2hsHow')) $('nwA2hsHow').onclick = ckA2hsHowModal;
     if($('nwA2hsX')) $('nwA2hsX').onclick = function(){ try{ localStorage.setItem('bci_a2hs_off', '1'); }catch(e){} var b = $('nwA2hs'); if(b) b.parentNode.removeChild(b); };
     if($('nwCal')) $('nwCal').onclick = function(){ ckIcsDownload(next, c); };
@@ -14537,6 +14548,80 @@ function ckUserNoticeModal(){
       save('送りました。ユーザーのカードに届きます');
     };
   }).catch(function(e){ toast(permMsg(e, 'お知らせを読めませんでした')); });
+}
+/* 💜 v129: ユーザーのカードのスマホの通知（DAYの前日のお知らせ・来場のお礼。送るのはサーバー＝functions/beauty.js）
+   ・「通知を受け取る」を押した時だけ、通知の仕組み（firebase-messaging）を読み込み、push-sw.js（範囲は /checkin/ だけ）を登録する
+   ・送り先は ckPush/{ユーザーのID} = { card: カードのトークン, union, t: 通知の宛先, on }（だれも読めない・サーバーだけが読む）
+   ・iPhone はホーム画面に追加して開いた時だけ受け取れる。そのため、ユーザーのカードは開いた時に
+     「ホーム画面のアプリ」として追加できる印（apple-mobile-web-app-capable・このカードを開く manifest）を付ける。
+     ビジネスの会員証・受付の画面には付けない（今までどおり） */
+var CK_FCM_VAPID = 'BF3BgLtdy0ANjYfZxldi_bsJ3ae3r22SkEr493WqJvLN5Z9qcvz2Ll-uxpk1Tsw-BMpLeyjywAlsI7KJBftS6UA';   // NAVIGATOR と同じ
+function ckUserAppHead(token){
+  try{
+    if(!document.querySelector('meta[name="apple-mobile-web-app-capable"]')){
+      var m = document.createElement('meta'); m.name = 'apple-mobile-web-app-capable'; m.content = 'yes'; document.head.appendChild(m);
+    }
+    var tt = document.querySelector('meta[name="apple-mobile-web-app-title"]'); if(tt) tt.content = 'NAVIGATOR Beauty';
+    if(!document.querySelector('link[rel="manifest"]')){
+      var base = location.href.split('#')[0].replace(/[^\/]*$/, '');
+      var mf = { name: 'NAVIGATOR Beauty', short_name: 'NAVIGATOR Beauty', start_url: cardUrl(token), scope: base, display: 'standalone',
+        background_color: '#f2f1ee', theme_color: '#f2f1ee',
+        icons: [{ src: base + 'icon-192.png', sizes: '192x192', type: 'image/png' }, { src: base + 'icon-512.png', sizes: '512x512', type: 'image/png' }] };
+      var l = document.createElement('link'); l.rel = 'manifest'; l.href = 'data:application/manifest+json,' + encodeURIComponent(JSON.stringify(mf));
+      document.head.appendChild(l);
+    }
+  }catch(e){}
+}
+function ckIsIos(){ return /iPhone|iPad|iPod/.test(navigator.userAgent || ''); }
+function ckPushState(c){
+  if(ckIsIos() && !ckIsStandalone()) return 'ios';
+  if(!('serviceWorker' in navigator) || !window.Notification || !('PushManager' in window)) return 'na';
+  if(Notification.permission === 'denied') return 'denied';
+  var on = '';
+  try{ on = localStorage.getItem('bci_push_' + c.no) || ''; }catch(e){}
+  return on && Notification.permission === 'granted' ? 'on' : 'off';
+}
+function ckLoadScript(src){
+  return new Promise(function(ok, ng){
+    if(document.querySelector('script[src="' + src + '"]')){ ok(); return; }
+    var s = document.createElement('script'); s.src = src; s.onload = function(){ ok(); }; s.onerror = function(){ ng(new Error('load')); };
+    document.head.appendChild(s);
+  });
+}
+function ckPushSave(c, token, t, on){
+  return ckAnonDb().collection('ckPush').doc(String(c.no)).set({ card: token, union: c.union || '', t: t, on: on,
+    ua: String(navigator.userAgent || '').slice(0, 180), at: FV.serverTimestamp() });
+}
+function ckPushToggle(c, token, wantOn, done){
+  var fin = function(msg){ toast(msg); if(done) done(); };
+  if(!wantOn){
+    var old = '';
+    try{ old = localStorage.getItem('bci_push_' + c.no) || ''; }catch(e){}
+    (old ? ckPushSave(c, token, old, false) : Promise.resolve()).then(function(){
+      try{ localStorage.removeItem('bci_push_' + c.no); }catch(e){}
+      fin('通知をやめました');
+    }).catch(function(){ fin('やめられませんでした。電波の良いところで、もう一度押してください'); });
+    return;
+  }
+  Notification.requestPermission().then(function(p){
+    if(p !== 'granted') throw { code: 'denied' };
+    return ckLoadScript('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
+  }).then(function(){
+    if(!firebase.messaging || (firebase.messaging.isSupported && !firebase.messaging.isSupported())) throw { code: 'na' };
+    return navigator.serviceWorker.register('push-sw.js', { scope: './' }).then(function(){ return navigator.serviceWorker.ready; });
+  }).then(function(reg){
+    return firebase.messaging().getToken({ vapidKey: CK_FCM_VAPID, serviceWorkerRegistration: reg });
+  }).then(function(t){
+    if(!t) throw { code: 'na' };
+    return ckPushSave(c, token, t, true).then(function(){
+      try{ localStorage.setItem('bci_push_' + c.no, t); }catch(e){}
+      fin('通知を受け取ります。DAYの前日と来場した日の、夜8時ごろに届きます');
+    });
+  }).catch(function(e){
+    fin(e && e.code === 'denied' ? '通知が許可されませんでした。スマホの設定で、この画面の通知を許可してください'
+      : e && e.code === 'na' ? 'このスマホでは通知を受け取れません（お知らせはカードで見られます）'
+      : '通知の登録ができませんでした。電波の良いところで、もう一度押してください');
+  });
 }
 $('btnGuest').onclick = function(){
   if(!gRec){ toast('先に受付を開始してください'); return; }

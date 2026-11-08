@@ -53,7 +53,7 @@ const OWNER = 'j2DPDAccCygHmR9i5K3bTvHnH0V2';
   {
     const o = await P.open(b, { hash: '#c=' + tok, data: { ['cards/' + tok]: card({ lastVisit: { d: day(-10), ev: '10月のDAY' } }) } });
     const t = await o.ev(`document.getElementById('nwArea').innerText`);
-    c('8日以上前の来場のお礼は出さない・何もない時は案内だけ', !/ご来場/.test(t) && !/NEWS/.test(t) && /ホーム画面に追加/.test(t), t);
+    c('8日以上前の来場のお礼は出さない・次のDAYもお知らせもない時は、案内（と v129 の通知の設定）だけ', !/ご来場/.test(t) && !/次のDAY/.test(t) && !/・ お知らせ/.test(t) && /ホーム画面に追加/.test(t), t);
     await o.ctx.close();
     const o2 = await P.open(b, { hash: '#c=' + tok, data: Object.assign({ ['cards/' + tok]: card({ toMember: 'P0006', toCard: 'feed' }) }, evs) });
     c('研修生になったユーザーのカードには出ない', (await o2.ev(`document.getElementById('nwArea').innerHTML`)) === '');
