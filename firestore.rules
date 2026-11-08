@@ -1052,6 +1052,57 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/cards/$(request.resource.data.card)).data.get('union', '') == request.resource.data.get('union', '_');
       allow delete: if isOwnerAdmin();
     }
+    // 💜 受付v130: バディ（会場でおたがいのQRを読み合う）。
+    //   cards/{トークン}/buddy/me = { k: 自分のバディのキー（b_20文字）, list: [{ k, n }]（20人まで）} … 本人だけ（パスにトークン）
+    //   ckBuddy/{キー} = { uid, n, st: 連続日数, bdg: バッジの数, td: 最後にできた日 } … バディに見せる分だけ（キーを知っている人）
+    //   ckBuddy/{キー}/in/{相手のキー} = { del } … 相手から「バディになった／外した」の知らせ（本人が読んで消す）
+    match /cards/{token}/buddy/{pid} {
+      allow get: if true;
+      allow list: if false;
+      allow create, update: if pid == 'me'
+        && request.resource.data.keys().hasOnly(['k', 'list', 'at'])
+        && request.resource.data.get('k', '') is string && request.resource.data.get('k', '').matches('^b_[a-z0-9]{20}$')
+        && request.resource.data.get('list', []) is list && request.resource.data.get('list', []).size() <= 20
+        && (resource == null || resource.data.get('k', '') == request.resource.data.k)
+        && exists(/databases/$(database)/documents/cards/$(token))
+        && get(/databases/$(database)/documents/cards/$(token)).data.get('kind', '') == 'user'
+        && get(/databases/$(database)/documents/cards/$(token)).data.get('active', true) != false
+        && get(/databases/$(database)/documents/cards/$(token)).data.get('toMember', '') == ''
+        && existsAfter(/databases/$(database)/documents/ckBuddy/$(request.resource.data.k));
+      allow delete: if false;
+    }
+    match /ckBuddy/{k} {
+      allow get: if true;
+      allow list: if false;
+      allow create, update: if k.matches('^b_[a-z0-9]{20}$')
+        && request.resource.data.keys().hasOnly(['uid', 'n', 'st', 'bdg', 'td', 'at'])
+        && request.resource.data.get('st', -1) is int && request.resource.data.st >= 0 && request.resource.data.st <= 1000
+        && request.resource.data.get('bdg', -1) is int && request.resource.data.bdg >= 0 && request.resource.data.bdg <= 30
+        && request.resource.data.get('td', '') is string && request.resource.data.get('td', '').size() <= 10
+        && request.resource.data.get('uid', '') is string && request.resource.data.get('uid', '') != ''
+        && exists(/databases/$(database)/documents/cardClaims/$(request.resource.data.uid))
+        && ckBuddyOwn(k, request.resource.data, get(/databases/$(database)/documents/cardClaims/$(request.resource.data.uid)).data.get('t', '_'));
+      allow delete: if false;
+      match /in/{other} {
+        allow get, list: if true;
+        allow create, update: if other.matches('^b_[a-z0-9]{20}$') && other != k
+          && request.resource.data.keys().hasOnly(['del', 'at'])
+          && request.resource.data.get('del', null) is bool
+          && exists(/databases/$(database)/documents/ckBuddy/$(k))
+          && exists(/databases/$(database)/documents/ckBuddy/$(other));
+        allow delete: if true;
+      }
+    }
+    function ckBuddyOwn(k, d, tk) {
+      return tk is string && tk != '_'
+        && exists(/databases/$(database)/documents/cards/$(tk))
+        && get(/databases/$(database)/documents/cards/$(tk)).data.get('kind', '') == 'user'
+        && get(/databases/$(database)/documents/cards/$(tk)).data.get('no', '') == d.uid
+        && get(/databases/$(database)/documents/cards/$(tk)).data.get('active', true) != false
+        && get(/databases/$(database)/documents/cards/$(tk)).data.get('name', '') == d.get('n', '')
+        && existsAfter(/databases/$(database)/documents/cards/$(tk)/buddy/me)
+        && getAfter(/databases/$(database)/documents/cards/$(tk)/buddy/me).data.get('k', '') == k;
+    }
     match /ckApply/{id} {
       allow get: if true;
       allow list: if false;
