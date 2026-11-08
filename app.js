@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v869';
+var APP_JS_VERSION = 'v871';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4574,7 +4574,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v869';
+  var DATA_VERSION = 'v871';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6686,6 +6686,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v871', d:'2026-11-08', items:['🛠 パソコンのMAPの上の帯で、画面の幅が足りない時（全画面でも）右のボタン（課題・受付連携・全画面・⋯）が切れていたのを、2行に折り返して全部見えるようにしました'] },
+  { v:'v870', d:'2026-11-08', items:['🎂 メンバーとユーザーの誕生日を、西暦がわからなくても「月・日」だけで登録できるようにしました（誕生日のお知らせはそのまま届きます。年齢は出ません）'] },
   { v:'v869', d:'2026-11-08', items:['ホームの「気になる人」に、ユーザー（お客さん）が「OL未着手」として出ていたのを出ないようにしました（OLはビジネスのメンバーだけ）'] },
   { v:'v868', d:'2026-11-07', items:['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v:'v867', d:'2026-11-05', items:['読み込みをさらに軽くしました（分析の過去の月・共有の確認・結合したメンバーの予定）'] },
@@ -7786,7 +7788,7 @@ function _bdayMD(m) {
 }
 function _bdayTurnAge(m) {
   var p = /^(\d{4})-(\d{2})-(\d{2})/.exec(m.birthday || '');
-  if (!p) return null;
+  if (!p || p[1] === '0000') return null;   // v870: 西暦がわからない時は「◯歳に」を出さない
   var now = new Date();
   var t0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   var next = new Date(now.getFullYear(), parseInt(p[2], 10) - 1, parseInt(p[3], 10));
@@ -8571,7 +8573,7 @@ function _birthSelInit() {
   if (!y || y.options.length > 1) return;
   var m = document.getElementById('fBirthM'), d = document.getElementById('fBirthD');
   var nowY = new Date().getFullYear();
-  var hy = '<option value="">----年</option>';
+  var hy = '<option value="">西暦不明</option>';   // v870: 年がわからなくても月日だけで保存できる
   // v503: この仕事は20才から（研修中に20才になるケース込みで今年−19年まで）。年が変われば自動で1年進む
   for (var i = nowY - 19; i >= 1900; i--) hy += '<option value="' + i + '">' + i + '年</option>';
   y.innerHTML = hy;
@@ -8582,12 +8584,14 @@ function _birthSelInit() {
   for (var k = 1; k <= 31; k++) hd += '<option value="' + k + '">' + k + '日</option>';
   if (d) d.innerHTML = hd;
 }
+// v870: 西暦がわからない誕生日は「0000-月-日」で持つ（誕生日のお知らせ・カードの🎂は月日だけを見るのでそのまま使える。年齢は出さない）
+function _bdHasYear(v) { return /^[1-9]\d{3}-\d{2}-\d{2}$/.test(String(v || '')); }
 function _fBirthGet() {
   var y = (document.getElementById('fBirthY') || {}).value || '';
   var m = (document.getElementById('fBirthM') || {}).value || '';
   var d = (document.getElementById('fBirthD') || {}).value || '';
-  if (!y || !m || !d) return '';
-  return y + '-' + ('0' + m).slice(-2) + '-' + ('0' + d).slice(-2);
+  if (!m || !d) return '';
+  return (y || '0000') + '-' + ('0' + m).slice(-2) + '-' + ('0' + d).slice(-2);   // v870: 年が空でも月日があれば保存
 }
 function _fBirthSet(v, yOnly) {
   _birthSelInit();
@@ -8595,12 +8599,12 @@ function _fBirthSet(v, yOnly) {
   if (!p && yOnly && /^\d{4}$/.test(String(yOnly))) p = [null, String(yOnly), '', '']; // v565: 生まれ年だけ
   var y = document.getElementById('fBirthY'), m = document.getElementById('fBirthM'), d = document.getElementById('fBirthD');
   // v503: 範囲外の年（旧データ）は選択肢を足して復元。未設定の初期表示は「今年−24年」（24才前後の新メンバーが最多）
-  if (y && p && !y.querySelector('option[value="' + p[1] + '"]')) {
+  if (y && p && p[1] !== '0000' && !y.querySelector('option[value="' + p[1] + '"]')) {
     var _op9 = document.createElement('option');
     _op9.value = p[1]; _op9.textContent = p[1] + '年';
     y.insertBefore(_op9, y.options[1] || null);
   }
-  if (y) y.value = p ? p[1] : ''; // v565: 年だけでも保存するため、未設定の初期表示は空（以前は今年−24年を仮表示）
+  if (y) y.value = p && p[1] !== '0000' ? p[1] : ''; // v870: 0000＝西暦がわからない／v565: 年だけでも保存するため、未設定の初期表示は空（以前は今年−24年を仮表示）
   if (m) m.value = p && p[2] ? String(parseInt(p[2], 10)) : '';
   if (d) d.value = p && p[3] ? String(parseInt(p[3], 10)) : '';
 }
@@ -8611,7 +8615,7 @@ function _fBirthYearGet() {
 }
 // 年齢：年/月/日が揃えばその日、年だけならその年の1月1日で計算して日の横に表示
 function _ageFrom(bd, by) {
-  var b = bd && /^\d{4}-\d{2}-\d{2}$/.test(bd) ? new Date(bd.replace(/-/g, '/')) : (by && /^\d{4}$/.test(String(by)) ? new Date(parseInt(by, 10), 0, 1) : null);
+  var b = _bdHasYear(bd) ? new Date(bd.replace(/-/g, '/')) : (by && /^\d{4}$/.test(String(by)) ? new Date(parseInt(by, 10), 0, 1) : null);
   if (!b) return null;
   var t = new Date(), a = t.getFullYear() - b.getFullYear();
   if (t.getMonth() < b.getMonth() || (t.getMonth() === b.getMonth() && t.getDate() < b.getDate())) a--;
@@ -8623,15 +8627,15 @@ function syncAgeField() {
   if (_au) { var _ag = _ageFrom(_fBirthGet(), _fBirthYearGet()); _au.textContent = _ag === null ? '' : _ag + '歳'; }
   var a = document.getElementById('fAge'), n = document.getElementById('fAgeNote');
   if (!a) return;
-  var hasBirth = !!_fBirthGet();
+  var hasBirth = _bdHasYear(_fBirthGet());   // v870: 月日だけの時は年齢を手で入れられる
   a.disabled = hasBirth;
   a.style.opacity = hasBirth ? '.45' : '';
   if (n) n.textContent = hasBirth ? '歳（生年月日から自動計算中）' : '歳';
 }
 // 年齢：生年月日があれば計算値を優先、無ければ手入力の年齢（m.age）
 function _memberAge(m) {
-  if (!(m.birthday && /^\d{4}-\d{2}-\d{2}$/.test(m.birthday)) && m.birthYear) return _ageFrom('', m.birthYear); // v565: 生まれ年だけ＝その年の1月1日で計算
-  if (m.birthday && /^\d{4}-\d{2}-\d{2}$/.test(m.birthday)) {
+  if (!_bdHasYear(m.birthday) && m.birthYear) return _ageFrom('', m.birthYear); // v565: 生まれ年だけ＝その年の1月1日で計算
+  if (_bdHasYear(m.birthday)) {   // v870: 西暦がわからない誕生日（0000-）は、手で入れた年齢を使う
     var b = new Date(m.birthday.replace(/-/g, '/')), t = new Date();
     var a = t.getFullYear() - b.getFullYear();
     if (t.getMonth() < b.getMonth() || (t.getMonth() === b.getMonth() && t.getDate() < b.getDate())) a--;
@@ -8661,7 +8665,7 @@ function openMemberDetail(mid) {
     + _dRow('性別', m.gender==='female'?'女性':'男性')
     + _dRow('適用MAP', m.mapType==='ideal'?'理想':(m.mapType==='both'?'両方':'現状'))
     + _dRow('アップライン', parent ? ((parent.lastName||'')+(parent.firstName||'')) : 'トップ直下')
-    + (function(){ var a=_memberAge(m); return a!==null ? _dRow('年齢', a + '歳' + (m.birthday?'':'（入力値）')) : ''; })()
+    + (function(){ var a=_memberAge(m); return a!==null ? _dRow('年齢', a + '歳' + (_bdHasYear(m.birthday)?'':'（入力値）')) : ''; })()
     + (m.instaUrl ? _dRow('Instagram', m.instaUrl) : '')
     + (m.lineId ? '<div class="md-row"><span class="md-l">LINE</span><span class="md-v" style="text-align:right"><span onclick="openLineChatById(\'' + m.id + '\')" style="color:#06C755;font-weight:600;cursor:pointer">💬 LINEを開く</span></span></div>' : '');
   var monthly = _dRow('現状GSV', m.ptCurrent>0 ? m.ptCurrent.toLocaleString() : '0')
@@ -17140,7 +17144,7 @@ function saveMember() {
     region: normalizeRegionValue((document.getElementById('fRegion')||{}).value || ''),
     birthday: _fBirthGet(),
     birthYear: _fBirthYearGet(), // v565: 年だけ
-    age: (function(){ if (_fBirthGet() || _fBirthYearGet()) return ''; /* v565: 年を入れたら旧「年齢のみ」は使わない */ var a=parseInt((document.getElementById('fAge')||{}).value,10); if(isNaN(a)) return ''; if(a<1||a>120){ toast('年齢は1〜120で入力してください（保存されません）'); return ''; } return a; })(),
+    age: (function(){ if (_bdHasYear(_fBirthGet()) || _fBirthYearGet()) return ''; /* v565: 年を入れたら旧「年齢のみ」は使わない */ var a=parseInt((document.getElementById('fAge')||{}).value,10); if(isNaN(a)) return ''; if(a<1||a>120){ toast('年齢は1〜120で入力してください（保存されません）'); return ''; } return a; })(),
     startMonth: (function(){
       var el = document.getElementById('fStartMonth');
       var v = el ? el.value : ''; // 'YYYY-MM'
@@ -19946,6 +19950,22 @@ function ppName() {
 }
 function ppStart(d) { var m = _ppM(); if (!m) return; var sm = String(m.startMonth || memberStartMonth(m) || (state.currentMonth || currentMonthStr())).replace('.', '-'); ppSetF('fStartMonth', _p2YmAdd(sm, d), 'スタート月を保存しました'); }
 function ppBirth(v) { _ppSave(function() { _fBirthSet(v || '', ''); }, '誕生日を保存しました'); }
+// v870: 誕生日は 年（わからない）・月・日 のリストで。月と日がそろった時に保存する（年は空でもよい）。年だけなら生まれ年
+function _ppBirthSelHtml(m) {
+  var p = /^(\d{4})-(\d{2})-(\d{2})$/.exec(m.birthday || ''), y0 = p && p[1] !== '0000' ? p[1] : (m.birthYear || ''), mo = p ? +p[2] : 0, da = p ? +p[3] : 0;
+  var nowY = new Date().getFullYear(), hy = '<option value="">西暦（わからない）</option>';
+  if (y0 && (+y0 > nowY - 19 || +y0 < 1900)) hy += '<option value="' + y0 + '" selected>' + y0 + '年</option>';
+  for (var i = nowY - 19; i >= 1900; i--) hy += '<option value="' + i + '"' + (String(i) === String(y0) ? ' selected' : '') + '>' + i + '年</option>';
+  var hm = '<option value="">--月</option>'; for (var j = 1; j <= 12; j++) hm += '<option value="' + j + '"' + (j === mo ? ' selected' : '') + '>' + j + '月</option>';
+  var hd = '<option value="">--日</option>'; for (var k = 1; k <= 31; k++) hd += '<option value="' + k + '"' + (k === da ? ' selected' : '') + '>' + k + '日</option>';
+  return '<div class="ppn ppbd"><select class="ppin" id="ppBY" onchange="ppBirthSel()" style="flex:1.6">' + hy + '</select><select class="ppin" id="ppBM" onchange="ppBirthSel()" style="flex:1">' + hm + '</select><select class="ppin" id="ppBD" onchange="ppBirthSel()" style="flex:1">' + hd + '</select></div>';
+}
+function ppBirthSel() {
+  var y = (document.getElementById('ppBY') || {}).value || '', mo = (document.getElementById('ppBM') || {}).value || '', d = (document.getElementById('ppBD') || {}).value || '';
+  if (mo && d) { var v = (y || '0000') + '-' + ('0' + mo).slice(-2) + '-' + ('0' + d).slice(-2), m0 = _ppM(); if (m0 && (m0.birthday || '') === v) return; ppBirth(v); return; }
+  if (!mo && !d) { _ppSave(function() { _fBirthSet('', y); }, y ? '生まれ年を保存しました' : '誕生日を外しました'); return; }
+  // 月か日のどちらかだけ：そろうまで待つ（保存しない）
+}
 // v834: 誕生日は入れ終わってから保存する（前は1つ変えた瞬間に保存して画面を描き直していたので、
 //   年・月・日を入れている途中で欄が作り直され、残りが消えて保存されなかった。iPhoneのカレンダーも同じ）
 var _ppBdP = null, _ppBdT = null;
@@ -20236,7 +20256,7 @@ function ppPhDel() {
     toastAction('写真を消しました', '↩ 元に戻す', function() { saveAvatar(id, old).then(function() { try { renderCurrentView(); } catch (e) {} if (_pp && _pp.id === id) _ppRender(); }); });
   }).catch(function() { toast('⚠️ 写真を消せませんでした'); });
 }
-function ppAge(v) { var s0 = String(v == null ? '' : v).trim(); _ppSave(function() { _fBirthSet('', ''); var a = document.getElementById('fAge'); if (a) a.value = s0; }, s0 ? '年齢を保存しました' : '年齢を外しました'); }
+function ppAge(v) { var s0 = String(v == null ? '' : v).trim(), _m0 = _ppM(), _keep = _m0 && /^0000-/.test(_m0.birthday || '') ? _m0.birthday : ''; _ppSave(function() { _fBirthSet(_keep, ''); var a = document.getElementById('fAge'); if (a) a.value = s0; }, s0 ? '年齢を保存しました' : '年齢を外しました'); }
 function ppOutVis(hide) { _ppSave(function() { selOutVis(!!hide); }, hide ? 'MAPから隠しました' : 'MAPに残します'); }
 // 研修の予定のリスケ・OL／タスクの入力など、別の画面から戻った時に描き直す
 var _ppObs = null, _ppObsT = null;
@@ -20377,8 +20397,8 @@ function _ppPage(m, pg) {
       + '<div class="ppl">性別</div><div class="ppb sm" style="--n:2"><span class="' + (m.gender !== 'female' ? 'on' : '') + '" onclick="ppGender(\'male\')">男性</span><span class="' + (m.gender === 'female' ? 'on' : '') + '" style="--a:var(--female)" onclick="ppGender(\'female\')">女性</span></div>'
       + '<div class="ppl">地域</div><div class="ppt" style="--k:var(--accent)">' + regs.map(function(r) { return '<span class="' + (r === rg ? 'on' : '') + '" onclick="ppSetF(\'fRegion\',\'' + evEsc(r) + '\',\'地域を保存しました\')">' + evEsc(r) + '</span>'; }).join('') + '<span class="' + (!rg ? 'on' : '') + '" onclick="ppSetF(\'fRegion\',\'\',\'地域を外しました\')">未設定</span><span onclick="var v=prompt(\'地域を入力\',\'\');if(v)ppSetF(\'fRegion\',v.trim(),\'地域を保存しました\')">＋ ほか</span></div>'
       + '<div class="ppl">' + (isUserM(m) ? 'スタート月（ユーザーになった月）' : 'スタート月（組織に入った月）') + '</div>' + _ymSelHtml(sm, 'ppStartYM') // v615: 年・月をリストで
-      + '<div class="ppl">誕生日</div><input class="ppin" type="date" id="ppBirthIn" value="' + evEsc(m.birthday || '') + '" onchange="ppBirthIn(this)" onblur="ppBirthDone()">'
-      + (m.birthday ? '' : '<div class="ppl">年齢（誕生日がわからない時）</div><input class="ppin" id="ppAge" type="number" inputmode="numeric" min="1" max="120" placeholder="例：27" value="' + evEsc(String(m.age || (m.birthYear ? new Date().getFullYear() - parseInt(m.birthYear, 10) : ''))) + '" onfocus="edSelAll(this)" onchange="ppAge(this.value)">')
+      + '<div class="ppl">誕生日 <small style="font-weight:400;color:var(--text-dim)">西暦がわからない時は、月・日だけでOK</small></div>' + _ppBirthSelHtml(m)
+      + (_bdHasYear(m.birthday) ? '' : '<div class="ppl">年齢（生まれた年がわからない時）</div><input class="ppin" id="ppAge" type="number" inputmode="numeric" min="1" max="120" placeholder="例：27" value="' + evEsc(String(m.age || (m.birthYear ? new Date().getFullYear() - parseInt(m.birthYear, 10) : ''))) + '" onfocus="edSelAll(this)" onchange="ppAge(this.value)">')
       + (isUserM(m) ? '' : '<div class="ppl">研修生</div><div class="ppb sm" style="--n:2"><span class="' + (!m.trainee ? 'on' : '') + '" onclick="ppTrainee(0)">いいえ</span><span class="' + (m.trainee ? 'on' : '') + '" style="--a:var(--mxtr)" onclick="ppTrainee(1)">研修生（水色）</span></div>')
       + '<div class="ppl">Instagram・LINE</div><input class="ppin" placeholder="InstagramのURL" value="' + evEsc(m.instaUrl || '') + '" onchange="ppSetF(\'fInsta\',this.value.trim(),\'保存しました\')"><input class="ppin" style="margin-top:8px" placeholder="LINE ID または URL" value="' + evEsc(m.lineId || '') + '" onchange="ppSetF(\'fLine\',this.value.trim(),\'保存しました\')">'
       + '<div class="ux-list" style="margin-top:14px"><div class="ux-li" onclick="ppGo(\'photo\')"><span class="ic">' + icn('camera') + '</span><span>写真<small>' + (_avatars[m.id] ? '変える・位置を直す・消す' : '選ぶ・撮る') + '</small></span><span class="ch">›</span></div></div>'
@@ -41158,7 +41178,8 @@ function _px3Css() {
     + "body.px3 header{display:none!important}" // v706: PCは上の帯をなくす（年月・翌月コピー・共有MAPはMAPの上、版・保存は左下へ）
     + "#pcsVer{display:none}body.px3 #pcsVer{display:flex;align-items:center;justify-content:center;gap:6px;padding:6px 0 0;flex:none}body.px3 #pcsVer>div{flex-direction:row!important;gap:8px!important;align-items:center!important}body.px3 #pcsVer #versionTag,body.px3 #pcsVer #lastSavedTag{font-size:10px!important}"
     // v710: MAPの上の帯を1行に（LTSVは1行の札・表示の切りかえはアイコン・たまに使う物は「⋯」）
-    + "body.px3 .pc-toolbar{flex-wrap:nowrap;gap:8px}body.px3 .pc-toolbar .pt-ltsv{padding:5px 12px;gap:10px;box-shadow:none;flex:none}body.px3 .pc-toolbar .pt-ltsv>div{display:flex;align-items:baseline;gap:6px}body.px3 .pc-toolbar .pt-ltsv-val{font-size:16px}body.px3 .pc-toolbar .pt-act{white-space:nowrap}"
+    // v871 #41: 幅が足りない時（ウィンドウが狭い・全画面でも）は右のボタン（課題・受付連携・全画面・⋯）が切れていた。足りない時だけ2行に折り返す
+    + "body.px3 .pc-toolbar{flex-wrap:wrap;gap:8px;row-gap:8px}body.px3 .pc-toolbar .pt-ltsv{padding:5px 12px;gap:10px;box-shadow:none;flex:none}body.px3 .pc-toolbar .pt-ltsv>div{display:flex;align-items:baseline;gap:6px}body.px3 .pc-toolbar .pt-ltsv-val{font-size:16px}body.px3 .pc-toolbar .pt-act{white-space:nowrap}"
     + "body.px3 .pv-seg{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--border);border-radius:11px;background:var(--surface2);flex:none}body.px3 .pv-seg .pv-btn{padding:5px 9px;background:transparent;display:flex;align-items:center;box-shadow:none}body.px3 .pv-seg .pv-btn.active{background:var(--accent)}body.px3 .pc-toolbar-ideal .pv-seg .pv-btn.active{background:var(--purple)}body.px3 .pv-btn .pv-lb{display:none}body.px3 .pv-btn .lic{width:18px;height:18px}.pv-btn .lic{margin-right:4px}body.px3 .pv-btn .lic{margin-right:0}"
     + "body.px3 .pc-toolbar .pt-search{min-width:130px;max-width:230px}body.px3 .pc-toolbar .pt-ic{padding:5px 11px;font-size:15px;line-height:1.2}body.px3 .mapFsBtn .fs-lb{display:none}body.px3 .pt-modebadge{display:none}body.px3 #pcShareBtn{display:none!important}body.px3 .pc-toolbar .pt-mapseg .pt-ms{padding:6px 12px}"
     + "@media (max-width:1380px){body.px3 .pc-toolbar .pt-search{min-width:0;flex:0 0 auto;padding:0 11px}body.px3 #pcSearchText{display:none}}"
