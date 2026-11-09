@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v871';
+var APP_JS_VERSION = 'v872';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3695,6 +3695,20 @@ function _admAccLine() {
   var cur = ACC_MODES.filter(function(m) { return m[0] === (A.mode || 'open'); })[0] || ACC_MODES[2], C = _accCount(A);
   return '<div class="adm-ln" onclick="admPg(\'acc\')">公開範囲：<b>' + cur[1] + '</b>・使える人 ' + C.ok.length + '人<span class="ch">›</span></div>';
 }
+// v872: 検索欄で日本語が変換できない（iPhone）。1文字ごとに一覧を作り直すと、変換の途中で入力が確定してしまっていた。
+//   変換の途中（isComposing）は何もせず、確定した時（compositionend）と、ふつうの入力は少し待ってから絞り込む
+var _imeT = null;
+function _imeInput(e, fn) {
+  if (e && e.isComposing && e.type !== 'compositionend') return;
+  clearTimeout(_imeT);
+  _imeT = setTimeout(function() { _imeT = null; try { fn(); } catch (er) {} }, 150);
+}
+// 確定した時に、もう一度 input を送って絞り込む（oncompositionend は属性では動かないので、ページ全体で受ける。対象は data-ime の欄）
+document.addEventListener('compositionend', function(e) {
+  var el = e.target;
+  if (!el || !el.getAttribute || !el.getAttribute('data-ime')) return;
+  try { el.dispatchEvent(new Event('input', { bubbles: true })); } catch (er) {}
+}, true);
 function renderAdminList() {
   var body = document.getElementById('adminBody');
   if (!body) return;
@@ -3858,7 +3872,7 @@ function _admCkRender() {
     + '<div class="adm-ck-who">' + evEsc(u.name || '(名前未設定)') + (u.email ? '<i>' + evEsc(u.email) + '</i>' : '') + '</div>'
     + '<div class="adm-ck-note">受付で<b>無効</b>にすると、この人はNAVIGATORも使えなくなります（有効に戻すと、次に開いた時から使えます）。</div>'
     + (P.unions.length > 1 ? '<select class="adm-ck-in" onchange="_admCkP.sel=this.value;_admCkRoster()">' + P.unions.map(function(x) { return '<option value="' + evEsc(x.id) + '"' + (x.id === P.sel ? ' selected' : '') + '>' + evEsc(x.id) + (x.area ? '（' + evEsc(x.area) + '）' : '') + '</option>'; }).join('') + '</select>' : '<div class="adm-ck-un">' + evEsc(P.sel) + '</div>')
-    + '<input class="adm-ck-in" id="admCkQ" placeholder="名前・番号で検索" oninput="_admCkP.q=this.value;_admCkList()">'
+    + '<input class="adm-ck-in" id="admCkQ" type="search" placeholder="名前・番号で検索" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" oninput="_imeInput(event,function(){_admCkP.q=document.getElementById(\'admCkQ\').value;_admCkList();})" data-ime="1">'
     + '<div class="adm-ck-list" id="admCkList"><div class="ev-empty">読み込み中...</div></div>'
     + (u.ckNo ? '<button class="adm-btn" style="width:100%;margin-top:10px;border-color:#FF5D73;color:#FF5D73" onclick="admCkPick(\'\')">紐付けを外す</button>' : '')
     + '</div>';
@@ -4574,7 +4588,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v871';
+  var DATA_VERSION = 'v872';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6686,6 +6700,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v872', d:'2026-11-09', items:['🛠 アカウント管理などの検索欄で、iPhoneの日本語入力が変換できなかったのを直しました（変換の途中は絞り込まず、確定してから絞り込みます）'] },
   { v:'v871', d:'2026-11-08', items:['🛠 パソコンのMAPの上の帯で、画面の幅が足りない時（全画面でも）右のボタン（課題・受付連携・全画面・⋯）が切れていたのを、2行に折り返して全部見えるようにしました'] },
   { v:'v870', d:'2026-11-08', items:['🎂 メンバーとユーザーの誕生日を、西暦がわからなくても「月・日」だけで登録できるようにしました（誕生日のお知らせはそのまま届きます。年齢は出ません）'] },
   { v:'v869', d:'2026-11-08', items:['ホームの「気になる人」に、ユーザー（お客さん）が「OL未着手」として出ていたのを出ないようにしました（OLはビジネスのメンバーだけ）'] },

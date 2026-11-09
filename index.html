@@ -1139,6 +1139,7 @@ tr.ot-done{opacity:.5}
 .sd-search{padding:8px 14px;border-bottom:1px solid var(--border)}
 .sd-search-input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:20px;color:var(--text);padding:8px 14px;font-size:14px;outline:none;font-family:'Inter','Noto Sans JP',sans-serif}
 .sd-search-input:focus{border-color:var(--accent)}
+.sd-search-input,.adm-ck-in{-webkit-appearance:none;appearance:none}.sd-search-input::-webkit-search-decoration{-webkit-appearance:none}
 .sd-filters{display:flex;gap:6px;padding:8px 14px 4px;flex-wrap:wrap;overflow-x:auto}
 .sd-filter{padding:4px 10px;border-radius:14px;font-size:11px;cursor:pointer;background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);transition:all .15s;white-space:nowrap;font-family:'Inter','IBM Plex Mono',monospace}
 .sd-filter.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent);font-weight:600}
@@ -3044,7 +3045,7 @@ body:not(.light) .iq-seg .idq-s.sel{background:var(--surface3)}
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v871</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v872</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3418,7 +3419,7 @@ body:not(.light) .iq-seg .idq-s.sel{background:var(--surface3)}
     <div class="sd-count" id="sdCount"></div>
   </div>
   <div class="sd-search">
-    <input class="sd-search-input" id="sdSearchInput" placeholder="名前・屋号・ユニオン・地域で検索" oninput="filterSharedCards()">
+    <input class="sd-search-input" id="sdSearchInput" type="search" name="gmShQ" placeholder="名前・屋号・ユニオン・地域で検索" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" oninput="_imeInput(event,filterSharedCards)" data-ime="1">
   </div>
   <div class="sd-filters" id="sdFilters"></div>
   <div class="sd-body" id="sdBody"></div>
@@ -3432,7 +3433,7 @@ body:not(.light) .iq-seg .idq-s.sel{background:var(--surface3)}
     <div class="sd-count" id="adminCount"></div>
   </div>
   <div class="sd-search">
-    <input class="sd-search-input" id="adminSearch" placeholder="名前・ユニオン・地域・メールで検索" oninput="renderAdminList()">
+    <input class="sd-search-input" id="adminSearch" type="search" name="gmAdmQ" placeholder="名前・ユニオン・地域・メールで検索" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" oninput="_imeInput(event,renderAdminList)" data-ime="1">
   </div>
   <div class="sd-body" id="adminBody"></div>
 </div>
@@ -3998,7 +3999,7 @@ body:not(.light) .iq-seg .idq-s.sel{background:var(--surface3)}
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v871';</script>
-<script src="app.js?v=v871"></script>
+<script>window.GM_EXPECT_JS='v872';</script>
+<script src="app.js?v=v872"></script>
 </body>
 </html>
