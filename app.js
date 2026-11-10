@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v872';
+var APP_JS_VERSION = 'v873';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4588,7 +4588,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v872';
+  var DATA_VERSION = 'v873';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6700,6 +6700,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v873', d:'2026-11-10', items:['📋 計画シートの「NEWフロント」は、その月に新しく作るフロントの人数です。目標も今の人数も − ＋ で入れます（今の人数はMAPから数えなくなりました）','📋 計画シートのFT・CTなどの「今」は、自分で入れた数だけになりました（11月からは予定にFT・CTと入れても数に入りません。10月までの数はそのまま残しています）'] },
   { v:'v872', d:'2026-11-09', items:['🛠 アカウント管理などの検索欄で、iPhoneの日本語入力が変換できなかったのを直しました（変換の途中は絞り込まず、確定してから絞り込みます）'] },
   { v:'v871', d:'2026-11-08', items:['🛠 パソコンのMAPの上の帯で、画面の幅が足りない時（全画面でも）右のボタン（課題・受付連携・全画面・⋯）が切れていたのを、2行に折り返して全部見えるようにしました'] },
   { v:'v870', d:'2026-11-08', items:['🎂 メンバーとユーザーの誕生日を、西暦がわからなくても「月・日」だけで登録できるようにしました（誕生日のお知らせはそのまま届きます。年齢は出ません）'] },
@@ -18404,6 +18405,14 @@ function _p2ActCfg() {
 function _p2OwnRoot() { var ms = state.members || []; for (var i = 0; i < ms.length; i++) { if (!ms[i].parentId && !ms[i].deleted) return ms[i]; } return null; }
 function _p2NormYmV(v) { return String(v || '').replace('.', '-').slice(0, 7); }
 // 実績の自動集計（手入力なし）: MAP・テンプレ完了(MAP実績)・受付連携の稼働率
+// v873: 2026年11月からは、計画シートの「今」（NEWフロント・FT・CT など）はぜんぶ手で入れる数。カレンダーの予定・MAPとは連動しない
+//  10月までは前の数え方の数をそのまま（記録として）。手で入れた数があればそちらが先
+var P2_MAN_FROM = '2026-11';
+function _p2ManOnly(ym) { return String(ym || '') >= P2_MAN_FROM; }
+function _p2ShManV(ym, id) { // 計画シートで手で入れた「今」（読むだけ。無ければ null）
+  var s = state.goals && state.goals.plan2 && state.goals.plan2.sheet, mm = s && s.m && s.m[ym], v = mm && mm.man ? mm.man[id] : undefined;
+  return (v === '' || v == null || isNaN(+v)) ? null : +v;
+}
 function _p2Act(ym) {
   var p = state.goals.plan;
   var root = _p2OwnRoot();
@@ -18415,6 +18424,8 @@ function _p2Act(ym) {
     if (sm === ym && (!root || m.id !== root.id) && ((m.ptCurrent || 0) >= 1000 || /^B\d+$/.test((m.title || '').trim()))) teamB1++;
     if (m.actRate !== '' && m.actRate != null && !isNaN(parseInt(m.actRate, 10))) { actN++; actS += parseInt(m.actRate, 10); }
   });
+  var frMan = _p2ShManV(ym, 'front'); // v873: NEWフロントの今＝手で入れた数（11月からはMAPから数えない）
+  if (frMan !== null) front = frMan; else if (_p2ManOnly(ym)) front = 0;
   return {
     front: front, teamB1: teamB1,
     actN: _p2ActN(), // v537: 平均稼働人数（1回あたりの出席人数の見込み＝各メンバーの稼働率の合計÷100）
@@ -18479,6 +18490,11 @@ function _p2ActAuto(ym, key, from, to) {
   var t = evTodayYmd(), n = 0;
   if (P2_TS_STEP[key]) n += _p2TsN(P2_TS_STEP[key], from || (ym + '-01'), to || (ym + '-31'), 'self'); // v570
   if (key === 'pg' || key === 'dlr') return n;
+  // v873: カレンダーの予定から数えるのは10月の分まで（11月からの予定は数えない）
+  var calEnd = _p2YmAdd(P2_MAN_FROM, -1) + '-31';
+  if (!to || to > calEnd) to = calEnd;
+  if (!from) from = ym + '-01';
+  if (from > to) return n;
   if (key === 'ctget') { _p2CtGotEvs(from || (ym + '-01'), to || (ym + '-31')).forEach(function(e) { n += _p2KindN(e); }); return n; }
   if (key === 'st' || key === 'snst') { _p2KindEvs(key, from || (ym + '-01'), to || (ym + '-31')).forEach(function(e) { if (_p2EvDoneAt(e, t)) n++; }); return n; } // 回数
   _p2KindEvs(key, from || (ym + '-01'), to || (ym + '-31')).forEach(function(e) { if (_p2EvDoneAt(e, t)) n += _p2KindN(e); });
@@ -23959,7 +23975,7 @@ function _p2MonPageHtml(i) {
   return '<div id="p2MonCur">' + h + '</div>';
 }
 // ════ v598: 今週やること（行動の一覧 → 行動の画面）と、振り返り（1問1答） ════
-UX_INFO['do'] = { t: '今週やることの数え方', h: '今月の目標（フロント・ST回数など）から、<b>残りの数 ÷ 残りの週</b>で今週の数を出しています。<br>CT・FT・ST・SNST・CT取りは<b>カレンダーの予定</b>から、PG・DLRは<b>研修履歴</b>から自動で数えます。<br>行を押すと、その行動の予定・結果待ちが見られます' };
+UX_INFO['do'] = { t: '今週やることの数え方', h: '今月の目標（フロント・ST回数など）から、<b>残りの数 ÷ 残りの週</b>で今週の数を出しています。<br>CT・FT・ST・SNST・CT取りは「＋1」で入れた数（2026年11月からは予定とは連動しません）、PG・DLRは<b>研修履歴</b>から自動で数えます。<br>行を押すと、その行動の予定・結果待ちが見られます' };
 function _p2DoCss2() {
   if (document.getElementById('p2DoCss2')) return;
   var st = document.createElement('style'); st.id = 'p2DoCss2';
@@ -26848,7 +26864,7 @@ function _p2FunnelHtml(ym) {
     + _p2ActRow(ym, 'pg', 'PG', 'PG', 0)
     + _p2ActRow(ym, 'dlr', 'DLR', 'DLR動員', F * c.dlr)
     + (function() { var lag = _p2Lagging(ym); return lag ? '<div class="p2a-lag">😤 ' + lag + ' <span class="p2a-lk" onclick="p2NotesOpen(\'why\',\'read\')">📖 やる理由を読み返す</span></div>' : ''; })()
-    + '<details class="p2a-help"><summary>ⓘ 数え方</summary>ST・SNST・CT取り・CT・FTはカレンダーから自動：タイトルにその言葉が入った予定は日付が来たら、タスクは完了で1件（CT・FTは関連メンバーの人数分）。PG・マケ・DLR動員は研修履歴から：自分の直下の研修生に結果（進んだ・流れた）を入れたら1人（DLRは会場に来た人だけ）。チームの研修生の分は「今月の目標」のチーム欄に数えます。予定に入れずにやった分は「＋1」で記録。ST・SNST・CT取りは「予約」で時間の枠を入れておく。CT取り＝会う約束が取れた件数（その月に入れたCTの予定の数）。CT取りの目標はCTの必要数＋' + cfg.ctBuf + '%（ドタキャン分）。PGは係数外（DLRの3日前までに実施）。🔥＝週の目標（月の必要数÷週の数）を続けてクリアした週数。点線の式をタップすると、数字が決まるまでの流れが見られます</details>';
+    + '<details class="p2a-help"><summary>ⓘ 数え方</summary>ST・SNST・CT取り・CT・FTは「＋1」で記録した数（2026年11月からは予定とは連動しません。10月までは、タイトルにその言葉が入った予定も数えています）。PG・マケ・DLR動員は研修履歴から：自分の直下の研修生に結果（進んだ・流れた）を入れたら1人（DLRは会場に来た人だけ）。チームの研修生の分は「今月の目標」のチーム欄に数えます。やった分は「＋1」で記録。ST・SNST・CT取りは「予約」で時間の枠を入れておく。CT取り＝会う約束が取れた件数。CT取りの目標はCTの必要数＋' + cfg.ctBuf + '%（ドタキャン分）。PGは係数外（DLRの3日前までに実施）。🔥＝週の目標（月の必要数÷週の数）を続けてクリアした週数。点線の式をタップすると、数字が決まるまでの流れが見られます</details>';
   h += '<div class="p2-meta" style="margin-top:8px">🎪 今後のDLR：' + (dlrEvs.length ? dlrEvs.slice(0, 3).map(function(u) { return parseInt(u.date.slice(5, 7), 10) + '/' + parseInt(u.date.slice(8, 10), 10); }).join('・') + '（ユニオン予定より）' : 'ユニオン予定に「' + evEsc(_p2DlrKw()) + '」を含む予定がありません（表記は「係数」の設定で変更可）') + '</div>';
   h += '<span class="p2-btn pri" onclick="p2Mobilize()">🎪 動員を計画（タスク自動生成）</span>';
   h += '</div>';
@@ -27057,7 +27073,7 @@ function p2DoMenu(which) {
     if (F) h += '<div class="p2do-base">計算のもと：フロント目標 <b>F＝' + F + '人</b>' + ({ ideal: '（理想MAP）', roadmap: '（ロードマップ）', month: '（今月の目標）' }[_p2FrontSrc(ym)] || '') + ' × 1人あたり CT' + c.ct + '・FT' + c.ft + '・DLR' + c.dlr + '</div>';
     h += mi('🧮', 'why', 'なぜこの数字？', '今月の必要数から、今週やる数を逆算する流れ');
     h += mi('🎮', 'tut', '1分で体験', 'Fや係数を動かして、数字の決まり方を体験', !viewingOwnerUid && !_p2().tutSeen);
-    h += '<div class="p2do-sec">数え方</div><div class="p2do-rule">ST・SNST・CT取り・CT・FTはカレンダーから自動：タイトルにその言葉が入った予定は日付が来たら、タスクは完了で1件（CT・FTは関連メンバーの人数分）。<br>PG・マケ・DLR動員は研修履歴から：自分の直下の研修生に結果（進んだ・流れた）を入れたら1人（DLRは会場に来た人だけ）。チームの研修生の分は「今月の目標」のチーム欄に数えます。<br>CT取り＝会う約束が取れた件数（その月に入れたCTの予定の数）。目標はCTの必要数＋' + cfg.ctBuf + '%（ドタキャン分）。<br>予定に入れずにやった分は、行をタップして「やった（＋1）」。🔥＝週の目標を続けてクリアした週数</div>';
+    h += '<div class="p2do-sec">数え方</div><div class="p2do-rule">ST・SNST・CT取り・CT・FTは「＋1」で記録した数（2026年11月からは予定とは連動しません。10月までは、タイトルにその言葉が入った予定も数えています）。<br>PG・マケ・DLR動員は研修履歴から：自分の直下の研修生に結果（進んだ・流れた）を入れたら1人（DLRは会場に来た人だけ）。チームの研修生の分は「今月の目標」のチーム欄に数えます。<br>CT取り＝会う約束が取れた件数。目標はCTの必要数＋' + cfg.ctBuf + '%（ドタキャン分）。<br>やった分は、行をタップして「やった（＋1）」。🔥＝週の目標を続けてクリアした週数</div>';
   } else {
     var dl = _p2DlrEvents();
     h += '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">設定・計画</div></div><span class="ms-x" onclick="_p2SheetClose(\'p2DoMnOv\')">✕</span></div><div style="padding:0 16px 18px">';
@@ -41521,7 +41537,7 @@ var P2_SH_ACT_EXS = { // v696: 記入例のPDFの行動（PCは空いた行に�
   self: ['4つのタイプを読む', '2×2=6を読む', 'メラビアン変化', 'FUNDAMENTALを受講', '感謝ページ（GS）を作る'] };
 function p2ShActEx(cat, t) { var el = document.getElementById('p2ShIn_' + cat); if (!el) return; el.value = t; el.focus(); try { el.setSelectionRange(t.length, t.length); } catch (e) {} }
 UX_INFO.shmap = { t: '＜現状/理想MAP＞', h: '上＝流通（ユーザー）：名前｜GSV<br>下＝ビジネス：名前｜稼働／タイトル｜GSV<br>点線＝今月これから出すNEWフロント（理想MAPでは足した人）<br><br><b>Howdy稼働基準</b><br>S：120%参加（本気レベル）<br>A：仕事切り替え期日確定<br>B：仕事以外は基本的に来る<br>C：参加可能でも中々来ない<br>A〜Cは稼働率を%で記載' };
-UX_INFO.shkz = { t: '数字と改善点', h: '1行に1項目。先月の目標→結果（届かなかったら赤）、改善点、今月の目標と今の数。<br>改善点は「先月の結果から、今月どうするか」を書きます。<br>今の数は − ＋ で入れます（数字を押して直接入れることもできます）。フロントはMAPの直下の新しい人の数から始まり、直すこともできます。<br>目標に対して何%かが出るので（100%以上は緑）、届かなかった月も次の月の改善に使えます' };
+UX_INFO.shkz = { t: '数字と改善点', h: '1行に1項目。先月の目標→結果（届かなかったら赤）、改善点、今月の目標と今の数。<br>改善点は「先月の結果から、今月どうするか」を書きます。<br>今の数は − ＋ で入れます（数字を押して直接入れることもできます）。NEWフロントもその月に作った人数を自分で入れます（MAP・予定とは連動しません）。<br>目標に対して何%かが出るので（100%以上は緑）、届かなかった月も次の月の改善に使えます' };
 UX_INFO.shact = { t: '行動', h: '✔＝やった。空いた行に書くと足されます。<br>期日を入れるとToDo・カレンダーにも出て、どちらでチェックしても同じです' };
 // ════ v848: 計画シートにまとめる（新機能のテスト sheet2）════
 //   「○月の目標」をなくし、数字は計画シートの「数字と改善点」へ。目標は前と同じ _p2M(ym) の欄（s・comm・front・upt・st・snst・teamB1・actN・teamPg・teamDlr）なので、前の画面とデータは共通
@@ -41640,18 +41656,18 @@ function _p2ShInc(ym) { // 月収：目標（月の目標のコミッション�
   if (ym === _p2Ym(0)) { try { now = Math.round(commCalc(membersForMap('current')).total / 1000) / 10; } catch (e) {} }
   return { t: (t === '' || t == null) ? null : +t, now: now };
 }
-function _p2ShFr(ym) { var t = _p2FrontTgt(ym), A = _p2Act(ym); return { t: (t === '' || t == null) ? null : +t, now: A.front || 0, ideal: _p2FrontIdeal(ym) !== null }; }
+function _p2ShFr(ym) { var t = _p2FrontTgt(ym), A = _p2Act(ym); return { t: (t === '' || t == null) ? null : +t, now: A.front || 0, man: _p2ShManV(ym, 'front') !== null, ideal: _p2FrontIdeal(ym) !== null }; } // v873: now は手で入れた数（_p2Act）
 function _p2ShKv(ym, k, A) {
   var m = _p2ShM(ym), t = m.kpi[k.id];
   t = (t === '' || t == null) ? null : +t;
   if (k.m) { var mt0 = _p2M(ym)[k.m]; t = (mt0 === '' || mt0 == null) ? null : +mt0; if (k.auto) return { t: t, v: _p2Sh2Auto(ym, k, A), ph: null, auto: 1 }; } // v848: 目標は月の目標の欄（前の画面と共通）
   if (t === null && k.a === 'front') { var f = _p2FrontTgt(ym); t = (f === '' || f == null) ? null : +f; } // フロントの目標は月間目標のNEWフロントと同じ
   var ph = null; try { if (k.a === 'ct' || k.a === 'ft' || k.a === 'dlr' || k.a === 'ctget') ph = _p2NeedOf(ym, k.a) || null; } catch (e) {}
-  // v775: 進捗は手で入れる数（カレンダーの予定は数えない）。フロントだけは入れるまでMAPの直下の新しい人の数。過去の月は入れていなければ前の数え方のまま（記録として）
+  // v775: 進捗は手で入れる数（カレンダーの予定は数えない）
+  // v873: 11月からはフロントも手で入れる数だけ。10月までは、入れていなければ前の数え方の数（記録として）
   var mv = m.man[k.id], has = !(mv === '' || mv == null), v;
   if (has) v = +mv;
-  else if (k.a === 'front') v = +(A || _p2Act(ym)).front || 0;
-  else if (k.a && ym < _p2Ym(0)) v = +(A || _p2Act(ym))[k.a] || 0;
+  else if (k.a && !_p2ManOnly(ym) && (k.a === 'front' || ym < _p2Ym(0))) v = +(A || _p2Act(ym))[k.a] || 0;
   else v = k.a ? 0 : null;
   return { t: t, v: v, ph: ph };
 }
@@ -41719,6 +41735,13 @@ function p2ShKMove(i, d) { var K = _p2Sh().kpi, j = i + d; if (!K[i] || !K[j]) r
 function p2ShKAdd() { var K = _p2Sh().kpi; if (K.length >= 12) { toast('12項目までです'); return; } K.push({ id: 'k' + Date.now().toString(36), lb: '新しい項目', a: '' }); saveGoals(); renderPlan(); }
 function p2ShKReset() { if (!confirm('数字の項目を最初の8項目に戻しますか？（入れた目標は残ります）')) return; _p2Sh().kpi = JSON.parse(JSON.stringify(P2_SH_KPI_DEF)); saveGoals(); renderPlan(); }
 function p2ShKz(v) { if (_p2ShRo()) return; _p2ShM(_p2ShYmN()).kaizen = String(v || '').slice(0, 2000); saveGoals(); }
+// v873: NEWフロントの「今」（その月に作った人数）を手で入れる
+function p2ShFrNow(d, v) {
+  if (_p2ShRo()) return;
+  var ym = _p2ShYmN(), m = _p2ShM(ym), cur = _p2ShFr(ym).now || 0;
+  m.man.front = v !== undefined && d === 0 ? (String(v).trim() === '' ? '' : Math.max(0, parseInt(v, 10) || 0)) : Math.max(0, cur + d);
+  saveGoals(); renderPlan();
+}
 function p2ShFr(v) { if (_p2ShRo()) return; var ym = _p2ShYmN(); if (_p2FrontIdeal(ym) !== null) { toast('NEWフロントの目標は理想MAPの人数です（理想MAPで直す）'); renderPlan(); return; } p2RmCell('front', ym, String(v === '' || v == null ? '' : Math.max(0, parseInt(v, 10) || 0))); }
 function p2ShMap(k) { _p2ShMapMode = k === 'cur' ? 'cur' : 'ideal'; renderPlan(); }
 // v723: 実行期日：空いた行でも先に日付を選べる・名前を書いてすぐ日付を押しても選べる（描き直しで日付の入力が消えないように）
@@ -42758,7 +42781,7 @@ function _p2S3Goal(ym, ro) {
   var card = '<div class="s3-cd' + (gold ? ' gold' : '') + '"><div class="m">' + (dl || _p2ShMonLb(ym)) + '</div>' + (S ? '<div class="big">' + S.pct + '<small>%</small></div><div class="lb">' + (gold ? '全部達成' : '今月の達成度') + '</div><div class="st">' + [0, 1, 2, 3, 4].map(function(j) { return '<i class="' + (j < st ? 'on' : '') + '">' + icn('star') + '</i>'; }).join('') + '</div>' : '<div class="big na">—</div><div class="lb">目標を決めると<br>達成度が出ます</div>') + '</div>';
   var top = '<div class="s3-top">' + card + '<div><div class="h">目標 ▶ 今</div>'
     + '<div class="s3-lr" onclick="p2S3Sheet(\'kp:comm\')"><span class="n">月収</span><span class="t">' + _p2S3Num(I.t) + '</span><span class="a">▶</span><span class="v ' + _p2S3Cls(I.now, I.t) + '">' + _p2S3Num(I.now) + '</span></div>'
-    + '<div class="s3-lr" style="border:0" onclick="p2S3Sheet(\'kp:front\')"><span class="n">フロント</span><span class="t">' + _p2S3Num(F.t) + '</span><span class="a">▶</span><span class="v ' + _p2S3Cls(F.now, F.t) + '">' + F.now + '</span></div>'
+    + '<div class="s3-lr" style="border:0" onclick="p2S3Sheet(\'kp:front\')"><span class="n">NEWフロント</span><span class="t">' + _p2S3Num(F.t) + '</span><span class="a">▶</span><span class="v ' + _p2S3Cls(F.now, F.t) + '">' + F.now + '</span></div>'
     + '<div class="nt">' + (ro ? '月収は万円・フロントは人' : '押すと − ＋ で直せます') + '</div></div></div>';
   var Ls = _p2S3Self(), Lt = _p2Sh2Team(), cnt = function(L) { var ok = 0, n = 0; L.forEach(function(k) { var X = _p2ShKv(ym, k, A); if (X.t) { n++; if ((+X.v || 0) >= X.t) ok++; } }); return ok + '/' + n; };
   var mine = Lt.length && _p2S3Mine === 'team' ? 'team' : 'self', L = mine === 'team' ? Lt : Ls;
@@ -42864,16 +42887,18 @@ function _p2S3KpHtml(ym, id, ro, x) {
       + '<div class="nt">目標は − ＋ で5万円ずつ。数字を直接入れることもできます</div>';
   } else if (id === 'front') {
     var F = _p2ShFr(ym);
-    h = '<h3>フロント<small>' + _p2ShMonLb(ym) + '・人</small>' + x + '</h3>'
+    h = '<h3>NEWフロント<small>' + _p2ShMonLb(ym) + '・人</small>' + x + '</h3>'
+      + '<div class="nt" style="margin-top:2px">' + _p2ShMonLb(ym) + 'に新しく作るフロントの人数（いまいる人数の合計ではありません）</div>'
       + '<div class="s3-sr"><span class="n">目標</span>' + (F.ideal ? '<span class="au">' + _p2S3Num(F.t) + '<small>理想MAPの人数</small></span>' : pm('p2ShFrStep(-1)', 'p2ShFrStep(1)', 'p2ShFr(this.value)', F.t)) + '</div>'
-      + '<div class="s3-sr" style="border:0"><span class="n">今<small>MAPの直下・今月スタート</small></span><span class="au ' + _p2S3Cls(F.now, F.t) + '">' + F.now + '</span></div>';
+      + '<div class="s3-sr" style="border:0"><span class="n">今<small>' + _p2ShMonLb(ym) + 'に作った人数</small></span>' + pm('p2ShFrNow(-1)', 'p2ShFrNow(1)', 'p2ShFrNow(0,this.value)', F.now) + '</div>'
+      + (ro ? '' : '<div class="nt">今の人数は − ＋ で入れます（MAPからは数えません）</div>');
   } else {
     var k = _p2ShK(id); if (!k) return '';
     var X = _p2ShKv(ym, k);
     h = '<h3>' + evEsc(_p2S3Lb(k)) + '<small>' + _p2ShMonLb(ym) + '</small>' + x + '</h3>' + (k.id === 's' ? '<div class="nt" style="margin-top:2px">' + _p2Sh2Lb(ym, k, X).replace(/^[^<]*/, '') + '</div>' : '')
       + '<div class="s3-sr"><span class="n">目標</span>' + pm('p2ShKT(\'' + id + '\',-1)', 'p2ShKT(\'' + id + '\',1)', 'p2ShKT(\'' + id + '\',0,this.value)', X.t, k.dec ? '0.1' : '') + '</div>'
       + '<div class="s3-sr" style="border:0"><span class="n">今' + (k.auto ? '<small>MAPから自動</small>' : '') + '</span>' + (k.auto ? '<span class="au ' + _p2S3Cls(X.v, X.t) + '">' + _p2S3Num(X.v) + '</span>' : _p2ShStep(ym, k, X)) + '</div>'
-      + (k.auto || ro ? '' : '<div class="nt">やったことを記録に残す時は：<span onclick="_p2S3Sh=\'\';p2SmKpAdd(\'' + id + '\',\'ev\')">予定に入れる</span> ／ <span onclick="_p2S3Sh=\'\';p2SmKpAdd(\'' + id + '\',\'todo\')">ToDoに入れる</span>（入れると今も＋1）</div>');
+      + (k.auto || ro ? '' : '<div class="nt">今の数は − ＋ で入れます（予定とは連動しません）。予定を残す時は：<span onclick="_p2S3Sh=\'\';p2SmKpAdd(\'' + id + '\',\'ev\')">予定に入れる</span> ／ <span onclick="_p2S3Sh=\'\';p2SmKpAdd(\'' + id + '\',\'todo\')">ToDoに入れる</span></div>');
   }
   return h + '<div class="s3-go dk" onclick="p2S3Sheet(\'\')">閉じる</div>';
 }
@@ -43648,7 +43673,7 @@ function _p2ShActSum(ym, c) {
   if (!L.length) r = '<div class="r"><span class="c"></span><span class="x"><span class="tx em">まだ書いていません</span></span><span class="d"></span></div>';
   return '<div class="sp-at" style="--c:' + c.c + '"><div class="h">' + c.lb + '<span>' + dn + '/' + L.length + '</span></div>' + r + '</div>';
 }
-// v776: サマリーの数字を押す → − ＋ で数だけ／＋1 を予定・ToDoとして入れる（入れると数も＋1）
+// v776: サマリーの数字を押す → − ＋ で数だけ／予定・ToDoとして入れる（v873: 入れても数は増やさない）
 function p2SmKp(id) {
   if (_p2ShRo()) return;
   var ym = _p2ShYmN(), k = _p2ShK(id); if (!k) return;
@@ -43658,7 +43683,7 @@ function p2SmKp(id) {
   o.innerHTML = '<div class="shdt smkp"><div class="hd">' + evEsc(k.lb) + '<span onclick="p2SmKpX()">✕</span></div>'
     + '<div class="smkp-n">' + _p2ShMonLb(ym) + 'の目標 <b>' + (t === null ? '—' : t) + '</b>' + _p2ShRateTag(X.v, t, id) + '</div>'
     + '<div class="smkp-st">' + _p2ShStep(ym, k, X) + '</div>'
-    + '<div class="nt">− ＋ は数だけ変えます。やったことを記録に残したい時は、下から予定・ToDoとして入れてください（入れると数も＋1）</div>'
+    + '<div class="nt">今の数は − ＋ で入れます（予定とは連動しません）。予定・ToDoも残したい時は、下から入れてください</div>'
     + '<div class="seg smkp-add"><span onclick="p2SmKpAdd(\'' + id + '\',\'ev\')">' + icn('calendar') + ' 予定に入れる</span><span onclick="p2SmKpAdd(\'' + id + '\',\'todo\')">' + icn('checksq') + ' ToDoに入れる</span></div>'
     + '<div class="bt"><span class="go" onclick="p2SmKpX()">閉じる</span></div></div>';
 }
@@ -43669,14 +43694,14 @@ function p2SmKpAdd(id, kind) {
   _p2ShDtS = { kp: id, title: _p2ShShort(k.lb), kind: kind, d: evTodayYmd() }; _p2ShDtRender(true);
 }
 function _p2SmKpDtOk(S, d, t, te) {
-  var ym = _p2ShYmN(), m = _p2ShM(ym), k = _p2ShK(S.kp); if (!k) return;
+  var k = _p2ShK(S.kp); if (!k) return;
   var e = _tdMakeTask(S.title, d, ''); e.date = d;
   if (S.kind === 'ev') { e.type = 'event'; e.time = t || ''; if (!t) delete e.endTime; else if (te && te > t) e.endTime = te; else { var h = parseInt(t.slice(0, 2), 10), mm = t.slice(3, 5); e.endTime = String(Math.min(23, h + 1)).padStart(2, '0') + ':' + mm; } }
   else { e.type = 'task'; e.time = t || ''; delete e.endTime; }
   state.events.push(e); saveEventDoc(e); try { updateEventsBadge(); } catch (eB) {}
-  var nv = Math.max(0, (+_p2ShKv(ym, k).v || 0) + 1); m.man[S.kp] = nv; saveGoals();
+  // v873: 予定・ToDoに入れても「今」の数は増やさない（数は − ＋ で自分で入れる）
   p2ShDtX(); if (currentView === 'plan') renderPlan();
-  toast((S.kind === 'ev' ? '予定に入れました（' : 'ToDoに入れました（') + _p2ShMd(d) + (t ? ' ' + t : '') + '）・' + _p2ShShort(k.lb) + ' ' + nv);
+  toast((S.kind === 'ev' ? '予定に入れました（' : 'ToDoに入れました（') + _p2ShMd(d) + (t ? ' ' + t : '') + '）');
 }
 // ── ロードマップのサマリー ──
 // v776: ロードマップのサマリーの先頭に「やりたいこと・なりたい自分」（理想で書いたもの）
