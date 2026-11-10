@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v873';
+var APP_JS_VERSION = 'v874';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4588,7 +4588,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v873';
+  var DATA_VERSION = 'v874';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6700,6 +6700,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v874', d:'2026-11-10', pop: { t: 'ハウディの日程表を、まとめてカレンダーに入れられます', items: ['日程表のページでブックマーク「NAVIGATORに送る」を押して、コピー → 貼り付けるだけ', '入れる前に一覧で確かめて、直してから入れられます（もう入れた予定は「入れ済み」）', 'ユニオンの管理者は、ユニオン予定（全メンバーのカレンダー）にも入れられます'], go: ['日程表から追加', "switchView('events');hwOpen()"] }, items:['📋 カレンダーの ⚙（または予定を足す画面）の「日程表から追加」で、ハウディの日程表をまとめて入れられるようにしました。日程表のページでブックマーク「NAVIGATORに送る」を押してコピーし、貼り付けます（パソコンは表をなぞってコピーしてもOK・AIは使わないので無料）','📋 入れる前に一覧で確かめられます：時間のない日・（仮）の日は最初はチェックなし、もう入れた予定は「入れ済み」。終わりの時間は仮に2時間後で、押すと直せます','📋 ユニオンの管理者は、ユニオン予定（全メンバーのカレンダー）にも入れられます'] },
   { v:'v873', d:'2026-11-10', items:['📋 計画シートの「NEWフロント」は、その月に新しく作るフロントの人数です。目標も今の人数も − ＋ で入れます（今の人数はMAPから数えなくなりました）','📋 計画シートのFT・CTなどの「今」は、自分で入れた数だけになりました（11月からは予定にFT・CTと入れても数に入りません。10月までの数はそのまま残しています）'] },
   { v:'v872', d:'2026-11-09', items:['🛠 アカウント管理などの検索欄で、iPhoneの日本語入力が変換できなかったのを直しました（変換の途中は絞り込まず、確定してから絞り込みます）'] },
   { v:'v871', d:'2026-11-08', items:['🛠 パソコンのMAPの上の帯で、画面の幅が足りない時（全画面でも）右のボタン（課題・受付連携・全画面・⋯）が切れていたのを、2行に折り返して全部見えるようにしました'] },
@@ -21048,7 +21049,7 @@ function epDup() {
 function _efHtml(o) {
   var add = _ef.mode === 'add', op = _ef.open || {}, t = evTodayYmd();
   var rel = o.date === t ? '今日' : (o.date === _evYmdAdd(t, 1) ? '明日' : (o.date === _evYmdAdd(t, -1) ? '昨日' : ''));
-  var h = '<div class="efh"><b>' + icn('calendar') + ' ' + (add ? '予定を足す' : '予定') + '</b><span class="x" onclick="efClose()" title="閉じる">✕</span></div>';
+  var h = '<div class="efh"><b>' + icn('calendar') + ' ' + (add ? '予定を足す' : '予定') + '</b>' + (add ? '<span class="eflk" style="margin-left:auto;margin-right:10px" onclick="hwOpen()">日程表からまとめて</span>' : '') + '<span class="x" onclick="efClose()" title="閉じる">✕</span></div>'; // v874
   h += '<div class="eft"><input id="efTitle" placeholder="例：佐藤CT（名前から入れてOK）" value="' + evEsc(o.title) + '" autocomplete="off"'
     + (add ? ' oninput="efTitleIn(this.value)"' : ' onchange="efTitleCh(this.value)" onkeydown="if(event.key===\'Enter\')this.blur()"') + '>'
     + (add ? '<span class="tp' + (op.tpl ? ' on' : '') + '" onclick="efTgl(\'tpl\')" title="テンプレ">⧉</span>' : '') + '</div>';
@@ -29513,6 +29514,7 @@ function loadEvents(uid) {
     state.trashEvents = _all.filter(function(e){ return !!e.deleted; });
     state.events = _all.filter(function(e){ return !e.deleted; });
     window._evLoadedUid = uid; setTimeout(function() { try { _olEvMigrate(); } catch (eMg) {} try { _tsEvMigrate(); } catch (eMt) {} }, 800); // v567・v571
+    setTimeout(function() { try { _hwPending(); } catch (eHw) {} }, 900); // v874: ブックマークから開いた日程表
     try {
       var _cut = new Date(Date.now() - 30 * 86400000).toISOString();
       state.trashEvents = state.trashEvents.filter(function(e){
@@ -32780,6 +32782,7 @@ function openCalSettings() {
     + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + icn('gear') + ' カレンダー設定</div></div>'
     + '<span class="ms-x" onclick="closeCalSettings()">✕</span></div>'
     + '<div style="padding:4px 16px 20px">'
+    + (eventsUid() && !viewingOwnerUid ? '<div class="fr"><label class="fl">日程表から追加</label><button class="fol-add" style="margin-top:0" onclick="closeCalSettings();hwOpen()">' + icn('calendar') + ' ハウディの日程表からまとめて入れる</button></div>' : '') // v874
     + (currentUser && currentUser.union ? '<div class="fr"><label class="fl">ユニオン予定</label><button class="fol-add" style="margin-top:0" onclick="closeCalSettings();openUnionListSheet()">' + icn('calendar') + ' ' + evEsc(currentUser.union) + 'のユニオン予定を見る</button></div>' : '') // v684: HOMEから移動
     + '<div class="fr"><label class="fl">ToDoの最初の表示</label><div class="rg"><div class="rb' + (_tdDefType() === 'all' ? ' sel' : '') + '" data-tdd="all" onclick="setTdDef(\'all\')">すべて</div><div class="rb' + (_tdDefType() === 'today' ? ' sel' : '') + '" data-tdd="today" onclick="setTdDef(\'today\')">' + icn('sun') + ' 今日</div></div></div>' // v855
     + '<div class="fr"><label class="fl">週の始まり（月・週ビュー共通）</label>'
@@ -44149,6 +44152,373 @@ function gdMenuTour(k) {
 }
 // 画面を切りかえた時にスポットライトを確かめる（switchView・p2Go・setEventsMode・dtTab を包む）
 (function() { ['switchView', 'p2Go', 'setEventsMode', 'dtTab', 'ppOpen', 'openEdit', 'naOpen', 'ckPgRender'].forEach(function(n) { var f = window[n]; if (typeof f !== 'function' || f._gd) return; var w = function() { var r = f.apply(this, arguments); try { _gdTourSoon(); } catch (e) {} return r; }; w._gd = 1; window[n] = w; }); })();
+
+// ════ v874: ハウディの日程表からカレンダーにまとめて入れる（AIは使わない・無料）
+//  ① ブックマーク「NAVIGATORに送る」：日程表のページで押すと、そのページの表を読み取ってコピー → ここに貼り付け
+//  ② パソコン：表をなぞってコピー → ここに貼り付け（コピーした表をそのまま読む）
+//  自分の予定に入れる。ユニオンの管理者は、ユニオン予定（全メンバーのカレンダー）にも入れられる
+var HW_MARK = 'NAVIGATOR日程:';
+var HW_APP_URL = 'https://hktymc18.github.io/groove-map/';
+var _hw = null;
+// 表を読む。ブックマークの中身にもそのまま使うので、この関数の中だけで完結させる（中にコメントと「%」を書かない）
+function _hwBm(D, ret) {
+  D = D || document;
+  var L = D.location || { search: '', hostname: '' };
+  function tx(el) {
+    var s = '';
+    (function w(n) {
+      for (var c = n.firstChild; c; c = c.nextSibling) {
+        if (c.nodeType === 3) s += c.nodeValue;
+        else if (c.nodeType === 1) {
+          var tg = c.tagName;
+          if (tg === 'BR') { s += '\n'; continue; }
+          if (tg === 'SCRIPT' || tg === 'STYLE') continue;
+          var bl = /^(DIV|P|LI|TR|H\d)$/.test(tg);
+          if (bl) s += '\n';
+          w(c);
+          if (bl) s += '\n';
+        }
+      }
+    })(el);
+    return s.replace(/\r/g, '').replace(/[ \t 　]+/g, ' ').replace(/ *\n */g, '\n').replace(/\n+/g, '\n').replace(/^\s+|\s+$/g, '');
+  }
+  var K = { c: /内容/, t: /時間/, sp: /^SP/i, mc: /MC|AC/i, pl: /会場/, on: /オンライン|配信/ };
+  var T = [], best = null, ad = function(dc) { var q = dc.getElementsByTagName('table'); for (var a = 0; a < q.length; a++) T.push(q[a]); };
+  ad(D);
+  var F = D.getElementsByTagName('iframe');
+  for (var f = 0; f < F.length; f++) { try { if (F[f].contentDocument) ad(F[f].contentDocument); } catch (eF) {} }
+  for (var i = 0; i < T.length; i++) {
+    var R = T[i].rows;
+    for (var h = 0; h < Math.min(4, R.length); h++) {
+      var hc = R[h].cells, map = {};
+      for (var j = 0; j < hc.length; j++) { var ht = tx(hc[j]); for (var k in K) { if (map[k] == null && K[k].test(ht)) map[k] = j; } }
+      if (map.c == null || map.t == null) continue;
+      var rows = [];
+      for (var r = h + 1; r < R.length; r++) {
+        var cs = R[r].cells; if (!cs.length) continue;
+        var d = tx(cs[0]); if (!/\d{1,2}\s*[.\/／月]\s*\d{1,2}/.test(d)) continue;
+        var o = { d: d };
+        for (var k2 in map) o[k2] = cs[map[k2]] ? tx(cs[map[k2]]) : '';
+        rows.push(o);
+      }
+      if (!best || rows.length > best.length) best = rows;
+      break;
+    }
+  }
+  var pd = function(x) { return (String(x).length < 2 ? '0' : '') + x; };
+  var ym = '', m1 = /date=(\d{4})-(\d{1,2})/.exec(L.search || '');
+  if (m1) ym = m1[1] + '-' + pd(m1[2]);
+  if (!ym) { var m2 = /(\d{4})\s*年\s*(\d{1,2})\s*月/.exec(tx(D.body || D.documentElement)); if (m2) ym = m2[1] + '-' + pd(m2[2]); }
+  var P = { v: 1, ym: ym, src: L.hostname || '', rows: best || [] };
+  if (ret) return P;
+  if (!P.rows.length) { alert('日程表が見つかりませんでした。日程表のページを開いてから押してください'); return; }
+  var s = 'NAVIGATOR日程:' + JSON.stringify(P);
+  var old = D.getElementById('nvHwBox'); if (old) old.parentNode.removeChild(old);
+  var bx = D.createElement('div'); bx.id = 'nvHwBox';
+  bx.setAttribute('style', 'position:fixed;left:12px;right:12px;bottom:12px;z-index:2147483647;background:#fff;color:#111;border:2px solid #2ee6b8;border-radius:16px;padding:14px 16px;font:15px/1.6 sans-serif;box-shadow:0 8px 30px rgba(0,0,0,.3);text-align:left');
+  var nn = 0; for (var q2 = 0; q2 < P.rows.length; q2++) { if (P.rows[q2].c) nn++; }
+  bx.innerHTML = '<b style="font-size:16px">NAVIGATOR</b><div>' + nn + '件の日程を読み取りました</div>'
+    + '<button id="nvHwCp" type="button" style="display:block;box-sizing:border-box;width:calc(100vw - 60px);max-width:100vw;margin-top:10px;padding:12px;border:0;border-radius:12px;background:#2ee6b8;color:#06281f;font:bold 16px sans-serif">コピーする</button>'
+    + '<div id="nvHwMsg" style="margin-top:8px;font-size:13px;color:#444">コピーしたら、NAVIGATOR のカレンダー → ⚙ →「日程表から追加」に貼り付けてください</div>'
+    + '<a href="https://hktymc18.github.io/groove-map/#hw=' + encodeURIComponent(JSON.stringify(P)) + '" target="_blank" style="display:block;margin-top:6px;font-size:13px;color:#0a6">このブラウザで NAVIGATOR を開く</a>'
+    + '<span id="nvHwX" style="position:absolute;top:6px;right:14px;font-size:22px;cursor:pointer;color:#888">×</span>';
+  (D.body || D.documentElement).appendChild(bx);
+  var done = function(ok) {
+    var mg = D.getElementById('nvHwMsg');
+    if (ok) { mg.innerHTML = '<b style="color:#0a7">コピーしました。</b>NAVIGATOR のカレンダー → ⚙ →「日程表から追加」に貼り付けてください'; return; }
+    mg.innerHTML = 'コピーできませんでした。下の文字を長押しして、すべて選んでコピーしてください';
+    var ta = D.createElement('textarea'); ta.value = s; ta.setAttribute('readonly', ''); ta.setAttribute('style', 'width:100' + String.fromCharCode(37) + ';height:70px;margin-top:6px;font-size:12px'); mg.appendChild(ta);
+  };
+  D.getElementById('nvHwCp').onclick = function() {
+    var fb = function() {
+      var ta = D.createElement('textarea'); ta.value = s; ta.setAttribute('readonly', ''); ta.setAttribute('style', 'position:fixed;top:0;left:0;opacity:0');
+      D.body.appendChild(ta); ta.select(); try { ta.setSelectionRange(0, s.length); } catch (e1) {}
+      var ok = false; try { ok = D.execCommand('copy'); } catch (e2) {}
+      D.body.removeChild(ta); done(ok);
+    };
+    try { if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(s).then(function() { done(true); }, fb); return; } } catch (e3) {}
+    fb();
+  };
+  D.getElementById('nvHwX').onclick = function() { bx.parentNode.removeChild(bx); };
+}
+// ブックマークに入れる文字（javascript:…）。日本語は \u の形にして、どのブラウザでも崩れないようにする
+function _hwBmCode() {
+  var src = String(_hwBm).replace(/\n\s*/g, ' ');
+  src = src.replace(/[^\x00-\x7f]/g, function(ch) { return '\\u' + ('000' + ch.charCodeAt(0).toString(16)).slice(-4); });
+  return 'javascript:void((' + src + ')())';
+}
+// 貼り付けた中身を読む：ブックマークの文字／コピーした表（HTML）／ふつうの文字
+function _hwParse(txt, html) {
+  var s = String(txt || ''), P = null, at = s.indexOf(HW_MARK);
+  if (at >= 0) { try { P = JSON.parse(s.slice(at + HW_MARK.length).trim()); } catch (e) { P = null; } }
+  if (!P && html && /<table/i.test(html) && typeof DOMParser !== 'undefined') {
+    try { P = _hwBm(new DOMParser().parseFromString(String(html), 'text/html'), true); } catch (e2) { P = null; }
+    if (P && !(P.rows || []).length) P = null;
+  }
+  if (!P && s.trim()) P = _hwFromText(s);
+  return P && (P.rows || []).length ? P : null;
+}
+// ふつうの文字（表をコピーした時のタブ区切り・写真の文字認識など）。日付で始まる行から次の日付の前までを1日分
+function _hwFromText(s) {
+  var lines = String(s).replace(/\r/g, '').split('\n'), cols = ['c', 't', 'sp', 'mc', 'pl', 'on'], rows = [], cur = null, ym = '';
+  var K = [['c', /内容/], ['t', /時間/], ['sp', /^SP/i], ['mc', /MC|AC/i], ['pl', /会場/], ['on', /オンライン|配信/]];
+  var my = /(\d{4})\s*年\s*(\d{1,2})\s*月/.exec(s); if (my) ym = my[1] + '-' + evPad2(+my[2]);
+  var flush = function() {
+    if (!cur) return;
+    var all = cur.join('\n'), o = { d: '' };
+    if (all.indexOf('\t') >= 0) {
+      var cs = all.split('\t'); o.d = cs[0];
+      cols.forEach(function(k, i) { o[k] = String(cs[i + 1] || '').trim(); });
+    } else { // 区切りがない：時間だけ取り出し、残りを内容に
+      var ls = all.split('\n'); o.d = ls.shift();
+      var rest = ls.join('\n'), tm = rest.match(/[0-2]?\d[:：][0-5]\d\s*[-〜~～]?(\s*[0-2]?\d[:：][0-5]\d)?/);
+      o.t = tm ? tm[0] : ''; o.c = (tm ? rest.replace(tm[0], '') : rest).trim();
+    }
+    o.d = String(o.d).trim();
+    rows.push(o); cur = null;
+  };
+  lines.forEach(function(ln) {
+    if (/内容/.test(ln) && /時間/.test(ln) && ln.indexOf('\t') >= 0) { // 見出しの行：列の並びを覚える
+      flush(); var hs = ln.split('\t'), c2 = [];
+      hs.forEach(function(x) { var hit = ''; K.forEach(function(k) { if (!hit && k[1].test(x)) hit = k[0]; }); c2.push(hit || '_'); });
+      if (c2[0] === '_') c2.shift(); // 先頭の空いた見出し（日付の列）は数えない。コピーの仕方で無いこともある
+      cols = c2; return;
+    }
+    if (/^\s*\d{1,2}\s*[.\/／月]\s*\d{1,2}(日)?(\s*[\(（][^)）]*[\)）])?(\t|\s|$)/.test(ln)) { flush(); cur = [ln]; return; }
+    if (cur) cur.push(ln);
+  });
+  flush();
+  return { v: 1, ym: ym, src: 'text', rows: rows };
+}
+function _hwNk(s) { s = String(s || ''); try { s = s.normalize('NFKC'); } catch (e) {} return s; }
+function _hwKey(date, title) { return date + '|' + _hwNk(title).replace(/\s+/g, '').toUpperCase(); }
+// 内容の行をつなげて予定の名前に：「【EARLY LANDING】」＋「NSE-T①・NSE-T②」。点線の行は「／」
+function _hwTitle(c) {
+  var out = '';
+  String(c || '').split('\n').forEach(function(l) {
+    l = l.trim(); if (!l) return;
+    if (/^[-ー―─━‐－=＝_\s]{3,}$/.test(l)) { if (out && !/／$/.test(out)) out += '／'; return; }
+    out += (!out || /[】\]／]$/.test(out)) ? l : '・' + l;
+  });
+  return out.replace(/／$/, '').trim();
+}
+function _hwAddMin(hm, min) {
+  var p = hm.split(':'), t = (+p[0]) * 60 + (+p[1]) + min;
+  t = Math.min(t, 29 * 60 + 59);
+  return evPad2(Math.floor(t / 60)) + ':' + evPad2(t % 60);
+}
+// 読み取った行 → 入れる予定の候補
+function _hwItems(P) {
+  var ym = /^\d{4}-\d{2}$/.test(P.ym || '') ? P.ym : '', nd = new Date(), cy = nd.getFullYear(), cm = nd.getMonth() + 1, out = [];
+  var have = {};
+  (state.events || []).forEach(function(e) { if (e && !e.deleted && e.date) { have[e.hwKey || _hwKey(e.date, e.title)] = 1; have[_hwKey(e.date, e.title)] = 1; } });
+  (_unionRaw || []).forEach(function(u) { if (u && u.date) { have[u.hwKey || _hwKey(u.date, u.title)] = 1; have[_hwKey(u.date, u.title)] = 1; } });
+  (P.rows || []).forEach(function(r) {
+    var dm = /(\d{1,2})\s*[.\/／月]\s*(\d{1,2})/.exec(_hwNk(r.d)); if (!dm) return;
+    var mo = +dm[1], da = +dm[2]; if (mo < 1 || mo > 12 || da < 1 || da > 31) return;
+    var y = ym ? +ym.slice(0, 4) : cy;
+    if (ym) { var ymo = +ym.slice(5); if (ymo === 12 && mo === 1) y++; else if (ymo === 1 && mo === 12) y--; }
+    else if (mo < cm - 6) y++; else if (mo > cm + 6) y--;
+    var date = y + '-' + evPad2(mo) + '-' + evPad2(da);
+    var title = _hwTitle(r.c); if (!title) return; // 空いている日
+    var tt = _hwNk(r.t || ''), tm = tt.match(/[0-2]?\d[:：][0-5]\d/g) || [];
+    var nh = function(x) { var q = x.replace('：', ':').split(':'); return evPad2(+q[0]) + ':' + q[1]; };
+    var time = tm[0] ? nh(tm[0]) : '', end = tm[1] ? nh(tm[1]) : (time ? _hwAddMin(time, 120) : '');
+    if (end && time && end <= time) end = _hwAddMin(time, 120);
+    var note = tt.replace(/[0-2]?\d[:：][0-5]\d/g, '').replace(/[-〜~～－]/g, ' ').replace(/\s+/g, ' ').trim();
+    var line = function(x) { return String(x || '').replace(/\s*\n\s*/g, ' ').trim(); };
+    var memo = [];
+    if (line(r.sp)) memo.push('SP：' + line(r.sp));
+    if (line(r.mc)) memo.push('MC/AC：' + line(r.mc));
+    if (line(r.on)) memo.push('オンライン：' + (/利用/.test(r.on) ? 'あり' : line(r.on)));
+    if (note) memo.push(note);
+    memo.push('（日程表から入れた予定）');
+    var tent = /^[\(（].*[\)）]$/.test(title), key = _hwKey(date, title), dup = !!have[key];
+    out.push({ i: out.length, date: date, time: time, end: end, title: title, place: line(r.pl), memo: memo.join('\n'), key: key, dup: dup, tent: tent, on: !!time && !dup && !tent });
+  });
+  return out;
+}
+function _hwCanUnion() { var un = currentUser && currentUser.union; return !!un && un.indexOf('/') < 0 && (_admOf(un) || (typeof isCurrentAdmin === 'function' && isCurrentAdmin())); }
+function hwOpen(P) {
+  if (!eventsUid() || viewingOwnerUid) { toast('自分のカレンダーを開いている時に使えます'); return; }
+  try { efClose(); } catch (e) {}
+  try { closeCalSettings(); } catch (e2) {}
+  _hw = { P: P || null, items: P ? _hwItems(P) : null, to: 'me', ed: -1, help: false };
+  _hwRender();
+}
+function hwClose() { var o = document.getElementById('hwOv'); if (o && o.parentNode) o.parentNode.removeChild(o); _hw = null; }
+function _hwCss() {
+  if (document.getElementById('hwCss')) return;
+  var st = document.createElement('style'); st.id = 'hwCss';
+  st.textContent = '.hw-sh{max-width:620px;margin:0 auto}.hw-h{display:flex;align-items:center;gap:8px;margin-bottom:6px}.hw-h b{font-size:19px;font-weight:900}.hw-h .ms-x{margin-left:auto;cursor:pointer;font-size:18px;color:var(--text-dim);padding:4px 6px}'
+    + '.hw-nt{font-size:13px;color:var(--text-mid);font-weight:700;line-height:1.6;margin:4px 0}.hw-st{background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:10px 12px;margin:10px 0;font-size:13.5px;font-weight:800;line-height:1.7}.hw-st b{color:var(--accent)}'
+    + '#hwIn{width:100%;box-sizing:border-box;min-height:96px;border-radius:12px;border:1.5px dashed var(--border2);background:transparent;color:var(--text);font-size:16px;font-weight:600;line-height:1.5;font-family:inherit;padding:10px 12px;resize:vertical}'
+    + '.hw-bt{display:flex;gap:8px;margin-top:10px}.hw-bt button{flex:1;padding:12px 8px;border-radius:12px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-size:14.5px;font-weight:800;font-family:inherit;cursor:pointer}.hw-bt button.p{background:var(--accent);border-color:var(--accent);color:#06281f}.hw-bt button:disabled{opacity:.45}'
+    + '.hw-hl{margin-top:14px;border-top:1px solid var(--border);padding-top:10px}.hw-hl>b{display:block;font-size:14.5px;font-weight:900;cursor:pointer}.hw-hl ol{margin:6px 0 0;padding-left:20px;font-size:13px;font-weight:700;line-height:1.7;color:var(--text-mid)}.hw-hl h6{font-size:13px;font-weight:900;margin:10px 0 0;color:var(--text)}'
+    + '.hw-seg{display:flex;gap:6px;margin:8px 0}.hw-seg span{flex:1;text-align:center;padding:9px 6px;border-radius:11px;border:1px solid var(--border);font-size:13px;font-weight:900;cursor:pointer;color:var(--text-mid)}.hw-seg span.on{background:var(--accent);border-color:var(--accent);color:#06281f}'
+    + '.hw-r{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--border)}.hw-r .ck{width:26px;height:26px;border-radius:8px;border:1.5px solid var(--border2);flex:none;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#06281f;cursor:pointer;margin-top:2px}'
+    + '.hw-r.on .ck{background:var(--accent);border-color:var(--accent)}.hw-r .bd{flex:1;min-width:0;cursor:pointer}.hw-r .d{font:800 13px Inter,"Noto Sans JP",sans-serif;color:var(--text-mid)}.hw-r .t{font-size:15px;font-weight:900;line-height:1.4;word-break:break-word}.hw-r .p,.hw-r .m{font-size:12px;font-weight:700;color:var(--text-dim);line-height:1.5;word-break:break-word}'
+    + '.hw-r:not(.on) .t{color:var(--text-mid)}.hw-tg{display:inline-block;margin-left:6px;padding:0 6px;border-radius:6px;font-size:11px;font-weight:900;border:1px solid var(--border2);color:var(--text-dim);vertical-align:1px}.hw-tg.dp{border-color:var(--gold);color:var(--gold)}'
+    + '.hw-ed{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}.hw-ed input{min-width:0;width:100%;box-sizing:border-box;border-radius:9px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-size:16px;font-weight:700;font-family:inherit;padding:7px 8px}.hw-ed .w{grid-column:1/3}'
+    + '.hw-ft{position:sticky;bottom:calc(-22px - env(safe-area-inset-bottom));background:var(--surface);padding:10px 0 4px;margin-top:6px}';
+  document.head.appendChild(st);
+}
+function _hwRender() {
+  if (!_hw) return;
+  _hwCss();
+  var ov = document.getElementById('hwOv'), fresh = !ov;
+  if (!ov) { ov = document.createElement('div'); ov.id = 'hwOv'; ov.className = 'ms-overlay'; ov.onclick = function(e) { if (e.target === ov) hwClose(); }; document.body.appendChild(ov); }
+  var sc = ov.firstChild ? ov.firstChild.scrollTop : 0;
+  ov.innerHTML = '<div class="ms-sheet hw-sh"><div class="ms-grip"></div>' + (_hw.items ? _hwListHtml() : _hwInHtml()) + '</div>';
+  if (ov.firstChild) ov.firstChild.scrollTop = sc;
+  if (fresh) requestAnimationFrame(function() { ov.classList.add('show'); }); else ov.classList.add('show');
+  var ta = document.getElementById('hwIn');
+  if (ta) ta.addEventListener('paste', function(ev) {
+    var cd = ev.clipboardData; if (!cd) return;
+    var P = _hwParse(cd.getData('text/plain'), cd.getData('text/html'));
+    if (P) { ev.preventDefault(); hwGo(P); }
+  });
+}
+function _hwInHtml() {
+  var h = '<div class="hw-h"><b>' + icn('calendar') + ' 日程表から追加</b><span class="ms-x" onclick="hwClose()">✕</span></div>'
+    + '<div class="hw-nt">ハウディの日程表（improveonline.jp など）を、まとめてカレンダーに入れます。AIは使わないので無料です</div>'
+    + '<div class="hw-st"><b>①</b> 日程表のページで、ブックマーク「NAVIGATORに送る」を押して「コピーする」<br><b>②</b> 下に貼り付けて「読み取る」</div>'
+    + '<textarea id="hwIn" placeholder="ここに貼り付け（パソコンは、表をなぞってコピーしたものでもOK）"></textarea>'
+    + '<div class="hw-bt"><button onclick="hwClip()">クリップボードから</button><button class="p" onclick="hwRead()">読み取る</button></div>';
+  h += '<div class="hw-hl"><b onclick="_hw.help=!_hw.help;_hwRender()">' + (_hw.help ? '▼' : '▶') + ' ブックマークの登録（最初の1回だけ）</b>';
+  if (_hw.help) {
+    h += '<div class="hw-bt"><button class="p" onclick="hwBmCopy()">ブックマーク用の文字をコピー</button></div>'
+      + '<h6>iPhone（Safari）</h6><ol><li>上のボタンで、ブックマーク用の文字をコピー</li><li>Safari でどのページでもいいので開き、共有ボタン（□↑）→「ブックマークを追加」→ 名前を「NAVIGATORに送る」にして保存</li>'
+      + '<li>本のマーク（ブックマーク）→「編集」→「NAVIGATORに送る」を押す → 下のアドレスの欄を全部消して、コピーした文字を貼り付け → 完了</li><li>使う時：日程表のページを開いて、本のマーク →「NAVIGATORに送る」</li></ol>'
+      + '<h6>パソコン（Chrome など）</h6><ol><li>上のボタンで、ブックマーク用の文字をコピー</li><li>ブックマークバーで右クリック →「ページを追加」→ 名前「NAVIGATORに送る」、URL の欄に貼り付けて保存</li><li>使う時：日程表のページでそのブックマークを押す</li></ol>'
+      + '<div class="hw-nt">ホーム画面の NAVIGATOR でコピーした文字も、Safari に貼り付けられます。パソコンは、ブックマークなしで表をなぞってコピーしても読めます</div>';
+  }
+  return h + '</div>';
+}
+function _hwYmLb(L) { var ym = L.length ? L[0].date.slice(0, 7) : ''; return ym ? (+ym.slice(0, 4)) + '年' + (+ym.slice(5)) + '月' : ''; }
+function _hwListHtml() {
+  var L = _hw.items, n = L.filter(function(x) { return x.on; }).length, wd = ['日', '月', '火', '水', '木', '金', '土'];
+  var h = '<div class="hw-h"><b>' + icn('calendar') + ' ' + evEsc(_hwYmLb(L)) + 'の日程</b><span class="ms-x" onclick="hwClose()">✕</span></div>';
+  if (!L.length) return h + '<div class="hw-nt">予定のある日が見つかりませんでした</div><div class="hw-bt"><button onclick="hwBack()">やり直す</button></div>';
+  h += '<div class="hw-nt">' + L.length + '件を読み取りました。入れる予定にチェックしてください（押すと直せます）</div>';
+  if (_hwCanUnion()) h += '<div class="hw-seg"><span class="' + (_hw.to === 'me' ? 'on' : '') + '" onclick="hwTo(\'me\')">自分の予定</span><span class="' + (_hw.to === 'union' ? 'on' : '') + '" onclick="hwTo(\'union\')">ユニオン予定（全メンバー）</span></div>';
+  h += '<div class="hw-nt" style="text-align:right"><span style="cursor:pointer;color:var(--accent)" onclick="hwAll(1)">すべて選ぶ</span>　<span style="cursor:pointer;color:var(--accent)" onclick="hwAll(0)">すべて外す</span></div>';
+  h += L.map(function(x) {
+    var p = x.date.split('-'), dw = wd[new Date(+p[0], +p[1] - 1, +p[2]).getDay()];
+    var tg = (x.dup ? '<span class="hw-tg dp">入れ済み</span>' : '') + (!x.time ? '<span class="hw-tg">時間なし</span>' : '') + (x.tent ? '<span class="hw-tg">（仮）</span>' : '');
+    var r = '<div class="hw-r' + (x.on ? ' on' : '') + '"><span class="ck" onclick="hwTg(' + x.i + ')">' + (x.on ? '✓' : '') + '</span><div class="bd" onclick="hwEd(' + x.i + ')">'
+      + '<div class="d">' + (+p[1]) + '/' + (+p[2]) + '（' + dw + '）' + (x.time ? ' ' + x.time + (x.end ? '〜' + x.end : '') : '') + tg + '</div>'
+      + '<div class="t">' + evEsc(x.title) + '</div>' + (x.place ? '<div class="p">' + evEsc(x.place) + '</div>' : '')
+      + '<div class="m">' + evEsc(x.memo.split('\n').filter(function(m) { return !/日程表から入れた/.test(m); }).join('・')) + '</div></div></div>';
+    if (_hw.ed === x.i) r += '<div class="hw-ed"><input class="w" value="' + evEsc(x.title) + '" onchange="hwSet(' + x.i + ',\'title\',this.value)" placeholder="予定の名前">'
+      + '<input type="date" value="' + evEsc(x.date) + '" onchange="hwSet(' + x.i + ',\'date\',this.value)"><input value="' + evEsc(x.place) + '" onchange="hwSet(' + x.i + ',\'place\',this.value)" placeholder="場所">'
+      + '<input type="time" value="' + evEsc(x.time) + '" onchange="hwSet(' + x.i + ',\'time\',this.value)"><input type="time" value="' + evEsc(x.end) + '" onchange="hwSet(' + x.i + ',\'end\',this.value)"></div>';
+    return r;
+  }).join('');
+  h += '<div class="hw-ft"><div class="hw-bt"><button onclick="hwBack()">やり直す</button><button class="p" id="hwGoBtn" onclick="hwSave()"' + (n ? '' : ' disabled') + '>' + n + '件を' + (_hw.to === 'union' ? 'ユニオン予定に' : 'カレンダーに') + '入れる</button></div></div>';
+  return h;
+}
+function hwGo(P) { if (!_hw) return; _hw.P = P; _hw.items = _hwItems(P); _hw.ed = -1; _hwRender(); }
+function hwRead() {
+  var v = (document.getElementById('hwIn') || {}).value || '';
+  if (!v.trim()) { toast('日程表を貼り付けてください'); return; }
+  var P = _hwParse(v, '');
+  if (!P) { toast('日程表として読み取れませんでした（ブックマークの「コピーする」から貼り付けてください）'); return; }
+  hwGo(P);
+}
+function hwClip() {
+  var nv = navigator.clipboard;
+  if (!nv || !nv.readText) { toast('入力欄を長押しして「ペースト」してください'); return; }
+  var useTxt = function() { nv.readText().then(function(t) { var P = _hwParse(t, ''); if (P) hwGo(P); else toast('クリップボードに日程表がありません'); }, function() { toast('入力欄を長押しして「ペースト」してください'); }); };
+  if (nv.read) {
+    nv.read().then(function(items) {
+      var it = (items || []).filter(function(x) { return x.types && x.types.indexOf('text/html') >= 0; })[0];
+      if (!it) { useTxt(); return; }
+      it.getType('text/html').then(function(b) { return b.text(); }).then(function(html) { var P = _hwParse('', html); if (P) hwGo(P); else useTxt(); }, useTxt);
+    }, useTxt);
+  } else useTxt();
+}
+function hwBmCopy() {
+  var s = _hwBmCode();
+  var ok = function() { toast('ブックマーク用の文字をコピーしました'); };
+  var fb = function() {
+    var ta = document.createElement('textarea'); ta.value = s; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+    document.body.appendChild(ta); ta.select(); try { ta.setSelectionRange(0, s.length); } catch (e) {}
+    var r = false; try { r = document.execCommand('copy'); } catch (e2) {}
+    document.body.removeChild(ta);
+    if (r) ok(); else toast('コピーできませんでした');
+  };
+  try { if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(s).then(ok, fb); return; } } catch (e3) {}
+  fb();
+}
+function hwBack() { if (!_hw) return; _hw.items = null; _hw.P = null; _hwRender(); }
+function hwTo(k) { if (!_hw) return; _hw.to = k === 'union' && _hwCanUnion() ? 'union' : 'me'; _hwRender(); }
+function hwTg(i) { var x = _hw && _hw.items[i]; if (!x) return; x.on = !x.on; _hwRender(); }
+function hwAll(on) { if (!_hw) return; _hw.items.forEach(function(x) { x.on = !!on; }); _hwRender(); }
+function hwEd(i) { if (!_hw) return; _hw.ed = _hw.ed === i ? -1 : i; _hwRender(); }
+function hwSet(i, k, v) {
+  var x = _hw && _hw.items[i]; if (!x) return;
+  v = String(v || '').trim();
+  if (k === 'date' && !/^\d{4}-\d{2}-\d{2}$/.test(v)) return;
+  if ((k === 'time' || k === 'end') && v && !/^\d{2}:\d{2}$/.test(v)) return;
+  if (k === 'title' && !v) return;
+  var t0 = x.time, e0 = x.end;
+  x[k] = v;
+  if (k === 'time' && v) { // 始まりを変えたら、長さはそのままで終わりも動かす
+    var mn = function(hm) { var q = hm.split(':'); return (+q[0]) * 60 + (+q[1]); };
+    x.end = _hwAddMin(v, (t0 && e0 && mn(e0) > mn(t0)) ? mn(e0) - mn(t0) : 120);
+  }
+  if (k === 'time' && !v) x.end = '';
+  if (k === 'end' && v && x.time && v <= x.time) x.end = e0;
+  x.key = _hwKey(x.date, x.title);
+  _hwRender();
+}
+function hwSave() {
+  if (!_hw || !_hw.items) return;
+  var L = _hw.items.filter(function(x) { return x.on; });
+  if (!L.length) { toast('入れる予定にチェックしてください'); return; }
+  var now = new Date().toISOString();
+  if (_hw.to === 'union') {
+    var un = currentUser.union;
+    if (!_hwCanUnion()) { toast('このユニオンの予定は作れません'); return; }
+    if (!confirm('「' + un + '」の全メンバーのカレンダーに ' + L.length + '件の予定が出ます。よろしいですか？')) return;
+    var bt = db.batch();
+    L.forEach(function(x, j) {
+      var id = 'ue_' + Date.now() + '_' + j + '_' + Math.floor(Math.random() * 100000);
+      var d = { id: id, union: un, area: '', title: x.title, date: x.date, endDate: '', time: x.time || '', endTime: x.time ? (x.end || '') : '', allDay: !x.time,
+        place: x.place || '', memo: x.memo || '', color: '', hwKey: x.key, createdBy: currentUser.uid, createdByName: currentUser.org || currentUser.name || '', createdAt: now, updatedAt: now };
+      bt.set(db.doc('unions/' + un + '/events/' + id), d);
+      _unionRaw.push(d);
+    });
+    bt.commit().then(function() { toast('📋 ユニオン予定に ' + L.length + '件を入れました'); }).catch(function(err) { toast('保存できませんでした: ' + ((err && err.message) || '権限/通信を確認してください')); });
+    try { _unionApplyToState(); } catch (eU) {}
+  } else {
+    L.forEach(function(x) {
+      var e = { id: genEventId(), done: false, createdAt: now, updatedAt: now, type: 'event', title: x.title, date: x.date, endDate: '',
+        time: x.time || '', endTime: x.time ? (x.end || '') : '', allDay: !x.time, memberIds: [], memberId: '', selfShow: '', vis: '', kind: 'その他', asan: '',
+        categoryId: '', color: '', place: x.place || '', priority: 'normal', star: false, listId: '', labelId: '', memo: x.memo || '', subtasks: [], remindBefore: '', hwKey: x.key };
+      state.events.push(e); saveEventDoc(e);
+    });
+    toast('📋 ' + L.length + '件をカレンダーに入れました');
+  }
+  hwClose();
+  try { updateEventsBadge(); } catch (eB) {}
+  try { if (currentView === 'events') renderEvents(); } catch (eR) {}
+}
+// ブックマークの「このブラウザで NAVIGATOR を開く」（#hw=…）で開いた時：ログインして予定を読み込んだら確認の一覧を出す
+(function() {
+  try {
+    var hs = location.hash || '';
+    if (hs.indexOf('#hw=') === 0) { sessionStorage.setItem('gm_hw', decodeURIComponent(hs.slice(4))); history.replaceState(null, '', location.pathname + location.search); }
+  } catch (e) {}
+})();
+function _hwPending() {
+  var s = null; try { s = sessionStorage.getItem('gm_hw'); } catch (e) {}
+  if (!s || viewingOwnerUid || !eventsUid()) return;
+  try { sessionStorage.removeItem('gm_hw'); } catch (e1) {}
+  var P = null; try { P = JSON.parse(s); } catch (e2) {}
+  if (P && (P.rows || []).length) hwOpen(P);
+}
 
 try {
   initTheme();
