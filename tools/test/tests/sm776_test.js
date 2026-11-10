@@ -28,10 +28,10 @@ T.run(async () => {
   c('予定に入れる → 日にちの窓（予定）', !!$('#p2ShDtOv') && /予定に入れる/.test($('#p2ShDtOv .seg .on').textContent));
   w.document.getElementById('p2ShDtD').value = ym + '-15'; w.p2ShDtOk(); await sleep(20);
   const ne = w.state.events[w.state.events.length - 1];
-  c('予定ができて、数も＋1', w.state.events.length === n0 + 1 && ne.type === 'event' && ne.date === ym + '-15' && /CT/.test(ne.title) && M.man.ct === 5);
+  c('予定ができる（v873：数は増えない）', w.state.events.length === n0 + 1 && ne.type === 'event' && ne.date === ym + '-15' && /CT/.test(ne.title) && M.man.ct === 4);
   w.p2SmKpAdd('ct', 'todo'); await sleep(10); w.document.getElementById('p2ShDtD').value = ym + '-16'; w.p2ShDtOk(); await sleep(20);
   const nt = w.state.events[w.state.events.length - 1];
-  c('ToDoにも入れられて、数も＋1', nt.type === 'task' && nt.date === ym + '-16' && M.man.ct === 6);
+  c('ToDoにも入れられる（v873：数は増えない）', nt.type === 'task' && nt.date === ym + '-16' && M.man.ct === 4);
   c('予定・ToDoで入れた物は計画シートの行動には混ざらない', w._p2ShActs(ym).length === 2);
   w.p2SumTgl('sh', 0);
   // ロードマップのサマリーにやりたいこと・なりたい自分
