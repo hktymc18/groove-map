@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v874';
+var APP_JS_VERSION = 'v875';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4093,7 +4093,8 @@ function unAdmSave() {
 //   appConfig/features = { flags:{ 機能名:{ on:true/false, testers:[uid] } }, at, by }（読み＝ログインした人・書き＝オーナーだけ）
 //   テスト中 … 「先に見られる人」にだけ出る。全員に公開 … 全員に出る（アプリの更新なしで、開いている画面にもすぐ）
 var FEATURES = [
-  { k: 'sheet2', t: '計画シートにまとめる', d: '「○月の目標」をなくし、目標の数字を計画シートの「数字と改善点」に移す' }
+  { k: 'sheet2', t: '計画シートにまとめる', d: '「○月の目標」をなくし、目標の数字を計画シートの「数字と改善点」に移す' },
+  { k: 'hwimp', t: '日程表から追加', d: 'ハウディの日程表（improveonline.jp など）を、ブックマーク・貼り付けでまとめてカレンダーに入れる（v874）' }
 ];
 var _featCfg = null, _featUnsub = null, _featEd = null;
 function _featFlags() {
@@ -4588,7 +4589,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v874';
+  var DATA_VERSION = 'v875';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6700,7 +6701,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
-  { v:'v874', d:'2026-11-10', pop: { t: 'ハウディの日程表を、まとめてカレンダーに入れられます', items: ['日程表のページでブックマーク「NAVIGATORに送る」を押して、コピー → 貼り付けるだけ', '入れる前に一覧で確かめて、直してから入れられます（もう入れた予定は「入れ済み」）', 'ユニオンの管理者は、ユニオン予定（全メンバーのカレンダー）にも入れられます'], go: ['日程表から追加', "switchView('events');hwOpen()"] }, items:['📋 カレンダーの ⚙（または予定を足す画面）の「日程表から追加」で、ハウディの日程表をまとめて入れられるようにしました。日程表のページでブックマーク「NAVIGATORに送る」を押してコピーし、貼り付けます（パソコンは表をなぞってコピーしてもOK・AIは使わないので無料）','📋 入れる前に一覧で確かめられます：時間のない日・（仮）の日は最初はチェックなし、もう入れた予定は「入れ済み」。終わりの時間は仮に2時間後で、押すと直せます','📋 ユニオンの管理者は、ユニオン予定（全メンバーのカレンダー）にも入れられます'] },
+  { v:'v875', d:'2026-11-10', items:['🛠 細かい修正をしました'] },
+  { v:'v874', d:'2026-11-10', items:['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v:'v873', d:'2026-11-10', items:['📋 計画シートの「NEWフロント」は、その月に新しく作るフロントの人数です。目標も今の人数も − ＋ で入れます（今の人数はMAPから数えなくなりました）','📋 計画シートのFT・CTなどの「今」は、自分で入れた数だけになりました（11月からは予定にFT・CTと入れても数に入りません。10月までの数はそのまま残しています）'] },
   { v:'v872', d:'2026-11-09', items:['🛠 アカウント管理などの検索欄で、iPhoneの日本語入力が変換できなかったのを直しました（変換の途中は絞り込まず、確定してから絞り込みます）'] },
   { v:'v871', d:'2026-11-08', items:['🛠 パソコンのMAPの上の帯で、画面の幅が足りない時（全画面でも）右のボタン（課題・受付連携・全画面・⋯）が切れていたのを、2行に折り返して全部見えるようにしました'] },
@@ -21049,7 +21051,7 @@ function epDup() {
 function _efHtml(o) {
   var add = _ef.mode === 'add', op = _ef.open || {}, t = evTodayYmd();
   var rel = o.date === t ? '今日' : (o.date === _evYmdAdd(t, 1) ? '明日' : (o.date === _evYmdAdd(t, -1) ? '昨日' : ''));
-  var h = '<div class="efh"><b>' + icn('calendar') + ' ' + (add ? '予定を足す' : '予定') + '</b>' + (add ? '<span class="eflk" style="margin-left:auto;margin-right:10px" onclick="hwOpen()">日程表からまとめて</span>' : '') + '<span class="x" onclick="efClose()" title="閉じる">✕</span></div>'; // v874
+  var h = '<div class="efh"><b>' + icn('calendar') + ' ' + (add ? '予定を足す' : '予定') + '</b>' + (add && _hwOn() ? '<span class="eflk" style="margin-left:auto;margin-right:10px" onclick="hwOpen()">日程表からまとめて</span>' : '') + '<span class="x" onclick="efClose()" title="閉じる">✕</span></div>'; // v874
   h += '<div class="eft"><input id="efTitle" placeholder="例：佐藤CT（名前から入れてOK）" value="' + evEsc(o.title) + '" autocomplete="off"'
     + (add ? ' oninput="efTitleIn(this.value)"' : ' onchange="efTitleCh(this.value)" onkeydown="if(event.key===\'Enter\')this.blur()"') + '>'
     + (add ? '<span class="tp' + (op.tpl ? ' on' : '') + '" onclick="efTgl(\'tpl\')" title="テンプレ">⧉</span>' : '') + '</div>';
@@ -32782,7 +32784,7 @@ function openCalSettings() {
     + '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">' + icn('gear') + ' カレンダー設定</div></div>'
     + '<span class="ms-x" onclick="closeCalSettings()">✕</span></div>'
     + '<div style="padding:4px 16px 20px">'
-    + (eventsUid() && !viewingOwnerUid ? '<div class="fr"><label class="fl">日程表から追加</label><button class="fol-add" style="margin-top:0" onclick="closeCalSettings();hwOpen()">' + icn('calendar') + ' ハウディの日程表からまとめて入れる</button></div>' : '') // v874
+    + (eventsUid() && !viewingOwnerUid && _hwOn() ? '<div class="fr"><label class="fl">日程表から追加</label><button class="fol-add" style="margin-top:0" onclick="closeCalSettings();hwOpen()">' + icn('calendar') + ' ハウディの日程表からまとめて入れる</button></div>' : '') // v874
     + (currentUser && currentUser.union ? '<div class="fr"><label class="fl">ユニオン予定</label><button class="fol-add" style="margin-top:0" onclick="closeCalSettings();openUnionListSheet()">' + icn('calendar') + ' ' + evEsc(currentUser.union) + 'のユニオン予定を見る</button></div>' : '') // v684: HOMEから移動
     + '<div class="fr"><label class="fl">ToDoの最初の表示</label><div class="rg"><div class="rb' + (_tdDefType() === 'all' ? ' sel' : '') + '" data-tdd="all" onclick="setTdDef(\'all\')">すべて</div><div class="rb' + (_tdDefType() === 'today' ? ' sel' : '') + '" data-tdd="today" onclick="setTdDef(\'today\')">' + icn('sun') + ' 今日</div></div></div>' // v855
     + '<div class="fr"><label class="fl">週の始まり（月・週ビュー共通）</label>'
@@ -44338,8 +44340,11 @@ function _hwItems(P) {
   });
   return out;
 }
+// v875: まだテスト中。新機能のテスト（hwimp）の「先に見られる人」だけに出す
+function _hwOn() { return typeof featOn === 'function' && featOn('hwimp'); }
 function _hwCanUnion() { var un = currentUser && currentUser.union; return !!un && un.indexOf('/') < 0 && (_admOf(un) || (typeof isCurrentAdmin === 'function' && isCurrentAdmin())); }
 function hwOpen(P) {
+  if (!_hwOn()) return;
   if (!eventsUid() || viewingOwnerUid) { toast('自分のカレンダーを開いている時に使えます'); return; }
   try { efClose(); } catch (e) {}
   try { closeCalSettings(); } catch (e2) {}
@@ -44380,7 +44385,7 @@ function _hwRender() {
   });
 }
 function _hwInHtml() {
-  var h = '<div class="hw-h"><b>' + icn('calendar') + ' 日程表から追加</b><span class="ms-x" onclick="hwClose()">✕</span></div>'
+  var h = '<div class="hw-h"><b>' + icn('calendar') + ' 日程表から追加</b><span class="ms-x" onclick="hwClose()">✕</span></div>' + _featBadge('hwimp')
     + '<div class="hw-nt">ハウディの日程表（improveonline.jp など）を、まとめてカレンダーに入れます。AIは使わないので無料です</div>'
     + '<div class="hw-st"><b>①</b> 日程表のページで、ブックマーク「NAVIGATORに送る」を押して「コピーする」<br><b>②</b> 下に貼り付けて「読み取る」</div>'
     + '<textarea id="hwIn" placeholder="ここに貼り付け（パソコンは、表をなぞってコピーしたものでもOK）"></textarea>'
@@ -44516,6 +44521,7 @@ function _hwPending() {
   var s = null; try { s = sessionStorage.getItem('gm_hw'); } catch (e) {}
   if (!s || viewingOwnerUid || !eventsUid()) return;
   try { sessionStorage.removeItem('gm_hw'); } catch (e1) {}
+  if (!_hwOn()) return;
   var P = null; try { P = JSON.parse(s); } catch (e2) {}
   if (P && (P.rows || []).length) hwOpen(P);
 }

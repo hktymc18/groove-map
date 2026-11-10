@@ -47,7 +47,7 @@ T.run(async () => {
   w.admTab('set'); await sleep(5);
   const mn = () => $$('#adminBody .adm-mn > div').map(x => x.textContent);
   c('設定：公開範囲・MAPの共有・ユニオンとUPBD・新機能のテスト', mn().length === 4 && /^公開範囲/.test(mn()[0]) && /^MAPの共有/.test(mn()[1]) && /^ユニオンとUPBD/.test(mn()[2]) && /^新機能のテスト/.test(mn()[3]));
-  c('右に今の状態', /先行利用・使える人3人/.test(mn()[0]) && /登録待ちの名簿 1人/.test(mn()[0]) && /上の人1人・アップ以外2件/.test(mn()[1]) && /2ユニオン/.test(mn()[2]) && /UPBDが空 1/.test(mn()[2]) && /テスト中1件/.test(mn()[3]));
+  c('右に今の状態', /先行利用・使える人3人/.test(mn()[0]) && /登録待ちの名簿 1人/.test(mn()[0]) && /上の人1人・アップ以外2件/.test(mn()[1]) && /2ユニオン/.test(mn()[2]) && /UPBDが空 1/.test(mn()[2]) && /テスト中2件/.test(mn()[3]));
   c('設定の時は検索を隠す', $('#adminPanel .sd-search').style.display === 'none');
   w.admPg('acc'); await sleep(5);
   c('押すとその設定の画面（中身は前と同じ）', /‹ 設定/.test($('.adm-sph').textContent) && /公開範囲/.test($('.adm-sph').textContent) && $$('#adminBody .acc-seg span').length === 3 && /名簿を貼り付けて先行利用に/.test($('#adminBody').textContent));

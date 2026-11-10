@@ -1,6 +1,7 @@
-// v874：ハウディの日程表からカレンダーにまとめて入れる（AIは使わない）。
+// v874・v875：ハウディの日程表からカレンダーにまとめて入れる（AIは使わない）。
 //   ① ブックマーク「NAVIGATORに送る」を日程表のページ（架空のページ・本物のサイトには行かない）で押す → コピー → 貼り付け → 確認 → 入れる
-//   ② パソコンで表をなぞってコピー → 貼り付け　③「このブラウザで開く」（#hw=…）　名前はすべて架空
+//   ② パソコンで表をなぞってコピー → 貼り付け　③「このブラウザで開く」（#hw=…）
+//   v875：まだテスト中。新機能のテスト（hwimp）の「先に見られる人」だけに出す　名前はすべて架空
 const PW = '/opt/node22/lib/node_modules/playwright';
 const { chromium } = require(require('fs').existsSync(PW) ? PW : 'playwright');
 const fs = require('fs'), path = require('path');
@@ -25,7 +26,8 @@ ${row('11.30', '', '', '', '', '', 0)}
 </table></body></html>`;
 async function navPage(b, o) {
   const ctx = await b.newContext({ serviceWorkers: 'block', viewport: { width: o.w || 390, height: 844 }, deviceScaleFactor: o.dsf || 1, colorScheme: o.dark ? 'dark' : 'light', permissions: ['clipboard-read', 'clipboard-write'] });
-  await ctx.addInitScript(() => { if (location.host === 'hktymc18.github.io') window.__FBDATA = window.__FBDATA || {}; });
+  await ctx.addInitScript((tester) => { if (location.host !== 'hktymc18.github.io') return; window.__FBDATA = window.__FBDATA || {};
+    if (tester) window.__FBDATA['appConfig/features'] = { flags: { hwimp: { on: false, testers: ['j2DPDAccCygHmR9i5K3bTvHnH0V2'] } } }; }, o.tester !== false);
   const page = await ctx.newPage(), errs = [];
   page.on('pageerror', e => errs.push(e.message));
   await ctx.route('**/*', async (route) => {
@@ -53,10 +55,11 @@ async function navGo(page, url) {
   c('ブックマークの文字：javascript: で始まり、「%」と日本語をそのまま含まない（どのブラウザでも崩れない）', /^javascript:void\(\(function _hwBm/.test(code) && code.indexOf('%') < 0 && !/[^\x00-\x7f]/.test(code) && code.indexOf('\n') < 0, code.slice(0, 80));
   await pg.evaluate(() => { switchView('events'); });
   await pg.evaluate(() => openCalSettings()); await pg.waitForTimeout(300);
-  c('カレンダーの ⚙ に「日程表から追加」', /ハウディの日程表からまとめて入れる/.test(await pg.evaluate(() => document.getElementById('calSetOv').textContent)));
+  c('先に見られる人：カレンダーの ⚙ に「日程表から追加」', /ハウディの日程表からまとめて入れる/.test(await pg.evaluate(() => document.getElementById('calSetOv').textContent)));
+  c('先に見られる人：予定を足す画面に「日程表からまとめて」', await pg.evaluate(() => { closeCalSettings(); eaOpen({}); var ok = /日程表からまとめて/.test(document.getElementById('efPg').textContent); efClose(); return ok; }));
   await pg.evaluate(() => { closeCalSettings(); hwOpen(); }); await pg.waitForTimeout(300);
   await pg.evaluate(() => { _hw.help = true; _hwRender(); }); await pg.waitForTimeout(200);
-  c('入口：手順・貼り付ける欄・ブックマークの登録の手順', await pg.evaluate(() => { var t = document.getElementById('hwOv').textContent; return /NAVIGATORに送る/.test(t) && !!document.getElementById('hwIn') && /iPhone（Safari）/.test(t) && /パソコン/.test(t); }));
+  c('入口：手順・貼り付ける欄・ブックマークの登録の手順・「テスト中」の印', await pg.evaluate(() => { var t = document.getElementById('hwOv').textContent; return /NAVIGATORに送る/.test(t) && !!document.getElementById('hwIn') && /iPhone（Safari）/.test(t) && /パソコン/.test(t) && /テスト中/.test(t); }));
   await pg.screenshot({ path: OUT + '/hw874_in.png' });
   await pg.evaluate(() => hwBmCopy()); await pg.waitForTimeout(200);
   c('「ブックマーク用の文字をコピー」でコピーされる', (await pg.evaluate(() => navigator.clipboard.readText())) === code);
@@ -124,7 +127,20 @@ async function navGo(page, url) {
   c('「このブラウザで NAVIGATOR を開く」：ログインのあと確認の一覧が出る・アドレスの #hw は消える', await B.page.evaluate(() => !!(_hw && _hw.items && _hw.items.length === 8) && location.hash === ''));
   await B.page.screenshot({ path: OUT + '/hw874_list_d.png' });
   c('ページのエラーなし（#hw）', !B.errs.length, B.errs.join(' / '));
-  await A.ctx.close(); await B.ctx.close();
+  // ④ 先に見られる人でない時は、どこにも出ない
+  const C = await navPage(b, { tester: false });
+  await navGo(C.page, href); await C.page.waitForTimeout(1500);
+  const off = await C.page.evaluate(() => {
+    var r = {}; r.pending = !document.getElementById('hwOv');
+    openCalSettings(); r.set = !/日程表から追加/.test(document.getElementById('calSetOv').textContent); closeCalSettings();
+    eaOpen({}); r.add = !/日程表からまとめて/.test(document.getElementById('efPg').textContent); efClose();
+    hwOpen(); r.open = !document.getElementById('hwOv');
+    r.note = !RELEASE_NOTES.some(function(n) { return /日程表/.test(JSON.stringify(n)); });
+    return r;
+  });
+  c('先に見られる人でない時：⚙・予定を足す画面に出ない・開けない・#hw でも開かない・お知らせにも出ない', off.pending && off.set && off.add && off.open && off.note, JSON.stringify(off));
+  c('ページのエラーなし（先に見られる人でない時）', !C.errs.length, C.errs.join(' / '));
+  await A.ctx.close(); await B.ctx.close(); await C.ctx.close();
   await b.close();
   console.log(fails ? 'FAIL ' + fails : 'ALL PASS'); process.exit(fails ? 1 : 0);
 })().catch(e => { console.error('exception', e); process.exit(1); });
