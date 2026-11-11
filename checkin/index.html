@@ -2537,10 +2537,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v137';
+var APP_VER = 'v138';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v138', d: '2026/11/11', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v137', d: '2026/11/11', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v136', d: '2026/11/11', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v135', d: '2026/11/11', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
@@ -14672,7 +14673,7 @@ function ckUaInfo(){
   var c = gUa.c || {}, nm = String(c.name || ''), lv = c.lastVisit;
   $('uaUn').textContent = c.union || '';
   $('uaVisits').innerHTML = (c.visits ? '来場 <b>' + (+c.visits || 0) + '</b> 回' : '') + (lv && lv.d ? (c.visits ? '　' : '') + '最後の来場 <b>' + esc(ckMd(lv.d)) + '</b>' : '');
-  $('uaMe').innerHTML = '<span class="ua-av">' + esc(nm.replace(/\s+/g, '').charAt(0) || '？') + '</span><div><b>' + esc(nm) + '</b><small>' + esc([c.union, c.referrer ? '紹介：' + c.referrer : '', c.visits ? '来場 ' + c.visits + '回' : ''].filter(Boolean).join(' ・ ')) + '</small></div>';
+  $('uaMe').innerHTML = '<span class="ua-av">' + esc(nm.replace(/\s+/g, '').charAt(0) || '？') + '</span><div><b>' + esc(nm) + '</b><small>' + esc([c.union, c.visits ? '来場 ' + c.visits + '回' : ''].filter(Boolean).join(' ・ '))   /* v138: 紹介者の名前は出さない */ + '</small></div>';
 }
 // ホーム：あいさつ・今日のクエスト（その場でチェック）・PRYSMiO の最新・ラウンジの新着
 function ckUaHome(){
