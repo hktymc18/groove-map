@@ -1130,6 +1130,11 @@ body.uapp #uaTabs{display:grid;}
 #uaTabs .ua-qrc{width:56px;height:56px;border-radius:50%;background:var(--ua-vio);color:#fff;display:grid;place-items:center;border:4px solid var(--paper);box-shadow:0 6px 16px rgba(106,63,209,.35);}
 #uaTabs .ua-qrc svg{width:25px;height:25px;}
 body.uapp #toast{bottom:calc(96px + env(safe-area-inset-bottom, 0px));}
+/* 💜 v136: 新しいお知らせ・ラウンジの赤丸 */
+#uaTabs button,#uaApp .ua-bell,#uaApp .ua-seg button{position:relative;}
+.ua-dot{position:absolute;top:3px;right:calc(50% - 19px);width:9px;height:9px;border-radius:50%;background:#e2475f;border:2px solid var(--card);box-sizing:content-box;}
+#uaApp .ua-bell .ua-dot{top:4px;right:5px;}
+#uaApp .ua-seg .ua-dot{top:5px;right:12px;}
 .nw-a2hs{position:relative;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 34px 10px 12px;border-radius:12px;background:#fff4e6;color:#7a3e0c;font-size:13px;font-weight:700;line-height:1.5;margin-bottom:14px;}
 .nw-a2hs span{flex:1 1 160px;min-width:0;}
 .nw-a2hs button{padding:6px 10px;font-size:12.5px;}
@@ -2532,10 +2537,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v135';
+var APP_VER = 'v136';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v136', d: '2026/11/11', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v135', d: '2026/11/11', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v134', d: '2026/11/11', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v133', d: '2026/11/11', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
@@ -14606,13 +14612,13 @@ function ckUaMount(c, token){
   document.body.classList.add('uapp');
   var app = document.createElement('div'); app.id = 'uaApp';
   app.innerHTML = '<div class="ua-top"><span class="ua-brand">NAVIGATOR Beauty</span><span class="ua-un" id="uaUn"></span>'
-      + '<button type="button" class="ua-bell" id="uaBell" aria-label="お知らせ">' + ckUaSvg('<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/>') + '</button></div>'
+      + '<button type="button" class="ua-bell" id="uaBell" aria-label="お知らせ">' + ckUaSvg('<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/>') + '<i class="ua-dot" data-dot="news" hidden></i></button></div>'
     + '<section class="ua-pg" data-p="home"><h2 class="ua-hello" id="uaHello"></h2><div id="uaHomeQ"></div><div id="uaHomePz"></div><div id="uaHomeLg"></div></section>'
     + '<section class="ua-pg" data-p="plan"><h2 class="ua-ttl">マイプラン</h2></section>'
     + '<section class="ua-pg" data-p="qr"><h2 class="ua-ttl ua-c">受付</h2><div id="uaQrCard"></div><p class="ua-visits" id="uaVisits"></p>'
       + '<p class="ua-qrnote">受付でこの画面を見せてください。<br>画面を明るくすると読みやすくなります。</p></section>'
     + '<section class="ua-pg" data-p="friends" data-seg="lounge"><h2 class="ua-ttl">なかま</h2><div class="ua-seg" role="tablist">'
-      + [['lounge', 'ラウンジ'], ['buddy', 'バディ'], ['invite', '招待']].map(function(x){ return '<button type="button" role="tab" data-seg="' + x[0] + '">' + x[1] + '</button>'; }).join('') + '</div></section>'
+      + [['lounge', 'ラウンジ'], ['buddy', 'バディ'], ['invite', '招待']].map(function(x){ return '<button type="button" role="tab" data-seg="' + x[0] + '">' + x[1] + (x[0] === 'lounge' ? '<i class="ua-dot" data-dot="lg" hidden></i>' : '') + '</button>'; }).join('') + '</div></section>'
     + '<section class="ua-pg" data-p="me"><h2 class="ua-ttl">マイページ</h2><div class="ua-me" id="uaMe"></div><div id="uaMeNw"></div></section>';
   wrap.insertBefore(app, wrap.firstChild);
   var pg = function(p){ return app.querySelector('.ua-pg[data-p="' + p + '"]'); }, mv = function(p, id, before){ var el = $(id); if(el) pg(p).insertBefore(el, before ? $(before) : null); };
@@ -14623,7 +14629,9 @@ function ckUaMount(c, token){
   mv('me', 'pzArea'); mv('me', 'rcptArea'); mv('me', 'mcHelp'); mv('me', 'verCard');
   var nav = document.createElement('nav'); nav.id = 'uaTabs'; nav.setAttribute('aria-label', 'メニュー');
   nav.innerHTML = ckUaTabs().map(function(t){
-    return '<button type="button" data-tab="' + t[0] + '"' + (t[0] === 'qr' ? ' class="ua-qrb"' : '') + '>' + (t[0] === 'qr' ? '<span class="ua-qrc">' + ckUaSvg(t[2]) + '</span>' : ckUaSvg(t[2])) + '<span>' + t[1] + '</span></button>';
+    var dt = t[0] === 'home' ? 'news' : t[0] === 'friends' ? 'lg' : '';
+    return '<button type="button" data-tab="' + t[0] + '"' + (t[0] === 'qr' ? ' class="ua-qrb"' : '') + '>' + (t[0] === 'qr' ? '<span class="ua-qrc">' + ckUaSvg(t[2]) + '</span>' : ckUaSvg(t[2])) + '<span>' + t[1] + '</span>'
+      + (dt ? '<i class="ua-dot" data-dot="' + dt + '" hidden></i>' : '') + '</button>';
   }).join('');
   vc.appendChild(nav);   // .cardwrap の外（中だと position:fixed が効かない）
   nav.onclick = function(e){ var b = e.target.closest ? e.target.closest('[data-tab]') : null; if(b) ckUaGo(b.getAttribute('data-tab')); };
@@ -14648,12 +14656,14 @@ function ckUaGo(tab, auto){
   Array.prototype.forEach.call(document.querySelectorAll('#uaTabs [data-tab]'), function(b){ var on = b.getAttribute('data-tab') === tab; b.classList.toggle('on', on); b.setAttribute('aria-current', on ? 'page' : 'false'); });
   try{ sessionStorage.setItem('bci_ua_tab_' + gUa.token, tab); }catch(e){}
   if(!auto) try{ window.scrollTo(0, 0); }catch(e2){}
+  ckUaBadges();
 }
 function ckUaSeg(seg){
   if(!gUa) return;
   gUa.seg = seg;
   var p = document.querySelector('#uaApp .ua-pg[data-p="friends"]'); if(p) p.setAttribute('data-seg', seg);
   Array.prototype.forEach.call(document.querySelectorAll('#uaApp .ua-seg button'), function(b){ var on = b.getAttribute('data-seg') === seg; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
+  ckUaBadges();
 }
 // 名前・ユニオン・来場（受付QR・マイページ）
 function ckUaInfo(){
@@ -14700,6 +14710,7 @@ function ckUaHome(){
     lg = '<div class="ua-cd" data-go="friends" data-gos="lounge"><div class="ua-lb">ラウンジの新着<em>ラウンジへ ›</em></div><div class="ua-post"><div><small>' + esc(p0.n) + ' さん' + (p0.co ? ' ・ ' + esc(p0.co) : '') + '</small><span>' + esc(p0.t) + '</span></div><i>👏 ' + (p0.claps || 0) + '</i></div></div>';
   }
   $('uaHomeLg').innerHTML = lg;
+  ckUaBadges();
 }
 // NEWS を描いたあと：スマホの通知の行はマイページへ。DAY の当日（自分で画面を選ぶ前）は受付QRから
 function ckUaNews(next){
@@ -14709,7 +14720,34 @@ function ckUaNews(next){
   if(push && box){ var w = document.createElement('div'); w.className = 'nwwrap'; w.appendChild(push); box.appendChild(w); }
   var nw = document.querySelector('#nwArea .nwwrap');
   if(nw && !nw.querySelector('.nw-box')){ var hd = nw.querySelector('.next-head'); if(hd) hd.parentNode.removeChild(hd); }
+  // 💜 v136: お知らせの中身（次のDAY・お礼・スタッフから）の印。変わったら赤丸
+  gUa.newsSig = ckUaHash([].map.call(document.querySelectorAll('#nwArea .nw-box'), function(b){ var x = b.cloneNode(true), cal = x.querySelector('.nw-cal'); if(cal) cal.parentNode.removeChild(cal); return x.textContent; }).join('|'));
   if(next && next.date === todayStr() && !gUa.picked) ckUaGo('qr', true);
+  ckUaBadges();
+}
+function ckUaHash(t){ var h = 5381; t = String(t || ''); for(var i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0; return t ? String(h >>> 0) : ''; }
+function ckUaSeen(k, v){
+  var key = 'bci_ua_' + k + '_' + gUa.token;
+  try{ if(v === undefined) return localStorage.getItem(key); localStorage.setItem(key, String(v)); }catch(e){}
+  return v === undefined ? null : v;
+}
+// 💜 v136: 赤丸（ホーム＝新しいお知らせ／なかま＝ラウンジの新しい投稿・自分の投稿が出せなかった）。
+//   はじめて開いた時は今あるものを「見た」にする。その画面を見たら消す
+function ckUaBadges(){
+  if(!gUa || !$('uaApp')) return;
+  var ns = gUa.newsSig, nSeen = ns != null ? ckUaSeen('news') : null;
+  if(ns != null && nSeen == null) nSeen = ckUaSeen('news', ns);
+  if(ns != null && gUa.tab === 'home' && ns !== nSeen) nSeen = ckUaSeen('news', ns);
+  var L = gLg && gLg.token === gUa.token && gLg.loaded ? gLg : null, me = String((gUa.c || {}).no || ''), lmax = 0, ngs = '';
+  if(L){
+    L.list.forEach(function(p){ if(p.uid !== me && (+p.okAt || 0) > lmax) lmax = +p.okAt || 0; });
+    ngs = L.mine.filter(function(m){ return m.st === 'ng'; }).map(function(m){ return m.id; }).join(',');
+  }
+  var lSeen = L ? ckUaSeen('lg') : null, gSeen = L ? (ckUaSeen('lgng') || '') : '';
+  if(L && (lSeen == null || (gUa.tab === 'friends' && gUa.seg === 'lounge'))){ lSeen = ckUaSeen('lg', lmax); gSeen = ckUaSeen('lgng', ngs); }
+  var nNew = ns != null && !!ns && ns !== nSeen;
+  var lNew = !!L && (lmax > (+lSeen || 0) || (ngs && ngs.split(',').some(function(id){ return (',' + gSeen + ',').indexOf(',' + id + ',') < 0; })));
+  Array.prototype.forEach.call(document.querySelectorAll('.ua-dot'), function(d){ d.hidden = !(d.getAttribute('data-dot') === 'news' ? nNew : lNew); });
 }
 function ckA2hsHowModal(){
   var ua = navigator.userAgent || '', ios = /iPhone|iPad|iPod/.test(ua), inApp = /Line\/|FBAN|FBAV|Instagram/i.test(ua);
@@ -15121,6 +15159,7 @@ function renderLounge(c, token, fresh){
     L.list = r[0] || [];
     L.mine = (r[1] || []).filter(function(x){ return x && x.st !== 'ok'; }).sort(function(a, b){ return b.at - a.at; }).slice(0, 5);
     L.claps = r[2] || {};
+    L.loaded = true;   // 💜 v136: 赤丸は読み終わってから
     lgDraw();
   });
 }
