@@ -1,4 +1,4 @@
-// 受付 v129：ユーザーのカードの「スマホの通知」（NAVIGATOR Beauty・準備中）。通知を受け取る／やめる・iPhone はホーム画面に追加してから・
+// 受付 v129・v135（通知の行はマイページ）：ユーザーのカードの「スマホの通知」（NAVIGATOR Beauty・準備中）。通知を受け取る／やめる・iPhone はホーム画面に追加してから・
 //   ユーザーのカードだけ「ホーム画面のアプリ」の印（架空データ。通知の許可・サービスワーカー・通知の宛先はにせもの）
 const path = require('path');
 const P = require('../lib/ckpage.js');
@@ -24,20 +24,20 @@ const IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebK
   // ① Android など：通知を受け取る → やめる
   for (const dark of [false, true]) {
     const { ctx, page, ev, wt, errs } = await P.open(b, { dark, hash: '#c=' + tok, data: { ['cards/' + tok]: card() }, init: fake({ tok: 'fcm-token-1' }) });
-    const t0 = await ev(`document.getElementById('nwArea').innerText`);
-    c('お知らせに「スマホの通知」と「通知を受け取る」' + (dark ? '（ダーク）' : ''), /スマホの通知/.test(t0) && /DAYの前日のお知らせと、来場のお礼が届きます/.test(t0) && /通知を受け取る/.test(t0), t0);
+    const t0 = await ev(`document.getElementById('uaMeNw').innerText`);
+    c('マイページに「スマホの通知」と「通知を受け取る」（v135：アプリの形）' + (dark ? '（ダーク）' : ''), /スマホの通知/.test(t0) && /DAYの前日のお知らせと、来場のお礼が届きます/.test(t0) && /通知を受け取る/.test(t0), t0);
     if (!dark) {
       await page.screenshot({ path: OUT + '/ckpu129_off.png' });
       await ev(`document.getElementById('nwPush').click()`); await wt(800);
       const d = JSON.parse(await ev(`JSON.stringify(window.__FBDATA['ckPush/${uid}']||null)`));
       c('受け取ると、送り先が入る（カード・ユニオン・宛先・オン）', d && d.card === tok && d.union === 'ANTARES' && d.t === 'fcm-token-1' && d.on === true, JSON.stringify(d));
       c('通知の仕組みは /checkin/ の範囲だけで登録する（push-sw.js）', (await ev(`window.__swReg.join(',')`)) === 'push-sw.js|./');
-      const t1 = await ev(`document.getElementById('nwArea').innerText`);
+      const t1 = await ev(`document.getElementById('uaMeNw').innerText`);
       c('受け取り中の表示と「通知をやめる」', /受け取っています/.test(t1) && /通知をやめる/.test(t1), t1);
       await page.screenshot({ path: OUT + '/ckpu129_on.png' });
       await ev(`document.getElementById('nwPush').click()`); await wt(600);
       const d2 = JSON.parse(await ev(`JSON.stringify(window.__FBDATA['ckPush/${uid}'])`));
-      c('やめると、送り先がオフになる', d2.on === false && d2.t === 'fcm-token-1' && /通知を受け取る/.test(await ev(`document.getElementById('nwArea').innerText`)), JSON.stringify(d2));
+      c('やめると、送り先がオフになる', d2.on === false && d2.t === 'fcm-token-1' && /通知を受け取る/.test(await ev(`document.getElementById('uaMeNw').innerText`)), JSON.stringify(d2));
     }
     c('エラーなし' + (dark ? '（ダーク）' : ''), !errs.length, errs.join('/'));
     await ctx.close();
@@ -49,7 +49,7 @@ const IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebK
     c('許可されなかった時は案内が出て、送り先は入らない', /許可されませんでした/.test(await o.ev(`document.getElementById('toast').textContent`)) && !(await o.ev(`!!window.__FBDATA['ckPush/${uid}']`)));
     await o.ctx.close();
     const o2 = await P.open(b, { hash: '#c=' + tok, data: { ['cards/' + tok]: card() }, init: fake({ perm: 'denied' }) });
-    const t = await o2.ev(`document.getElementById('nwArea').innerText`);
+    const t = await o2.ev(`document.getElementById('uaMeNw').innerText`);
     c('止められている時は「設定から許可してください」（ボタンなし）', /通知が止められています/.test(t) && !(await o2.ev(`!!document.getElementById('nwPush')`)), t);
     await o2.ctx.close();
   }
