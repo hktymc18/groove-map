@@ -1,4 +1,4 @@
-// 受付 v131：ユーザーのカードの「ラウンジ」（NAVIGATOR Beauty・準備中）。同じユニオンのひとこと（60文字・文字だけ）。
+// 受付 v131・v132：ユーザーのカードの「ラウンジ」（NAVIGATOR Beauty・準備中）。同じユニオンのひとこと（60文字・文字だけ）。
 //   スタッフが「出す」を押した投稿だけが出る。👏 は1人1回。本人は取り消せる（架空データ）
 const path = require('path');
 const P = require('../lib/ckpage.js');
@@ -76,7 +76,8 @@ const OWNER = 'j2DPDAccCygHmR9i5K3bTvHnH0V2';
     await ev(`document.querySelector('nav button[data-pane="pRoster"]').click()`); await wt(600);
     c('ビジネスの名簿では「ラウンジの確認」は出ない', (await ev(`document.getElementById('btnUserLounge').classList.contains('hide')`)) === true);
     await ev(`document.querySelector('#rosterKind button[data-k="user"]').click()`); await wt(500);
-    await ev(`document.getElementById('btnUserLounge').click()`); await wt(500);
+    c('ユーザーの名簿で「ラウンジの確認」「ユーザーにお知らせ」のボタンが見える（v132：前はCSSで隠れていた）', (await ev(`['btnUserLounge','btnUserNotice'].every(function(id){ var b=document.getElementById(id); return b && getComputedStyle(b).display !== 'none' && b.offsetParent !== null; })`)) === true);
+    await page.click('#btnUserLounge'); await wt(500);
     const m = await ev(`document.querySelector('.modal').innerText`);
     c('確認待ち2件・出ている1件（ほかのユニオンは出ない）', /確認待ち（2件）/.test(m) && /今週は毎日歩けました/.test(m) && /出ている投稿/.test(m) && !/ほかのユニオン/.test(m), m);
     c('効果をうたう言葉（アトピー・治った）を目立たせる', (await ev(`document.querySelectorAll('.modal .lg-q.warn').length`)) === 1 && (await ev(`document.querySelectorAll('.modal mark.lg-warn').length`)) >= 2 && /出さないでください/.test(m));
