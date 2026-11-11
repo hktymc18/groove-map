@@ -2537,10 +2537,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v136';
+var APP_VER = 'v137';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v137', d: '2026/11/11', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v136', d: '2026/11/11', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v135', d: '2026/11/11', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v134', d: '2026/11/11', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
@@ -4031,7 +4032,7 @@ function ckRenderUserCard(c, card, brand){
   if(brand) brand.textContent = 'NAVIGATOR Beauty';
   $('mcName').textContent = c.name || '';
   $('mcName').style.fontSize = '';
-  $('mcGroup').textContent = c.referrer ? '紹介: ' + c.referrer : '';
+  $('mcGroup').textContent = '';   // v137: お客さんのQRの画面に紹介者の名前は出さない
   $('mcNo').textContent = 'USER PASS';
   $('mcUnion').textContent = c.union || '';
   ['mcGrade', 'mcAbTx', 'mcAtkTx'].forEach(function(id){ $(id).textContent = ''; });
@@ -6808,7 +6809,7 @@ function coreAdminsModal(un, rows, kind, opt){
         + '<button id="caLoad">ユーザーを表示</button></div>'
       : '')
     // 💜 v126: 会員証に「ユーザーを招待」を出す会員番号（準備中に試す人だけ）
-    + (bty ? '<label for="caNos" style="margin-top:14px;">会員証に「ユーザーを招待」を出す会員番号' + hq('ここに入れた会員番号の会員証にだけ、お客さんに読んでもらう招待のQR（紹介者として入る申し込みQR）が出ます。改行・カンマ・スペースで区切ります。この端末で開く会員証にはすぐ、ほかの端末の会員証には6時間ほどで反映されます（すぐ見たい時は、その端末のプライベートタブで会員証を開いてください）。') + '</label>'
+    + (bty ? '<label for="caNos" style="margin-top:14px;">会員証に「INVITATION」を出す会員番号' + hq('ここに入れた会員番号の会員証にだけ、お客さんに読んでもらう招待のQR（紹介者として入る申し込みQR）が出ます。改行・カンマ・スペースで区切ります。この端末で開く会員証にはすぐ、ほかの端末の会員証には6時間ほどで反映されます（すぐ見たい時は、その端末のプライベートタブで会員証を開いてください）。') + '</label>'
         + '<textarea id="caNos" rows="2" autocomplete="off" placeholder="例: ANT0012, RV0034">' + esc(((opt && opt.cardNos) || []).join(', ')) + '</textarea>' : '')
     + '<div class="btns"><button id="caCancel">キャンセル</button><button class="primary" id="caSave">保存</button></div>', true);
   function paint(){
@@ -6853,7 +6854,7 @@ function coreAdminsModal(un, rows, kind, opt){
       // v133: この端末の会員証が覚えている会員番号（6時間）も、保存した内容に置きかえる（同じ端末ならすぐ出る）
       if(bty){ try{ localStorage.setItem('bci_bty_nos', JSON.stringify({ nos: cnos, at: Date.now() })); }catch(eN){} }
       closeModal();
-      toast((bty ? 'ユーザー機能の確認メンバー' : lead ? 'リーダー' : 'ユニオン管理者') + 'を保存しました（' + arr.length + '名）。本人は再読み込み後に反映されます' + (bty && cnos.length ? '。会員証の「ユーザーを招待」は、この端末ではすぐ出ます' : ''));
+      toast((bty ? 'ユーザー機能の確認メンバー' : lead ? 'リーダー' : 'ユニオン管理者') + 'を保存しました（' + arr.length + '名）。本人は再読み込み後に反映されます' + (bty && cnos.length ? '。会員証の「INVITATION」は、この端末ではすぐ出ます' : ''));
       refreshUnionSelectors(); ckApplyFinUi(); renderRoster();
     }).catch(function(e){ $('caSave').disabled = false; toast(permMsg(e, (bty ? '確認メンバー' : lead ? 'リーダー' : 'ユニオン管理者') + 'の指定はオーナーのみ可能です')); });
   };
@@ -8411,7 +8412,7 @@ function ckUserBackToUser(u){
 function ckUserEditModal(u){
   modal('<h2>ユーザーの編集</h2>'
     + '<label>氏名</label><input type="text" id="ueName" value="' + esc(u.name || '') + '">'
-    + '<label>紹介者（ビジネスメンバー）</label><input type="text" id="ueRef" list="ueRefList" autocomplete="off" value="' + esc(u.referrer || '') + '">'
+    + '<label>紹介者</label><input type="text" id="ueRef" list="ueRefList" autocomplete="off" value="' + esc(u.referrer || '') + '">'
     + '<datalist id="ueRefList">' + gMembers.filter(function(m){ return !ckMemberOff(m) && m.name; })
         .map(function(m){ return '<option value="' + esc(m.name) + '"></option>'; }).join('') + '</datalist>'
     + '<p style="font-size:12.5px;color:var(--sub);">来場 ' + (u.visits || 0) + '回・最後の来場 ' + esc(ckUserDay(u.lastAt) || '—')
@@ -14236,7 +14237,7 @@ function ckApplyDraw(box, a){
   box.innerHTML = '<div class="gate jn">'
     + '<p class="jn-br">NAVIGATOR Beauty ・ 受付票</p>'
     + '<h1>' + esc(a.name || '') + ' さん</h1>'
-    + '<p class="s">' + esc(a.union || '') + (a.refName ? ' ・ 紹介：' + esc(a.refName) : '') + (a.invName ? '<br>' + esc(a.invName) + ' さんからの招待' : '') + '</p>'
+    + '<p class="s">' + esc(a.union || '') + (a.invName ? '<br>' + esc(a.invName) + ' さんからの招待' : '') + '</p>'   // v137: 紹介者の名前は出さない
     + '<div class="jn-qr" id="jnQr"></div>'
     + '<p class="jn-big">受付でこの画面を見せてください</p>'
     + '<div class="jn-wait">受付が終わると、この画面があなたのカードに変わります。閉じずにお待ちください。</div>'
@@ -14275,7 +14276,7 @@ function ckApplyToCard(tok){
 function ckApplyScan(id, method){
   if(!gRec) return;
   var ng = function(t, s){ beep('ng'); setStage('ng', '<span class="hit-badge">' + esc(t) + '</span><p class="stage-sub">' + esc(s) + '</p>'); };
-  if(!ckBeautyOn()){ ng('まだ使えない受付票です', 'ユーザーの申し込みは準備中です。「ゲスト受付」から受付してください。'); return; }
+  if(!ckBeautyOn()){ ng('まだ使えない受付票です', 'NAVIGATOR Beauty の新規登録は準備中です。「ゲスト受付」から受付してください。'); return; }
   var ev0 = gRec.ev;
   db.collection('ckApply').doc(id).get().then(function(s){
     if(!gRec || gRec.ev !== ev0) return;
@@ -14306,11 +14307,11 @@ function ckApplyConfirm(id, a, method){
     .filter(function(m){ return m.union === a.union && !ckMemberOff(m) && m.name; })
     .sort(function(x, y){ return String(x.kana || x.name).localeCompare(String(y.kana || y.name), 'ja'); })
     .map(function(m){ return '<option value="' + esc(m.name) + '"></option>'; }).join('');
-  modal('<h2>💜 ユーザーの申し込み</h2>'
+  modal('<h2>💜 NAVIGATOR Beauty 新規登録</h2>'
     + '<p style="font-size:13px;color:var(--sub);margin:-4px 0 6px;">受付票を読みました。内容を確かめて「登録して受付」を押してください。</p>'
     + '<label for="apName">お名前</label><input type="text" id="apName" maxlength="40" value="' + esc(a.name || '') + '">'
     + (a.kana ? '<p style="font-size:12.5px;color:var(--sub);margin:4px 0 0;">ふりがな：' + esc(a.kana) + '</p>' : '')
-    + '<label for="apRef">紹介者（ビジネスメンバー）</label>'
+    + '<label for="apRef">紹介者</label>'
     + '<input type="text" id="apRef" list="apRefList" maxlength="40" autocomplete="off" value="' + esc(a.refName || '') + '"' + (fixed ? ' readonly' : ' placeholder="名前を入れると候補が出ます"') + '>'
     + '<datalist id="apRefList">' + (fixed ? '' : opts) + '</datalist>'
     + '<p id="apRefSt" class="ap-st"></p>'
@@ -14430,9 +14431,9 @@ function renderUserInvite(c, token){
   if(!c || c.kind === 'user' || c.trainee || c.active === false || c.rcptOnly || !c.no) return;
   ckBeautyCardNos(function(nos){
     if(nos.map(function(x){ return String(x).toUpperCase(); }).indexOf(String(c.no).toUpperCase()) < 0) return;
-    el.innerHTML = '<div class="uiwrap"><div class="next-head">USER INVITE</div>'
-      + '<p class="ui-s">お客さん（ユーザー）にこのQRを読んでもらうと、あなたが紹介者として入った申し込みページが開きます。リンクで送って、前の日に申し込んでもらうこともできます。</p>'
-      + '<button class="primary" id="uiOpen" style="width:100%;">💜 ユーザーを招待する</button></div>';
+    el.innerHTML = '<div class="uiwrap"><div class="next-head">INVITATION</div>'
+      + '<p class="ui-s">お客さんにこのQRを読んでもらうと、あなたが紹介者として入った申し込みページが開きます。リンクで送って、前の日に申し込んでもらうこともできます。</p>'
+      + '<button class="primary" id="uiOpen" style="width:100%;">💜 INVITATION</button></div>';
     $('uiOpen').onclick = function(){ ckJoinRefOpen(c, token); };
   });
 }
@@ -14450,9 +14451,9 @@ function ckJoinRefOpen(c, token){
   }).then(function(k){
     $('uiOpen').disabled = false;
     var url = ckJoinUrl(k);
-    modal('<h2>💜 ユーザーを招待</h2>'
-      + '<p style="font-size:13px;color:var(--sub);margin:-4px 0 8px;">お客さんのスマホのカメラで読んでもらってください。紹介者に「' + esc(c.name || '') + '」さんが入った申し込みページが開きます。</p>'
-      + '<div class="jv-poster"><p class="jv-br">NAVIGATOR Beauty</p><p class="jv-t">' + esc(c.name || '') + ' さんの紹介</p><div id="uiQr"></div>'
+    modal('<h2>💜 INVITATION</h2>'
+      + '<p style="font-size:13px;color:var(--sub);margin:-4px 0 8px;">お客さんのスマホのカメラで読んでもらってください。紹介者にあなたが入った申し込みページが開きます（QRの画面にお名前は出ません）。</p>'
+      + '<div class="jv-poster"><p class="jv-br">NAVIGATOR Beauty</p><p class="jv-t">はじめての方はこちら</p><div id="uiQr"></div>'
       + '<p class="jv-s">スマホのカメラで読んで、お名前を入れてください</p></div>'
       + '<div class="btns"><button id="uiShare">リンクを送る</button><button class="primary" id="uiClose">閉じる</button></div>', true);
     makeQr($('uiQr'), url, 220);
@@ -15310,7 +15311,7 @@ $('btnGuest').onclick = function(){
     + '<label id="gAsUserRow" class="' + (ckBeautyOn() ? '' : 'hide') + '" style="display:flex;align-items:center;gap:8px;margin-top:12px;cursor:pointer;font-weight:700;">'
     + '<input type="checkbox" id="gAsUser" style="width:auto;margin:0;">ユーザーとして登録する'
     + hq('ビジネスではないお客さま（製品を使う人）の時に選びます。ユーザーの名簿に入り、本人にQRを渡すと次からそのQRで受付できます。ユニオンの稼働率には入りません。') + '</label>'
-    + '<div id="gUserBox" class="hide"><label>紹介者（ビジネスメンバー）</label>'
+    + '<div id="gUserBox" class="hide"><label>紹介者</label>'
     + '<input type="text" id="gRef" list="gRefList" placeholder="名前を入れると候補が出ます" autocomplete="off"><datalist id="gRefList"></datalist>'
     + '<p style="font-size:12px;color:var(--sub);margin:4px 0 0;">ユーザーは「所属ユニオン」の名簿（ユーザー）に入ります。</p></div>'
     + '<div class="btns"><button id="gCancel">キャンセル</button><button class="primary" id="gGo">受付</button></div>'
