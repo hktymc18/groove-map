@@ -138,7 +138,7 @@ const pick = re => { const m = H.match(re); if (!m) throw new Error('not found '
     await page.goto('https://hktymc18.github.io/groove-map/checkin/index.html#c=' + tok);
     await page.waitForTimeout(1500);
     const cv = JSON.parse(await page.evaluate(() => JSON.stringify({ cls: document.getElementById('memberCard').className, brand: document.querySelector('#memberCard .mc-brand').textContent, name: document.getElementById('mcName').textContent, grp: document.getElementById('mcGroup').textContent, qr: document.getElementById('mcQr').getAttribute('data-qr'), err: document.getElementById('mcErr').textContent, tr: (document.getElementById('trArea') || { innerHTML: '' }).innerHTML, sw: document.documentElement.scrollWidth })));
-    c('カード: ユーザーのデザイン・名前・紹介者', /mc-user/.test(cv.cls) && cv.brand === 'NAVIGATOR Beauty' && cv.name === '見本 はなこ' && cv.grp === '紹介: 架空 太郎', JSON.stringify(cv));
+    c('カード: ユーザーのデザイン・名前（v137：紹介者の名前はQRの画面に出さない）', /mc-user/.test(cv.cls) && cv.brand === 'NAVIGATOR Beauty' && cv.name === '見本 はなこ' && cv.grp === '', JSON.stringify(cv));
     c('カードのQRは u:ID:先頭6文字', cv.qr === 'u:' + uid + ':012345');
     c('カード: エラーなし・横にはみ出さない', !cv.err && cv.sw === 390 && !errs.length, cv.err + errs.join('/'));
     await page.screenshot({ path: OUT + '/ckusr117_card.png' });

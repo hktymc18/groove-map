@@ -22,7 +22,7 @@ const OWNER = 'j2DPDAccCygHmR9i5K3bTvHnH0V2';
   c('保存のメッセージに「この端末ではすぐ出ます」', /この端末ではすぐ出ます/.test(await ev(`document.getElementById('toast').textContent`)));
   // 同じ端末で会員証を開く（覚えている間はサーバーを読まない）
   await page.goto('https://hktymc18.github.io/groove-map/checkin/index.html#c=' + tm); await page.reload(); await wt(2200);
-  c('同じ端末の会員証に、すぐ「USER INVITE」が出る（6時間待たない）', /ユーザーを招待する/.test(await ev(`document.getElementById('uiArea').innerText`)));
+  c('同じ端末の会員証に、すぐ「INVITATION」が出る（6時間待たない）', /INVITATION/.test(await ev(`document.getElementById('uiArea').innerText`)));
   c('ページのエラーなし', !errs.length, errs.join(' / '));
   await ctx.close();
   await b.close();
