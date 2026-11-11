@@ -1,4 +1,5 @@
 // 受付 v131（ラウンジ: ckLounge・cards/{トークン}/lounge・👏）の firestore.rules を、Firestore エミュレータで試す（架空のデータだけ）
+// v139: スタッフ（出す・出さない・確認待ちの一覧・消す）はオーナー・ユニオン管理者・DAYスタッフだけ（受付管理者だけの人は不可）
 // 準備・実行は ckpf109_rules.js と同じ
 const fs = require('fs'), path = require('path');
 const { initializeTestEnvironment } = require('@firebase/rules-unit-testing');
@@ -15,9 +16,10 @@ const P1 = 'aaaaaaaaaaaaaaaaaaaa', P2 = 'bbbbbbbbbbbbbbbbbbbb', P3 = 'cccccccccc
   await env.clearFirestore();
   await env.withSecurityRulesDisabled(async (cx) => {
     const d = cx.firestore();
-    await setDoc(doc(d, 'checkinUnions/U1'), { name: 'U1', admins: ['adm1'] });
+    await setDoc(doc(d, 'checkinUnions/U1'), { name: 'U1', admins: ['adm1'], dayStaff: ['day1'] });
     await setDoc(doc(d, 'users/adm1'), { union: 'U1', status: 'active' });
     await setDoc(doc(d, 'users/staff1'), { union: 'U1', status: 'active' });
+    await setDoc(doc(d, 'users/day1'), { union: 'U1', status: 'active' });
     await setDoc(doc(d, 'cards/' + TA), { kind: 'user', no: UA, name: '見本 はなこ', union: 'U1', active: true });
     await setDoc(doc(d, 'cardClaims/' + UA), { t: TA });
     await setDoc(doc(d, 'cards/' + TB), { kind: 'user', no: UB, name: '見本 さくら', union: 'U1', active: true });
@@ -26,7 +28,7 @@ const P1 = 'aaaaaaaaaaaaaaaaaaaa', P2 = 'bbbbbbbbbbbbbbbbbbbb', P3 = 'cccccccccc
     await setDoc(doc(d, 'cardClaims/ZZ0001'), { t: TM });
   });
   const anon = env.unauthenticatedContext().firestore();
-  const adm = env.authenticatedContext('adm1').firestore(), staff = env.authenticatedContext('staff1').firestore();
+  const adm = env.authenticatedContext('adm1').firestore(), day = env.authenticatedContext('day1').firestore(), staff = env.authenticatedContext('staff1').firestore();
   const L = (x) => Object.assign({ union: 'U1', uid: UA, n: '見本 はなこ', co: 'ダイエット編', t: '今週は毎日歩けました', st: 'wait', at: serverTimestamp() }, x);
   const post = (tok, pid, x) => { const b = writeBatch(anon);
     b.set(doc(anon, 'ckLounge/' + pid), L(x)); b.set(doc(anon, 'cards/' + tok + '/lounge/' + pid), { at: serverTimestamp() }); return b.commit(); };
@@ -41,9 +43,11 @@ const P1 = 'aaaaaaaaaaaaaaaaaaaa', P2 = 'bbbbbbbbbbbbbbbbbbbb', P3 = 'cccccccccc
   c('確認待ちは一覧に出ない（ログインなし）', !(await ok(getDocs(query(collection(anon, 'ckLounge'), where('union', '==', 'U1'), where('st', '==', 'wait'))))));
   c('本人は自分の投稿を書き換えられない', !(await ok(updateDoc(doc(anon, 'ckLounge/' + P1), { st: 'ok' }))));
   c('ふつうの受付の人は出せない', !(await ok(updateDoc(doc(staff, 'ckLounge/' + P1), { st: 'ok', okAt: serverTimestamp(), by: 'staff1' }))));
-  c('受付管理者は確認待ちの一覧を見られる', await ok(getDocs(query(collection(adm, 'ckLounge'), where('union', '==', 'U1'), where('st', '==', 'wait')))));
-  c('受付管理者は「出す」ことができる', await ok(updateDoc(doc(adm, 'ckLounge/' + P1), { st: 'ok', okAt: serverTimestamp(), by: 'adm1' })));
-  c('受付管理者でも文は変えられない', !(await ok(updateDoc(doc(adm, 'ckLounge/' + P1), { t: '別の文', by: 'adm1' }))));
+  c('v139: 受付管理者だけの人は確認待ちの一覧を見られない', !(await ok(getDocs(query(collection(adm, 'ckLounge'), where('union', '==', 'U1'), where('st', '==', 'wait'))))));
+  c('v139: 受付管理者だけの人は「出す」ことができない', !(await ok(updateDoc(doc(adm, 'ckLounge/' + P1), { st: 'ok', okAt: serverTimestamp(), by: 'adm1' }))));
+  c('DAYスタッフは確認待ちの一覧を見られる', await ok(getDocs(query(collection(day, 'ckLounge'), where('union', '==', 'U1'), where('st', '==', 'wait')))));
+  c('DAYスタッフは「出す」ことができる', await ok(updateDoc(doc(day, 'ckLounge/' + P1), { st: 'ok', okAt: serverTimestamp(), by: 'day1' })));
+  c('DAYスタッフでも文は変えられない', !(await ok(updateDoc(doc(day, 'ckLounge/' + P1), { t: '別の文', by: 'day1' }))));
   c('出ている投稿は一覧で読める（ログインなし）', await ok(getDocs(query(collection(anon, 'ckLounge'), where('union', '==', 'U1'), where('st', '==', 'ok')))));
   // 👏
   const clap = (tok, uid, pid) => { const b = writeBatch(anon);
@@ -57,7 +61,9 @@ const P1 = 'aaaaaaaaaaaaaaaaaaaa', P2 = 'bbbbbbbbbbbbbbbbbbbb', P3 = 'cccccccccc
   c('印を消さずに投稿だけ消すことはできない（ほかの人も）', !(await ok(deleteDoc(doc(anon, 'ckLounge/' + P2)))));
   c('本人は、自分の印と一緒に取り消せる', await ok((() => { const b = writeBatch(anon); b.delete(doc(anon, 'ckLounge/' + P2)); b.delete(doc(anon, 'cards/' + TB + '/lounge/' + P2)); return b.commit(); })()));
   c('ほかの人の印では取り消せない', !(await ok((() => { const b = writeBatch(anon); b.delete(doc(anon, 'ckLounge/' + P1)); b.delete(doc(anon, 'cards/' + TB + '/lounge/' + P1)); return b.commit(); })())));
-  c('受付管理者は投稿を消せる', await ok(deleteDoc(doc(adm, 'ckLounge/' + P1))));
+  c('v139: 受付管理者だけの人は投稿を消せない', !(await ok(deleteDoc(doc(adm, 'ckLounge/' + P1)))));
+  c('DAYスタッフは出さなかった投稿の一覧を見られる', await ok(getDocs(query(collection(day, 'ckLounge'), where('union', '==', 'U1'), where('st', '==', 'ng')))));
+  c('DAYスタッフは投稿を消せる', await ok(deleteDoc(doc(day, 'ckLounge/' + P1))));
   await env.cleanup();
   console.log(fails ? 'FAIL ' + fails : 'ALL PASS'); process.exit(fails ? 1 : 0);
 })();

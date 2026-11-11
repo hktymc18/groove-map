@@ -54,7 +54,7 @@ const vis = (id) => `(function(){ var e=document.getElementById('${id}'); return
     await page.click('#uaApp .ua-seg [data-seg="invite"]'); await wt(200);
     c('なかま：招待に切りかえ', (await ev(vis('fiArea'))) && /見本 さくら/.test(await ev(`document.getElementById('fiArea').innerText`)));
     await page.click('#uaTabs [data-tab="me"]'); await wt(300);
-    c('マイページ：名前・紹介者・PRYSMiO の記録・スマホの通知の欄', /見本 はなこ/.test(await ev(`document.getElementById('uaMe').innerText`)) && /紹介：架空 太郎/.test(await ev(`document.getElementById('uaMe').innerText`)) && (await ev(vis('pzArea'))) && (await ev(`!!document.querySelector('#uaMeNw')`)));
+    c('マイページ：名前（紹介者は出さない・v138）・PRYSMiO の記録・スマホの通知の欄', /見本 はなこ/.test(await ev(`document.getElementById('uaMe').innerText`)) && !/紹介|架空 太郎/.test(await ev(`document.getElementById('uaMe').innerText`)) && (await ev(vis('pzArea'))) && (await ev(`!!document.querySelector('#uaMeNw')`)));
     await page.screenshot({ path: OUT + '/ckua135_me' + sfx + '.png' });
     if (!dark) {
       await page.click('#uaBell'); await wt(300);

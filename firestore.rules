@@ -600,8 +600,9 @@ service cloud.firestore {
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['trainers']))
         // 🎓 v25: 研修生登録の担当（trainers）の任命・解除もユニオン管理者（コア管理者）だけ。受付管理者は不可
         // 🙈 v29: 受付の金額を統括だけに見せる設定（hideMoney）もユニオン管理者だけ
+        // 💜 受付v139: DAYスタッフ（dayStaff）の任命・解除はオーナーとユニオン管理者だけ。受付管理者は不可
         || (isCkAdmin(un)
-            && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['admins', 'coreAdmins', 'trainers', 'hideMoney', 'leaders', 'unionAdmins', 'ckMig33']));
+            && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['admins', 'coreAdmins', 'trainers', 'hideMoney', 'leaders', 'unionAdmins', 'ckMig33', 'dayStaff']));
       allow delete: if isOwnerAdmin();
     }
 
@@ -1031,11 +1032,12 @@ service cloud.firestore {
     match /ckNotice/{un} {
       allow get: if true;
       allow list: if false;
-      allow create, update: if (isOwnerAdmin() || isCkAdmin(un) || (ckBeautyTester() && ckCanSee(un)))
+      // 💜 受付v139: 書けるのはオーナー・ユニオン管理者・DAYスタッフだけ（受付管理者・確認メンバーだけの人は不可）
+      allow create, update: if ckLoungeStaff(un)
         && request.resource.data.keys().hasOnly(['items', 'by', 'at'])
         && request.resource.data.items is list && request.resource.data.items.size() <= 5
         && request.resource.data.get('by', '') == request.auth.uid;
-      allow delete: if isOwnerAdmin() || isCkAdmin(un);
+      allow delete: if ckLoungeStaff(un);
     }
     // 💜 受付v129: ユーザーのスマホの通知の送り先（ckPush/{ユーザーのID}）。カードの本人だけが書ける（だれも読めない＝サーバーだけ）
     match /ckPush/{uid} {
@@ -1137,8 +1139,15 @@ service cloud.firestore {
         allow delete: if ckLoungeStaff(get(/databases/$(database)/documents/ckLounge/$(pid)).data.get('union', ''));
       }
     }
+    // 💜 受付v139: ユーザー向けの管理（お知らせ・ラウンジの確認）ができる人 = オーナー・ユニオン管理者・そのユニオンのDAYスタッフ
+    //   DAYスタッフ = checkinUnions/{un}.dayStaff にUIDが入っている人（オーナーかユニオン管理者が任命）。受付管理者とは別
     function ckLoungeStaff(un) {
-      return isOwnerAdmin() || isCkAdmin(un) || (ckBeautyTester() && ckCanSee(un));
+      return isCkCoreAdmin(un) || ckDayStaff(un);
+    }
+    function ckDayStaff(un) {
+      return signedIn() && notDisabled(request.auth.uid)
+        && exists(/databases/$(database)/documents/checkinUnions/$(un))
+        && get(/databases/$(database)/documents/checkinUnions/$(un)).data.get('dayStaff', []).hasAny([request.auth.uid]);
     }
     function ckLoungeOwn(pid, d, tk) {
       return tk is string && tk != '_'
