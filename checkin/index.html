@@ -316,7 +316,7 @@ tr:last-child td{border-bottom:none;}
 .rkseg button{border:none;background:none;border-radius:99px;padding:7px 20px;font-weight:700;font-size:14px;color:var(--sub);box-shadow:none;}
 .rkseg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.14);}
 /* ユーザーの名簿では、ビジネス用のボタン（会員証・CSV・任命など）をしまう */
-#pRoster.umode .toolrow > *:not(#rosterUnionSel):not([for=rosterUnionSel]):not(#q){display:none !important;}
+#pRoster.umode .toolrow > *:not(#rosterUnionSel):not([for=rosterUnionSel]):not(#q):not(#btnUserNotice):not(#btnUserLounge){display:none !important;} /* v132: お知らせ・ラウンジの確認は、ユーザーの名簿で出す */
 #pRoster.umode #bulkRow{display:none !important;}
 /* 集計: 未終了イベントの説明を出す?ボタン */
 /* ❔ v105: 説明は「？」に（PCはマウスを乗せる・スマホはタップで吹き出し） */
@@ -2474,10 +2474,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v131';
+var APP_VER = 'v132';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v132', d: '2026/11/11', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v131', d: '2026/11/08', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v130', d: '2026/11/08', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v129', d: '2026/11/07', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
