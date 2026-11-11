@@ -316,7 +316,7 @@ tr:last-child td{border-bottom:none;}
 .rkseg button{border:none;background:none;border-radius:99px;padding:7px 20px;font-weight:700;font-size:14px;color:var(--sub);box-shadow:none;}
 .rkseg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.14);}
 /* ユーザーの名簿では、ビジネス用のボタン（会員証・CSV・任命など）をしまう */
-#pRoster.umode .toolrow > *:not(#rosterUnionSel):not([for=rosterUnionSel]):not(#q):not(#btnUserNotice):not(#btnUserLounge){display:none !important;} /* v132: お知らせ・ラウンジの確認は、ユーザーの名簿で出す */
+#pRoster.umode .toolrow > *:not(#rosterUnionSel):not([for=rosterUnionSel]):not(#q){display:none !important;} /* v139: お知らせ・ラウンジの確認は「💜 Beauty」タブへ */
 #pRoster.umode #bulkRow{display:none !important;}
 /* 集計: 未終了イベントの説明を出す?ボタン */
 /* ❔ v105: 説明は「？」に（PCはマウスを乗せる・スマホはタップで吹き出し） */
@@ -1060,6 +1060,22 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .lg-warn{background:#ffe066;color:#33290a;padding:0 2px;border-radius:3px;}
 .lg-qw{font-size:12px;margin:6px 0 0;font-weight:700;}
 .lg-qb{display:flex;gap:8px;margin-top:8px;}
+/* 💜 v139: 「💜 Beauty」タブ（ユーザー向けの管理。オーナー・ユニオン管理者・DAYスタッフ） */
+.nav-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#e5484d;margin-left:4px;vertical-align:2px;}
+.nav-dot[hidden]{display:none;}
+.bt-wrap{display:grid;gap:14px;max-width:760px;}
+.bt-box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;min-width:0;}
+.bt-box h3{margin:0 0 8px;font-size:15px;}
+.bt-todo{display:flex;gap:10px;flex-wrap:wrap;}
+.bt-todo button{flex:1 1 140px;text-align:left;padding:10px 12px;border-radius:12px;font-weight:700;}
+.bt-todo button b{display:block;font-size:22px;line-height:1.2;}
+.bt-todo button.hot{border-color:#e5484d;color:#c62828;}
+.bt-note{font-size:12.5px;color:var(--sub);margin:6px 0 0;}
+#btNtText{width:100%;}
+#btLgSeg button{padding:7px 14px;}
+#btUnionSel{flex:0 1 220px;min-width:9em;}
+#btNt .btns{margin-bottom:6px;}
+.lg-q.warn button:not(.primary){background:#fff;color:#33290a;border-color:#e0a800;}
 .bd-list{display:grid;gap:8px;margin-top:4px;}
 .bd-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);}
 .bd-av{width:34px;height:34px;flex:none;border-radius:50%;display:grid;place-items:center;font-weight:900;background:#eeebff;color:#3b2fb5;}
@@ -1467,6 +1483,7 @@ body.practice .topbar{top:var(--pxh,36px);}
       <button data-pane="pEvents">イベント</button>
       <button data-pane="pFin">会計</button>
       <button data-pane="pStats">集計</button>
+      <button data-pane="pBeauty" class="hide">💜 Beauty<span class="nav-dot" hidden></span></button>
       <button id="btnLogout" title="ログアウト">⎋</button>
     </nav>
   </div>
@@ -1563,8 +1580,6 @@ body.practice .topbar{top:var(--pxh,36px);}
       <button id="btnFreeMembers" class="hide rmore" title="いつも徴収なしで出席に入れる人（ユニオン管理者など）">🆓 徴収なしメンバー</button>
       <button id="btnTrainers" class="hide rmore">🎓 研修生登録の担当</button>
       <button id="btnUnionAdmins" class="hide rmore" title="ユニオン管理者の任命（オーナーのみ）">🛡 ユニオン管理者</button>
-      <button id="btnUserNotice" class="hide">📣 ユーザーにお知らせ</button>
-      <button id="btnUserLounge" class="hide">💬 ラウンジの確認</button>
       <button id="btnBeautyTesters" class="hide rmore" title="準備中のユーザー機能（NAVIGATOR Beauty）を見られる人（オーナーのみ）">💜 ユーザー機能の確認メンバー</button>
       <button id="btnLeaders" class="hide rmore" title="名簿・集計の閲覧と研修生登録の担当の任命ができる人（オーナーのみ指定）">⭐ リーダー</button>
       <button id="btnAdminsView" class="rmore">👥 管理者一覧</button>
@@ -1630,6 +1645,18 @@ body.practice .topbar{top:var(--pxh,36px);}
       <button id="btnRcptSet" class="hide">⚙ ユニオン設定</button>
     </div>
     <div id="finBody"><p style="color:var(--sub)">読み込み中…</p></div>
+  </section>
+
+  <!-- 💜 v139: Beauty（ユーザー向けの管理。オーナー・ユニオン管理者・DAYスタッフ） -->
+  <section class="pane" id="pBeauty">
+    <div class="panehead"><div class="toolrow">
+      <label for="btUnionSel" style="font-weight:700;font-size:13px;">ユニオン:</label>
+      <select id="btUnionSel"></select>
+      <span style="flex:1"></span>
+      <button id="btnDayStaff" class="hide" title="このユニオンのDAYスタッフを決める（オーナー・ユニオン管理者）">🌸 DAYスタッフ</button>
+      <button id="btReload">↻ 読み直す</button>
+    </div></div>
+    <div id="btBody"><p style="color:var(--sub)">読み込み中…</p></div>
   </section>
 
   <!-- 集計 -->
@@ -2173,6 +2200,9 @@ function ckBeautyLoad(){
     gBeautyTesters = (s.exists && s.data().testers) || [];
   }).catch(function(){ gBeautyTesters = []; });
 }
+var gDayStaff = {};         // 💜 v139: ユニオン名 → DAYスタッフのUID（checkinUnions.dayStaff・オーナーかユニオン管理者が任命）。「💜 Beauty」タブを使える
+var CK_DAY_NAME = 'DAYスタッフ';   // 💜 v139: 役割の名前（仮。正式な名前が決まったらここを変える）
+function isDayStaff(un){ return !!(gUser && (gDayStaff[un] || []).indexOf(gUser.uid) >= 0); }
 var gLeaders = {};          // ⭐ ユニオン名 → リーダーのUID（checkinUnions.leaders・オーナーが指定）。名簿・集計の閲覧と研修担当の任命ができる
 var gUnionAddon = {};       // ユニオン名 → 追加オプションの設定（checkinUnions.addon・有効なものだけ）
 var gUnionPrefix = {};      // ユニオン名 → 会員番号プレフィックス（checkinUnions.noPrefix）
@@ -2255,6 +2285,7 @@ function ckApplyFinUi(){
     if(t) t.classList.toggle('hide', !rs);
     if(!rs && $(id) && $(id).classList.contains('on')){ var k2 = document.querySelector('nav button[data-pane="pKiosk"]'); if(k2) k2.click(); }
   });
+  ckBtApply();   // 💜 v139: Beauty タブ
 }
 // 受付管理者 = checkinUnions/{un}.admins に登録されたユーザー。このシステム内では管理者と同等
 function isCkStaffAdmin(un){ return !!(gUser && (gCkAdmins[un] || []).indexOf(gUser.uid) >= 0); }
@@ -2537,10 +2568,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v138';
+var APP_VER = 'v139';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v139', d: '2026/11/11', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v138', d: '2026/11/11', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v137', d: '2026/11/11', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v136', d: '2026/11/11', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
@@ -6287,7 +6319,7 @@ function ckMig33(list){
 
 /* ---------- 起動 ---------- */
 function afterLogin(){
-  ckBeautyLoad().then(function(){ if(gMembersLoaded) renderRoster(); });   // 💜 ユーザー機能の確認メンバー
+  ckBeautyLoad().then(function(){ if(gMembersLoaded) renderRoster(); ckBtApply(); });   // 💜 ユーザー機能の確認メンバー
   db.collection('checkinUnions').get().then(function(qs){
     gUnions = [];
     gCkAdmins = {};
@@ -6298,6 +6330,7 @@ function afterLogin(){
       gCkAdmins[un] = d.data().admins || [];
       gUnionAdmins[un] = d.data().unionAdmins || [];
       gLeaders[un] = d.data().leaders || [];
+      gDayStaff[un] = d.data().dayStaff || [];
       if(isOwner() && !d.data().ckMig33) mig.push({ id: d.id, un: un, d: d.data() });
       gHideMoney[un] = !!d.data().hideMoney;
       gRcptDef[un] = d.data().rcptDefault !== false;   // 🧾 新しく作るイベントの領収書（既定: 発行する）
@@ -6697,9 +6730,9 @@ $('btnTrainers').onclick = function(){
   }).catch(function(e){ toast('ユーザー読込エラー: ' + e.message); });
 };
 /* ⭐ リーダーの設定・🛡 ユニオン管理者の任命（オーナーのみ）: 名簿タブのボタン */
-function ckOwnerListOpen(key){
-  if(!isOwner()) return;
-  var un = gRosterUnion;
+function ckOwnerListOpen(key, un0){
+  var un = un0 || gRosterUnion;
+  if(key === 'dayStaff' ? !isCoreAdmin(un) : !isOwner()) return;   // 💜 v139: DAYスタッフはユニオン管理者も決められる
   db.collection('checkinUnions').doc(un).get().then(function(sn){
     var cur = (sn.exists && sn.data()[key]) || [];
     return Promise.all(cur.map(function(uid){
@@ -6708,12 +6741,10 @@ function ckOwnerListOpen(key){
         return { uid: uid, name: d.name || uid.slice(0, 8), union: d.union || '?', role: d.role || '', checked: true };
       }).catch(function(){ return { uid: uid, name: uid.slice(0, 8), union: '?', role: '', checked: true }; });
     }));
-  }).then(function(rows){ coreAdminsModal(un, rows, key === 'leaders' ? 'leaders' : ''); })
+  }).then(function(rows){ coreAdminsModal(un, rows, key === 'leaders' ? 'leaders' : key === 'dayStaff' ? 'day' : ''); })
   .catch(function(e){ toast('読込エラー: ' + e.message); });
 }
 $('btnLeaders').onclick = function(){ ckOwnerListOpen('leaders'); };
-$('btnUserNotice').onclick = function(){ ckUserNoticeModal(); };
-$('btnUserLounge').onclick = function(){ ckLoungeModal(); };
 // 💜 ユーザー機能の確認メンバー（全ユニオン共通・checkinConfig/beauty.testers）
 $('btnBeautyTesters').onclick = function(){
   if(!isOwner()) return;
@@ -6746,9 +6777,10 @@ $('btnAdminsView').onclick = function(){
     });
     var s0 = res[1].exists ? res[1].data() : {};
     var admins = (s0.admins || []).slice(), trainers = (s0.trainers || []).slice(), cores = (s0.unionAdmins || []).slice(), leaders = (s0.leaders || []).slice();
+    var days = ckBeautyOn() ? (s0.dayStaff || []).slice() : [];   // 💜 v139（準備中は確認メンバーにだけ見せる）
     // 他ユニオン所属の兼務者はプロフィールを個別取得して所属付きで表示
     var need = {};
-    admins.concat(trainers, cores, leaders).forEach(function(uid){ if(!byUid[uid]) need[uid] = 1; });
+    admins.concat(trainers, cores, leaders, days).forEach(function(uid){ if(!byUid[uid]) need[uid] = 1; });
     return Promise.all(Object.keys(need).map(function(uid){
       return db.collection('users').doc(uid).get().then(function(sn){
         var u = sn.exists ? sn.data() : {};
@@ -6776,6 +6808,8 @@ $('btnAdminsView').onclick = function(){
         + '<label style="margin-top:14px;">🎓 研修生登録の担当</label>'
         + (trainers.map(function(uid){ return row(uid, ''); }).join('')
           || '<p style="font-size:12.5px;color:var(--sub);margin:4px 0 0;">任命されていません</p>')
+        + (ckBeautyOn() ? '<label style="margin-top:14px;">🌸 ' + CK_DAY_NAME + hq('オーナーかユニオン管理者が「💜 Beauty」タブで決めます。ユーザーへのお知らせとラウンジの確認ができます。') + '</label>'
+          + (days.map(function(uid){ return row(uid, ''); }).join('') || '<p style="font-size:12.5px;color:var(--sub);margin:4px 0 0;">いません</p>') : '')
         + '';
       modal('<h2>👥 管理者一覧 — ' + esc(un) + hq('任命・解除は、名簿タブの「👑 受付管理者」「🎓 研修生登録の担当」ボタンから行えます（研修生登録の担当はリーダーも任命できます）。') + '</h2>' + h
         + '<div class="btns"><button id="avClose">閉じる</button></div>', true);
@@ -6794,10 +6828,13 @@ $('btnAdminsView').onclick = function(){
    v102: NAVIGATORの管理者・NAVIGATORの兼務（coreAdmins）とは別。受付ではここで任命した人だけがユニオン管理者 */
 // ⭐ kind === 'leaders' のときは「リーダー」の設定（checkinUnions/{un}.leaders・オーナーのみ）。同じユニオンの人も選べる
 function coreAdminsModal(un, rows, kind, opt){
-  if(!isOwner()) return;
- var lead = kind === 'leaders', bty = kind === 'beauty';
+  var lead = kind === 'leaders', bty = kind === 'beauty', day = kind === 'day';
+  if(day ? !isCoreAdmin(un) : !isOwner()) return;
   var others = [un].concat(gUnions.filter(function(u){ return u !== un; }));
-  modal((bty
+  modal((day
+      ? '<h2>🌸 ' + CK_DAY_NAME + ' — ' + esc(un) + hq('チェックした人は、このユニオンの「💜 Beauty」タブで、ユーザーへのお知らせとラウンジの確認ができます。名簿・イベント・会計は見られません。決められるのはオーナーとユニオン管理者です。受付管理者とは別です。') + '</h2>'
+        + '<p style="font-size:12.5px;color:var(--sub);margin:-4px 0 8px;">本人は再読み込みのあとに使えるようになります。</p>'
+      : bty
       ? '<h2>💜 ユーザー機能の確認メンバー' + hq('準備中のユーザー機能（ゲスト受付の「ユーザーとして登録する」・名簿の「ビジネス｜ユーザー」・測定・体験・購入の記録）を見られる人です。オーナーは指定しなくても見られます。全ユニオン共通です。') + '</h2>'
         + '<p style="font-size:12.5px;color:var(--sub);margin:-4px 0 8px;">チェックした人だけに、準備中のユーザー機能が出ます（本人は再読み込みのあとに出ます）。</p>'
       : lead
@@ -6849,15 +6886,16 @@ function coreAdminsModal(un, rows, kind, opt){
     var cnos = bty ? ($('caNos').value || '').split(/[\s,、，]+/).map(function(x){ return x.trim().toUpperCase(); })
       .filter(function(x, i, a){ return x && a.indexOf(x) === i; }).slice(0, 300) : [];
     var w = bty ? db.collection('checkinConfig').doc('beauty').set({ testers: arr, cardNos: cnos, by: gUser.uid, at: FV.serverTimestamp() })
-      : db.collection('checkinUnions').doc(un).set(lead ? { leaders: arr } : { unionAdmins: arr }, { merge: true });
+      : db.collection('checkinUnions').doc(un).set(day ? { dayStaff: arr } : lead ? { leaders: arr } : { unionAdmins: arr }, { merge: true });
+    var what = day ? CK_DAY_NAME : bty ? 'ユーザー機能の確認メンバー' : lead ? 'リーダー' : 'ユニオン管理者';
     w.then(function(){
-      if(bty) gBeautyTesters = arr; else if(lead) gLeaders[un] = arr; else gUnionAdmins[un] = arr;
+      if(day) gDayStaff[un] = arr; else if(bty) gBeautyTesters = arr; else if(lead) gLeaders[un] = arr; else gUnionAdmins[un] = arr;
       // v133: この端末の会員証が覚えている会員番号（6時間）も、保存した内容に置きかえる（同じ端末ならすぐ出る）
       if(bty){ try{ localStorage.setItem('bci_bty_nos', JSON.stringify({ nos: cnos, at: Date.now() })); }catch(eN){} }
       closeModal();
-      toast((bty ? 'ユーザー機能の確認メンバー' : lead ? 'リーダー' : 'ユニオン管理者') + 'を保存しました（' + arr.length + '名）。本人は再読み込み後に反映されます' + (bty && cnos.length ? '。会員証の「INVITATION」は、この端末ではすぐ出ます' : ''));
+      toast(what + 'を保存しました（' + arr.length + '名）。本人は再読み込み後に反映されます' + (bty && cnos.length ? '。会員証の「INVITATION」は、この端末ではすぐ出ます' : ''));
       refreshUnionSelectors(); ckApplyFinUi(); renderRoster();
-    }).catch(function(e){ $('caSave').disabled = false; toast(permMsg(e, (bty ? '確認メンバー' : lead ? 'リーダー' : 'ユニオン管理者') + 'の指定はオーナーのみ可能です')); });
+    }).catch(function(e){ $('caSave').disabled = false; toast(permMsg(e, day ? CK_DAY_NAME + 'を決められるのは、オーナーとユニオン管理者だけです' : (bty ? '確認メンバー' : lead ? 'リーダー' : 'ユニオン管理者') + 'の指定はオーナーのみ可能です')); });
   };
 }
 $('btnAddUnion').onclick = function(){
@@ -7779,6 +7817,7 @@ Array.prototype.forEach.call(tabs, function(b){
       if(!(gFinLoaded.k === fk && Date.now() - gFinLoaded.at < 120000)) loadFinanceTab();
     }
     if(b.getAttribute('data-pane') === 'pStats' && (gStatDirty || !gStat)) loadStatsNow();
+    if(b.getAttribute('data-pane') === 'pBeauty'){ if(!gBt || Date.now() - gBt.at > 60000) btLoad(); else btDraw(); }
   };
 });
 
@@ -7822,8 +7861,6 @@ function renderRoster(){
   if(!ukOn) gRosterKind = 'biz';
   $('btnBeautyTesters').classList.toggle('hide', !isOwner());
   ckRosterKindSync();
-  $('btnUserNotice').classList.toggle('hide', !(ukOn && gRosterKind === 'user'));
-  $('btnUserLounge').classList.toggle('hide', !(ukOn && gRosterKind === 'user'));
   if(gRosterKind === 'user'){ renderUserRoster(); return; }
   function sth(k, label){
     var cur = gRosterSort.k === k;
@@ -14793,46 +14830,6 @@ function ckGcalUrl(ev, c){
     + '&dates=' + ckIcsDay(ev.date, 0) + '/' + ckIcsDay(ev.date, 1)
     + '&details=' + encodeURIComponent((ev.uInfo ? ev.uInfo + '\n' : '') + 'NAVIGATOR Beauty（' + (c.union || '') + '）');
 }
-// 名簿 → ユーザー →「📣 ユーザーにお知らせ」: そのユニオンのユーザーのカードに出すお知らせ（新しい5件まで）
-function ckUserNoticeModal(){
-  var un = gRosterUnion;
-  if(!ckBeautyOn()) return;
-  db.collection('ckNotice').doc(un).get().then(function(s){
-    var items = ((s.exists && s.data().items) || []).slice(0, 5);
-    function paint(){
-      $('unList').innerHTML = items.length ? items.map(function(n, i){
-        return '<div class="ap-row"><span style="flex:1;min-width:0;color:var(--ink);">' + esc(ckMd(n.d)) + '　' + esc(n.t) + '</span>'
-          + '<button type="button" data-del="' + i + '" class="danger ghost" style="flex:0 0 auto;">消す</button></div>';
-      }).join('') : '<p style="font-size:12.5px;color:var(--sub);margin:4px 0;">まだありません。</p>';
-    }
-    modal('<h2>📣 ユーザーにお知らせ — ' + esc(un) + hq('このユニオンのユーザーのカードの「お知らせ」に出ます。新しい5件まで出ます。カードには30分ほどで届きます。効果をうたう言葉（治る・やせる など）は書かないでください。') + '</h2>'
-      + '<label for="unText">新しいお知らせ（100文字まで）</label>'
-      + '<textarea id="unText" rows="3" maxlength="100" placeholder="例: 12月のDAYは、14時からの開始です。"></textarea>'
-      + '<label style="margin-top:12px;">今出ているお知らせ</label><div id="unList"></div>'
-      + '<div class="btns"><button id="unCancel">閉じる</button><button class="primary" id="unGo">送る</button></div>', true);
-    paint();
-    function save(msg){
-      return db.collection('ckNotice').doc(un).set({ items: items, by: gUser.uid, at: FV.serverTimestamp() }).then(function(){ paint(); toast(msg); })
-        .catch(function(e){ toast(permMsg(e, 'お知らせを保存できませんでした。ルールの反映をオーナーに確認してください')); });
-    }
-    $('unList').onclick = function(e){
-      var b = e.target.closest ? e.target.closest('button[data-del]') : null;
-      if(!b) return;
-      items.splice(+b.getAttribute('data-del'), 1);
-      save('お知らせを消しました');
-    };
-    $('unCancel').onclick = closeModal;
-    $('unGo').onclick = function(){
-      var tx = $('unText').value.replace(/\s+/g, ' ').trim();
-      if(!tx){ toast('お知らせを入れてください'); return; }
-      if(tx.length > 100){ toast('100文字までで入れてください'); return; }
-      items.unshift({ t: tx, d: todayStr() });
-      items = items.slice(0, 5);
-      $('unText').value = '';
-      save('送りました。ユーザーのカードに届きます');
-    };
-  }).catch(function(e){ toast(permMsg(e, 'お知らせを読めませんでした')); });
-}
 /* 💜 v129: ユーザーのカードのスマホの通知（DAYの前日のお知らせ・来場のお礼。送るのはサーバー＝functions/beauty.js）
    ・「通知を受け取る」を押した時だけ、通知の仕組み（firebase-messaging）を読み込み、push-sw.js（範囲は /checkin/ だけ）を登録する
    ・送り先は ckPush/{ユーザーのID} = { card: カードのトークン, union, t: 通知の宛先, on }（だれも読めない・サーバーだけが読む）
@@ -15235,48 +15232,179 @@ function ckLoungeClap(id){
     lgDraw(); toast('👏 できませんでした。電波の良いところで、もう一度押してください');
   });
 }
-// 名簿 → ユーザー →「💬 ラウンジの確認」（スタッフ）
+/* 💜 v139: 「💜 Beauty」タブ（ユーザー向けの管理）。使えるのはオーナー・ユニオン管理者・DAYスタッフ（準備中のあいだは確認メンバーだけ）
+   ・いま対応すること（ラウンジの確認待ち・出ているお知らせ）。確認待ちがあるとタブに赤丸
+   ・ユーザーへのお知らせ（ckNotice/{ユニオン}・新しい5件まで）・ラウンジの確認（確認待ち｜出ている｜出さなかった）
+   ・DAYスタッフを決める（オーナー・ユニオン管理者）
+   読み取りを減らす：開いた時に読むのはお知らせと確認待ちだけ。「出ている」「出さなかった」は押した時に読む。1分以内なら読み直さない */
+var gBtUnion = '', gBt = null, gBtSeg = 'wait';
+function ckBtUnions(){
+  if(!gUser || !ckBeautyOn()) return [];
+  return gUnions.filter(function(u){ return isCoreAdmin(u) || isDayStaff(u); });
+}
+function ckBtApply(){
+  var us = ckBtUnions(), t = document.querySelector('nav button[data-pane="pBeauty"]');
+  if(t) t.classList.toggle('hide', !us.length);
+  if(!us.length){
+    if($('pBeauty') && $('pBeauty').classList.contains('on')){ var k = document.querySelector('nav button[data-pane="pKiosk"]'); if(k) k.click(); }
+    return;
+  }
+  if(us.indexOf(gBtUnion) < 0){ gBtUnion = us.indexOf(gUnion) >= 0 ? gUnion : us[0]; gBt = null; gBtSeg = 'wait'; }
+  fillUnionSel($('btUnionSel'), gBtUnion, us);
+  $('btnDayStaff').classList.toggle('hide', !isCoreAdmin(gBtUnion));
+  if(!gBt) btLoad();   // 赤丸のために、確認待ちを読んでおく
+}
+$('btUnionSel').onchange = function(){
+  gBtUnion = $('btUnionSel').value; gBt = null; gBtSeg = 'wait';
+  $('btnDayStaff').classList.toggle('hide', !isCoreAdmin(gBtUnion));
+  btLoad();
+};
+$('btReload').onclick = function(){ btLoad(); };
+$('btnDayStaff').onclick = function(){ ckOwnerListOpen('dayStaff', gBtUnion); };
+function btRows(qs, st, un){
+  var a = [];
+  qs.forEach(function(d){ var x = d.data(); x.id = d.id; if(x.st === st && x.union === un) a.push(x); });
+  a.sort(function(x, y){ return st === 'wait' ? ckTsMs(x.at) - ckTsMs(y.at) : ckTsMs(y.okAt || y.at) - ckTsMs(x.okAt || x.at); });
+  return st === 'wait' ? a : a.slice(0, 30);
+}
+function btLoad(){
+  var un = gBtUnion;
+  if(!un) return;
+  var me = gBt = { un: un, at: Date.now(), items: null, wait: null, ok: null, ng: null };
+  btDraw();
+  Promise.all([
+    db.collection('ckNotice').doc(un).get(),
+    db.collection('ckLounge').where('union', '==', un).where('st', '==', 'wait').get()
+  ]).then(function(r){
+    if(gBt !== me) return;
+    me.items = ((r[0].exists && r[0].data().items) || []).slice(0, 5);
+    me.wait = btRows(r[1], 'wait', un);
+    btDraw();
+    if(gBtSeg !== 'wait') btSegLoad(gBtSeg);
+  }).catch(function(e){ if(gBt === me){ me.err = permMsg(e, '読めませんでした。ルールの反映をオーナーに確認してください'); btDraw(); } });
+}
+function btSegLoad(seg){
+  var me = gBt;
+  if(!me || me[seg]){ btDraw(); return; }
+  db.collection('ckLounge').where('union', '==', me.un).where('st', '==', seg).get().then(function(qs){
+    if(gBt !== me) return;
+    me[seg] = btRows(qs, seg, me.un);
+    btDraw();
+  }).catch(function(e){ toast(permMsg(e, 'ラウンジの投稿を読めませんでした')); });
+}
+function btDot(){
+  var d = document.querySelector('nav button[data-pane="pBeauty"] .nav-dot');
+  if(d) d.hidden = !(gBt && gBt.wait && gBt.wait.length);
+}
+// 名前・コース・文（効果をうたう言葉は黄色）と、押せるボタン
 function ckLgMark(t){
   var s = esc(t);
   CK_LG_WARN.forEach(function(w){ s = s.split(esc(w)).join('<mark class="lg-warn">' + esc(w) + '</mark>'); });
   return s;
 }
-function ckLoungeModal(){
-  var un = gRosterUnion;
-  if(!ckBeautyOn()) return;
-  var col = db.collection('ckLounge');
-  Promise.all([col.where('union', '==', un).where('st', '==', 'wait').get(), col.where('union', '==', un).where('st', '==', 'ok').get()]).then(function(r){
-    var wait = [], ok = [];
-    r[0].forEach(function(d){ var x = d.data(); x.id = d.id; if(x.st === 'wait' && x.union === un) wait.push(x); });
-    r[1].forEach(function(d){ var x = d.data(); x.id = d.id; if(x.st === 'ok' && x.union === un) ok.push(x); });
-    wait.sort(function(a, b){ return ckTsMs(a.at) - ckTsMs(b.at); });
-    ok.sort(function(a, b){ return ckTsMs(b.okAt) - ckTsMs(a.okAt); });
-    ok = ok.slice(0, 20);
-    var row = function(x, btns){
-      var warn = CK_LG_WARN.some(function(w){ return String(x.t || '').indexOf(w) >= 0; });
-      return '<div class="lg-q' + (warn ? ' warn' : '') + '"><div class="lg-qh"><b>' + esc(x.n || '') + '</b>' + (x.co ? ' <small>' + esc(x.co) + '</small>' : '') + '</div>'
-        + '<div class="lg-qt">' + ckLgMark(x.t || '') + '</div>'
-        + (warn ? '<p class="lg-qw">⚠️ 効果をうたう言葉が入っています。出さないでください</p>' : '')
-        + '<div class="lg-qb">' + btns + '</div></div>';
-    };
-    modal('<h2>💬 ラウンジの確認 — ' + esc(un) + hq('ユーザーのカードの「ラウンジ」に出す投稿を決めます。「出す」を押した投稿だけが、同じユニオンのユーザーに出ます。治る・やせる・効く など、効果をうたう言葉が入った投稿は出さないでください（黄色で目立たせています）。') + '</h2>'
-      + '<label>確認待ち（' + wait.length + '件）</label>'
-      + (wait.length ? wait.map(function(x){ return row(x, '<button data-lgok="' + esc(x.id) + '" class="primary">出す</button><button data-lgng="' + esc(x.id) + '">出さない</button>'); }).join('') : '<p style="font-size:12.5px;color:var(--sub);margin:4px 0;">ありません。</p>')
-      + '<label style="margin-top:14px;">出ている投稿（新しい20件）</label>'
-      + (ok.length ? ok.map(function(x){ return row(x, '<button data-lgng="' + esc(x.id) + '" class="danger ghost">取り下げる</button>'); }).join('') : '<p style="font-size:12.5px;color:var(--sub);margin:4px 0;">ありません。</p>')
-      + '<div class="btns"><button id="lgqClose">閉じる</button></div>', true);
-    $('lgqClose').onclick = closeModal;
-    Array.prototype.forEach.call(document.querySelectorAll('.modal [data-lgok],.modal [data-lgng]'), function(b){
-      b.onclick = function(){
-        var okk = b.hasAttribute('data-lgok'), id = b.getAttribute(okk ? 'data-lgok' : 'data-lgng');
-        var up = { st: okk ? 'ok' : 'ng', by: gUser.uid };
-        if(okk) up.okAt = FV.serverTimestamp();
-        b.disabled = true;
-        col.doc(id).update(up).then(function(){ toast(okk ? '出しました。ユーザーのカードには10分ほどで出ます' : '出さないにしました'); ckLoungeModal(); })
-          .catch(function(e){ b.disabled = false; toast(permMsg(e, '保存できませんでした。ルールの反映をオーナーに確認してください')); });
-      };
+function btLgRow(x, seg){
+  var warn = CK_LG_WARN.some(function(w){ return String(x.t || '').indexOf(w) >= 0; });
+  var btns = seg === 'wait' ? '<button data-lgok="' + esc(x.id) + '" class="primary">出す</button><button data-lgng="' + esc(x.id) + '">出さない</button>'
+    : seg === 'ok' ? '<button data-lgng="' + esc(x.id) + '" class="danger ghost">取り下げる</button>'
+    : '<button data-lgok="' + esc(x.id) + '">やっぱり出す</button>';
+  return '<div class="lg-q' + (warn ? ' warn' : '') + '"><div class="lg-qh"><b>' + esc(x.n || '') + '</b>' + (x.co ? ' <small>' + esc(x.co) + '</small>' : '') + '</div>'
+    + '<div class="lg-qt">' + ckLgMark(x.t || '') + '</div>'
+    + (warn && seg !== 'ng' ? '<p class="lg-qw">⚠️ 効果をうたう言葉が入っています。出さないでください</p>' : '')
+    + '<div class="lg-qb">' + btns + '</div></div>';
+}
+function btDraw(){
+  btDot();
+  var me = gBt, box = $('btBody');
+  if(!box) return;
+  if(!me || me.items === null){
+    box.innerHTML = me && me.err ? '<p class="bt-note">' + esc(me.err) + '</p>' : '<p style="color:var(--sub)">読み込み中…</p>';
+    return;
+  }
+  var keep = $('btNtText') ? $('btNtText').value : '';
+  var nW = me.wait.length, list = me[gBtSeg];
+  var empty = function(t){ return '<p style="font-size:12.5px;color:var(--sub);margin:6px 0 0;">' + t + '</p>'; };
+  var segs = [['wait', '確認待ち'], ['ok', '出ている'], ['ng', '出さなかった']];
+  box.innerHTML = '<div class="bt-wrap">'
+    + '<div class="bt-box"><h3>いま対応すること — ' + esc(me.un) + '</h3><div class="bt-todo">'
+    +   '<button type="button" data-go="btLg"' + (nW ? ' class="hot"' : '') + '><b>' + nW + '件</b>ラウンジの確認待ち</button>'
+    +   '<button type="button" data-go="btNt"><b>' + me.items.length + '件</b>出ているお知らせ（5件まで）</button>'
+    + '</div>' + (nW ? '' : '<p class="bt-note">確認待ちの投稿はありません。</p>') + '</div>'
+    + '<div class="bt-box" id="btNt"><h3>📣 ユーザーへのお知らせ' + hq('このユニオンのユーザーのアプリの「お知らせ」に出ます。新しい5件まで出ます。アプリには30分ほどで届きます。効果をうたう言葉（治る・やせる など）は書かないでください。') + '</h3>'
+    +   '<label for="btNtText">新しいお知らせ（100文字まで）</label>'
+    +   '<textarea id="btNtText" rows="3" maxlength="100" placeholder="例: 12月のDAYは、14時からの開始です。"></textarea>'
+    +   '<div class="btns" style="margin-top:8px;"><button class="primary" id="btNtGo">送る</button></div>'
+    +   '<label style="margin-top:6px;">今出ているお知らせ</label><div id="btNtList">'
+    +   (me.items.length ? me.items.map(function(n, i){
+          return '<div class="ap-row"><span style="flex:1;min-width:0;color:var(--ink);overflow-wrap:anywhere;">' + esc(ckMd(n.d)) + '　' + esc(n.t) + '</span>'
+            + '<button type="button" data-del="' + i + '" class="danger ghost" style="flex:0 0 auto;">消す</button></div>';
+        }).join('') : empty('まだありません。'))
+    +   '</div></div>'
+    + '<div class="bt-box" id="btLg"><h3>💬 ラウンジの確認' + hq('ユーザーのアプリの「ラウンジ」に出す投稿を決めます。「出す」を押した投稿だけが、同じユニオンのユーザーに出ます。治る・やせる・効く など、効果をうたう言葉が入った投稿は出さないでください（黄色で目立たせています）。') + '</h3>'
+    +   '<div class="rkseg" id="btLgSeg" role="tablist">' + segs.map(function(g){
+          var n = g[0] === 'wait' ? nW : me[g[0]] ? me[g[0]].length : null;
+          return '<button type="button" role="tab" data-seg="' + g[0] + '"' + (g[0] === gBtSeg ? ' class="on" aria-selected="true"' : ' aria-selected="false"') + '>' + g[1] + (n === null ? '' : '（' + n + '）') + '</button>';
+        }).join('') + '</div>'
+    +   '<div id="btLgList">' + (list ? (list.length ? list.map(function(x){ return btLgRow(x, gBtSeg); }).join('')
+          : empty(gBtSeg === 'wait' ? '確認待ちの投稿はありません。' : gBtSeg === 'ok' ? '出ている投稿はありません。' : '出さなかった投稿はありません。'))
+          + (gBtSeg !== 'wait' && list.length >= 30 ? '<p class="bt-note">新しい30件を出しています。</p>' : '')
+        : empty('読み込み中…')) + '</div>'
+    + '</div>'
+    + '<div class="bt-box"><h3>🗺 クエストの編集</h3><p class="bt-note" style="margin:0;">準備中です。ここから、ユーザーのプランのクエストを直せるようにします。</p></div>'
+    + '</div>';
+  $('btNtText').value = keep;
+  Array.prototype.forEach.call(box.querySelectorAll('[data-go]'), function(b){
+    b.onclick = function(){ var t = $(b.getAttribute('data-go')); if(t && t.scrollIntoView) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+  });
+  Array.prototype.forEach.call(box.querySelectorAll('#btLgSeg [data-seg]'), function(b){
+    b.onclick = function(){ gBtSeg = b.getAttribute('data-seg'); btSegLoad(gBtSeg); };
+  });
+  Array.prototype.forEach.call(box.querySelectorAll('#btLgList [data-lgok],#btLgList [data-lgng]'), function(b){
+    b.onclick = function(){ btLgSet(b); };
+  });
+  $('btNtList').onclick = function(e){
+    var b = e.target.closest ? e.target.closest('button[data-del]') : null;
+    if(!b) return;
+    var items = me.items.slice();
+    items.splice(+b.getAttribute('data-del'), 1);
+    btNtSave(me, items, 'お知らせを消しました');
+  };
+  $('btNtGo').onclick = function(){
+    var tx = $('btNtText').value.replace(/\s+/g, ' ').trim();
+    if(!tx){ toast('お知らせを入れてください'); return; }
+    if(tx.length > 100){ toast('100文字までで入れてください'); return; }
+    var items = [{ t: tx, d: todayStr() }].concat(me.items).slice(0, 5);
+    btNtSave(me, items, '送りました。ユーザーのアプリに届きます', true);
+  };
+}
+function btNtSave(me, items, msg, clear){
+  db.collection('ckNotice').doc(me.un).set({ items: items, by: gUser.uid, at: FV.serverTimestamp() }).then(function(){
+    me.items = items;
+    if(clear && $('btNtText')) $('btNtText').value = '';
+    if(gBt === me) btDraw();
+    toast(msg);
+  }).catch(function(e){ toast(permMsg(e, 'お知らせを保存できませんでした。ルールの反映をオーナーに確認してください')); });
+}
+function btLgSet(b){
+  var me = gBt, okk = b.hasAttribute('data-lgok'), id = b.getAttribute(okk ? 'data-lgok' : 'data-lgng');
+  var up = { st: okk ? 'ok' : 'ng', by: gUser.uid };
+  if(okk) up.okAt = FV.serverTimestamp();
+  b.disabled = true;
+  db.collection('ckLounge').doc(id).update(up).then(function(){
+    toast(okk ? '出しました。ユーザーのアプリには10分ほどで出ます' : '出さないにしました');
+    if(gBt !== me) return;
+    // 読み直さずに、手元の一覧を動かす
+    var post = null;
+    ['wait', 'ok', 'ng'].forEach(function(k){
+      if(!me[k]) return;
+      me[k] = me[k].filter(function(x){ if(x.id === id){ post = x; return false; } return true; });
     });
-  }).catch(function(e){ toast(permMsg(e, 'ラウンジの投稿を読めませんでした')); });
+    if(post){
+      post.st = up.st; post.by = up.by;
+      if(okk) post.okAt = Date.now();
+      if(me[up.st]) me[up.st].unshift(post);
+    }
+    btDraw();
+  }).catch(function(e){ b.disabled = false; toast(permMsg(e, '保存できませんでした。ルールの反映をオーナーに確認してください')); });
 }
 $('btnGuest').onclick = function(){
   if(!gRec){ toast('先に受付を開始してください'); return; }
