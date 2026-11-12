@@ -2606,10 +2606,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v141';
+var APP_VER = 'v142';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v142', d: '2026/11/12', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v141', d: '2026/11/12', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v140', d: '2026/11/12', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v139', d: '2026/11/11', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
@@ -13987,7 +13988,7 @@ function ckUserStage(uid, data, opt){
     + (pick ? ckPayPickHtml() : '')
     + (fee > 0 ? ckAddonBtnHtml(uid) : '')
     + (opt.applied ? '<p class="hit-meta">📱 本人の受付票が、そのままカードに変わります</p>' : '')
-    + (opt.isNew ? '<button id="stgUserQr"' + (opt.applied ? '' : ' class="primary"') + ' style="margin-top:8px;">📱 ' + (opt.applied ? '変わらない時：ユーザーQRを渡す' : 'ユーザーQRを渡す') + '</button> ' : '')
+    + (opt.isNew ? '<button id="stgUserQr"' + (opt.applied ? '' : ' class="primary"') + ' style="margin-top:8px;">📱 ' + (opt.applied ? '変わらない時：新規受付のQRを渡す' : '新規受付のQRを渡す') + '</button> ' : '')
     + '<button id="stgUserLog" style="margin-top:8px;"' + (opt.isNew ? '' : ' class="primary"') + '>📋 測定・体験・購入</button>',
     true);
   if(pick) ckBindPayPick(uid, fee);
@@ -14128,9 +14129,10 @@ function ckUserLogSave(uid, o){
 }
 // 本人のスマホで読んでもらう（カードのページが開く → ホーム画面に追加 → 次からそのQRで受付）
 function ckUserQrModal(name, token, onClose){
-  modal('<h2>📱 ユーザーQR</h2>'
+  // v142: お客さんにも見える画面なので「ユーザー」と出さない（見出しは「新規受付」）
+  modal('<h2>📱 新規受付</h2>'
     + '<p style="font-size:13.5px;">' + esc(name || '') + ' さん本人のスマホのカメラで読んでもらってください。'
-    + 'ユーザーのカードが開きます。<b>ホーム画面に追加</b>してもらうと、次からはそのカードのQRで受付できます。</p>'
+    + 'NAVIGATOR Beauty のアプリが開きます。<b>ホーム画面に追加</b>してもらうと、次からはそのカードのQRで受付できます。</p>'
     + '<div id="uqQr" style="display:flex;justify-content:center;background:#fff;padding:14px;border-radius:12px;"></div>'
     + '<div class="btns"><button id="uqClose">閉じる</button></div>', true);
   makeQr($('uqQr'), cardUrl(token), 220);

@@ -71,7 +71,7 @@ const pick = re => { const m = H.match(re); if (!m) throw new Error('not found '
       return JSON.stringify({k:k, a:a, stage:document.getElementById('stageBody').innerText, total:document.getElementById('total').textContent, sub:document.getElementById('totalSub').textContent, recent:document.getElementById('recent').innerText, ut:document.getElementById('unionTally').innerText, gt:document.getElementById('groupTally').innerText}); })()`));
     c('出席に入る（union は空・uUnion・紹介者・カードのトークン）', r1.k && r1.a.union === '' && r1.a.uUnion === 'ANTARES' && r1.a.referrer === 'ジェッ子 ちゃん' && r1.a.referrerNo === undefined && /^[0-9a-f]{32}$/.test(r1.a.cardToken), JSON.stringify(r1.a));
     c('料金はゲストと同じ（この練習イベントは¥1,000）', r1.a.fee === 1000 && r1.a.paid === true);
-    c('画面: 出席（ユーザー登録）・紹介者・QRを渡すボタン', /出席（ユーザー登録）/.test(r1.stage) && /紹介: ジェッ子 ちゃん/.test(r1.stage) && /ユーザーQRを渡す/.test(r1.stage), r1.stage);
+    c('画面: 出席（ユーザー登録）・紹介者・QRを渡すボタン', /出席（ユーザー登録）/.test(r1.stage) && /紹介: ジェッ子 ちゃん/.test(r1.stage) && /新規受付のQRを渡す/.test(r1.stage), r1.stage);
     c('人数に入り「うちユーザー 1」・履歴は「ユーザー」', r1.total === '1' && /うちユーザー 1/.test(r1.sub) && /ユーザー/.test(r1.recent));
     c('ユニオン別は「ユーザー」・系列別には入らない', /ユーザー/.test(r1.ut) && !/ユーザー/.test(r1.gt), r1.ut + ' / ' + r1.gt);
     const dbs = JSON.parse(await ev(`(function(){ var d=window.__ck.db(), k=${JSON.stringify(r1.k)}, t=${JSON.stringify(r1.a.cardToken)}, o={};
