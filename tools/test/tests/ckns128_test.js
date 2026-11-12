@@ -32,15 +32,24 @@ const OWNER = 'j2DPDAccCygHmR9i5K3bTvHnH0V2';
     await page.screenshot({ path: OUT + '/ckns128_card' + (dark ? '_d' : '') + '.png', fullPage: true });
     if (!dark) {
       const href = await ev(`document.getElementById('nwGcal').getAttribute('href')`);
-      c('Googleカレンダーのリンク（日付・名前）', href.indexOf('https://calendar.google.com/calendar/render?action=TEMPLATE') === 0 && href.indexOf('dates=' + day(12).replace(/-/g, '') + '/' + day(13).replace(/-/g, '')) > 0 && /12%E6%9C%88/.test(href), href);
+      // v141: 「13:00〜」を読み取って 13:00〜15:00（日本時間＝UTC 04:00〜06:00）
+      c('Googleカレンダーのリンク（日付と時間・名前）', href.indexOf('https://calendar.google.com/calendar/render?action=TEMPLATE') === 0 && href.indexOf('dates=' + day(12).replace(/-/g, '') + 'T040000Z/' + day(12).replace(/-/g, '') + 'T060000Z') > 0 && /12%E6%9C%88/.test(href), href);
       const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 5000 }).catch(() => null), ev(`document.getElementById('nwCal').click()`)]);
       let ics = '';
       if (dl) { const p = await dl.path(); ics = p ? fs.readFileSync(p, 'utf8') : ''; }
-      c('「カレンダーに追加」で .ics（終日・日付・名前・時間と場所）', dl && /\.ics$/.test(dl.suggestedFilename()) && /BEGIN:VEVENT/.test(ics) && ics.indexOf('DTSTART;VALUE=DATE:' + day(12).replace(/-/g, '')) >= 0 && /SUMMARY:12月のDAY/.test(ics) && /13:00〜 見本ホール/.test(ics), (dl && dl.suggestedFilename()) + ' ' + ics.slice(0, 300));
+      c('「カレンダーに追加」で .ics（v141: 13:00〜15:00・名前・時間と場所）', dl && /\.ics$/.test(dl.suggestedFilename()) && /BEGIN:VEVENT/.test(ics) && ics.indexOf('DTSTART:' + day(12).replace(/-/g, '') + 'T040000Z') >= 0 && ics.indexOf('DTEND:' + day(12).replace(/-/g, '') + 'T060000Z') >= 0 && /SUMMARY:12月のDAY/.test(ics) && /13:00〜 見本ホール/.test(ics), (dl && dl.suggestedFilename()) + ' ' + ics.slice(0, 300));
       await ev(`document.getElementById('nwA2hsHow').click()`); await wt(300);
+      // v141: ジェッ子ちゃんが1つずつ案内（この端末は Android 扱い → 「iPhone の人はこちら」で切りかえ）
       const m = await ev(`document.querySelector('.modal').innerText`);
-      c('やり方：iPhone と Android の手順', /共有ボタン/.test(m) && /ホーム画面に追加/.test(m) && /Android/.test(m) && /︙/.test(m), m);
+      c('やり方：ジェッ子ちゃんと絵で1つずつ（Android：︙）', /1 \/ 3/.test(m) && /︙/.test(m) && /iPhone の人はこちら/.test(m) && !!(await ev(`!!document.querySelector('.modal .a2-jet svg') && !!document.querySelector('.modal .a2-ill .a2-hl')`)), m);
+      await ev(`document.getElementById('a2Next').click()`); await wt(150);
+      c('「次へ」で「ホーム画面に追加」', /ホーム画面に追加/.test(await ev(`document.getElementById('a2Body').innerText`)));
+      await ev(`document.getElementById('a2Os').click()`); await wt(200);
+      const mi = await ev(`document.getElementById('a2Body').innerText`);
+      c('iPhone：新しい画面の「…」と前の画面の共有ボタンの両方', /「…」/.test(mi) && /四角から上に矢印/.test(mi) && (await ev(`document.querySelectorAll('.modal .a2-bar').length`)) === 2, mi);
       await page.screenshot({ path: OUT + '/ckns128_how.png' });
+      for (let k = 0; k < 3; k++) { await ev(`document.getElementById('a2Next').click()`); await wt(100); }
+      c('iPhone：共有 → ホーム画面に追加 → 「わかった！」', /追加/.test(await ev(`document.getElementById('a2Body').innerText`)) && (await ev(`document.getElementById('a2Next').textContent`)) === 'わかった！');
       await ev(`document.getElementById('nwHowOk').click()`);
       await ev(`document.getElementById('nwA2hsX').click()`); await wt(200);
       c('✕ で案内を閉じる', !(await ev(`!!document.getElementById('nwA2hs')`)) && (await ev(`localStorage.getItem('bci_a2hs_off')`)) === '1');
