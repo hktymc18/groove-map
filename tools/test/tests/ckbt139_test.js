@@ -31,7 +31,7 @@ const dotOn = `!document.querySelector('nav button[data-pane="pBeauty"] .nav-dot
     await page.click('nav button[data-pane="pBeauty"]'); await wt(600);
     const t = await ev(`document.getElementById('btBody').innerText`);
     c('いま対応すること：確認待ち2件・お知らせ1件', /いま対応すること — ANTARES/.test(t) && /2件\s*ラウンジの確認待ち/.test(t) && /1件\s*出ているお知らせ/.test(t), t);
-    c('お知らせ・ラウンジ・クエスト（準備中）の3つ', /ユーザーへのお知らせ/.test(t) && /14時からの開始/.test(t) && /ラウンジの確認/.test(t) && /クエストの編集/.test(t) && /準備中/.test(t));
+    c('お知らせ・ラウンジ・クエストの編集の3つ', /ユーザーへのお知らせ/.test(t) && /14時からの開始/.test(t) && /ラウンジの確認/.test(t) && /クエストの編集/.test(t));
     c('DAYスタッフ：「🌸 DAYスタッフ」を決めるボタンは出ない', await ev(`document.getElementById('btnDayStaff').classList.contains('hide')`));
     c('横にはみ出さない', (await ev('document.documentElement.scrollWidth')) === 390);
     await page.screenshot({ path: OUT + '/ckbt139_day' + (dark ? '_d' : '') + '.png', fullPage: true });

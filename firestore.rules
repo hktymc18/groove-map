@@ -1039,6 +1039,22 @@ service cloud.firestore {
         && request.resource.data.get('by', '') == request.auth.uid;
       allow delete: if ckLoungeStaff(un);
     }
+    // 💜 受付v140: ユーザーのプランのクエスト（ユニオンごと）。無いユニオンは、アプリに組み込みのクエスト
+    //   ckQuest/{ユニオン} = { co: { diet: [{ k, t, off }], yuragi: [...], inner: [...] }, by, at }（1コース10こまで）
+    //   アプリ（ログインなし）が1件ずつ読む。書けるのはオーナー・ユニオン管理者・DAYスタッフ（消す＝はじめの内容にもどす）
+    match /ckQuest/{un} {
+      allow get: if true;
+      allow list: if false;
+      allow create, update: if ckLoungeStaff(un)
+        && request.resource.data.keys().hasOnly(['co', 'by', 'at'])
+        && request.resource.data.get('by', '') == request.auth.uid
+        && request.resource.data.get('co', null) is map
+        && request.resource.data.co.keys().hasOnly(['diet', 'yuragi', 'inner'])
+        && request.resource.data.co.get('diet', []) is list && request.resource.data.co.get('diet', []).size() <= 10
+        && request.resource.data.co.get('yuragi', []) is list && request.resource.data.co.get('yuragi', []).size() <= 10
+        && request.resource.data.co.get('inner', []) is list && request.resource.data.co.get('inner', []).size() <= 10;
+      allow delete: if ckLoungeStaff(un);
+    }
     // 💜 受付v129: ユーザーのスマホの通知の送り先（ckPush/{ユーザーのID}）。カードの本人だけが書ける（だれも読めない＝サーバーだけ）
     match /ckPush/{uid} {
       allow get, list: if false;

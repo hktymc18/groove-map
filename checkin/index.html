@@ -1073,6 +1073,18 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .bt-note{font-size:12.5px;color:var(--sub);margin:6px 0 0;}
 #btNtText{width:100%;}
 #btLgSeg button{padding:7px 14px;}
+#btQeSeg button{padding:7px 14px;}
+.qe-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px 0;border-bottom:1px solid var(--line);}
+.qe-row input{flex:1 1 160px;min-width:0;}
+.qe-row button{padding:6px 10px;flex:none;}
+.qe-b{display:flex;gap:6px;margin-left:auto;flex:none;}
+.qe-off{min-width:4.2em;}
+.qe-n{width:1.4em;text-align:right;font-weight:700;color:var(--sub);flex:none;}
+.qe-row.off input{opacity:.5;text-decoration:line-through;}
+.qe-row small{flex-basis:100%;padding-left:2em;font-size:12px;}
+.qe-tag{color:var(--sub);}
+.qe-w{color:#b45309;font-weight:700;}
+.qe-row.warn input{border-color:#e0a800;background:#fff9db;color:#33290a;}
 #btUnionSel{flex:0 1 220px;min-width:9em;}
 #btNt .btns{margin-bottom:6px;}
 .lg-q.warn button:not(.primary){background:#fff;color:#33290a;border-color:#e0a800;}
@@ -2568,10 +2580,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v139';
+var APP_VER = 'v140';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v140', d: '2026/11/12', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v139', d: '2026/11/11', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v138', d: '2026/11/11', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v137', d: '2026/11/11', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
@@ -3929,7 +3942,26 @@ var MP_COURSES = [
   { k: 'inner', n: '体内（インナービューティ）編', sub: '食事・水分・睡眠を整える', c: '#3fb950',
     q: [['supp', 'いつものサプリメントをとった'], ['veg', '野菜を1皿食べた'], ['water3', '水を1.5L飲んだ'], ['walk2', '20分歩く'], ['early', '日付が変わる前に寝た']] }
 ];
-function mpCourse(k){ for(var i = 0; i < MP_COURSES.length; i++) if(MP_COURSES[i].k === k) return MP_COURSES[i]; return null; }
+// 💜 v140: ユニオンごとのクエスト（ckQuest/{ユニオン}・スタッフが「💜 Beauty」タブで編集）。しまったクエストは出さない。無ければ組み込み
+var gMpQuest = null;
+function ckQuestGet(un){
+  var key = 'bci_qst_' + (un || '');
+  try{ var o = JSON.parse(localStorage.getItem(key) || 'null'); if(o && Date.now() - o.at < 30 * 60000) return Promise.resolve(o.co || null); }catch(e){}
+  return ckAnonDb().collection('ckQuest').doc(un || '_').get().then(function(s){
+    var co = (s.exists && s.data().co) || null;
+    try{ localStorage.setItem(key, JSON.stringify({ at: Date.now(), co: co })); }catch(e){}
+    return co;
+  }).catch(function(){ return null; });
+}
+function mpCourse(k){
+  for(var i = 0; i < MP_COURSES.length; i++){
+    var b = MP_COURSES[i];
+    if(b.k !== k) continue;
+    var L = gMpQuest && gMpQuest[k], q = (L && L.length) ? L.filter(function(x){ return x && !x.off && x.k && x.t; }).map(function(x){ return [x.k, x.t]; }) : [];
+    return q.length ? { k: b.k, n: b.n, sub: b.sub, c: b.c, q: q } : b;
+  }
+  return null;
+}
 function mpYmd(d){ return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
 function mpAddDays(ymd, n){ var p = ymd.split('-'), d = new Date(+p[0], +p[1] - 1, +p[2] + n); return mpYmd(d); }
 // 連続日数（今日できていなければ昨日までの連続）・合計・レベル
@@ -3967,8 +3999,9 @@ function renderMyPlan(c, token){
   if(!el) return;
   if(!c || c.kind !== 'user' || c.active === false || c.toMember){ el.innerHTML = ''; return; }
   gMp = { token: token, c: c, plan: gMp && gMp.token === token ? gMp.plan : null };
-  db.collection('cards').doc(token).collection('plan').doc('me').get().then(function(s){
-    gMp.plan = s.exists ? s.data() : null;
+  var pl = db.collection('cards').doc(token).collection('plan').doc('me').get().then(function(s){ return s.exists ? s.data() : null; }, function(){ return gMp.plan; });
+  Promise.all([pl, ckQuestGet(c.union || '')]).then(function(r){
+    gMp.plan = r[0]; gMpQuest = r[1];
     mpDraw();
   }).catch(function(){ mpDraw(); });
 }
@@ -15274,11 +15307,14 @@ function btLoad(){
   btDraw();
   Promise.all([
     db.collection('ckNotice').doc(un).get(),
-    db.collection('ckLounge').where('union', '==', un).where('st', '==', 'wait').get()
+    db.collection('ckLounge').where('union', '==', un).where('st', '==', 'wait').get(),
+    db.collection('ckQuest').doc(un).get()
   ]).then(function(r){
     if(gBt !== me) return;
     me.items = ((r[0].exists && r[0].data().items) || []).slice(0, 5);
     me.wait = btRows(r[1], 'wait', un);
+    me.qd = (r[2].exists && r[2].data().co) || null;
+    if(!(gBtQe && gBtQe.un === un && gBtQe.dirty)) gBtQe = null;   // 直している途中なら、読み直しても消さない
     btDraw();
     if(gBtSeg !== 'wait') btSegLoad(gBtSeg);
   }).catch(function(e){ if(gBt === me){ me.err = permMsg(e, '読めませんでした。ルールの反映をオーナーに確認してください'); btDraw(); } });
@@ -15349,9 +15385,10 @@ function btDraw(){
           + (gBtSeg !== 'wait' && list.length >= 30 ? '<p class="bt-note">新しい30件を出しています。</p>' : '')
         : empty('読み込み中…')) + '</div>'
     + '</div>'
-    + '<div class="bt-box"><h3>🗺 クエストの編集</h3><p class="bt-note" style="margin:0;">準備中です。ここから、ユーザーのプランのクエストを直せるようにします。</p></div>'
+    + '<div class="bt-box" id="btQe"></div>'
     + '</div>';
   $('btNtText').value = keep;
+  btQeDraw();   // 💜 v140
   Array.prototype.forEach.call(box.querySelectorAll('[data-go]'), function(b){
     b.onclick = function(){ var t = $(b.getAttribute('data-go')); if(t && t.scrollIntoView) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
   });
@@ -15375,6 +15412,111 @@ function btDraw(){
     var items = [{ t: tx, d: todayStr() }].concat(me.items).slice(0, 5);
     btNtSave(me, items, '送りました。ユーザーのアプリに届きます', true);
   };
+}
+/* 💜 v140: クエストの編集（「💜 Beauty」タブ）。ユニオンごとに ckQuest/{ユニオン} = { co: { diet: [{ k, t, off }], … }, by, at }
+   ・文を直す・足す（1コース10こまで）・並べかえ・しまう（新しく選べず、選んでいた人の毎日のクエストからも消える）
+   ・キー（k）は変えないので、文を直してもそれまでのチェックの記録はそのまま
+   ・効果をうたう言葉（CK_LG_WARN）は保存できない。「はじめの内容にもどす」＝ドキュメントを消す（組み込みのクエストに戻る） */
+var BT_QE_SHORT = { diet: 'ダイエット', yuragi: 'ゆらぎ肌', inner: '体内' };
+var gBtQe = null;   // { un, co: { diet: [{k,t,off}] … }, seg, dirty }
+function btQeBase(k){ for(var i = 0; i < MP_COURSES.length; i++) if(MP_COURSES[i].k === k) return MP_COURSES[i]; return null; }
+function btQeInit(me){
+  var co = {};
+  MP_COURSES.forEach(function(b){
+    var L = me.qd && me.qd[b.k] && me.qd[b.k].length ? me.qd[b.k] : b.q.map(function(q){ return { k: q[0], t: q[1] }; });
+    co[b.k] = L.map(function(x){ var y = { k: x.k, t: x.t }; if(x.off) y.off = true; return y; });
+  });
+  gBtQe = { un: me.un, co: co, seg: (gBtQe && gBtQe.un === me.un && gBtQe.seg) || 'diet', dirty: false };
+}
+function btQeWarn(t){ var w = ''; CK_LG_WARN.some(function(x){ if(String(t || '').indexOf(x) >= 0){ w = x; return true; } return false; }); return w; }
+function btQeDraw(){
+  var box = $('btQe'), me = gBt;
+  if(!box || !me || me.items === null) return;
+  if(!gBtQe || gBtQe.un !== me.un) btQeInit(me);
+  var Q = gBtQe, L = Q.co[Q.seg], vis = L.filter(function(x){ return !x.off; }).length;
+  box.innerHTML = '<h3>🗺 クエストの編集' + hq('このユニオンのユーザーのアプリの「プラン」で選ぶ、毎日のクエストです。文を直す・足す・並べかえ・しまうができます。文を直しても、それまでのチェックの記録はそのまま残ります。「しまう」と新しく選べなくなり、選んでいた人の毎日のクエストからも消えます。効果をうたう言葉（治る・やせる・効く など）は使えません。') + '</h3>'
+    + '<div class="rkseg" id="btQeSeg" role="tablist">' + MP_COURSES.map(function(b){
+        return '<button type="button" role="tab" data-qco="' + b.k + '"' + (b.k === Q.seg ? ' class="on" aria-selected="true"' : ' aria-selected="false"') + '>' + esc(BT_QE_SHORT[b.k] || b.n) + '</button>';
+      }).join('') + '</div>'
+    + '<div id="btQeList">' + L.map(function(x, i){
+        var w = btQeWarn(x.t);
+        return '<div class="qe-row' + (x.off ? ' off' : '') + (w ? ' warn' : '') + '" data-i="' + i + '">'
+          + '<span class="qe-n">' + (i + 1) + '</span>'
+          + '<input type="text" maxlength="30" data-qt="' + i + '" value="' + esc(x.t) + '" aria-label="クエスト' + (i + 1) + 'の文">'
+          + '<span class="qe-b"><button type="button" data-qup="' + i + '" aria-label="上へ"' + (i ? '' : ' disabled') + '>↑</button>'
+          + '<button type="button" data-qdn="' + i + '" aria-label="下へ"' + (i < L.length - 1 ? '' : ' disabled') + '>↓</button>'
+          + '<button type="button" data-qoff="' + i + '" class="qe-off">' + (x.off ? '出す' : 'しまう') + '</button></span>'
+          + (x.off ? '<small class="qe-tag">しまっています（ユーザーには出ません）</small>' : '')
+          + '<small class="qe-w"' + (w ? '' : ' hidden') + '>⚠️ 効果をうたう言葉（' + esc(w) + '）は使えません</small>'
+          + '</div>';
+      }).join('') + '</div>'
+    + (L.length < 10 ? '<button type="button" id="btQeAdd" class="ghost" style="margin-top:8px;">＋ クエストを足す</button>' : '')
+    + '<p class="bt-note">ユーザーに出ているのは ' + vis + ' こ（この中から1〜5こ選びます）。アプリには30分ほどで届きます。</p>'
+    + '<div class="btns" style="justify-content:flex-start;flex-wrap:wrap;margin-top:10px;">'
+    + (me.qd ? '<button type="button" id="btQeReset" class="ghost">はじめの内容にもどす</button>' : '')
+    + '<span style="flex:1"></span><button type="button" class="primary" id="btQeSave"' + (Q.dirty ? '' : ' disabled') + '>保存</button></div>';
+  var mark = function(){ Q.dirty = true; $('btQeSave').disabled = false; };
+  $('btQeSeg').onclick = function(e){ var b = e.target.closest ? e.target.closest('[data-qco]') : null; if(b){ Q.seg = b.getAttribute('data-qco'); btQeDraw(); } };
+  Array.prototype.forEach.call(box.querySelectorAll('[data-qt]'), function(inp){
+    inp.oninput = function(){
+      var i = +inp.getAttribute('data-qt'); L[i].t = inp.value; mark();
+      var w = btQeWarn(inp.value), row = inp.parentNode, m = row.querySelector('.qe-w');
+      row.classList.toggle('warn', !!w); m.hidden = !w; if(w) m.textContent = '⚠️ 効果をうたう言葉（' + w + '）は使えません';
+    };
+  });
+  $('btQeList').onclick = function(e){
+    var b = e.target.closest ? e.target.closest('button') : null;
+    if(!b) return;
+    var i;
+    if(b.hasAttribute('data-qup')){ i = +b.getAttribute('data-qup'); if(i > 0){ L.splice(i - 1, 0, L.splice(i, 1)[0]); } }
+    else if(b.hasAttribute('data-qdn')){ i = +b.getAttribute('data-qdn'); if(i < L.length - 1){ L.splice(i + 1, 0, L.splice(i, 1)[0]); } }
+    else if(b.hasAttribute('data-qoff')){
+      i = +b.getAttribute('data-qoff');
+      if(!L[i].off && L.filter(function(x){ return !x.off; }).length <= 1){ toast('出ているクエストを1つは残してください'); return; }
+      if(L[i].off) delete L[i].off; else L[i].off = true;
+    } else return;
+    mark(); btQeDraw();
+  };
+  if($('btQeAdd')) $('btQeAdd').onclick = function(){
+    var k;
+    do { k = 'q' + Math.random().toString(36).slice(2, 8); } while(L.some(function(x){ return x.k === k; }) || k.length < 4);
+    L.push({ k: k, t: '' });
+    mark(); btQeDraw();
+    var ins = box.querySelectorAll('[data-qt]'); if(ins.length) ins[ins.length - 1].focus();
+  };
+  $('btQeSave').onclick = function(){ btQeSave(me); };
+  if($('btQeReset')) $('btQeReset').onclick = function(){
+    if(!window.confirm('このユニオンのクエストを、はじめの内容（3つのコースすべて）にもどしますか？\nそれまでのチェックの記録は残ります。')) return;
+    db.collection('ckQuest').doc(me.un).delete().then(function(){
+      me.qd = null; gBtQe = null;
+      try{ localStorage.removeItem('bci_qst_' + me.un); }catch(e){}
+      btQeDraw(); toast('はじめの内容にもどしました。ユーザーのアプリには30分ほどで届きます');
+    }).catch(function(e){ toast(permMsg(e, 'もどせませんでした')); });
+  };
+}
+function btQeSave(me){
+  var Q = gBtQe, co = {}, err = '', errCo = '';
+  MP_COURSES.forEach(function(b){
+    if(err) return;
+    var L = Q.co[b.k].map(function(x){ var y = { k: x.k, t: String(x.t || '').replace(/\s+/g, ' ').trim() }; if(x.off) y.off = true; return y; });
+    var name = BT_QE_SHORT[b.k] || b.n;
+    L.forEach(function(x, i){
+      if(err) return;
+      if(!x.t) err = name + 'の' + (i + 1) + 'つ目が空です（いらない時は「しまう」）';
+      else if(x.t.length > 30) err = name + 'の' + (i + 1) + 'つ目は30文字までにしてください';
+      else if(btQeWarn(x.t)) err = name + 'の' + (i + 1) + 'つ目に、効果をうたう言葉（' + btQeWarn(x.t) + '）があります';
+    });
+    if(!err && !L.some(function(x){ return !x.off; })) err = name + 'に、出ているクエストが1つもありません';
+    if(err) errCo = b.k;
+    co[b.k] = L;
+  });
+  if(err){ if(errCo && errCo !== Q.seg){ Q.seg = errCo; btQeDraw(); } toast(err); return; }
+  $('btQeSave').disabled = true;
+  db.collection('ckQuest').doc(me.un).set({ co: co, by: gUser.uid, at: FV.serverTimestamp() }).then(function(){
+    me.qd = co; Q.co = JSON.parse(JSON.stringify(co)); Q.dirty = false;
+    try{ localStorage.setItem('bci_qst_' + me.un, JSON.stringify({ at: Date.now(), co: co })); }catch(e){}   // この端末のアプリにはすぐ
+    btQeDraw(); toast('クエストを保存しました。ユーザーのアプリには30分ほどで届きます');
+  }).catch(function(e){ $('btQeSave').disabled = false; toast(permMsg(e, 'クエストを保存できませんでした')); });
 }
 function btNtSave(me, items, msg, clear){
   db.collection('ckNotice').doc(me.un).set({ items: items, by: gUser.uid, at: FV.serverTimestamp() }).then(function(){
