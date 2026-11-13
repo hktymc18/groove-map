@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v876';
+var APP_JS_VERSION = 'v877';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3820,7 +3820,7 @@ function _admCkLoad() {
   })).then(function() { if (document.getElementById('adminPanel').classList.contains('open')) renderAdminList(); });
 }
 function _admCkLine(u) {
-  if (isOwnerUid(u.id)) return '';
+  if (isOwnerUid(u.id) && !_ckIsOwner()) return ''; // v877: オーナーの行はオーナーだけが紐付けられる（受付で無効にしても、オーナーはNAVIGATORが止まらない）
   var r = u.ckNo ? _admCk[u.ckNo] : undefined, t;
   if (!u.ckNo) t = '🎫 受付の名簿と紐付ける';
   else t = '🎫 受付 ' + evEsc(u.ckNo) + (r ? ' ' + evEsc(r.name || '') : '')
@@ -3840,7 +3840,7 @@ function _admCkUnion(unions, u) {
   return sel || (unions[0] ? unions[0].id : '');
 }
 function admCkOpen(uid) {
-  var u = _adminFindUser(uid); if (!u || isOwnerUid(uid)) return;
+  var u = _adminFindUser(uid); if (!u || (isOwnerUid(uid) && !_ckIsOwner())) return;
   if (!db) { toast('オンライン時のみ使えます'); return; }
   db.collection('checkinUnions').get().then(function(qs) {
     var unions = [];
@@ -3870,7 +3870,7 @@ function _admCkRender() {
   o.innerHTML = '<div class="adm-ck-box">'
     + '<div class="adm-ck-hd"><b>受付の名簿と紐付け</b><span onclick="admCkClose()">閉じる</span></div>'
     + '<div class="adm-ck-who">' + evEsc(u.name || '(名前未設定)') + (u.email ? '<i>' + evEsc(u.email) + '</i>' : '') + '</div>'
-    + '<div class="adm-ck-note">受付で<b>無効</b>にすると、この人はNAVIGATORも使えなくなります（有効に戻すと、次に開いた時から使えます）。</div>'
+    + '<div class="adm-ck-note">' + (isOwnerUid(u.id) ? 'オーナーは、受付で<b>無効</b>になってもNAVIGATORは止まりません。紐付けると「🃏 カードコレクション」が使えます。' : '受付で<b>無効</b>にすると、この人はNAVIGATORも使えなくなります（有効に戻すと、次に開いた時から使えます）。') + '</div>'
     + (P.unions.length > 1 ? '<select class="adm-ck-in" onchange="_admCkP.sel=this.value;_admCkRoster()">' + P.unions.map(function(x) { return '<option value="' + evEsc(x.id) + '"' + (x.id === P.sel ? ' selected' : '') + '>' + evEsc(x.id) + (x.area ? '（' + evEsc(x.area) + '）' : '') + '</option>'; }).join('') + '</select>' : '<div class="adm-ck-un">' + evEsc(P.sel) + '</div>')
     + '<input class="adm-ck-in" id="admCkQ" type="search" placeholder="名前・番号で検索" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" oninput="_imeInput(event,function(){_admCkP.q=document.getElementById(\'admCkQ\').value;_admCkList();})" data-ime="1">'
     + '<div class="adm-ck-list" id="admCkList"><div class="ev-empty">読み込み中...</div></div>'
@@ -3902,16 +3902,22 @@ function admCkPick(no) {
     var dup = _adminUsers.filter(function(x) { return x.id !== u.id && x.ckNo === no; })[0];
     if (!confirm((r ? (r.name || '') + '（' + no + '）' : no) + ' と紐付けますか？'
       + (dup ? '\n※この番号は ' + (dup.name || dup.email || '') + ' さんのアカウントにも紐付いています' : '')
-      + (r && r.active === false ? '\n※受付で無効になっているため、この人はNAVIGATORを使えなくなります' : ''))) return;
+      + (r && r.active === false && !isOwnerUid(u.id) ? '\n※受付で無効になっているため、この人はNAVIGATORを使えなくなります' : ''))) return;
   } else if (!confirm('受付の名簿との紐付けを外しますか？\n（受付で無効にしても、NAVIGATORは使えるままになります）')) return;
   u.ckNo = no;
   if (r) _admCk[no] = r;
   var ckD = { ckNo: no, ckSetBy: currentUser.uid, ckSetAt: new Date().toISOString() };
   if (r && r.referrer && !u.referrer) { ckD.referrer = String(r.referrer).trim(); ckD.referrerFrom = 'ck'; u.referrer = ckD.referrer; } // v827: 名簿の紹介者
+  if (currentUser && u.id === currentUser.uid) _ckSelfRelink(no); // v877: 自分のアカウント（オーナー）なら、カードコレクションをその場で使えるように
   fsSet('users/' + u.id, ckD)
     .then(function() { toast(no ? '受付の名簿と紐付けました ✓' : '紐付けを外しました'); })
     .catch(function() { toast('保存に失敗しました'); });
   admCkClose(); renderAdminList();
+}
+function _ckSelfRelink(no) {
+  currentUser.ckNo = no;
+  try { if (_olCo.selfUnsub) { _olCo.selfUnsub(); _olCo.selfUnsub = null; } _olCo.self = []; if (no) _olCoSelf(); } catch (e) {}
+  try { if (currentView === 'menu') renderMenuHub(); else if (currentView === 'home' && isPCMode()) renderHome(); } catch (e) {}
 }
 function adminToggleStatus(uid) {
   if (isOwnerUid(uid)) { toast('オーナーは変更できません'); return; }
@@ -4590,7 +4596,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v876';
+  var DATA_VERSION = 'v877';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6702,6 +6708,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v877', d:'2026-11-13', items:['🃏 カードコレクションを、HOMEのメニューにいつも出すようにしました。受付の名簿とまだ紐付いていない人は、押すと紐付け方の案内が出ます', 'オーナーも、アカウント管理の自分の行から受付の名簿と紐付けられるようになりました'] },
   { v:'v876', d:'2026-11-13', items:['🛠 細かい修正をしました'] },
   { v:'v875', d:'2026-11-10', items:['🛠 細かい修正をしました'] },
   { v:'v874', d:'2026-11-10', items:['新しい機能の準備をしました（今は画面の変化はありません）'] },
@@ -8923,7 +8930,7 @@ function _phHtml(o) { // o: { li, pct, streak, thisW, dwTxt, deltaCls, ftue, com
           + (x.k !== 'leader' ? '<span class="bt" onclick="event.stopPropagation();ckRecord(\'' + m.id + '\',\'' + x.k + '\')">' + (x.k === 'trainee' ? '研修' : 'OL') + '</span>' : '') + '<span class="bt g" onclick="event.stopPropagation();phToDp(\'' + m.id + '\')">ToDoへ</span></div>'; }).join('')
       + (ppl.length > 6 ? '<div class="ph-mr lk" onclick="window._phAll=!window._phAll;renderHome()">' + (all ? '少なく表示' : 'すべて表示（' + ppl.length + '人）') + '</div>' : '')
       : '<div class="ph-em">今フォローが必要な人はいません 👍</div>')
-    + (currentUser && currentUser.ckNo ? '<div class="ph-h" style="margin-top:14px" onclick="cardColOpen()">🃏 カードコレクション<em>' + (cardColNew().length ? '新着' + cardColNew().length : '') + '</em><span>ひらく ›</span></div>' : '') // v801
+    + (currentUser ? '<div class="ph-h" style="margin-top:14px" onclick="cardColOpen()">🃏 カードコレクション<em>' + (currentUser.ckNo && cardColNew().length ? '新着' + cardColNew().length : '') + '</em><span>ひらく ›</span></div>' : '') // v801／v877: 紐付いていない人にも出す（押すと案内）
     + '<div class="ph-h" style="margin-top:14px" onclick="reapOpen()">🔄 再アプローチ<em>' + due + '人</em><span>ひらく ›</span></div><div class="ph-em" style="text-align:left">' + (due ? '声をかける時期が来た人がいます' : '時期が来た人はまだいません') + '</div>'
     + '</div>';
   c1 = '<div>' + c1 + (function() { var b = ''; try { b = birthdayHtml(); } catch (eB) {} return b; })() + '</div>'; // v785: 誕生日カード（今日の予定・ToDoの下。気になる人の下だと画面の外になるため）
@@ -16009,10 +16016,25 @@ function cardColOpen(get) {
   var ov = document.createElement('div');
   ov.id = 'cardColOv';
   ov.style.cssText = 'position:fixed;inset:0;z-index:10040;display:flex;flex-direction:column;background:var(--bg,#0b1118)';
+  var linked = !!(currentUser && currentUser.ckNo);
   ov.innerHTML = '<div style="display:flex;align-items:center;gap:8px;padding:calc(env(safe-area-inset-top,0px) + 8px) 12px 8px;border-bottom:1px solid var(--border,#223)">'
     + '<b style="flex:1;font-size:16px">🃏 カードコレクション</b>'
     + '<span onclick="cardColClose()" style="padding:6px 10px;font-size:20px;cursor:pointer;color:var(--text-mid)" title="閉じる">✕</span></div>'
-    + '<iframe src="checkin/index.html#col' + (get ? '&get=1' : '') + '" title="カードコレクション" style="flex:1;width:100%;border:0;background:transparent" allow="camera"></iframe>';
+    + (linked ? '<iframe src="checkin/index.html#col' + (get ? '&get=1' : '') + '" title="カードコレクション" style="flex:1;width:100%;border:0;background:transparent" allow="camera"></iframe>'
+      : _cardColGuide()); // v877: まだ受付の名簿と紐付いていない人には案内
+  document.body.appendChild(ov);
+}
+// v877: 紐付いていない人への案内（オーナーは自分でアカウント管理から紐付けられる）
+function _cardColGuide() {
+  var own = _ckIsOwner();
+  return '<div id="cardColGuide" style="flex:1;overflow:auto;padding:28px 20px;text-align:center;color:var(--text)">'
+    + '<div style="font-size:48px;margin-bottom:8px">🃏</div>'
+    + '<p style="font-size:15px;line-height:1.7;margin:0 0 10px">特別なカードのAさんのアウトラインを受けて、<br>OLチェックアウトするとカードが集まります。</p>'
+    + '<p style="font-size:14px;line-height:1.7;margin:0 0 18px;color:var(--text-mid)">このアカウントは、まだ<b>受付の名簿と紐付いていません</b>。<br>'
+    + (own ? '「アカウント管理」で自分の行の「🎫 受付の名簿と紐付ける」から紐付けてください。' : 'ユニオンの管理者に「受付の名簿と紐付けてください」とお願いしてください。')
+    + '<br><small>紐付けると、これまでに受けたOLのカードと履歴も出ます。</small></p>'
+    + (own && typeof openAdminPanel === 'function' ? '<button class="adm-btn" style="padding:10px 18px;font-size:14px" onclick="cardColClose();openAdminPanel()">アカウント管理を開く</button>' : '')
+    + '</div>';
   document.body.appendChild(ov);
 }
 function cardColClose() {
@@ -23064,7 +23086,7 @@ function renderMenuHub() {
   var S = sb(icn('sun') + ' 今日', 'switchView(\'home\')')
     + sb(icn('target') + ' 理想MAP', 'switchView(\'ideal\')') + sb(icn('clipboard') + ' OL', 'switchView(\'ol\')')
     + sb(icn('refresh') + ' 再アプローチ', 'reapOpen()', (_reapproach && _reapproach.length) || '');
-  if (currentUser && currentUser.ckNo) S += sb('🃏 カードコレクション', 'cardColOpen()', cardColNew().length || ''); // v801
+  if (currentUser) S += sb('🃏 カードコレクション', 'cardColOpen()', (currentUser.ckNo && cardColNew().length) || ''); // v801／v877: 紐付いていない人にも出す（押すと案内）
   // v684: ユニオン予定は「設定 › カレンダー」の中へ
   if (sharedOwners && sharedOwners.length) S += sb(icn('share2') + ' 共有MAP', 'openSharedDashboard()', sharedOwners.length);
   if (typeof _fitOwner === 'function' && _fitOwner()) S += sb(icn('dumbbell') + ' トレーニング', 'fitOpen()');
