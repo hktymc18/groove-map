@@ -170,6 +170,11 @@ main{max-width:1080px;margin:0 auto;padding:18px 16px 70px;}
 .kb-mode label{display:flex;align-items:flex-start;gap:8px;margin:0;font-weight:400;font-size:13px;line-height:1.45;padding:8px 10px;border:1px solid var(--line,#ddd);border-radius:10px;}
 .kb-mode label small{display:block;color:var(--sub);font-size:11.5px;}
 .kb-mode input{width:auto;margin-top:3px;}
+.kb-zoom{display:flex;flex-direction:column;gap:6px;}
+.kb-zoom label{display:flex;align-items:center;gap:8px;margin:0;font-weight:400;font-size:13px;}
+.kb-zoom input[type=range]{flex:1;min-width:0;}
+.kb-zoom b{width:3.2em;text-align:right;font-size:12px;color:var(--sub);font-weight:600;}
+.kb-zoom button{align-self:flex-start;}
 .kb-prevcap{text-align:center;font-size:11px;color:#bdb8d6;background:#16151c;margin:0 -16px 12px;padding:0 0 10px;}
 .kb-sec{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:10px;}
 .kb-sec h4{margin:0 0 8px;font-size:13.5px;}
@@ -952,14 +957,15 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
   background:var(--sk-holo,radial-gradient(90% 55% at 50% 50%,rgba(122,58,214,.6),rgba(52,18,96,.42) 50%,transparent 80%)) var(--bx,50%) var(--by,42%)/auto 125% no-repeat,var(--sk-bg,#3c3554);
   box-shadow:inset 0 0 0 1px rgba(0,0,0,.35),inset 0 0 34px 6px rgba(20,10,40,.35);}
 .membercard.skin-x .mc-art::after{background:linear-gradient(180deg,rgba(10,5,25,.5),rgba(10,5,25,.1) 20%,transparent 32%,transparent 60%,rgba(10,5,25,.35));}
-.membercard.skin-x .mc-pop::after{background:var(--sk-art,none) 50% 100%/auto 100% no-repeat;}
-.membercard.skin-x .mc-pop::before{background:var(--sk-art,none) 50% 100%/auto 100% no-repeat;transform-origin:50% 100%;
+/* v150: イラストの大きさ（--sk-zoom）・位置（--sk-ox / --sk-oy）は工房で人ごとに */
+.membercard.skin-x .mc-pop::after{background:var(--sk-art,none) var(--sk-ox,50%) var(--sk-oy,100%)/auto calc(100% * var(--sk-zoom,1)) no-repeat;}
+.membercard.skin-x .mc-pop::before{background:var(--sk-art,none) var(--sk-ox,50%) var(--sk-oy,100%)/auto calc(100% * var(--sk-zoom,1)) no-repeat;transform-origin:50% 100%;
   filter:brightness(var(--sk-bright,1)) contrast(1.12) drop-shadow(0 0 3px var(--sk-glow-a)) drop-shadow(0 0 12px var(--sk-glow-b));
   animation:reaperSway 7s ease-in-out infinite alternate,skGlow 3.2s ease-in-out infinite alternate;}
 .mc-tilt.on .membercard.skin-x .mc-pop::before{animation:skGlow 3.2s ease-in-out infinite alternate;}
 /* v149: 「絵の中」＝イラストは枠の内側（飛び出さない）。ふつうの1枚絵向け。傾けると絵が少しずれる（--bx/--by） */
 .membercard.skin-x.skin-flat .mc-pop{display:none;}
-.membercard.skin-x.skin-flat .mc-art{background:var(--sk-art,none) var(--bx,50%) var(--by,42%)/112% auto no-repeat,var(--sk-bg,#3c3554);filter:brightness(var(--sk-bright,1));}
+.membercard.skin-x.skin-flat .mc-art{background:var(--sk-art,none) calc(var(--sk-ox,50%) + var(--bx,50%) - 50%) calc(var(--sk-oy,42%) + var(--by,42%) - 42%)/calc(112% * var(--sk-zoom,1)) auto no-repeat,var(--sk-bg,#3c3554);filter:brightness(var(--sk-bright,1));}
 @keyframes skGlow{
   from{filter:brightness(calc(var(--sk-bright,1) * .95)) contrast(1.12) drop-shadow(0 0 2px var(--sk-glow-b)) drop-shadow(0 0 8px var(--sk-glow-c));}
   to{filter:brightness(calc(var(--sk-bright,1) * 1.08)) contrast(1.12) drop-shadow(0 0 4px var(--sk-glow-a)) drop-shadow(0 0 18px var(--sk-glow-b));}
@@ -2697,10 +2703,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v149';
+var APP_VER = 'v150';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v150', d: '2026/11/14', items: ['🛠 細かい修正をしました'] },
   { v: 'v149', d: '2026/11/14', items: ['🛠 細かい修正をしました'] },
   { v: 'v148', d: '2026/11/14', items: ['🛠 細かい修正をしました'] },
   { v: 'v147', d: '2026/11/13', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
@@ -3729,7 +3736,7 @@ function ckHexRgb(h){ var m = /^#?([0-9a-f]{6})$/i.exec(h || ''); if(!m) return 
 function ckRgba(c, a){ return 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + a + ')'; }
 function ckLum(c){ return (0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]) / 255; }
 function ckMix(c, w, t){ return [0, 1, 2].map(function(i){ return Math.round(c[i] + (w[i] - c[i]) * t); }); }
-var CK_SKIN_VARS = ['--sk-frame', '--sk-art', '--sk-holo', '--sk-bright', '--sk-glow-a', '--sk-glow-b', '--sk-glow-c', '--sk-band', '--sk-band-0', '--sk-bandink', '--sk-tag', '--sk-tagtx', '--sk-bg'];
+var CK_SKIN_VARS = ['--sk-frame', '--sk-art', '--sk-holo', '--sk-bright', '--sk-zoom', '--sk-ox', '--sk-oy', '--sk-glow-a', '--sk-glow-b', '--sk-glow-c', '--sk-band', '--sk-band-0', '--sk-bandink', '--sk-tag', '--sk-tagtx', '--sk-bg'];
 function ckSkinClear(card){
   card.classList.remove('skin-x'); card.classList.remove('skin-flat');
   CK_SKIN_VARS.forEach(function(k){ card.style.removeProperty(k); });
@@ -3741,6 +3748,10 @@ function ckSkinPaint(card, def, img){
   var url = function(k, v){ if(v) st.setProperty(k, 'url("' + v + '")'); };
   url('--sk-frame', img.frame); url('--sk-art', img.art); url('--sk-holo', img.holo);
   st.setProperty('--sk-bright', String(def && def.bright > 0 ? def.bright : 1));
+  // v150: イラストの大きさ・位置（無い時は CSS の既定＝今までどおり）
+  if(def && def.zoom > 0) st.setProperty('--sk-zoom', String(def.zoom));
+  if(def && def.ox != null && def.ox !== '') st.setProperty('--sk-ox', (+def.ox) + '%');
+  if(def && def.oy != null && def.oy !== '') st.setProperty('--sk-oy', (+def.oy) + '%');
   var g = ckHexRgb(col.glow) || [170, 100, 255], b = ckHexRgb(col.band) || [217, 181, 106], t = ckHexRgb(col.tag) || [192, 57, 43];
   st.setProperty('--sk-glow-a', ckRgba(ckMix(g, [255, 255, 255], .25), .95));
   st.setProperty('--sk-glow-b', ckRgba(g, .85));
@@ -3766,7 +3777,8 @@ function ckSkinUse(card, id){
     if(!s.exists){ try{ localStorage.removeItem('bci_skd_' + id); }catch(e){} if(cur() && !/^x_/.test(id)) ckSkinClear(card); return; }
     var def = s.data();
     ckSkinDefCache(id, def);
-    if(cached && JSON.stringify(cached.v || {}) === JSON.stringify(def.v || {}) && JSON.stringify(cached.colors || {}) === JSON.stringify(def.colors || {}) && cached.bright === def.bright && cached.orb === def.orb && (cached.pop === false) === (def.pop === false) && card.classList.contains('skin-x')) return;
+    if(cached && JSON.stringify(cached.v || {}) === JSON.stringify(def.v || {}) && JSON.stringify(cached.colors || {}) === JSON.stringify(def.colors || {}) && cached.bright === def.bright && cached.orb === def.orb && (cached.pop === false) === (def.pop === false)
+      && cached.zoom === def.zoom && cached.ox === def.ox && cached.oy === def.oy && card.classList.contains('skin-x')) return;
     return ckSkinImgs(id, def).then(function(img){ if(cur() && img.frame) ckSkinPaint(card, def, img); });
   }).catch(function(){});
 }
@@ -7709,6 +7721,11 @@ function koboEdit(def0, presetMem){
       + '<button id="kbAuto" style="font-size:12px;padding:4px 10px;">✨ 画像から自動</button></div>'
       + '<div class="kb-cols" style="margin-top:8px;"><label style="margin:0;font-weight:400;">イラストの明るさ <input type="range" id="kbBright" min="0.6" max="2.4" step="0.1" value="' + (def.bright || 1) + '" style="vertical-align:middle;width:120px;"></label>'
       + '<label style="margin:0;font-weight:400;">HPの横のマーク <input type="text" id="kbOrb" maxlength="2" value="' + esc(def.orb || '✦') + '" style="width:3em;text-align:center;"></label></div></div>'
+      + '<div class="kb-sec"><h4>🔍 イラストの大きさ・位置</h4><div class="kb-zoom">'
+      + '<label>大きさ <input type="range" id="kbZoom" min="0.5" max="2.5" step="0.05" value="' + (def.zoom || 1) + '"><b id="kbZoomV">' + Math.round((def.zoom || 1) * 100) + '%</b></label>'
+      + '<label>左右 <input type="range" id="kbOx" min="0" max="100" step="1" value="' + (def.ox != null ? def.ox : 50) + '"' + (def.ox != null ? ' data-t="1"' : '') + '><b>←→</b></label>'
+      + '<label>上下 <input type="range" id="kbOy" min="0" max="100" step="1" value="' + (def.oy != null ? def.oy : (def.pop === false ? 42 : 100)) + '"' + (def.oy != null ? ' data-t="1"' : '') + '><b>↑↓</b></label>'
+      + '<button id="kbZoomReset" style="font-size:12px;padding:4px 10px;">元の大きさ・位置に戻す</button></div></div>'
       + '<div class="kb-sec"><h4>📝 カードの文字</h4>'
       + '<details open><summary>表示名・HP・レアリティ・通し番号</summary>'
       + '<label>表示名</label><input type="text" id="kbName" maxlength="20" value="' + esc(txt('skinName')) + '" placeholder="例: シニガミ">'
@@ -7737,6 +7754,14 @@ function koboEdit(def0, presetMem){
   function collect(){
     def.colors = { glow: $('kbGlow').value, band: $('kbBand').value, tag: $('kbTag').value };
     def.bright = Math.round(parseFloat($('kbBright').value) * 10) / 10 || 1;
+    // v150: イラストの大きさ・位置（動かしていない左右・上下は保存しない＝表示の仕方ごとの既定の位置）
+    var zm = Math.round(parseFloat($('kbZoom').value) * 100) / 100;
+    if(zm > 0 && zm !== 1) def.zoom = zm; else delete def.zoom;
+    [['kbOx', 'ox'], ['kbOy', 'oy']].forEach(function(x){
+      var el = $(x[0]);
+      if(el.getAttribute('data-t')) def[x[1]] = +el.value; else delete def[x[1]];
+    });
+    if($('kbZoomV')) $('kbZoomV').textContent = Math.round((zm || 1) * 100) + '%';
     var pm = document.querySelector('input[name="kbPop"]:checked');
     if(pm){ if(pm.value === '0') def.pop = false; else delete def.pop; }
     def.orb = $('kbOrb').value.trim() || '✦';
@@ -7802,6 +7827,17 @@ function koboEdit(def0, presetMem){
         if(c.glow) def.colors.glow = c.glow; if(c.band) def.colors.band = c.band;
         render(); toast('画像から色を決めました');
       });
+    };
+    ['kbOx', 'kbOy'].forEach(function(k){ $(k).addEventListener('input', function(){ this.setAttribute('data-t', '1'); }); });
+    // 「飛び出す／絵の中」を変えた時、上下を動かしていなければ、その表示の既定の位置にそろえる
+    Array.prototype.forEach.call(document.querySelectorAll('input[name="kbPop"]'), function(r){
+      r.addEventListener('change', function(){ if(!$('kbOy').getAttribute('data-t')) $('kbOy').value = r.value === '0' ? 42 : 100; });
+    });
+    $('kbZoomReset').onclick = function(){
+      $('kbZoom').value = 1; $('kbOx').value = 50; $('kbOx').removeAttribute('data-t'); $('kbOy').removeAttribute('data-t');
+      var pm = document.querySelector('input[name="kbPop"]:checked');
+      $('kbOy').value = pm && pm.value === '0' ? 42 : 100;
+      prevSoon();
     };
     $('kbBack').onclick = koboList;
     $('kbWhoPick').onclick = function(){ collect(); kbPickMember(function(m){ mem = m; render(); }); };
