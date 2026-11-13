@@ -1074,6 +1074,12 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 #btNtText{width:100%;}
 #btLgSeg button{padding:7px 14px;}
 #btQeSeg button{padding:7px 14px;}
+.pz-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--line);}
+.pz-nm{flex:1 1 140px;min-width:0;display:grid;gap:2px;}
+.pz-nm small{font-size:12px;color:var(--sub);}
+.pz-in{display:flex;align-items:center;gap:6px;flex:none;margin-left:auto;}
+.pz-in input{width:6.5em;font-size:16px;font-weight:700;}
+.pz-self{display:block;width:100%;margin-top:12px;}
 .qe-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px 0;border-bottom:1px solid var(--line);}
 .qe-row input{flex:1 1 160px;min-width:0;}
 .qe-row button{padding:6px 10px;flex:none;}
@@ -2606,10 +2612,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v143';
+var APP_VER = 'v144';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v144', d: '2026/11/13', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v143', d: '2026/11/13', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v142', d: '2026/11/12', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v141', d: '2026/11/12', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
@@ -3933,15 +3940,75 @@ function ckPrysmHist(c){
     .map(function(k){ var r = c[k]; return { ev: k.slice(3), v: +r.v, d: r.d || '', at: r.at || 0, name: r.ev || '' }; })
     .sort(function(a, b){ return a.d !== b.d ? (a.d < b.d ? -1 : 1) : a.at - b.at; });
 }
+/* 💜 v144: PRYSMiO は本人がアプリで入れる（受付した日のうちだけ）。受付では入れない
+   lastVisit = { d, ev, id: イベントID, until: その日の終わり（日本時間24時・ミリ秒）} があり、今日がその日の時だけ「📏 今日の測定の結果を入れる」
+   入れた値はカードの pz_{イベントID} = { v, d, ev, at, by: 'self' }（ルールで、本人はこの1つだけ・その日のうちだけ書ける） */
+function ckPzSelf(c){
+  var lv = c && c.lastVisit;
+  if(!lv || !lv.id || !lv.until || lv.d !== todayStr() || Date.now() >= lv.until || c.toMember || c.tm) return null;
+  return lv;
+}
+function ckPzSelfBtn(c){
+  var lv = ckPzSelf(c);
+  return lv ? '<button type="button" class="primary pz-self" data-pzself>' + (c['pz_' + lv.id] ? '📏 今日の結果を直す' : '📏 今日の測定の結果を入れる') + '</button>' : '';
+}
+function ckPzSelfModal(c){
+  var lv = ckPzSelf(c), tok = gCardToken;
+  if(!lv || !tok){ toast('測定の結果は、受付した日のうちだけ入れられます'); return; }
+  var cur = c['pz_' + lv.id], prev = ckPrysmHist(c).filter(function(r){ return r.ev !== lv.id; }).pop() || null;
+  modal('<h2>📏 今日の PRYSMiO</h2>'
+    + '<p style="font-size:13.5px;margin:-4px 0 10px;">会場の測定器に出た数字を入れてください。入れられるのは、今日（' + esc(ckMd(lv.d)) + '）のうちだけです。</p>'
+    + '<div style="display:flex;align-items:center;gap:10px;"><input type="text" id="pzsV" inputmode="numeric" autocomplete="off" maxlength="6" aria-label="PRYSMiO の数値" style="flex:1;font-size:28px;font-weight:700;" value="' + (cur && cur.v != null ? cur.v : '') + '" placeholder="例: 820"><span id="pzsChip"></span></div>'
+    + '<p id="pzsSub" style="font-size:12.5px;color:var(--sub);margin:6px 0 0;"></p>'
+    + '<div class="btns"><button id="pzsCancel">キャンセル</button><button class="primary" id="pzsGo">保存</button></div>', true);
+  function draw(){
+    var raw = $('pzsV').value.trim(), v = ckNum(raw), has = raw !== '', nx = has ? ckPrysmNext(v) : null;
+    $('pzsChip').innerHTML = has ? ckPrysmChip(v) : '';
+    $('pzsSub').innerHTML = has
+      ? (prev ? '前回 ' + prev.v.toLocaleString() + ' から ' + (v - prev.v >= 0 ? '+' : '−') + Math.abs(v - prev.v).toLocaleString() : 'はじめての測定')
+        + (nx ? '・' + esc(nx.b.n) + 'まで あと ' + nx.need.toLocaleString() : '・最高の色')
+      : (prev ? '前回 ' + prev.v.toLocaleString() + '（' + esc(ckPrysmBand(prev.v).n) + '）' : 'はじめての測定です');
+  }
+  $('pzsV').oninput = draw; draw();
+  $('pzsCancel').onclick = closeModal;
+  $('pzsGo').onclick = function(){
+    var raw = $('pzsV').value.trim();
+    if(!raw || !/^[0-9０-９,，]+$/.test(raw)){ toast('測定器に出た数字を入れてください'); return; }
+    var v = ckNum(raw);
+    if(v > CK_PRYSM_MAX){ toast('0〜' + CK_PRYSM_MAX + ' の数字で入れてください'); return; }
+    var val = { v: v, d: lv.d, ev: lv.ev || '', at: Date.now(), by: 'self' }, up = {};
+    up['pz_' + lv.id] = val;
+    $('pzsGo').disabled = true;
+    db.collection('cards').doc(tok).update(up).then(function(){
+      closeModal(); ckPzSelfApply('pz_' + lv.id, val); toast('保存しました');
+    }).catch(function(){ $('pzsGo').disabled = false; toast('保存できませんでした。電波の良いところで、もう一度お試しください'); });
+  };
+}
+function ckPzSelfApply(key, val){
+  [gCardLast, gUa && gUa.c, gMp && gMp.c].forEach(function(o){ if(o) o[key] = val; });
+  try{ var k = 'bci_card_' + gCardToken, cc = JSON.parse(localStorage.getItem(k) || 'null'); if(cc){ cc[key] = val; localStorage.setItem(k, JSON.stringify(cc)); } }catch(e){}
+  renderPrysm((gUa && gUa.c) || gCardLast);
+  if(gMp && gMp.plan !== undefined && $('mpArea') && $('mpArea').innerHTML) mpDraw();   // バッジ（はじめての測定・色が上がった）
+  ckUaHome();
+}
+// 💜 v144: 来場の日（受付が入れる）。id と until があると、本人がその日のうちだけ PRYSMiO を入れられる
+function ckLvOf(ev){
+  var d = (ev && ev.date) || todayStr(), p = d.split('-');
+  return { d: d, ev: (ev && ev.name) || '', id: (ev && ev.id) || '', until: Date.UTC(+p[0], +p[1] - 1, +p[2], 15, 0) };
+}
 // 本人のカードの PRYSMiO（今の色・前回から・次の色まで・記録）
 function renderPrysm(c){
   var el = $('pzArea');
   if(!el) return;
   if(!c || c.kind !== 'user'){ el.innerHTML = ''; return; }
   var h = ckPrysmHist(c);
+  var bindSelf = function(){ var bz = el.querySelector('[data-pzself]'); if(bz) bz.onclick = function(){ ckPzSelfModal(c); }; };   // 💜 v144
   if(!h.length){
     el.innerHTML = '<div class="pzwrap"><div class="next-head">PRYSMiO</div>'
-      + '<p class="pz-empty">まだ測っていません。次のDAYの会場で測ると、ここに<b>あなたの色</b>が出ます。</p></div>';
+      + (ckPzSelf(c) ? '<p class="pz-empty">今日の会場で測ったら、測定器に出た数字を入れてね。ここに<b>あなたの色</b>が出ます。</p>'
+        : '<p class="pz-empty">まだ測っていません。次のDAYの会場で測ると、ここに<b>あなたの色</b>が出ます。</p>')
+      + ckPzSelfBtn(c) + '</div>';
+    bindSelf();
     return;
   }
   var cur = h[h.length - 1], prev = h.length > 1 ? h[h.length - 2] : null, b = ckPrysmBand(cur.v), nx = ckPrysmNext(cur.v);
@@ -3958,7 +4025,9 @@ function renderPrysm(c){
     + (h.length > 1 ? '<div class="pz-hist">' + h.slice(-6).reverse().map(function(r){
         return '<div><span class="mono">' + esc((r.d || '').slice(5).replace('-', '/')) + '</span><span class="dot" style="background:' + ckPrysmBand(r.v).c + ';"></span><b class="mono">' + r.v.toLocaleString() + '</b><span class="nm">' + esc(r.name) + '</span></div>';
       }).join('') + '</div>' : '')
+    + ckPzSelfBtn(c)
     + '<p class="pz-note">測定は会場（DAY）でできます</p></div>';
+  bindSelf();
 }
 /* 💜 段階5: マイプラン（ユーザーのカードの上で。本人＝カードのリンクを持っている人だけが書ける）
    cards/{トークン}/plan/me = { course, goal, qs:[使うクエスト], start, days:{ 'YYYY-MM-DD': [できたクエスト] }, atMs }
@@ -13957,7 +14026,7 @@ function ckCreateUser(o){
             createdAt: FV.serverTimestamp(), createdBy: gUser.uid, byName: (gProf && gProf.name) || '' };
   if(o.invUid){ u.invUid = o.invUid; u.invName = o.invName || ''; }   // 💜 v127: 友だちの招待で来た人（招待した人）
   var c = { kind: 'user', no: uid, active: true, visits: 1, createdAt: FV.serverTimestamp() };
-  if(gRec && gRec.ev) c.lastVisit = { d: gRec.ev.date || todayStr(), ev: gRec.ev.name || '' };   // 💜 v128: カードの「来場のお礼」
+  if(gRec && gRec.ev) c.lastVisit = ckLvOf(gRec.ev);   // 💜 v128: カードの「来場のお礼」・v144: その日のうちは本人が PRYSMiO を入れられる
   Object.keys(who).forEach(function(k){ u[k] = who[k]; c[k] = who[k]; });
   batch.set(db.collection('checkinUsers').doc(uid), u);
   batch.set(db.collection('cards').doc(token), c);
@@ -13977,7 +14046,7 @@ function ckUserAttData(uid, u, token, method){
 function ckUserVisit(uid, token){
   var up = { visits: FV.increment(1), lastAt: Date.now(), lastEv: gRec.ev.id };
   db.collection('checkinUsers').doc(uid).set(up, { merge: true }).catch(function(){});
-  db.collection('cards').doc(token).set({ visits: FV.increment(1), lastVisit: { d: gRec.ev.date || todayStr(), ev: gRec.ev.name || '' } }, { merge: true }).catch(function(){});
+  db.collection('cards').doc(token).set({ visits: FV.increment(1), lastVisit: ckLvOf(gRec.ev) }, { merge: true }).catch(function(){});
 }
 function ckUserStage(uid, data, opt){
   var fee = data.fee || 0, pick = fee > 0 && !gRec.payMode && gRec.payBoth;
@@ -13991,7 +14060,7 @@ function ckUserStage(uid, data, opt){
     + (fee > 0 ? ckAddonBtnHtml(uid) : '')
     + (opt.applied ? '<p class="hit-meta">📱 本人の受付票が、そのままカードに変わります</p>' : '')
     + (opt.isNew ? '<button id="stgUserQr"' + (opt.applied ? '' : ' class="primary"') + ' style="margin-top:8px;">📱 ' + (opt.applied ? '変わらない時：新規受付のQRを渡す' : '新規受付のQRを渡す') + '</button> ' : '')
-    + '<button id="stgUserLog" style="margin-top:8px;"' + (opt.isNew ? '' : ' class="primary"') + '>📋 測定・体験・購入</button>',
+    + '<button id="stgUserLog" style="margin-top:8px;"' + (opt.isNew ? '' : ' class="primary"') + '>📋 体験・購入</button>',
     true);
   if(pick) ckBindPayPick(uid, fee);
   else if(gRec.addon && fee > 0) ckStageHold();
@@ -14010,18 +14079,15 @@ function ckUserLogModal(uid){
   var ev = gRec.ev, tok = a.cardToken;
   db.collection('cards').doc(tok).get().then(function(sn){
     var c = sn.exists ? sn.data() : {};
-    var prev = ckPrysmHist(c).filter(function(r){ return r.ev !== ev.id; }).pop() || null;
-    var cur = c['pz_' + ev.id], ex = (c['ex_' + ev.id] && c['ex_' + ev.id].list) || a.exp || [], bu = c['rcpt_b_' + ev.id] || null;
+    var ex = (c['ex_' + ev.id] && c['ex_' + ev.id].list) || a.exp || [], bu = c['rcpt_b_' + ev.id] || null;
     var items = (bu && bu.items && bu.items.slice()) || [];
     if(!items.length) items.push({ n: '', q: 1, p: '' });
     var sellers = Object.keys(gRec.roster).map(function(no){ return gRec.roster[no]; })
       .filter(function(m){ return !ckMemberOff(m) && m.name && m.union === (a.uUnion || m.union); });
-    modal('<h2>📋 測定・体験・購入</h2>'
-      + '<p style="font-size:13px;color:var(--sub);margin:-4px 0 8px;">' + esc(a.name || '') + ' さん（ユーザー）・' + esc(ev.name || '') + '</p>'
-      + '<label for="ulPz">PRYSMiO の数値</label>'
-      + '<div style="display:flex;align-items:center;gap:10px;"><input type="text" id="ulPz" inputmode="numeric" autocomplete="off" style="flex:1;font-size:24px;font-weight:700;" value="' + (cur && cur.v != null ? cur.v : '') + '" placeholder="例: 820"><span id="ulPzChip"></span></div>'
-      + '<p id="ulPzSub" style="font-size:12.5px;color:var(--sub);margin:4px 0 0;"></p>'
-      + '<label style="margin-top:14px;">今日の体験</label><div class="ulg-chips" id="ulExp">'
+    // v144: PRYSMiO は受付では入れない（本人がアプリで・スタッフは「💜 Beauty」タブの「📏 今日の測定」で）
+    modal('<h2>📋 体験・購入</h2>'
+      + '<p style="font-size:13px;color:var(--sub);margin:-4px 0 8px;">' + esc(a.name || '') + ' さん・' + esc(ev.name || '') + '</p>'
+      + '<label>今日の体験</label><div class="ulg-chips" id="ulExp">'
       + CK_EXP.concat(ex.filter(function(x){ return CK_EXP.indexOf(x) < 0; })).map(function(x){ return '<button type="button" data-x="' + esc(x) + '"' + (ex.indexOf(x) >= 0 ? ' class="on"' : '') + '>' + esc(x) + '</button>'; }).join('')
       + '</div>'
       + '<label style="margin-top:14px;">会場でのお買い上げ <small style="font-weight:400;color:var(--sub);">（金額は税込・ご注文は公式サイトから）</small></label>'
@@ -14033,7 +14099,7 @@ function ckUserLogModal(uid){
       + '<label>販売者（領収書の発行者）</label><input type="text" id="ulSeller" list="ulSellerList" autocomplete="off" value="' + esc((bu && bu.by) || a.referrer || '') + '">'
       + '<datalist id="ulSellerList">' + sellers.map(function(m){ return '<option value="' + esc(m.name) + '"></option>'; }).join('') + '</datalist>'
       + '</div>'
-      + '<p style="font-size:12px;color:var(--sub);margin:10px 0 0;">保存すると、本人のカードに色と領収書が届きます（紙の領収書はいりません）。</p>'
+      + '<p style="font-size:12px;color:var(--sub);margin:10px 0 0;">保存すると、本人のアプリに領収書が届きます（紙の領収書はいりません）。PRYSMiO は、本人がアプリで入れます。</p>'
       + '<div class="btns"><button id="ulCancel">キャンセル</button><button class="primary" id="ulGo">保存して本人に送る</button></div>', true);
     if(bu && bu.pm) $('ulPm').value = bu.pm;
     function rowHtml(it, i){
@@ -14055,17 +14121,7 @@ function ckUserLogModal(uid){
       $('ulBuyMore').classList.toggle('hide', !(t > 0));
       return t;
     }
-    function pzDraw(){
-      var v = ckNum($('ulPz').value), has = $('ulPz').value.trim() !== '';
-      $('ulPzChip').innerHTML = has ? ckPrysmChip(v) : '';
-      var nx = has ? ckPrysmNext(v) : null;
-      $('ulPzSub').innerHTML = has
-        ? (prev ? '前回 ' + prev.v.toLocaleString() + ' → 今回 ' + v.toLocaleString() + '（' + (v - prev.v >= 0 ? '+' : '−') + Math.abs(v - prev.v).toLocaleString() + '）' : 'はじめての測定')
-          + (nx ? '・' + esc(nx.b.n) + 'まで あと ' + nx.need.toLocaleString() : '・最高の色')
-        : (prev ? '前回 ' + prev.v.toLocaleString() + '（' + esc(ckPrysmBand(prev.v).n) + '）' : 'まだ測ったことがありません');
-    }
-    drawItems(); pzDraw();
-    $('ulPz').oninput = pzDraw;
+    drawItems();
     $('ulExp').onclick = function(e){ var bt = e.target.closest ? e.target.closest('button[data-x]') : null; if(bt) bt.classList.toggle('on'); };
     $('ulItems').addEventListener('input', calc);
     $('ulItems').addEventListener('click', function(e){
@@ -14078,9 +14134,6 @@ function ckUserLogModal(uid){
     $('ulAdd').onclick = function(){ items = readItems(); items.push({ n: '', q: 1, p: '' }); drawItems(); };
     $('ulCancel').onclick = function(){ closeModal(); focusScan(); };
     $('ulGo').onclick = function(){
-      var raw = $('ulPz').value.trim(), v = raw === '' ? null : ckNum(raw);
-      if(raw !== '' && !/^[0-9０-９,，]+$/.test(raw)){ toast('PRYSMiO の数値は数字で入れてください'); return; }
-      if(v != null && (v < 0 || v > CK_PRYSM_MAX)){ toast('PRYSMiO の数値は 0〜' + CK_PRYSM_MAX + ' で入れてください'); return; }
       var its = readItems().filter(function(it){ return it.n || it.p > 0; });
       for(var i = 0; i < its.length; i++){
         if(!its[i].n){ toast('製品名を入れてください'); return; }
@@ -14091,7 +14144,7 @@ function ckUserLogModal(uid){
       var seller = total > 0 ? $('ulSeller').value.trim() : '';
       if(total > 0 && !seller){ toast('販売者（領収書の発行者）を入れてください'); return; }
       var exp = [].map.call(document.querySelectorAll('#ulExp button.on'), function(x){ return x.getAttribute('data-x'); });
-      ckUserLogSave(uid, { v: v, exp: exp, items: its, total: total, pm: $('ulPm').value, seller: seller });
+      ckUserLogSave(uid, { exp: exp, items: its, total: total, pm: $('ulPm').value, seller: seller });
     };
   }).catch(function(e){ toast(permMsg(e, 'カードを読めませんでした')); });
 }
@@ -14099,20 +14152,17 @@ function ckNum(s){ s = String(s == null ? '' : s).replace(/[０-９]/g, function
 function ckUserLogSave(uid, o){
   var a = gRec.att[uid], ev = gRec.ev, d = ev.date || todayStr(), now = Date.now(), tok = a.cardToken;
   var cu = {}, au = {};
-  cu['pz_' + ev.id] = o.v != null ? { v: o.v, d: d, ev: ev.name || '', at: now } : FV.delete();
   cu['ex_' + ev.id] = o.exp.length ? { d: d, ev: ev.name || '', list: o.exp } : FV.delete();
   cu['rcpt_b_' + ev.id] = o.total > 0
     ? { kind: 'buy', d: d, ev: 'お買い上げ（' + (ev.name || '') + '）', amt: o.total, no: uid, at: now, pm: o.pm, by: o.seller,
         items: o.items.map(function(it){ return { n: it.n, q: it.q, p: it.p }; }) }
     : FV.delete();
-  au.prysm = o.v != null ? o.v : FV.delete();
   au.exp = o.exp;
   au.buyAmt = o.total;
   au.buyItems = o.items;
   au.buyPm = o.total > 0 ? o.pm : '';
   au.seller = o.seller;
   Object.keys(au).forEach(function(k){ a[k] = au[k]; });
-  if(o.v == null) delete a.prysm;
   db.collection('cards').doc(tok).set(cu, { merge: true }).then(function(){
     closeModal();
     toast('保存しました。本人のカードに届きます');
@@ -14120,14 +14170,13 @@ function ckUserLogSave(uid, o){
     if(sb && $('stgUserLog')){
       var nt = $('stgUserLogDone') || document.createElement('p');
       nt.id = 'stgUserLogDone'; nt.className = 'hit-meta';
-      nt.innerHTML = '✓ 記録済み' + (o.v != null ? '・' + ckPrysmChip(o.v) + ' ' + o.v.toLocaleString() : '') + (o.total > 0 ? '・お買い上げ ' + yen(o.total) : '');
+      nt.innerHTML = '✓ 記録済み' + (o.exp.length ? '・体験 ' + o.exp.length : '') + (o.total > 0 ? '・お買い上げ ' + yen(o.total) : '');
       if(!nt.parentNode) sb.appendChild(nt);
     }
     focusScan();
   }).catch(function(e){ toast(permMsg(e, '保存に失敗しました')); });
   db.collection('checkinEvents').doc(ev.id).collection('attendance').doc(uid).set(au, { merge: true }).catch(function(){});
-  if(o.v != null) db.collection('checkinUsers').doc(uid).set({ prysm: o.v, prysmAt: now }, { merge: true }).catch(function(){});
-  auditLog(ev.id, '測定・購入の記録', a.name || uid, (o.v != null ? 'PRYSMiO ' + o.v : '') + (o.total > 0 ? ' お買い上げ ' + yen(o.total) : ''));
+  auditLog(ev.id, '体験・購入の記録', a.name || uid, (o.exp.length ? '体験 ' + o.exp.join('・') : '') + (o.total > 0 ? ' お買い上げ ' + yen(o.total) : ''));
 }
 // 本人のスマホで読んでもらう（カードのページが開く → ホーム画面に追加 → 次からそのQRで受付）
 function ckUserQrModal(name, token, onClose){
@@ -14148,7 +14197,7 @@ function ckUserScan(uid, sig, method){
     setStage('dup', '<span class="hit-badge">出席済み</span><div class="hit-name">' + esc(gRec.att[uid].name || '') + '</div>'
       + '<div class="hit-group">NAVIGATOR Beauty</div>'
       + '<p class="hit-meta">' + esc(gRec.att[uid].atLocal || '') + ' に受付済みです（記録は増えません）</p>'
-      + '<button id="stgUserLog" class="primary" style="margin-top:8px;">📋 測定・体験・購入</button>', true);
+      + '<button id="stgUserLog" class="primary" style="margin-top:8px;">📋 体験・購入</button>', true);
     $('stgUserLog').onclick = function(){ ckUserLogModal(uid); };
     return;
   }
@@ -14814,7 +14863,12 @@ function ckUaHome(){
     pz = '<div class="ua-cd" data-go="me"><div class="ua-lb">PRYSMiO<em>記録 ›</em></div><div class="ua-pz"><b class="mono">' + (+cur.v || 0).toLocaleString() + '</b>' + ckPrysmChip(cur.v)
       + (prev ? '<span class="ua-up">前回から ' + (df >= 0 ? '+' : '') + df + '</span>' : '') + '</div></div>';
   }
+  var lvS = ckPzSelf(c);   // 💜 v144: 受付した日は、ホームにも「今日の結果を入れる」
+  if(lvS && !c['pz_' + lvS.id]) pz = '<div class="ua-cd"><div class="ua-lb">PRYSMiO</div><p class="ua-p">今日の会場で測ったら、測定器に出た数字を入れよう。</p>'
+    + '<button type="button" class="primary ua-btn" data-pzself>📏 今日の結果を入れる</button></div>' + pz;
   $('uaHomePz').innerHTML = pz;
+  var bzH = $('uaHomePz').querySelector('[data-pzself]');
+  if(bzH) bzH.onclick = function(e){ e.stopPropagation(); ckPzSelfModal(c); };
   var L = gLg && gLg.token === gUa.token ? gLg : null, lg = '';
   if(L && L.list.length){
     var p0 = L.list[0];
@@ -15461,9 +15515,11 @@ function btDraw(){
           + (gBtSeg !== 'wait' && list.length >= 30 ? '<p class="bt-note">新しい30件を出しています。</p>' : '')
         : empty('読み込み中…')) + '</div>'
     + '</div>'
+    + '<div class="bt-box" id="btPz"></div>'
     + '<div class="bt-box" id="btQe"></div>'
     + '</div>';
   $('btNtText').value = keep;
+  btPzDraw();   // 💜 v144
   btQeDraw();   // 💜 v140
   Array.prototype.forEach.call(box.querySelectorAll('[data-go]'), function(b){
     b.onclick = function(){ var t = $(b.getAttribute('data-go')); if(t && t.scrollIntoView) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
@@ -15593,6 +15649,71 @@ function btQeSave(me){
     try{ localStorage.setItem('bci_qst_' + me.un, JSON.stringify({ at: Date.now(), co: co })); }catch(e){}   // この端末のアプリにはすぐ
     btQeDraw(); toast('クエストを保存しました。ユーザーのアプリには30分ほどで届きます');
   }).catch(function(e){ $('btQeSave').disabled = false; toast(permMsg(e, 'クエストを保存できませんでした')); });
+}
+/* 💜 v144: 「📏 今日の測定」（「💜 Beauty」タブ）。今日のイベントで受付した NAVIGATOR Beauty のお客さんに、スタッフが PRYSMiO の数値を入れる
+   （本人が自分のアプリで入れられない人の分）。押した時だけ読む：今日のイベント → ユーザーの出席 → それぞれのカード */
+function btPzLoad(){
+  var me = gBt, un = me.un, t = todayStr();
+  me.pz = { loading: true }; btPzDraw();
+  db.collection('checkinEvents').where('date', '==', t).get().then(function(qs){
+    var evs = [];
+    qs.forEach(function(d){ var e = d.data(); e.id = d.id; if((e.unions || []).indexOf(un) >= 0) evs.push(e); });
+    return Promise.all(evs.map(function(e){
+      return db.collection('checkinEvents').doc(e.id).collection('attendance').where('kind', '==', 'user').where('uUnion', '==', un).get().then(function(as){
+        var L = [];
+        as.forEach(function(d){ var a = d.data(); a.id = d.id; a.ev = e; if(a.cardToken && a.kind === 'user') L.push(a); });
+        return L;
+      });
+    }));
+  }).then(function(arrs){
+    var rows = [].concat.apply([], arrs);
+    return Promise.all(rows.map(function(a){
+      return db.collection('cards').doc(a.cardToken).get().then(function(s){ a.card = s.exists ? s.data() : {}; return a; }, function(){ a.card = {}; return a; });
+    }));
+  }).then(function(rows){
+    if(gBt !== me) return;
+    rows.sort(function(x, y){ return String(x.name || '').localeCompare(String(y.name || ''), 'ja'); });
+    me.pz = { rows: rows };
+    btPzDraw();
+  }).catch(function(e){ if(gBt === me){ me.pz = { err: permMsg(e, '今日の来場者を読めませんでした') }; btPzDraw(); } });
+}
+function btPzDraw(){
+  var box = $('btPz'), me = gBt;
+  if(!box || !me) return;
+  var P = me.pz, h = '<h3>📏 今日の測定' + hq('今日のイベントで受付した NAVIGATOR Beauty のお客さんに、PRYSMiO の数値を入れます。お客さんは自分のアプリからも、受付した日のうちだけ入れられます。スマホの操作が苦手な人の分を、ここで代わりに入れてください。') + '</h3>';
+  if(!P) h += '<p class="bt-note" style="margin:0 0 8px;">今日（' + esc(ckMd(todayStr())) + '）受付したお客さんの一覧を出します。</p><button type="button" id="btPzGo">今日の来場者を出す</button>';
+  else if(P.loading) h += '<p class="bt-note">読み込み中…</p>';
+  else if(P.err) h += '<p class="bt-note">' + esc(P.err) + '</p>';
+  else if(!P.rows.length) h += '<p class="bt-note">今日のイベントで受付したお客さんは、まだいません。</p>';
+  else h += P.rows.map(function(a, i){
+      var cur = a.card['pz_' + a.ev.id], who = !cur ? 'まだ' : cur.by === 'self' ? '本人が入力' : 'スタッフが入力';
+      return '<div class="pz-row"><div class="pz-nm"><b>' + esc(a.name || '') + '</b><small>' + esc(a.ev.name || '') + ' ・ ' + who + '</small></div>'
+        + '<div class="pz-in">' + (cur ? ckPrysmChip(cur.v) : '')
+        + '<input type="text" inputmode="numeric" autocomplete="off" maxlength="6" data-pzv="' + i + '" value="' + (cur ? cur.v : '') + '" placeholder="例: 820" aria-label="' + esc(a.name || '') + ' さんの PRYSMiO">'
+        + '<button type="button" class="primary" data-pzs="' + i + '">保存</button></div></div>';
+    }).join('') + '<p class="bt-note">本人がアプリで入れた数字は「本人が入力」と出ます。ここで直すと、スタッフの数字に置きかわります。</p>';
+  if(P && !P.loading) h += '<div class="btns" style="justify-content:flex-start;margin-top:8px;"><button type="button" id="btPzRe" class="ghost">↻ 読み直す</button></div>';
+  box.innerHTML = h;
+  if($('btPzGo')) $('btPzGo').onclick = btPzLoad;
+  if($('btPzRe')) $('btPzRe').onclick = btPzLoad;
+  Array.prototype.forEach.call(box.querySelectorAll('[data-pzs]'), function(b){
+    b.onclick = function(){
+      var i = +b.getAttribute('data-pzs'), a = P.rows[i], raw = box.querySelector('[data-pzv="' + i + '"]').value.trim();
+      if(!raw || !/^[0-9０-９,，]+$/.test(raw)){ toast('数字で入れてください'); return; }
+      var v = ckNum(raw);
+      if(v > CK_PRYSM_MAX){ toast('0〜' + CK_PRYSM_MAX + ' で入れてください'); return; }
+      var val = { v: v, d: a.ev.date || todayStr(), ev: a.ev.name || '', at: Date.now(), by: gUser.uid }, up = {};
+      up['pz_' + a.ev.id] = val;
+      b.disabled = true;
+      db.collection('cards').doc(a.cardToken).update(up).then(function(){
+        a.card['pz_' + a.ev.id] = val;
+        // 名簿の色・イベントの記録にも（書けない時は何もしない）
+        db.collection('checkinUsers').doc(a.no || a.id).set({ prysm: v, prysmAt: val.at }, { merge: true }).catch(function(){});
+        db.collection('checkinEvents').doc(a.ev.id).collection('attendance').doc(a.id).set({ prysm: v }, { merge: true }).catch(function(){});
+        btPzDraw(); toast((a.name || '') + ' さんの PRYSMiO を保存しました');
+      }).catch(function(e){ b.disabled = false; toast(permMsg(e, '保存できませんでした')); });
+    };
+  });
 }
 function btNtSave(me, items, msg, clear){
   db.collection('ckNotice').doc(me.un).set({ items: items, by: gUser.uid, at: FV.serverTimestamp() }).then(function(){

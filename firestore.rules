@@ -717,6 +717,9 @@ service cloud.firestore {
                          .hasOnly(['zoomUrl', 'zoomId', 'zoomPw', 'recClosed']);
 
       match /attendance/{aid} {
+        // 💜 受付v144: 「💜 Beauty」タブの「📏 今日の測定」。ユーザーの出席（union は空・uUnion にユーザーのユニオン）は、
+        //   そのユニオンのオーナー・ユニオン管理者・DAYスタッフが読める（読み取り回数の上限に当たらないよう先頭に置く。一覧は kind と uUnion で絞った検索のみ）
+        allow read: if resource.data.kind == 'user' && ckLoungeStaff(resource.data.uUnion);
         allow read: if ckEventStaff(eid);
         // 📊 v21: 自分が見られるユニオン（ckCanSee）のメンバーの出席は、他ユニオンのイベントでも読める
         // （集計の「他ユニオンイベントへの出席（参考）」用。一覧は union で絞った検索のみ）
@@ -877,6 +880,23 @@ service cloud.firestore {
       allow delete: if signedIn();
       // オンライン申請の承認結果マーカー(online_<eventId>)の書込みに使用
       allow update: if signedIn() && ckDecoUpdOk();
+      // 💜 受付v144: ユーザー本人（トークンを持っている人）が、受付した日のうちだけ、その日の PRYSMiO の数値を入れる
+      allow update: if ckSelfPzOk();
+    }
+    // 受付が lastVisit = { d, ev, id: イベントID, until: その日の終わり（ミリ秒）} を入れる。本人が書けるのは pz_{そのイベント} だけ
+    function ckSelfPzOk() {
+      return resource.data.get('kind', '') == 'user' && resource.data.get('active', true) != false
+        && resource.data.get('toMember', '') == ''
+        && resource.data.get('lastVisit', null) is map
+        && resource.data.lastVisit.get('id', '') is string && resource.data.lastVisit.get('id', '') != ''
+        && resource.data.lastVisit.get('until', 0) is int && request.time.toMillis() < resource.data.lastVisit.until
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pz_' + resource.data.lastVisit.id])
+        && ckSelfPzVal(request.resource.data.get('pz_' + resource.data.lastVisit.id, null), resource.data.lastVisit);
+    }
+    function ckSelfPzVal(p, lv) {
+      return p is map && p.keys().hasOnly(['v', 'd', 'ev', 'at', 'by'])
+        && p.get('v', -1) is int && p.v >= 0 && p.v <= 3000
+        && p.get('by', '') == 'self' && p.get('d', '') == lv.get('d', '_');
     }
     // 🃏 v30: 特別カード工房。カードセットの定義（色・文字・付けた人・画像の版）と画像（data URL・1枚ずつ）、
     //   ユニオンごとの裏面の設定。会員証は未ログインで開くので get は公開、作る・変えるのはオーナーだけ
