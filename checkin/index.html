@@ -1075,6 +1075,23 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 #btLgSeg button{padding:7px 14px;}
 #btQeSeg button{padding:7px 14px;}
 /* 💜 v145: DAYの体感 */
+.fu-host{display:flex;align-items:center;gap:6px;font-size:13px;margin:-2px 0 8px;font-weight:400;}
+.fu-host input{width:auto;margin:0;}
+.fu-lb{font-size:12.5px;font-weight:800;color:var(--sub);margin:12px 0 6px;}
+.fu-flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:6px;}
+.fu-st{border:1px solid var(--line);border-radius:10px;padding:6px 8px;display:grid;gap:1px;}
+.fu-st small{font-size:11px;color:var(--sub);font-weight:700;}
+.fu-st b{font-size:20px;line-height:1.2;}
+.fu-st span{font-size:11.5px;color:var(--sub);}
+.fu-need{margin-top:10px;padding:8px 10px;border:1px solid #E08A1D;border-radius:10px;display:grid;gap:2px;font-size:13px;}
+.fu-need small{color:var(--sub);font-size:12px;}
+.fu-cut button{padding:6px 10px;font-size:12.5px;}
+.fu-tw{overflow-x:auto;border:1px solid var(--line);border-radius:10px;margin-top:6px;}
+.fu-tb{border-collapse:collapse;width:100%;font-size:12.5px;white-space:nowrap;}
+.fu-tb th,.fu-tb td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;}
+.fu-tb thead th{color:var(--sub);font-size:11.5px;}
+.fu-tb tbody th{text-align:left;position:sticky;left:0;background:var(--card);max-width:9em;overflow:hidden;text-overflow:ellipsis;}
+.fu-tb td small{display:block;font-size:10.5px;color:var(--sub);}
 .rq-req{color:#c62828;font-weight:700;font-size:11px;}
 .rq-sec{margin:16px 0 0;padding-top:8px;border-top:1px solid var(--line);font-size:12.5px;font-weight:800;color:var(--sub);}
 .rq-info{display:grid;gap:0;margin:6px 0 4px;}
@@ -2673,10 +2690,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v146';
+var APP_VER = 'v147';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v147', d: '2026/11/13', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v146', d: '2026/11/13', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v145', d: '2026/11/13', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v144', d: '2026/11/13', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
@@ -6530,6 +6548,7 @@ function afterLogin(){
       gUnionAdmins[un] = d.data().unionAdmins || [];
       gLeaders[un] = d.data().leaders || [];
       gDayStaff[un] = d.data().dayStaff || [];
+      gHostFollow[un] = d.data().hostFollow === true;   // 💜 v147
       if(isOwner() && !d.data().ckMig33) mig.push({ id: d.id, un: un, d: d.data() });
       gHideMoney[un] = !!d.data().hideMoney;
       gRcptDef[un] = d.data().rcptDefault !== false;   // 🧾 新しく作るイベントの領収書（既定: 発行する）
@@ -15468,6 +15487,7 @@ function btDraw(){
     + '</div>' + (nW ? '' : '<p class="bt-note">確認待ちの投稿はありません。</p>') + '</div>'
     + '<div class="bt-box" id="btDay"></div>'
     + '<div class="bt-box" id="btRq"></div>'
+    + '<div class="bt-box hide" id="btFu"></div>'
     + '<div class="bt-box" id="btNt"><h3>📣 ユーザーへのお知らせ' + hq('このユニオンのユーザーのアプリの「お知らせ」に出ます。新しい5件まで出ます。アプリには30分ほどで届きます。効果をうたう言葉（治る・やせる など）は書かないでください。') + '</h3>'
     +   '<label for="btNtText">新しいお知らせ（100文字まで）</label>'
     +   '<textarea id="btNtText" rows="3" maxlength="100" placeholder="例: 12月のDAYは、14時からの開始です。"></textarea>'
@@ -15494,6 +15514,7 @@ function btDraw(){
   $('btNtText').value = keep;
   btDyDraw();   // 💜 v145
   btRqDraw();   // 💜 v146
+  btFuDraw();   // 💜 v147
   btPzDraw();   // 💜 v144
   btQeDraw();   // 💜 v140
   Array.prototype.forEach.call(box.querySelectorAll('[data-go]'), function(b){
@@ -16400,6 +16421,110 @@ function btDyPub(){
   var me = gBt, dy = me.dy;
   if(!dy || !dy.day || !dy.ev) return;
   db.collection('ckDayPub').doc(dy.eid + '_' + me.un).set({ union: me.un, eid: dy.eid, date: dy.ev.date || '', ev: dy.ev.name || '', staff: (dy.day.staff || []).map(function(s){ return s.name; }), menus: dy.menus || BT_MENUS0, open: true, by: gUser.uid, at: Date.now() }).catch(function(){});
+}
+/* 💜 v147: 「📈 体感のその後」（「💜 Beauty」タブ）。見られるのはオーナー・ユニオン管理者と、「DAY HOST にも見せる」をオンにしたユニオンの DAY HOST
+   ・最近90日の DAY の参加者（ckBoard の p）× その後：
+     購入の道 … ckFollow/{ユーザー}（NAVIGATOR のユーザー台帳から紹介者などが記録：会員登録・初めての購入・ADP）
+     ビジネスの道 … 受付の記録から自動（ユーザー → 研修生 toMember・研修の受講 trainings・正規メンバーに昇格 promotedAt）
+   ・切り口：DAY・体感メニュー・担当・紹介者・参加区分。押した時だけ読む */
+var gHostFollow = {};
+function btFuCan(un){ return isCoreAdmin(un) || (isDayStaff(un) && gHostFollow[un] === true); }
+function btFuDaysBetween(a, b){ var p = function(s){ var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || ''); return m ? Date.UTC(+m[1], +m[2] - 1, +m[3]) : NaN; }; var x = (p(b) - p(a)) / 864e5; return isNaN(x) ? null : Math.round(x); }
+function btFuLoad(){
+  var me = gBt, un = me.un, t = todayStr(), from = (function(){ var d = new Date(); d.setDate(d.getDate() - 90); return mpYmd(d); })();
+  me.fu = { loading: true }; btFuDraw();
+  var evq = db.collection('checkinEvents').where('unions', 'array-contains', un).where('date', '>=', from).orderBy('date').limit(40).get()
+    .catch(function(){ return db.collection('checkinEvents').where('date', '>=', from).orderBy('date').limit(80).get(); });
+  evq.then(function(qs){
+    var evs = [];
+    qs.forEach(function(d){ var e = d.data(); e.id = d.id; if((e.unions || []).indexOf(un) >= 0 && (e.date || '') <= t) evs.push(e); });
+    return Promise.all([
+      Promise.all(evs.map(function(e){
+        return db.collection('checkinEvents').doc(e.id).collection('btDay').doc(un).get().then(function(s){
+          if(!s.exists || !s.data().key) return [];
+          return db.collection('ckBoard').doc(s.data().key).collection('p').get().then(function(ps){ var a = []; ps.forEach(function(d){ var p = d.data(); p.id = d.id; p.ev = e; a.push(p); }); return a; });
+        }).catch(function(){ return []; });
+      })),
+      db.collection('ckFollow').where('union', '==', un).get().catch(function(){ return null; }),
+      db.collection('checkinUsers').where('union', '==', un).get().catch(function(){ return null; }),
+      fetchMembers(un).catch(function(){ return []; })
+    ]);
+  }).then(function(r){
+    if(gBt !== me) return;
+    var ps = [].concat.apply([], r[0]), fol = {}, users = {}, mem = {};
+    if(r[1]) r[1].forEach(function(d){ fol[d.id] = d.data(); });
+    if(r[2]) r[2].forEach(function(d){ users[d.id] = d.data(); });
+    (r[3] || []).forEach(function(m){ mem[m.no] = m; });
+    var rows = ps.map(function(p){
+      var na = p.kind === 'na1' || p.kind === 'na0', u = p.ckNo ? users[p.ckNo] : null, f = p.ckNo ? fol[p.ckNo] : null;
+      var trNo = na ? (u && u.toMember) || '' : (p.kind === 'tr1' ? p.memNo || '' : ''), m = trNo ? mem[trNo] : null;
+      var nTr = m ? Object.keys(m.trainings || {}).filter(function(k){ return m.trainings[k]; }).length : 0;
+      return { p: p, ev: p.ev, na: na, exp: btHas(p.kind) && p.st === 'done', link: !!p.ckNo,
+        shop: !!(f && f.shop), buy1: f && f.buy1 || '', adp: !!(f && f.adp), amt: (f && f.amt) || 0,
+        tr: na ? !!trNo : p.kind === 'tr1', trN: nTr, biz: !!(m && m.trainee === false) || p.kind === 'fb1',
+        need: na && !!p.ckNo && !f && (btFuDaysBetween(p.ev.date, t) || 0) >= 3,
+        days: f && f.buy1 ? btFuDaysBetween(p.ev.date, f.buy1) : null };
+    });
+    me.fu = { rows: rows, evN: r[0].filter(function(a){ return a.length; }).length, cut: (me.fu && me.fu.cut) || 'menu' };
+    btFuDraw();
+  }).catch(function(e){ if(gBt === me){ me.fu = { err: permMsg(e, '読めませんでした') }; btFuDraw(); } });
+}
+function btFuDraw(){
+  var box = $('btFu'), me = gBt;
+  if(!box || !me) return;
+  if(!btFuCan(me.un)){ box.classList.add('hide'); box.innerHTML = ''; return; }
+  box.classList.remove('hide');
+  var h = '<h3>📈 体感のその後' + hq('最近90日の DAY の参加者が、そのあとどうなったかです。購入の道（会員登録・初めての購入・ADP）は、紹介者などが NAVIGATOR のユーザー台帳で記録した分です。ビジネスの道（研修生・研修・ビジネススタート）は、受付の記録から自動で数えます。') + '</h3>';
+  if(isCoreAdmin(me.un)) h += '<label class="fu-host"><input type="checkbox" id="btFuHost"' + (gHostFollow[me.un] ? ' checked' : '') + '> DAY HOST にも見せる</label>';
+  var F = me.fu;
+  if(!F){ box.innerHTML = h + '<button type="button" id="btFuGo">集計を見る</button>'; btFuBind(); return; }
+  if(F.loading){ box.innerHTML = h + '<p class="bt-note">読み込み中…</p>'; btFuBind(); return; }
+  if(F.err){ box.innerHTML = h + '<p class="bt-note">' + esc(F.err) + '</p>'; btFuBind(); return; }
+  var R = F.rows, NA = R.filter(function(x){ return x.na; });
+  if(!R.length){ box.innerHTML = h + '<p class="bt-note">最近90日の DAY に、参加者の記録がまだありません。</p>'; btFuBind(); return; }
+  var pc = function(n, d){ return d ? Math.round(n / d * 100) + '%' : '—'; };
+  var cnt = function(L, k){ return L.filter(function(x){ return x[k]; }).length; };
+  var buyDays = NA.filter(function(x){ return x.days != null && x.days >= 0; }).map(function(x){ return x.days; });
+  var avg = buyDays.length ? Math.round(buyDays.reduce(function(a, b){ return a + b; }, 0) / buyDays.length) : null;
+  var step = function(lb, n, d){ return '<div class="fu-st"><small>' + lb + '</small><b>' + n + '</b><span>' + pc(n, d) + '</span></div>'; };
+  h += '<p class="bt-note" style="margin:0 0 6px;">DAY ' + F.evN + '回・参加 ' + R.length + '人（NA ' + NA.length + '人）</p>'
+    + '<div class="fu-lb">NA の購入の道</div><div class="fu-flow">' + step('参加', NA.length, NA.length) + step('体感した', cnt(NA, 'exp'), NA.length) + step('会員登録', cnt(NA, 'shop'), NA.length) + step('初めて購入', NA.filter(function(x){ return x.buy1; }).length, NA.length) + step('ADP（定期）', cnt(NA, 'adp'), NA.length) + '</div>'
+    + (avg != null ? '<p class="bt-note">DAY から初めての購入まで、平均 <b>' + avg + '日</b>（' + buyDays.length + '人）</p>' : '')
+    + '<div class="fu-lb">NA のビジネスの道（受付の記録から）</div><div class="fu-flow">' + step('研修生になった', cnt(NA, 'tr'), NA.length) + step('研修に通った', NA.filter(function(x){ return x.trN > 0; }).length, NA.length) + step('ビジネススタート', NA.filter(function(x){ return x.tr && x.biz; }).length, NA.length) + '</div>';
+  var need = NA.filter(function(x){ return x.need; }), noLink = NA.filter(function(x){ return !x.link; });
+  if(need.length){
+    var byRef = {}; need.forEach(function(x){ var k = x.p.ref || '（紹介者なし）'; byRef[k] = (byRef[k] || 0) + 1; });
+    h += '<div class="fu-need"><b>📝 その後の記録がまだ ' + need.length + '人</b>（DAY から3日以上）<small>' + Object.keys(byRef).map(function(k){ return esc(k) + ' ' + byRef[k] + '人'; }).join('・') + '</small><small>紹介者に、NAVIGATOR のユーザー台帳で記録してもらってください。</small></div>';
+  }
+  if(noLink.length) h += '<p class="bt-note">アプリ（NAVIGATOR Beauty）とつながっていない NA が ' + noLink.length + '人います。受付で登録すると、その後を追えるようになります。</p>';
+  var cuts = [['menu', '体感メニュー'], ['staff', '担当'], ['ref', '紹介者'], ['kind', '参加区分'], ['day', 'DAY']];
+  var keyOf = { menu: function(x){ return btHas(x.p.kind) ? x.p.menu || '（未定）' : '体感なし'; }, staff: function(x){ return btHas(x.p.kind) ? x.p.staffName || '（未割り振り）' : '体感なし'; },
+    ref: function(x){ return x.p.ref || '（紹介者なし）'; }, kind: function(x){ return btKindN(x.p.kind); }, day: function(x){ return ckMd(x.ev.date) + ' ' + (x.ev.name || ''); } };
+  var G = {}, order = [];
+  R.forEach(function(x){ var k = keyOf[F.cut](x); if(!G[k]){ G[k] = []; order.push(k); } G[k].push(x); });
+  order.sort(function(a, b){ return G[b].length - G[a].length; });
+  h += '<div class="fu-lb">切り口</div><div class="rkseg fu-cut" id="btFuCut">' + cuts.map(function(c2){ return '<button type="button" data-cut="' + c2[0] + '"' + (c2[0] === F.cut ? ' class="on"' : '') + '>' + c2[1] + '</button>'; }).join('') + '</div>'
+    + '<div class="fu-tw"><table class="fu-tb"><thead><tr><th></th><th>参加</th><th>体感</th><th>会員登録</th><th>初回購入</th><th>ADP</th><th>研修生</th><th>ビジネス</th></tr></thead><tbody>'
+    + order.map(function(k){
+        var L = G[k], N = L.filter(function(x){ return x.na; }), td = function(n, d){ return '<td>' + n + (d ? '<small>' + pc(n, d) + '</small>' : '') + '</td>'; };
+        return '<tr><th>' + esc(k) + '</th><td>' + L.length + '</td>' + td(cnt(L, 'exp'), L.length) + td(cnt(N, 'shop'), N.length) + td(N.filter(function(x){ return x.buy1; }).length, N.length) + td(cnt(N, 'adp'), N.length)
+          + td(cnt(L, 'tr'), L.length) + td(L.filter(function(x){ return x.tr && x.biz; }).length, L.length) + '</tr>';
+      }).join('') + '</tbody></table></div>'
+    + '<p class="bt-note">会員登録・初回購入・ADP の % は NA の人数に対して、研修生・ビジネスは参加した人数に対してです。</p>'
+    + '<div class="btns" style="justify-content:flex-start;"><button type="button" id="btFuRe" class="ghost">↻ 読み直す</button></div>';
+  box.innerHTML = h;
+  btFuBind();
+}
+function btFuBind(){
+  var me = gBt;
+  if($('btFuGo')) $('btFuGo').onclick = btFuLoad;
+  if($('btFuRe')) $('btFuRe').onclick = btFuLoad;
+  if($('btFuHost')) $('btFuHost').onchange = function(){
+    var on = $('btFuHost').checked;
+    db.collection('checkinUnions').doc(me.un).set({ hostFollow: on }, { merge: true }).then(function(){ gHostFollow[me.un] = on; toast(on ? 'DAY HOST にも見せます（本人は開き直すと出ます）' : 'DAY HOST には見せません'); })
+      .catch(function(e){ $('btFuHost').checked = !on; toast(permMsg(e, '変えられるのはオーナーとユニオン管理者だけです')); });
+  };
+  Array.prototype.forEach.call(document.querySelectorAll('#btFuCut [data-cut]'), function(b){ b.onclick = function(){ me.fu.cut = b.getAttribute('data-cut'); btFuDraw(); }; });
 }
 function btNtSave(me, items, msg, clear){
   db.collection('ckNotice').doc(me.un).set({ items: items, by: gUser.uid, at: FV.serverTimestamp() }).then(function(){
