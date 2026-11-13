@@ -602,7 +602,7 @@ service cloud.firestore {
         // 🙈 v29: 受付の金額を統括だけに見せる設定（hideMoney）もユニオン管理者だけ
         // 💜 受付v139: DAYスタッフ（dayStaff）の任命・解除はオーナーとユニオン管理者だけ。受付管理者は不可
         || (isCkAdmin(un)
-            && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['admins', 'coreAdmins', 'trainers', 'hideMoney', 'leaders', 'unionAdmins', 'ckMig33', 'dayStaff']));
+            && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['admins', 'coreAdmins', 'trainers', 'hideMoney', 'leaders', 'unionAdmins', 'ckMig33', 'dayStaff', 'hostFollow']));
       allow delete: if isOwnerAdmin();
     }
 
@@ -1204,6 +1204,23 @@ service cloud.firestore {
         && id == request.resource.data.get('eid', '') + '_' + request.resource.data.get('union', '')
         && request.resource.data.keys().hasOnly(['union', 'eid', 'date', 'ev', 'staff', 'menus', 'open', 'by', 'at']);
       allow delete: if ckLoungeStaff(resource.data.get('union', ''));
+    }
+    // 💜 受付v147: 体感のその後（NAVIGATOR のユーザー台帳から、紹介者などが書く要点）= ckFollow/{ユーザーのID}
+    //   { union, refNo, name, shop: 会員登録した日, buy1: 初めての購入の日, nBuy, amt, adp, by, at }
+    //   書けるのは、そのユーザーと同じユニオンのメンバー（ログイン）。読めるのはオーナー・ユニオン管理者と、
+    //   ユニオン管理者が「DAY HOST にも見せる」（checkinUnions/{un}.hostFollow）をオンにしたユニオンの DAY HOST
+    match /ckFollow/{uid} {
+      allow get, list: if isCkCoreAdmin(resource.data.get('union', ''))
+        || (ckDayStaff(resource.data.get('union', '')) && get(/databases/$(database)/documents/checkinUnions/$(resource.data.get('union', '_'))).data.get('hostFollow', false) == true);
+      allow create, update: if signedIn() && notDisabled(request.auth.uid)
+        && exists(/databases/$(database)/documents/checkinUsers/$(uid))
+        && get(/databases/$(database)/documents/checkinUsers/$(uid)).data.get('union', '') == request.resource.data.get('union', '_')
+        && (ckMyUnion() == request.resource.data.union || isCkCoreAdmin(request.resource.data.union))
+        && request.resource.data.keys().hasOnly(['union', 'refNo', 'name', 'shop', 'buy1', 'nBuy', 'amt', 'adp', 'by', 'at'])
+        && request.resource.data.get('by', '') == request.auth.uid
+        && request.resource.data.get('adp', false) is bool
+        && request.resource.data.get('nBuy', 0) is int && request.resource.data.get('nBuy', 0) <= 100;
+      allow delete: if isCkCoreAdmin(resource.data.get('union', ''));
     }
     // 💜 受付v145: 体感のメニュー（ユニオンごと）= { menus: [文字], by, at }。無いユニオンは組み込み（ルミスパ・ウェルスパ・カウンセリング）
     match /ckBtCfg/{un} {

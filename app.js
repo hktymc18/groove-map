@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v875';
+var APP_JS_VERSION = 'v876';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4094,7 +4094,8 @@ function unAdmSave() {
 //   テスト中 … 「先に見られる人」にだけ出る。全員に公開 … 全員に出る（アプリの更新なしで、開いている画面にもすぐ）
 var FEATURES = [
   { k: 'sheet2', t: '計画シートにまとめる', d: '「○月の目標」をなくし、目標の数字を計画シートの「数字と改善点」に移す' },
-  { k: 'hwimp', t: '日程表から追加', d: 'ハウディの日程表（improveonline.jp など）を、ブックマーク・貼り付けでまとめてカレンダーに入れる（v874）' }
+  { k: 'hwimp', t: '日程表から追加', d: 'ハウディの日程表（improveonline.jp など）を、ブックマーク・貼り付けでまとめてカレンダーに入れる（v874）' },
+  { k: 'bxall', t: 'NAVIGATOR Beauty のユーザー台帳', d: '受付のユーザー・DAYの体感をユーザー台帳に取り込み、その後（会員登録・購入・定期）の記録を受付の集計に送る（v876）。オフの時はオーナーと受付の確認メンバーだけ' }
 ];
 var _featCfg = null, _featUnsub = null, _featEd = null;
 function _featFlags() {
@@ -4589,7 +4590,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v875';
+  var DATA_VERSION = 'v876';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6701,6 +6702,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v876', d:'2026-11-13', items:['🛠 細かい修正をしました'] },
   { v:'v875', d:'2026-11-10', items:['🛠 細かい修正をしました'] },
   { v:'v874', d:'2026-11-10', items:['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v:'v873', d:'2026-11-10', items:['📋 計画シートの「NEWフロント」は、その月に新しく作るフロントの人数です。目標も今の人数も − ＋ で入れます（今の人数はMAPから数えなくなりました）','📋 計画シートのFT・CTなどの「今」は、自分で入れた数だけになりました（11月からは予定にFT・CTと入れても数に入りません。10月までの数はそのまま残しています）'] },
@@ -23314,7 +23316,7 @@ function _uxIb(k) { return UX_INFO[k] ? '<span class="ux-ib" onclick="uxInfo(\''
 //   ユーザー側は一覧（スマホ）／表（PC）で、ADP・購入・ニーズ・プロフィールを持つ。「研修生にする」でビジネスのMAPへ。
 //   項目：adp {on, next}／buys [{t, d}]（新しい順・20件まで）／needs [タグ]／needMemo／uMemo／fromUser（研修生にした日）
 //   あとで（ユーザー用QR会員証）：ckNo・cardToken・uVisits（イベント来場回数）・uGrade（グレード）を受付から入れる予定（今は画面に出さない）
-var UM_KEYS = ['adp', 'buys', 'needs', 'needMemo', 'uMemo', 'fromUser', 'toUser', 'ckNo', 'cardToken', 'uVisits', 'uGrade', 'uLastAt', 'uPrysm', 'uPrysmD', 'uCkAt', 'ckToMember']; // メンバー画面の保存で落とさない（v864: 受付から）
+var UM_KEYS = ['adp', 'buys', 'needs', 'needMemo', 'uMemo', 'fromUser', 'toUser', 'ckNo', 'cardToken', 'uVisits', 'uGrade', 'uLastAt', 'uPrysm', 'uPrysmD', 'uCkAt', 'ckToMember', 'uDays', 'shopReg', 'fuJ']; // メンバー画面の保存で落とさない（v864: 受付から）
 var _umMode = false, _umFlt = 'all', _umRef = '', _umSort = 'ref', _umOpenId = '', _umBuyF = false;
 try { _umMode = localStorage.getItem('gm_umMode') === '1'; } catch (e) {}
 function isUserM(m) { if (!m || m.deleted) return false; var t = String(m.title || '').trim(); return t === 'ユーザー' || /^U$/i.test(t); }
@@ -23336,6 +23338,8 @@ function _umQ(k) { return '<span class="umq" onclick="event.stopPropagation();ux
 UX_INFO.um_sw = { t: 'ビジネスとユーザー', h: 'ユーザー（タイトルが「ユーザー」の人）は、ビジネスのMAPには丸を出さず、紹介者のカードに「ユーザー○人・○P」で出します（押すとその人のユーザーの一覧）。<br>ユーザーのポイントは今までどおり紹介者のGSVに入ります。<br>「研修生にする」と、ビジネスのMAPの紹介者の下に研修生として出ます。', ok: 'OK' };
 UX_INFO.um_list = { t: 'ユーザーの一覧', h: '・<b>ADPなし</b>：定期購入をしていない人<br>・<b>60日買ってない</b>：最後の購入から60日以上（オレンジで表示）<br>・<b>ニーズあり</b>：ニーズを書いてある人<br>人を押すと、ポイント・ADP・購入・ニーズ・プロフィールを直せます。', ok: 'OK' };
 UX_INFO.um_fix = { t: '固定で上がるポイント', h: '毎月決まって入る見込みのポイント（ADPの定期購入など）。理想MAPの計算にも使います。', ok: 'OK' };
+UX_INFO.um_shop = { t: 'ショッピング会員の登録', h: 'ニュースキンのショッピング会員に登録したかどうか。登録した日も入れておくと、受付の「📈 体感のその後」で、DAY から何日で登録したかが分かります。', ok: 'OK' };
+UX_INFO.um_fu = { t: 'その後の記録', h: 'DAY で体感したユーザーの、その後（ショッピング会員の登録・初めての購入・ADP）を記録してね。<br>DAY から3日たっても記録がない人に「📝 その後」が付きます（DAY から90日まで）。<br>記録すると、受付の「📈 体感のその後」の集計に入ります（ユニオン管理者・オーナーが見ます）。', ok: 'OK' };
 UX_INFO.um_adp = { t: 'ADP（定期購入）', h: '定期購入をしているかどうか。「あり」の時は次の発送日を入れておくと、一覧に出ます。', ok: 'OK' };
 function umSet(on) {
   _umMode = !!on; try { localStorage.setItem('gm_umMode', _umMode ? '1' : '0'); } catch (e) {}
@@ -23373,6 +23377,7 @@ function _umFiltered() {
   if (_umFlt === 'noadp') L = L.filter(function(u) { return !_umAdp(u); });
   else if (_umFlt === 'old') L = L.filter(function(u) { var b = _umLast(u), d = b ? _umDays(b.d) : null; return d !== null && d >= 60; });
   else if (_umFlt === 'needs') L = L.filter(_umHasNeeds);
+  else if (_umFlt === 'fu') L = L.filter(_umFuNeed);
   var pt = function(u) { return parseInt(u.ptCurrent, 10) || 0; };
   if (_umSort === 'pt') L.sort(function(a, b) { return pt(b) - pt(a); });
   else if (_umSort === 'old') L.sort(function(a, b) { var x = _umLast(a), y = _umLast(b); return (x ? x.d : '0000') < (y ? y.d : '0000') ? -1 : 1; });
@@ -23391,7 +23396,8 @@ function _umPaneHtml(pc) {
   var chip = function(k, lb) { return '<span class="umc' + (_umFlt === k ? ' on' : '') + '" onclick="umFlt(\'' + k + '\')">' + lb + '</span>'; };
   var h = '<div class="ump' + (pc ? ' pc' : '') + '">';
   h += '<div class="ums"><div><small>今月のポイント</small><b>' + sumPt.toLocaleString() + '</b></div><div><small>固定で上がる</small><b>' + sumFix.toLocaleString() + '</b></div><div><small>ADPあり</small><b>' + adp + '<i>/' + all.length + '</i></b></div></div>';
-  h += '<div class="umf">' + chip('all', 'すべて') + chip('noadp', 'ADPなし') + chip('old', '60日買ってない') + chip('needs', 'ニーズあり')
+  var nFu = all.filter(_umFuNeed).length;
+  h += '<div class="umf">' + chip('all', 'すべて') + chip('noadp', 'ADPなし') + chip('old', '60日買ってない') + chip('needs', 'ニーズあり') + (nFu || _umFlt === 'fu' ? chip('fu', '📝 その後がまだ ' + nFu) : '')
     + '<span class="umc sel">' + evEsc(_umRef ? '紹介者：' + _umNm(_umById(_umRef)) : '紹介者：すべて') + ' ▾<select onchange="umRefSel(this.value)">' + refOpts + '</select></span>'
     + '<span class="umc sel">並び ▾<select onchange="umSortSel(this.value)"><option value="ref"' + (_umSort === 'ref' ? ' selected' : '') + '>紹介者ごと</option><option value="pt"' + (_umSort === 'pt' ? ' selected' : '') + '>ポイント順</option><option value="old"' + (_umSort === 'old' ? ' selected' : '') + '>買ってから長い順</option></select></span>'
     + _umQ('um_list') + (_bxOn() && ed ? '<span class="umc" onclick="umCkSync(true)" title="受付（BASE CHECK-IN）で登録したユーザーを取り込む">🎫 受付から更新</span>' : '') + (pc && ed ? '<span class="umadd-pc" onclick="umAdd()">＋ ユーザーを足す</span>' : '') + '</div>';
@@ -23418,7 +23424,7 @@ function _umTags(u) { var t = _umNeedS(u); return t ? '<span class="umt">' + evE
 function _umCardHtml(u) {
   var ph = _avatars[u.id], av = ph ? '<img src="' + ph + '" alt="">' : evEsc((u.lastName || u.firstName || '?').charAt(0));
   return '<div class="umcd" onclick="umOpen(\'' + u.id + '\')"><div class="umav">' + av + '</div><div class="umb2"><div class="umn">' + evEsc(_umNm(u)) + '<em class="' + (_umAdp(u) ? 'adp' : 'no') + '">' + (_umAdp(u) ? 'ADP' : 'ADPなし') + '</em></div>'
-    + _umBuyLine(u) + _umCkLine(u) + (_umTags(u) ? '<div>' + _umTags(u) + '</div>' : '') + '</div>'
+    + _umBuyLine(u) + _umCkLine(u) + _umDayLine(u) + (_umTags(u) ? '<div>' + _umTags(u) + '</div>' : '') + '</div>'
     + '<div class="umpt"><b>' + (parseInt(u.ptCurrent, 10) || 0).toLocaleString() + '</b><small>固定 ' + (parseInt(u.ptFixed, 10) || 0).toLocaleString() + '</small></div>'
     + (state.isEditor ? '<span class="umdel" title="削除" onclick="umDel(\'' + u.id + '\',event)">' + icn('trash') + '</span>' : '') + '</div>'; // v846: 一覧からも削除
 }
@@ -23476,10 +23482,13 @@ function _umMigrate(u) {
   u.needMemo = (tags.length ? tags.join('・') + (memo ? '\n' : '') : '') + memo; u.needs = [];
   if (state.isEditor) autoSave();
 }
-function _umSv() { try { recalcAllGSV(); } catch (e) {} autoSave(); if (_pp) _ppRender(); }
+function _umSv() { try { recalcAllGSV(); } catch (e) {} var t = _umTgt(); if (t) _umFuPush(t); autoSave(); if (_pp) _ppRender(); }
 function umPpSet(k, v) { var u = _umTgt(); if (!u) return; umPt(u.id, k, v, true); if (_pp) _ppRender(); toast('保存しました'); }
 function umPpStep(k, d) { var u = _umTgt(); if (!u) return; umPtStep(u.id, k, d); if (_pp) _ppRender(); }
 function umAdpSet(on) { var u = _umTgt(); if (!u || !state.isEditor) return; u.adp = { on: !!on, next: (u.adp && u.adp.next) || '' }; _umSv(); }
+// v876: ショッピング会員の登録（したかどうか・した日）
+function umShopSet(on) { var u = _umTgt(); if (!u || !state.isEditor) return; u.shopReg = on ? { on: true, d: (u.shopReg && u.shopReg.d) || evTodayYmd() } : { on: false, d: '' }; _umSv(); }
+function umShopDate(v) { var u = _umTgt(); if (!u || !state.isEditor) return; u.shopReg = { on: true, d: v || '' }; _umSv(); }
 function umAdpNext(v) { var u = _umTgt(); if (!u || !state.isEditor) return; u.adp = { on: true, next: v || '' }; _umSv(); }
 function umBuyAdd() {
   var u = _umTgt(); if (!u || !state.isEditor) return;
@@ -23526,13 +23535,13 @@ function _ppHubU(m) {
   h += _dtKv([['今月のポイント', (parseInt(m.ptCurrent, 10) || 0).toLocaleString() + '<small style="display:block;font-size:10.5px;color:var(--text-dim)">固定 ' + (parseInt(m.ptFixed, 10) || 0).toLocaleString() + '</small>', 'ppGo(\'upt\')'],
     ['ADP', adp ? 'あり' + (m.adp.next ? '<small style="display:block;font-size:10.5px;color:var(--text-dim)">次 ' + _umMD(m.adp.next) + '</small>' : '') : 'なし', 'ppGo(\'uadp\')', adp ? 'var(--accent)' : ''],
     ['最後の購入', b ? (dd === 0 ? '今日' : dd + '日前') : '記録なし', 'ppGo(\'uadp\')', dd !== null && dd >= 60 ? '#E08A1D' : '']]);
-  if (m.ckNo) h += '<div class="umck-hub">' + _umCkLine(m) + '</div>'; // v864: 受付から（来場・PRYSMiO）
+  if (m.ckNo) h += '<div class="umck-hub">' + _umCkLine(m) + _umDayLine(m, true) + '</div>'; // v864: 受付から（来場・PRYSMiO）・v876: DAYの体感
   var tile = function(key, c, ic, lb, st) { return '<div style="--c:' + c + '" onclick="ppGo(\'' + key + '\')"><i>' + ic + '</i><b>' + lb + '</b><span>' + st + '</span></div>'; };
   var nAct = 0; try { var c9 = _meActCut(); nAct = _meActItems(m).filter(function(it) { return !_meActIsOld(it, c9); }).length; } catch (e) {}
   h += '<div class="pptl">'
     + tile('title', k, icn('star'), 'タイトル', '<em>ユーザー</em>')
     + tile('upt', 'var(--accent)', icn('trend'), 'ポイント', '今月 ' + (parseInt(m.ptCurrent, 10) || 0).toLocaleString() + '<br>固定 ' + (parseInt(m.ptFixed, 10) || 0).toLocaleString())
-    + tile('uadp', '#2CE5B8', icn('bag'), 'ADP・購入', 'ADP <em>' + (adp ? 'あり' : 'なし') + '</em><br>' + (b ? evEsc(String(b.t || '').slice(0, 14)) + ' ' + _umMD(b.d) : '購入の記録なし'))
+    + tile('uadp', '#2CE5B8', icn('bag'), 'ADP・購入', (m.shopReg && m.shopReg.on ? '会員登録 <em>済</em>・' : '') + 'ADP <em>' + (adp ? 'あり' : 'なし') + '</em><br>' + (b ? evEsc(String(b.t || '').slice(0, 14)) + ' ' + _umMD(b.d) : '購入の記録なし'))
     + tile('uneed', '#8B7CFF', icn('bulb'), 'ニーズ', nd ? '「' + evEsc(nd.slice(0, 26)) + '」' : 'まだない')
     + tile('act', '#5AD7FF', icn('calendar'), '活動', nAct ? 'OL・予定・タスク <em>' + nAct + '件</em>' : 'OL・予定・タスクの記録')
     + tile('memo', '#D19500', icn('pencil'), 'メモ', memo ? '「' + evEsc(memo.slice(0, 30)) + '」' : 'まだない')
@@ -23551,7 +23560,10 @@ function _ppPageU(m, pg) {
   }
   if (pg === 'uadp') {
     var adp = _umAdp(m), nx = (m.adp && m.adp.next) || '', B = Array.isArray(m.buys) ? m.buys : [];
+    var sr = m.shopReg && m.shopReg.on, sd = (m.shopReg && m.shopReg.d) || '';
     var h = '<h2 class="ux-h2">ADP・購入</h2>'
+      + '<div class="ppl">ショッピング会員の登録' + _umQ('um_shop') + '</div><div class="ppb sm" style="--n:2"><span class="' + (sr ? 'on' : '') + '" onclick="umShopSet(1)">した</span><span class="' + (sr ? '' : 'on') + '" onclick="umShopSet(0)">まだ</span></div>'
+      + (sr ? '<div class="ppl">登録した日</div><div class="umdt' + (sd ? '' : ' em') + '"><input class="ppin" type="date" value="' + evEsc(sd) + '" onchange="umShopDate(this.value)"><span>日付を選ぶ</span></div>' : '')
       + '<div class="ppl">ADP（定期購入）' + _umQ('um_adp') + '</div><div class="ppb sm" style="--n:2"><span class="' + (adp ? 'on' : '') + '" onclick="umAdpSet(1)">あり</span><span class="' + (adp ? '' : 'on') + '" onclick="umAdpSet(0)">なし</span></div>';
     if (adp) h += '<div class="ppl">次の発送日</div><div class="umdt' + (nx ? '' : ' em') + '"><input class="ppin" type="date" value="' + evEsc(nx) + '" onchange="umAdpNext(this.value)"><span>日付を選ぶ</span></div>';
     h += '<div class="ppl">購入を記録する</div><input class="ppin" id="umBuyT" maxlength="40" placeholder="製品名（例：スキンケアセット）">'
@@ -23601,8 +23613,8 @@ function umAddSave() {
 //   準備中のあいだは、オーナーと受付の確認メンバー（checkinConfig/beauty.testers）だけ
 var UM_PRYSM = [['レッド', 0, '#e5484d'], ['オレンジ', 250, '#f28c28'], ['イエロー', 350, '#e8c21c'], ['グリーン', 450, '#3fb950'], ['ブルー', 550, '#3e8bf0'], ['パープル', 700, '#9b5de5'], ['プラチナメダリオン', 1100, '#c9ced8']]; // 受付の CK_PRYSM と同じ
 function umPrysmBand(v) { v = +v || 0; var b = UM_PRYSM[0]; UM_PRYSM.forEach(function(x) { if (v >= x[1]) b = x; }); return { n: b[0], c: b[2] }; }
-var _bxTesters = null, _umCkBusy = false;
-function _bxOn() { return !!currentUser && (isOwnerUid(currentUser.uid) || (_bxTesters || []).indexOf(currentUser.uid) >= 0); }
+var _bxTesters = null, _umCkBusy = false, _umCkUn = '';
+function _bxOn() { return !!currentUser && (isOwnerUid(currentUser.uid) || (_bxTesters || []).indexOf(currentUser.uid) >= 0 || (typeof featOn === 'function' && featOn('bxall'))); } // v876: 新機能のテスト「bxall」で全員に
 function _bxLoad() {
   if (_bxTesters || !db) return Promise.resolve(_bxTesters || []);
   return db.doc('checkinConfig/beauty').get().then(function(d) { _bxTesters = (d.exists && (d.data() || {}).testers) || []; return _bxTesters; }).catch(function() { _bxTesters = []; return []; });
@@ -23613,6 +23625,32 @@ function _umCkLine(u, tbl) {
   return '<span class="umck' + (tbl ? ' t' : '') + '">' + (u.uVisits ? '来場 ' + u.uVisits + '回' : '受付で登録') + (u.uLastAt > 1e11 ? '・' + (new Date(u.uLastAt).getMonth() + 1) + '/' + new Date(u.uLastAt).getDate() : '')
     + (p ? '<i style="--pz:' + p.c + '"></i>' + evEsc(p.n) + ' ' + (+u.uPrysm).toLocaleString() : '')
     + (u.uInvName ? '<span class="umck-inv">・招待: ' + evEsc(u.uInvName) + '</span>' : '') + '</span>';
+}
+// v876: DAYの体感（受付から）・その後の記録がまだか・受付の集計へ送る
+function _umDayLine(u, all) {
+  var D = (Array.isArray(u.uDays) ? u.uDays : []).filter(function(x) { return x.menu; });
+  if (!D.length) return '';
+  return (all ? D.slice(0, 3) : D.slice(0, 1)).map(function(x) {
+    return '<span class="umck umday">💆 ' + _umMD(x.d) + ' ' + evEsc(x.menu) + (x.staff ? '（' + evEsc(x.staff) + '）' : '') + (x.st === 'done' ? ' 済み' : x.st === 'absent' ? ' 来なかった' : ' 予定') + '</span>';
+  }).join('') + (_umFuNeed(u) ? '<span class="umfu" onclick="event.stopPropagation();uxInfo(\'um_fu\')">📝 その後を記録してね</span>' : '');
+}
+function _umFuNeed(u) { // DAY（3〜90日前）に来たのに、そのあとの会員登録・購入・ADP の記録がない
+  var D = (Array.isArray(u.uDays) ? u.uDays : []).filter(function(x) { var n = _umDays(x.d); return x.st !== 'absent' && n !== null && n >= 3 && n <= 90; });
+  if (!D.length || _umAdp(u) || (u.shopReg && u.shopReg.on)) return false;
+  var d0 = D[D.length - 1].d;
+  return !(Array.isArray(u.buys) ? u.buys : []).some(function(b) { return String(b.d || '') >= d0; });
+}
+function _umFuSum(u) {
+  var ref = _umById(u.parentId), B = (Array.isArray(u.buys) ? u.buys : []).filter(function(b) { return b.d; }).slice().sort(function(a, b) { return String(a.d).localeCompare(String(b.d)); });
+  var amt = 0; B.forEach(function(b) { amt += +b.amt || 0; });
+  return { union: _umCkUn, refNo: (ref && ref.checkinNo) || '', name: _umNm(u).slice(0, 40), shop: (u.shopReg && u.shopReg.on) ? (u.shopReg.d || '-') : '', buy1: B.length ? String(B[0].d).slice(0, 10) : '', nBuy: B.length, amt: amt, adp: _umAdp(u) };
+}
+function _umFuPush(u) {
+  if (!db || !u || !u.ckNo || !_umCkUn || !_bxOn() || viewingOwnerUid) return;
+  var s = _umFuSum(u), j = JSON.stringify(s);
+  if (u.fuJ === j) return;
+  s.by = currentUser.uid; s.at = Date.now();
+  db.collection('ckFollow').doc(String(u.ckNo)).set(s).then(function() { u.fuJ = j; autoSave(); }).catch(function() {});
 }
 // 会場でのお買い上げ（カードの rcpt_b_{イベント}）→ buys の1行
 function _umCkBuy(k, r) {
@@ -23669,13 +23707,19 @@ function umCkSync(force) {
         B.forEach(function(b) { if (b.ck) had[b.ck] = 1; });
         Object.keys(cd).forEach(function(k) { if (k.indexOf('rcpt_b_') === 0 && cd[k] && !had[k]) B.push(_umCkBuy(k, cd[k])); });
         B = B.filter(function(b) { return !b.ck || cd[b.ck]; }); // 受付で取り下げたお買い上げは消す
-        if (B.length !== n0 || B.some(function(b, i) { return b !== (u.buys || [])[i]; })) { B.sort(function(a, b) { return String(b.d).localeCompare(String(a.d)); }); u.buys = B.slice(0, 20); return 1; }
-        return 0;
+        var ch = 0;
+        if (B.length !== n0 || B.some(function(b, i) { return b !== (u.buys || [])[i]; })) { B.sort(function(a, b) { return String(b.d).localeCompare(String(a.d)); }); u.buys = B.slice(0, 20); ch = 1; }
+        // v876: DAYの体感（カードの exp_{イベント}：区分・メニュー・担当・済み）
+        var D = Object.keys(cd).filter(function(k) { return k.indexOf('exp_') === 0 && cd[k] && cd[k].d; }).map(function(k) { var x = cd[k]; return { e: k.slice(4), d: x.d, ev: String(x.ev || '').slice(0, 40), kind: x.kind || '', menu: x.menu || '', staff: x.staff || '', st: x.st || 'rsv' }; })
+          .sort(function(a, b) { return String(b.d).localeCompare(String(a.d)); }).slice(0, 20);
+        if (JSON.stringify(D) !== JSON.stringify(u.uDays || [])) { u.uDays = D; ch = 1; }
+        return ch;
       }).catch(function() { return 0; }));
     });
     return Promise.all(jobs).then(function(bs) {
       _umCkBusy = false;
       var nb = bs.reduce(function(a, b) { return a + (b || 0); }, 0);
+      _umCkUn = un; _umList().forEach(function(x) { if (x.ckNo) _umFuPush(x); }); // v876: その後の記録を受付の集計へ（変わった人だけ）
       if (res.add || res.link || res.upd || nb) { _memMap = null; _umSaved(true); }
       if (res.add || res.link || res.tr || res.back) { _umRepaint(); try { renderCurrentView(); } catch (eR) {} }
       if (res.tr) toast('🎓 受付で研修生になった人を、MAPの研修生にしました（' + res.tr + '人）');
@@ -23700,6 +23744,7 @@ function _umCss() {
     + '.umf{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px}.umc{position:relative;font-size:12.5px;font-weight:800;border:1px solid var(--border);border-radius:999px;padding:6px 11px;color:var(--text-mid);cursor:pointer;white-space:nowrap}.umc.on{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,transparent)}.umc select{position:absolute;inset:0;opacity:0;width:100%;cursor:pointer}'
     + '.umadd-pc{margin-left:auto;color:var(--accent);font-weight:900;cursor:pointer}'
     + '.umg{font-size:12px;font-weight:900;color:var(--text-dim);margin:10px 2px 6px}'
+    + '.umday{color:#c08cff}.umfu{display:inline-block;margin-top:4px;font-size:11.5px;font-weight:900;color:#E08A1D;border:1px solid #E08A1D;border-radius:8px;padding:1px 7px;cursor:pointer}'
     + '.umck{display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;color:var(--text-mid);margin-top:3px}.umck.t{margin:0;white-space:nowrap}.umck i{width:9px;height:9px;border-radius:50%;background:var(--pz);margin-left:4px;flex:none}.umck-inv{color:var(--text-dim)}.umck-hub{margin:8px 2px 0}'
     + '.umdel{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:10px;cursor:pointer;opacity:.75}.umdel:hover{opacity:1;background:color-mix(in srgb,var(--red) 12%,transparent)}.umdel .lic{width:18px;height:18px}.umtb td.umdelc{width:40px;padding:4px 6px}'
     + '.umcd{display:grid;grid-template-columns:42px 1fr auto auto;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:10px 12px;margin-bottom:8px;cursor:pointer}'
