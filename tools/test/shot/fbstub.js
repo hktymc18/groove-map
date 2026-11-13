@@ -8,7 +8,14 @@
   function docRef(path) {
     return { path: path, id: path.split('/').pop(),
       get: function () { return Promise.resolve(snap(path)); },
-      set: function (d, o) { store[path] = (o && o.merge) ? Object.assign({}, store[path] || {}, cp(d)) : cp(d); return Promise.resolve(); },
+      set: function (d, o) {
+        // テスト用: window.__FBLOG に書いた順を残す・window.__FBHOLD（正規表現）に合う書き込みは終わらない（通信が止まった時の再現）
+        var hold = window.__FBHOLD && window.__FBHOLD.test(path), log = window.__FBLOG;
+        if (log) log.push({ p: path, t: 'start' });
+        if (hold) return new Promise(function () {});
+        store[path] = (o && o.merge) ? Object.assign({}, store[path] || {}, cp(d)) : cp(d);
+        return new Promise(function (res) { setTimeout(function () { if (log) log.push({ p: path, t: 'end' }); res(); }, window.__FBDELAY || 0); });
+      },
       update: function (d) { store[path] = Object.assign({}, store[path] || {}, cp(d)); return Promise.resolve(); },
       delete: function () { delete store[path]; return Promise.resolve(); },
       onSnapshot: function (a, b) { var cb = typeof a === 'function' ? a : b; setTimeout(function () { try { cb(snap(path)); } catch (e) {} }, 0); return function () {}; },

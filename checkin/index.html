@@ -2690,10 +2690,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v147';
+var APP_VER = 'v148';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v148', d: '2026/11/14', items: ['🛠 細かい修正をしました'] },
   { v: 'v147', d: '2026/11/13', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v146', d: '2026/11/13', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v145', d: '2026/11/13', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
@@ -7506,18 +7507,22 @@ var KB_KIND_LABEL = { frame: '枠', art: 'イラスト', holo: 'ホロ（任意�
 function kbReadFile(f){ return new Promise(function(res, rej){ var r = new FileReader(); r.onload = function(){ res(r.result); }; r.onerror = rej; r.readAsDataURL(f); }); }
 function kbImg(src){ return new Promise(function(res, rej){ var im = new Image(); im.onload = function(){ res(im); }; im.onerror = rej; im.src = src; }); }
 function kbCanvas(w, h){ var c = document.createElement('canvas'); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; }
-// できるだけ軽く（1枚 ~600KB 以内の data URL）。透過が要る画像は webp か png、それ以外は webp か jpeg
+// できるだけ軽く（1枚 ~450KB 以内の data URL）。透過が要る画像は webp か png、それ以外は webp か jpeg
+//   v148: iPhone は webp を作れず png・jpeg になって重い → 上限を下げる（大きいと保存の通信が終わらないことがあった）
+var KB_MAX_URL = 600000;
+function kbFree(cv){ try{ cv.width = 0; cv.height = 0; }catch(e){} }   // iPhone はキャンバスのメモリがすぐ空かないので、使い終わったら空にする
 function kbEncode(cv, alpha){
-  var q = .86, out = '';
-  for(var i = 0; i < 8; i++){
+  var q = .86, out = '', made = [];
+  for(var i = 0; i < 10; i++){
     out = cv.toDataURL('image/webp', q);
     if(out.indexOf('data:image/webp') !== 0) out = alpha ? cv.toDataURL('image/png') : cv.toDataURL('image/jpeg', q);
-    if(out.length < 800000) return out;
+    if(out.length < KB_MAX_URL) break;
     if(q > .6 && out.indexOf('image/png') < 0){ q -= .1; continue; }
-    var c2 = kbCanvas(cv.width * .8, cv.height * .8);
+    var c2 = kbCanvas(cv.width * .85, cv.height * .85);
     c2.getContext('2d').drawImage(cv, 0, 0, c2.width, c2.height);
-    cv = c2; q = .82;
+    cv = c2; made.push(c2); q = .82;
   }
+  made.forEach(kbFree);
   return out;
 }
 function kbHasAlpha(ctx, w, h){
@@ -7556,8 +7561,12 @@ function kbProcess(src, opt){
     var alpha = !!opt.alpha;
     if(opt.key && !kbHasAlpha(ctx, cv.width, cv.height)){ kbKeyOut(ctx, cv.width, cv.height); alpha = true; }
     else if(opt.alpha) alpha = kbHasAlpha(ctx, cv.width, cv.height);
+    var cv0 = cv;
     if(opt.trim) cv = kbTrim(cv);
-    return kbEncode(cv, alpha);
+    var out = kbEncode(cv, alpha);
+    kbFree(cv); kbFree(cv0);
+    if(!out || out.length < 100) throw new Error('empty');   // メモリ不足で空の画像になった時
+    return out;
   });
 }
 function kbKB(d){ return d ? Math.round(d.length * .75 / 1024) + 'KB' : ''; }
@@ -7792,28 +7801,45 @@ function koboEdit(def0, presetMem){
   function save(){
     collect();
     if(!img.frame || !img.art){ $('kbErr').textContent = '枠とイラストの画像を入れてください'; return; }
-    $('kbSave').disabled = true; $('kbErr').textContent = '';
+    var btn = $('kbSave'), label = btn.textContent, step = '';
+    btn.disabled = true; $('kbErr').textContent = '';
     var now = Date.now();
     delete def._autoDone;
+    // v148: 画像は1枚ずつ送る（iPhone で3枚まとめて送ると、エラーも出ずに終わらないことがあった）
     var ops = [];
     CK_SKIN_KINDS.forEach(function(k){
-      if(changed[k]){ def.v[k] = now; ops.push(db.collection('cardArt').doc(id + '__' + k).set({ d: img[k], v: now })); }
-      if(removed[k]){ def.v[k] = 0; ops.push(db.collection('cardArt').doc(id + '__' + k).delete()); }
+      if(changed[k]){ def.v[k] = now; ops.push({ k: k, run: function(){ return db.collection('cardArt').doc(id + '__' + k).set({ d: img[k], v: now }); } }); }
+      if(removed[k]){ def.v[k] = 0; ops.push({ k: k, run: function(){ return db.collection('cardArt').doc(id + '__' + k).delete(); } }); }
     });
     def.no = mem ? mem.no : ''; def.memberName = mem ? (mem.name || '') : ''; def.union = mem ? (mem.union || '') : '';
     def.updatedAt = now; if(!def.createdAt) def.createdAt = now;
-    Promise.all(ops).then(function(){
+    var show = function(t){ step = t; if($('kbSave') === btn) btn.textContent = '保存中…（' + t + '）'; };
+    var late = false, timer = setTimeout(function(){
+      late = true;
+      if($('kbSave') !== btn) return;
+      btn.disabled = false; btn.textContent = label;
+      $('kbErr').textContent = '保存に時間がかかっています（' + step + 'の途中）。電波の良いところで、もう一度「保存」を押してください。'
+        + 'くり返す時は、画像を小さめのものにしてみてください。';
+    }, 60000);
+    var chain = Promise.resolve();
+    ops.forEach(function(o, i){ chain = chain.then(function(){ show('画像 ' + (i + 1) + '/' + ops.length); return o.run(); }); });
+    chain.then(function(){
+      show('カードの設定');
       return db.collection('cardSkins').doc(id).set(def);
     }).then(function(){
+      if(mem) show('会員証に反映');
       // 画像はこの端末に保存（会員証・コレクションでもすぐ出る）
       CK_SKIN_KINDS.forEach(function(k){ if(changed[k]) ckIdb.set(id + '__' + k, { v: now, d: img[k] }); });
       ckSkinDefCache(id, def);
       return kbAssign(id, def, oldNo, mem);
     }).then(function(){
+      clearTimeout(timer);
       toast(mem ? '保存しました。' + (mem.name || mem.no) + ' さんの会員証に反映されます（本人が開き直すと反映）' : '保存しました');
-      koboList();
+      if($('kbSave') === btn || !late) koboList();   // 待ちきれず別の画面へ移った後なら、その画面はそのまま
     }).catch(function(e){
-      $('kbSave').disabled = false;
+      clearTimeout(timer);
+      if($('kbSave') !== btn) return;
+      btn.disabled = false; btn.textContent = label;
       $('kbErr').textContent = permMsg(e, '保存できませんでした（オーナーのみ・画像が大きすぎる可能性もあります）');
     });
   }
