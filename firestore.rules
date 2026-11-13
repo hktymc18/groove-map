@@ -677,6 +677,8 @@ service cloud.firestore {
     //   ・受付の人（どこかのユニオンの有効なメンバー＝合同イベントの受付も）は、ゲスト受付からの新規登録と、
     //     来場の回数（1ずつ）・最後の来場・最新の PRYSMiO の数値（受付v118）の更新だけ
     match /checkinUsers/{uid} {
+      // 💜 受付v145: DAY HOST（とオーナー・ユニオン管理者）は、そのユニオンのユーザーを読める（DAYの体感の参加者を名簿から選ぶ）
+      allow get, list: if ckLoungeStaff(resource.data.get('union', ''));
       allow get, list: if isCkAdmin(resource.data.get('union', ''));
       // 💜 受付v119: 準備中は、オーナーが指定した確認メンバーも、自分が関わるユニオンのユーザーを見て・直して・消せる
       allow get, list, update, delete: if ckBeautyTester() && ckCanSee(resource.data.get('union', ''))
@@ -716,6 +718,19 @@ service cloud.firestore {
                     && request.resource.data.diff(resource.data).affectedKeys()
                          .hasOnly(['zoomUrl', 'zoomId', 'zoomPw', 'recClosed']);
 
+      // 💜 受付v145: DAYの体感（ユニオンごと）= { union, date, ev, key（掲示板の鍵）, staff: [{ no, name }], recv: [{ no, name }], by, at }
+      //   書けるのはそのユニオンのオーナー・ユニオン管理者・DAY HOST。読めるのは同じ人と、そのイベントの受付の人
+      match /btDay/{un} {
+        allow read: if ckLoungeStaff(un) || ckEventStaff(eid);
+        allow create, update: if ckLoungeStaff(un)
+          && request.resource.data.get('union', '') == un
+          && request.resource.data.keys().hasOnly(['union', 'date', 'ev', 'key', 'staff', 'recv', 'by', 'at'])
+          && request.resource.data.get('key', '') is string && request.resource.data.get('key', '').matches('^[a-z0-9]{20}$')
+          && request.resource.data.get('staff', []) is list && request.resource.data.get('staff', []).size() <= 40
+          && request.resource.data.get('recv', []) is list && request.resource.data.get('recv', []).size() <= 10
+          && (resource == null || resource.data.get('key', '') == request.resource.data.key);
+        allow delete: if ckLoungeStaff(un);
+      }
       match /attendance/{aid} {
         // 💜 受付v144: 「💜 Beauty」タブの「📏 今日の測定」。ユーザーの出席（union は空・uUnion にユーザーのユニオン）は、
         //   そのユニオンのオーナー・ユニオン管理者・DAYスタッフが読める（読み取り回数の上限に当たらないよう先頭に置く。一覧は kind と uUnion で絞った検索のみ）
@@ -1073,6 +1088,53 @@ service cloud.firestore {
         && request.resource.data.co.get('diet', []) is list && request.resource.data.co.get('diet', []).size() <= 10
         && request.resource.data.co.get('yuragi', []) is list && request.resource.data.co.get('yuragi', []).size() <= 10
         && request.resource.data.co.get('inner', []) is list && request.resource.data.co.get('inner', []).size() <= 10;
+      allow delete: if ckLoungeStaff(un);
+    }
+    // 💜 受付v145: DAYの体感の掲示板（鍵＝20文字・会員証を持つ DAYスタッフ・予約受付担当が見る）
+    //   ckBoard/{鍵} = { eid, union, date, ev, staff: [{ no, name }], by, at } … 鍵を知っている人だけ読める（一覧は不可）
+    //   ckBoard/{鍵}/p/{参加者} = { kind, name, ref, refNo, menu, w1, w2, mist, memo, staffNo, staffName, ord, st, ckNo, mst, doneAt, by, at }
+    //   ckBoard/{鍵}/done/{参加者} = { tk: 担当の会員証トークン, at } … 担当が「済み」を押した印（だれも読めない＝トークンを見せない）
+    match /ckBoard/{key} {
+      allow get: if key.matches('^[a-z0-9]{20}$');
+      allow list: if false;
+      allow create, update: if key.matches('^[a-z0-9]{20}$') && ckLoungeStaff(request.resource.data.get('union', ''))
+        && (resource == null || resource.data.get('union', '') == request.resource.data.get('union', ''))
+        && request.resource.data.keys().hasOnly(['eid', 'union', 'date', 'ev', 'staff', 'by', 'at']);
+      allow delete: if ckLoungeStaff(resource.data.get('union', ''));
+      match /p/{pid} {
+        allow get, list: if true;
+        allow create, update, delete: if ckLoungeStaff(get(/databases/$(database)/documents/ckBoard/$(key)).data.get('union', ''));
+        // 担当の DAYスタッフ（会員証・ログインなし）：自分の担当だけ「済み」「戻す」（同じ一括書き込みで done の印）
+        allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['st', 'doneAt'])
+          && request.resource.data.st in ['done', 'rsv']
+          && existsAfter(/databases/$(database)/documents/ckBoard/$(key)/done/$(pid))
+          && ckBoardStaffTk(key, getAfter(/databases/$(database)/documents/ckBoard/$(key)/done/$(pid)).data.get('tk', ''), resource.data.get('staffNo', ''));
+        // 受付の人：初めての人を登録した時に、この参加者とつなぐ（ckNo を入れるだけ）
+        allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ckNo'])
+          && resource.data.get('ckNo', '') == ''
+          && ckEventStaff(get(/databases/$(database)/documents/ckBoard/$(key)).data.get('eid', '_'));
+      }
+      match /done/{pid} {
+        allow get, list: if false;
+        allow create, update: if request.resource.data.keys().hasOnly(['tk', 'at'])
+          && ckBoardStaffTk(key, request.resource.data.get('tk', ''), get(/databases/$(database)/documents/ckBoard/$(key)/p/$(pid)).data.get('staffNo', ''));
+        allow delete: if false;
+      }
+    }
+    function ckBoardStaffTk(key, tk, staffNo) {
+      return tk is string && tk.size() == 32 && staffNo is string && staffNo != ''
+        && exists(/databases/$(database)/documents/cards/$(tk))
+        && get(/databases/$(database)/documents/cards/$(tk)).data.get('no', '') == staffNo
+        && get(/databases/$(database)/documents/cards/$(tk)).data.get('btd_' + get(/databases/$(database)/documents/ckBoard/$(key)).data.get('eid', '_'), {}).get('key', '') == key;
+    }
+    // 💜 受付v145: 体感のメニュー（ユニオンごと）= { menus: [文字], by, at }。無いユニオンは組み込み（ルミスパ・ウェルスパ・カウンセリング）
+    match /ckBtCfg/{un} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create, update: if ckLoungeStaff(un)
+        && request.resource.data.keys().hasOnly(['menus', 'by', 'at'])
+        && request.resource.data.get('menus', []) is list && request.resource.data.get('menus', []).size() <= 12
+        && request.resource.data.get('by', '') == request.auth.uid;
       allow delete: if ckLoungeStaff(un);
     }
     // 💜 受付v129: ユーザーのスマホの通知の送り先（ckPush/{ユーザーのID}）。カードの本人だけが書ける（だれも読めない＝サーバーだけ）

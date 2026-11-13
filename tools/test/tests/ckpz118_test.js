@@ -40,47 +40,14 @@ const OUT = path.join(__dirname, '../out');
     await ev(`[].forEach.call(document.querySelectorAll('button'),function(b){ if(/^OK/.test(b.textContent.trim()) && b.offsetParent) b.click(); })`);
     await ev(`document.getElementById('btnGuest').click()`); await wt();
     await ev(`(function(){ document.getElementById('gName').value='見本 はなこ'; var c=document.getElementById('gAsUser'); c.checked=true; c.onchange(); document.getElementById('gRef').value='ジェッ子 ちゃん'; document.getElementById('gGo').click(); })()`); await wt(500);
-    // v144: PRYSMiO は受付では入れない（ボタンは「📋 体験・購入」・欄が無い・本人が入れた値は消さない）
-    c('受付の画面に「📋 体験・購入」（「測定」は無い）', /体験・購入/.test(await ev(`document.getElementById('stageBody').innerText`)) && !/測定/.test(await ev(`document.getElementById('stageBody').innerText`)));
+    // v145: 受付の「体験・購入」はなくした（会場での購入はない・体験は「💜 Beauty」タブの「💆 DAYの体感」）
+    const st0 = await ev(`document.getElementById('stageBody').innerText`);
+    c('v145: 受付の画面に「体験・購入」「測定」のボタンは無い', !(await ev(`!!document.getElementById('stgUserLog')`)) && !/体験・購入|測定/.test(st0), st0);
     const uid = await ev(`(function(){ var r=window.__ck.rec(); return Object.keys(r.att).filter(function(x){ return r.att[x].kind==='user'; })[0]; })()`);
     const tok = await ev(`window.__ck.rec().att[${JSON.stringify(uid)}].cardToken`);
-    const evId = await ev(`window.__ck.rec().ev.id`);
-    // 本人がアプリで入れた今日の値（と前回の値）
-    await ev(`window.__ck.db().collection('cards').doc(${JSON.stringify(tok)}).set({ pz_old1: { v: 760, d: '2026-10-05', ev: '10月のDAY', at: 1 }, ['pz_' + ${JSON.stringify(evId)}]: { v: 820, d: '2026-11-13', ev: '練習', at: 2, by: 'self' } }, { merge: true })`);
-    await ev(`document.getElementById('stgUserLog').click()`); await wt(400);
-    const m0 = JSON.parse(await ev(`JSON.stringify({h:document.querySelector('.modal h2').textContent, pz:!!document.getElementById('ulPz'), txt:document.querySelector('.modal').innerText, buy:document.getElementById('ulBuyMore').classList.contains('hide'), seller:document.getElementById('ulSeller').value, exp:document.querySelectorAll('#ulExp button').length})`));
-    c('v144: 見出しは「📋 体験・購入」で、PRYSMiO の欄は無い', /体験・購入/.test(m0.h) && !m0.pz && !/ユーザー/.test(m0.txt) && /PRYSMiO は、本人がアプリで入れます/.test(m0.txt), JSON.stringify(m0).slice(0, 300));
-    c('金額を入れるまで受け取り方法・販売者はしまう・販売者の初めは紹介者', m0.buy && m0.seller === 'ジェッ子 ちゃん' && m0.exp === 4);
-    await ev(`document.querySelector('#ulExp button[data-x="フェイシャル体験"]').click()`);
-    await ev(`(function(){ var r=document.querySelector('#ulItems .ulg-row'); r.querySelector('.ulN').value='見本の美容液'; r.querySelector('.ulQ').value='2'; r.querySelector('.ulP').value='4,500'; r.querySelector('.ulP').dispatchEvent(new Event('input',{bubbles:true})); })()`);
-    await ev(`document.getElementById('ulAdd').click()`);
-    await ev(`(function(){ var r=document.querySelectorAll('#ulItems .ulg-row')[1]; r.querySelector('.ulN').value='見本のクレンジング'; r.querySelector('.ulP').value='3000'; r.querySelector('.ulP').dispatchEvent(new Event('input',{bubbles:true})); })()`);
-    const m2 = JSON.parse(await ev(`JSON.stringify({tot:document.getElementById('ulTot').textContent, buy:document.getElementById('ulBuyMore').classList.contains('hide'), rows:document.querySelectorAll('#ulItems .ulg-row').length})`));
-    c('行を足せて、合計（数×単価）が出る・金額を入れると販売者の欄が出る', m2.tot === '¥12,000' && !m2.buy && m2.rows === 2, JSON.stringify(m2));
-    await shot('modal');
-    await ev(`(function(){ document.getElementById('ulAdd').click(); var r=document.querySelectorAll('#ulItems .ulg-row')[2]; r.querySelector('.ulN').value='値段なし'; })()`);
-    await ev(`document.getElementById('ulGo').click()`); await wt(300);
-    c('単価が無い製品があると保存しない', !!(await ev(`!!document.getElementById('ulGo')`)) && /単価を入れて/.test(await ev(`document.getElementById('toast').textContent`)));
-    await ev(`document.querySelectorAll('#ulItems .ulDel')[2].click()`);
-    await ev(`(function(){ document.getElementById('ulPm').value='PayPay'; document.getElementById('ulGo').click(); })()`); await wt(500);
-    const d1 = JSON.parse(await ev(`(function(){ var d=window.__ck.db(), ev=window.__ck.rec().ev.id;
-      return Promise.all([d.collection('cards').doc(${JSON.stringify(tok)}).get(), d.collection('checkinEvents').doc(ev).collection('attendance').doc(${JSON.stringify(uid)}).get()])
-      .then(function(s){ var cd=s[0].data(); return JSON.stringify({pz:cd['pz_'+ev], old:cd.pz_old1, ex:cd['ex_'+ev], rb:cd['rcpt_b_'+ev], a:s[1].data()}); }); })()`));
-    c('v144: 保存しても、本人が入れた今日の PRYSMiO・前回の値は消えない', d1.pz && d1.pz.v === 820 && d1.pz.by === 'self' && d1.old && d1.old.v === 760, JSON.stringify(d1.pz));
-    c('カードに体験（ex_イベント）', d1.ex && d1.ex.list.join() === 'フェイシャル体験');
-    c('カードにお買い上げの領収書（お品代・合計・明細・販売者・PayPay）', d1.rb && d1.rb.kind === 'buy' && d1.rb.amt === 12000 && d1.rb.items.length === 2 && d1.rb.items[0].q === 2 && d1.rb.items[0].p === 4500 && d1.rb.by === 'ジェッ子 ちゃん' && d1.rb.pm === 'PayPay' && d1.rb.no === uid, JSON.stringify(d1.rb));
-    c('出席の記録にも体験・お買い上げ', d1.a.buyAmt === 12000 && d1.a.exp.join() === 'フェイシャル体験' && d1.a.seller === 'ジェッ子 ちゃん');
-    const sbt = await ev(`document.getElementById('stageBody').innerText`);
-    c('受付の画面に「記録済み」', /記録済み/.test(sbt) && /¥12,000/.test(sbt), sbt);
     await ev(`document.getElementById('stage').scrollIntoView({block:'center'})`); await shot('stage');
-    await ev(`document.getElementById('stgUserLog').click()`); await wt(400);
-    const m3 = JSON.parse(await ev(`JSON.stringify({on:[].map.call(document.querySelectorAll('#ulExp button.on'),function(b){return b.textContent;}), rows:document.querySelectorAll('#ulItems .ulg-row').length, pm:document.getElementById('ulPm').value})`));
-    c('もう一度開くと入れた内容のまま（直せる）', m3.on.join() === 'フェイシャル体験' && m3.rows === 2 && m3.pm === 'PayPay', JSON.stringify(m3));
-    await ev(`(function(){ [].forEach.call(document.querySelectorAll('#ulItems .ulP'),function(x){ x.value=''; }); [].forEach.call(document.querySelectorAll('#ulItems .ulN'),function(x){ x.value=''; }); document.getElementById('ulGo').click(); })()`); await wt(400);
-    const d2 = JSON.parse(await ev(`(function(){ var ev=window.__ck.rec().ev.id; return window.__ck.db().collection('cards').doc(${JSON.stringify(tok)}).get().then(function(s){ var cd=s.data(); return JSON.stringify({pz:cd['pz_'+ev]||null, rb:cd['rcpt_b_'+ev]||null}); }); })()`));
-    c('お買い上げを消して保存すると、領収書は取り下げ（PRYSMiO はそのまま）', !d2.rb && d2.pz && d2.pz.v === 820, JSON.stringify(d2));
     await ev(`window.__ck.scan(${JSON.stringify('u:' + uid + ':' + tok.slice(0, 6))}, 'scan')`); await wt(300);
-    c('出席済みの画面からも「📋 体験・購入」', /出席済み/.test(await ev(`document.getElementById('stageBody').innerText`)) && !!(await ev(`!!document.getElementById('stgUserLog')`)));
+    c('出席済みの画面にも「体験・購入」は無い', /出席済み/.test(await ev(`document.getElementById('stageBody').innerText`)) && !(await ev(`!!document.getElementById('stgUserLog')`)));
     await ev(`window.__ck.db().collection('checkinUsers').doc(${JSON.stringify(uid)}).set({ prysm: 1150, prysmAt: 3 }, { merge: true })`);
     // 名簿（ユーザー）に色
     await ev(`document.querySelector('nav button[data-pane="pRoster"]').click()`); await wt(500);

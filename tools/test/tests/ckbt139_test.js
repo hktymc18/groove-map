@@ -74,7 +74,7 @@ const dotOn = `!document.querySelector('nav button[data-pane="pBeauty"] .nav-dot
     await page.click('nav button[data-pane="pBeauty"]'); await wt(600);
     c('ユニオン管理者：「🌸 DAYスタッフ」ボタンが出る', !(await ev(`document.getElementById('btnDayStaff').classList.contains('hide')`)));
     await page.click('#btnDayStaff'); await wt(600);
-    c('今の DAYスタッフにチェック', /DAYスタッフ — ANTARES/.test(await ev(`document.querySelector('.modal h2').textContent`)) && /見本 でい/.test(await ev(`document.getElementById('caList').innerText`)));
+    c('今の DAYスタッフにチェック', /DAY HOST — ANTARES/.test(await ev(`document.querySelector('.modal h2').textContent`)) && /見本 でい/.test(await ev(`document.getElementById('caList').innerText`)));
     await ev(`document.getElementById('caLoad').click()`); await wt(600);
     await ev(`(function(){ var l=[].filter.call(document.querySelectorAll('#caList label'), function(x){ return x.textContent==='見本 めんば'; })[0]; var cb=document.getElementById(l.getAttribute('for')); cb.checked=true; cb.onchange(); })()`);
     await page.screenshot({ path: OUT + '/ckbt139_assign.png' });
@@ -92,7 +92,7 @@ const dotOn = `!document.querySelector('nav button[data-pane="pBeauty"] .nav-dot
     await ev(`document.querySelector('nav button[data-pane="pRoster"]').click()`); await wt(600);
     await ev(`document.getElementById('btnAdminsView').click()`); await wt(800);
     const m = await ev(`document.querySelector('.modal').innerText`);
-    c('管理者一覧に DAYスタッフ', /DAYスタッフ/.test(m) && /見本 でい/.test(m) && /見本 じゅんび/.test(m), m);
+    c('管理者一覧に DAYスタッフ', /DAY HOST/.test(m) && /見本 でい/.test(m) && /見本 じゅんび/.test(m), m);
     c('ページのエラーなし（オーナー）', !errs.length, errs.join(' / '));
     await ctx.close();
   }

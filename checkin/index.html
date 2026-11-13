@@ -1060,7 +1060,7 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .lg-warn{background:#ffe066;color:#33290a;padding:0 2px;border-radius:3px;}
 .lg-qw{font-size:12px;margin:6px 0 0;font-weight:700;}
 .lg-qb{display:flex;gap:8px;margin-top:8px;}
-/* 💜 v139: 「💜 Beauty」タブ（ユーザー向けの管理。オーナー・ユニオン管理者・DAYスタッフ） */
+/* 💜 v139: 「💜 Beauty」タブ（ユーザー向けの管理。オーナー・ユニオン管理者・DAY HOST） */
 .nav-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#e5484d;margin-left:4px;vertical-align:2px;}
 .nav-dot[hidden]{display:none;}
 .bt-wrap{display:grid;gap:14px;max-width:760px;}
@@ -1074,6 +1074,48 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 #btNtText{width:100%;}
 #btLgSeg button{padding:7px 14px;}
 #btQeSeg button{padding:7px 14px;}
+/* 💜 v145: DAYの体感 */
+.dy-top{display:flex;gap:8px;align-items:center;margin-bottom:10px;}
+.dy-top select{flex:1;min-width:0;}
+.dy-staff{display:grid;gap:6px;font-size:13px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:10px;}
+.dy-staff b{margin-right:6px;}
+.dy-staff small{color:var(--sub);}
+.dy-staff button{justify-self:start;}
+.dy-sum{font-size:13px;margin:4px 0 8px;}
+.dy-hot{color:#c62828;font-weight:700;}
+.dy-g{margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:6px 12px;}
+.dy-g.hot{border-color:#e5484d;}
+.dy-gh{font-size:13px;font-weight:800;color:var(--sub);padding:4px 0;}
+.dy-row{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;padding:8px 0;border-top:1px solid var(--line);}
+.dy-row.done .dy-nm b,.dy-crow.done .dy-nm b{text-decoration:line-through;color:var(--sub);}
+.dy-row.absent,.dy-crow.absent{opacity:.6;}
+.dy-l{display:flex;gap:8px;flex:1 1 200px;min-width:0;}
+.dy-n{width:1.6em;flex:none;text-align:center;font-weight:900;font-size:16px;}
+.dy-nm{display:grid;gap:2px;min-width:0;}
+.dy-nm small{font-size:12px;color:var(--sub);overflow-wrap:anywhere;}
+.dy-a{display:flex;flex-wrap:wrap;gap:6px;margin-left:auto;}
+.dy-a select{max-width:12em;}
+.dy-a button{padding:6px 10px;}
+.dy-st{font-size:11.5px;font-weight:800;margin-left:6px;}
+.dy-st.ok{color:#1f8a43;} .dy-st.ng{color:var(--sub);}
+.dy-2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.dy-sl{max-height:50vh;overflow:auto;border:1px solid var(--line);border-radius:10px;}
+.dy-sr{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:8px 10px;border-bottom:1px solid var(--line);}
+.dy-sr .dy-sn{flex:1 1 140px;min-width:0;font-weight:700;}
+.dy-sr label{display:flex;align-items:center;gap:4px;margin:0;font-weight:400;font-size:13px;}
+.dy-sr input{width:auto;margin:0;}
+.dy-card .dy-ch{display:grid;gap:2px;margin-bottom:8px;}
+.dy-card .dy-ch small{color:var(--sub);}
+.dy-cg{margin-top:10px;}
+.dy-cg.mine{border:2px solid #7c5cff;border-radius:12px;padding:6px 10px;}
+.dy-crow{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line);text-align:left;}
+.dy-crow .dy-nm{flex:1;}
+.dy-crow button{flex:none;padding:6px 12px;}
+.dy-me{display:grid;gap:2px;padding:8px 0;border-top:1px solid var(--line);font-size:13px;text-align:left;}
+.dy-me b{font-size:15px;}
+.nw-exp{font-weight:700;}
+.dy-hint{font-weight:700;}
+.dy-hint small{display:block;font-weight:400;}
 .pz-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--line);}
 .pz-nm{flex:1 1 140px;min-width:0;display:grid;gap:2px;}
 .pz-nm small{font-size:12px;color:var(--sub);}
@@ -1691,13 +1733,13 @@ body.practice .topbar{top:var(--pxh,36px);}
     <div id="finBody"><p style="color:var(--sub)">読み込み中…</p></div>
   </section>
 
-  <!-- 💜 v139: Beauty（ユーザー向けの管理。オーナー・ユニオン管理者・DAYスタッフ） -->
+  <!-- 💜 v139: Beauty（ユーザー向けの管理。オーナー・ユニオン管理者・DAY HOST） -->
   <section class="pane" id="pBeauty">
     <div class="panehead"><div class="toolrow">
       <label for="btUnionSel" style="font-weight:700;font-size:13px;">ユニオン:</label>
       <select id="btUnionSel"></select>
       <span style="flex:1"></span>
-      <button id="btnDayStaff" class="hide" title="このユニオンのDAYスタッフを決める（オーナー・ユニオン管理者）">🌸 DAYスタッフ</button>
+      <button id="btnDayStaff" class="hide" title="このユニオンの DAY HOST を決める（オーナー・ユニオン管理者）">🌸 DAY HOST</button>
       <button id="btReload">↻ 読み直す</button>
     </div></div>
     <div id="btBody"><p style="color:var(--sub)">読み込み中…</p></div>
@@ -1771,6 +1813,7 @@ body.practice .topbar{top:var(--pxh,36px);}
     <div id="mcProf"></div><!-- 👤 #21 プロフィール（ルビー以上・ふだんは閉じる） -->
     <div id="nwArea"></div><!-- 💜 ユーザーのお知らせ（ホーム画面に追加・次のDAY・来場のお礼・スタッフから） -->
     <div id="pzArea"></div><!-- 💜 ユーザーの PRYSMiO（色・前回から・記録） -->
+    <div id="exArea"></div><!-- 💜 v145: 体感の記録 -->
     <div id="mpArea"></div><!-- 💜 ユーザーのマイプラン（コース・毎日のクエスト・連続・レベル・バッジ） -->
     <div id="bdArea"></div><!-- 💜 ユーザーのバディ（QRを読み合う・連続日数とバッジだけ見える） -->
     <div id="fiArea"></div><!-- 💜 ユーザーの「友だちを招待」（招待リンク・来てくれた友だち） -->
@@ -1779,6 +1822,7 @@ body.practice .topbar{top:var(--pxh,36px);}
     <div id="selfArea"></div>
     <div id="hwArea"></div><!-- 📝 宿題は受講記録の一覧より上（記録が増えても埋もれないように） -->
     <div id="trArea"></div>
+    <div id="dyArea"></div><!-- 💜 v145: DAYの体感（任命された DAYスタッフ・予約受付担当の会員証） -->
     <div id="dlrArea"></div>
     <div id="coArea"></div>
     <div id="onlineArea"></div>
@@ -2245,7 +2289,7 @@ function ckBeautyLoad(){
   }).catch(function(){ gBeautyTesters = []; });
 }
 var gDayStaff = {};         // 💜 v139: ユニオン名 → DAYスタッフのUID（checkinUnions.dayStaff・オーナーかユニオン管理者が任命）。「💜 Beauty」タブを使える
-var CK_DAY_NAME = 'DAYスタッフ';   // 💜 v139: 役割の名前（仮。正式な名前が決まったらここを変える）
+var CK_DAY_NAME = 'DAY HOST';   // 💜 v139: 役割の名前（v145: DAYスタッフ → DAY HOST。DAYスタッフは DAY ごとに任命するスタッフの名前になった）
 function isDayStaff(un){ return !!(gUser && (gDayStaff[un] || []).indexOf(gUser.uid) >= 0); }
 var gLeaders = {};          // ⭐ ユニオン名 → リーダーのUID（checkinUnions.leaders・オーナーが指定）。名簿・集計の閲覧と研修担当の任命ができる
 var gUnionAddon = {};       // ユニオン名 → 追加オプションの設定（checkinUnions.addon・有効なものだけ）
@@ -2612,10 +2656,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v144';
+var APP_VER = 'v145';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v145', d: '2026/11/13', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v144', d: '2026/11/13', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v143', d: '2026/11/13', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v142', d: '2026/11/12', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
@@ -4951,7 +4996,7 @@ function showCardView(token){
   auth.onAuthStateChanged(function(u){ if(u && ckIsOwnerNow() && gCardLast) renderCard(gCardLast); });   // オーナーは解禁前でも本物を確認
   var cached = null;
   try{ cached = JSON.parse(localStorage.getItem('bci_card_' + token) || 'null'); }catch(e){}
-  if(cached){ renderCard(cached); if(cached.kind === 'user'){ renderPrysm(cached); if(!cached.tm) ckUaMount(cached, token); } }   // 💜 v135: ユーザーはアプリの形
+  if(cached){ renderCard(cached); if(cached.kind === 'user'){ renderPrysm(cached); renderExpHist(cached); if(!cached.tm) ckUaMount(cached, token); } }   // 💜 v135: ユーザーはアプリの形
   db.collection('cards').doc(token).get().then(function(snap){
     if(snap.exists){
       var c = snap.data();
@@ -4983,6 +5028,7 @@ function showCardView(token){
         if(!c.toMember) ckUserAppHead(token);
         renderUserNews(c, token);
         renderPrysm(c);
+        renderExpHist(c);   // 💜 v145
         renderMyPlan(c, token);
         renderBuddy(c, token);
         renderFriendInvite(c, token);
@@ -4994,13 +5040,14 @@ function showCardView(token){
             + '<a class="primary" href="' + esc(cardUrl(c.toCard)) + '">研修生のカードを開く</a></div>');
         }
         var cu = { kind: 'user', no: c.no, name: c.name, union: c.union, referrer: c.referrer || '', tm: !!c.toMember, visits: c.visits || 0, lastVisit: c.lastVisit || null };
-        Object.keys(c).forEach(function(k){ if(k.indexOf('pz_') === 0) cu[k] = c[k]; });
+        Object.keys(c).forEach(function(k){ if(k.indexOf('pz_') === 0 || k.indexOf('exp_') === 0) cu[k] = c[k]; });
         try{ localStorage.setItem('bci_card_' + token, JSON.stringify(cu)); }catch(e4){}
         return;
       }
       renderCard(c);
       ckBackSync(c.union, function(){ if(gCardLast) renderCard(gCardLast); });   // 🃏 ユニオンの裏面の設定（変わっていたら描き直す）
       renderTrainee(c);
+      renderDayBoard(c, token);   // 💜 v145: DAYの体感（任命された人）・自分の体感（研修生・フレッシュBA）
       renderCoSheetEntry(c);
       renderProfile(c);
       renderGoalHw(c);
@@ -6864,7 +6911,7 @@ $('btnTrainers').onclick = function(){
 /* ⭐ リーダーの設定・🛡 ユニオン管理者の任命（オーナーのみ）: 名簿タブのボタン */
 function ckOwnerListOpen(key, un0){
   var un = un0 || gRosterUnion;
-  if(key === 'dayStaff' ? !isCoreAdmin(un) : !isOwner()) return;   // 💜 v139: DAYスタッフはユニオン管理者も決められる
+  if(key === 'dayStaff' ? !isCoreAdmin(un) : !isOwner()) return;   // 💜 v139: DAY HOST（前の DAYスタッフ）はユニオン管理者も決められる
   db.collection('checkinUnions').doc(un).get().then(function(sn){
     var cur = (sn.exists && sn.data()[key]) || [];
     return Promise.all(cur.map(function(uid){
@@ -6940,7 +6987,7 @@ $('btnAdminsView').onclick = function(){
         + '<label style="margin-top:14px;">🎓 研修生登録の担当</label>'
         + (trainers.map(function(uid){ return row(uid, ''); }).join('')
           || '<p style="font-size:12.5px;color:var(--sub);margin:4px 0 0;">任命されていません</p>')
-        + (ckBeautyOn() ? '<label style="margin-top:14px;">🌸 ' + CK_DAY_NAME + hq('オーナーかユニオン管理者が「💜 Beauty」タブで決めます。ユーザーへのお知らせとラウンジの確認ができます。') + '</label>'
+        + (ckBeautyOn() ? '<label style="margin-top:14px;">🌸 ' + CK_DAY_NAME + hq('オーナーかユニオン管理者が「💜 Beauty」タブで決めます。DAYの体感（DAYスタッフの任命・担当の割り振り）・お知らせ・ラウンジの確認・クエストの編集ができます。') + '</label>'
           + (days.map(function(uid){ return row(uid, ''); }).join('') || '<p style="font-size:12.5px;color:var(--sub);margin:4px 0 0;">いません</p>') : '')
         + '';
       modal('<h2>👥 管理者一覧 — ' + esc(un) + hq('任命・解除は、名簿タブの「👑 受付管理者」「🎓 研修生登録の担当」ボタンから行えます（研修生登録の担当はリーダーも任命できます）。') + '</h2>' + h
@@ -6964,7 +7011,7 @@ function coreAdminsModal(un, rows, kind, opt){
   if(day ? !isCoreAdmin(un) : !isOwner()) return;
   var others = [un].concat(gUnions.filter(function(u){ return u !== un; }));
   modal((day
-      ? '<h2>🌸 ' + CK_DAY_NAME + ' — ' + esc(un) + hq('チェックした人は、このユニオンの「💜 Beauty」タブで、ユーザーへのお知らせとラウンジの確認ができます。名簿・イベント・会計は見られません。決められるのはオーナーとユニオン管理者です。受付管理者とは別です。') + '</h2>'
+      ? '<h2>🌸 ' + CK_DAY_NAME + ' — ' + esc(un) + hq('チェックした人は、このユニオンの「💜 Beauty」タブで、DAYの体感（DAYスタッフの任命・担当の割り振り）・お知らせ・ラウンジの確認・クエストの編集ができます。名簿・イベント・会計は見られません。決められるのはオーナーとユニオン管理者です。受付管理者とは別です。') + '</h2>'
         + '<p style="font-size:12.5px;color:var(--sub);margin:-4px 0 8px;">本人は再読み込みのあとに使えるようになります。</p>'
       : bty
       ? '<h2>💜 ユーザー機能の確認メンバー' + hq('準備中のユーザー機能（ゲスト受付の「ユーザーとして登録する」・名簿の「ビジネス｜ユーザー」・測定・体験・購入の記録）を見られる人です。オーナーは指定しなくても見られます。全ユニオン共通です。') + '</h2>'
@@ -8341,6 +8388,7 @@ function memberForm(m){
       active: (m.active !== false), updatedAt: FV.serverTimestamp()
     };
     data.trainings = m.trainings || {};   // 研修履歴は維持（カード再生成用）
+    if(m.trainee && !data.trainee) data.promotedAt = Date.now();   // 💜 v145: 正規メンバーに昇格した日（ビジネススタート）
     if($('mfAlso')){   // 🔗 v82: MAPで連携するユニオン（所属ユニオンは入れない）
       data.alsoUnions = Array.prototype.slice.call($('mfAlso').querySelectorAll('input[data-u]'))
         .filter(function(x){ return x.checked; }).map(function(x){ return x.getAttribute('data-u'); })
@@ -11085,7 +11133,7 @@ function trSendCard(m){
 function promoteTrainee(m, cb){
   var miss = trPromoteMissing(m);
   if(miss.length){ toast('まだ昇格できません（あと: ' + miss.join('・') + '）'); return; }
-  db.collection('checkinMembers').doc(m.no).update({ trainee: false, updatedAt: FV.serverTimestamp() })
+  db.collection('checkinMembers').doc(m.no).update({ trainee: false, promotedAt: Date.now(), updatedAt: FV.serverTimestamp() })   // v145: 昇格した日（ビジネススタート）
     .then(function(){
       m.trainee = false;
       if(m.cardToken) return db.collection('cards').doc(m.cardToken).update({ trainee: false }).catch(function(){});
@@ -13715,6 +13763,7 @@ function checkinMember(member, method, role){
   if(ppPick) ckBindPayPick(no, fee);
   else if(canAddUn || (gRec.addon && fee > 0 && !role)) ckStageHold();
   ckBindAddon(no);
+  ckDayHint({ no: no, name: member.name || '' });   // 💜 v145: DAYの体感（研修生・フレッシュBA）
   var au = $('stgAddUn');
   if(au) au.onclick = function(){ ckAddJointUnion(member.union, au); };
   var su = $('stgUnpaid');
@@ -14059,125 +14108,17 @@ function ckUserStage(uid, data, opt){
     + (pick ? ckPayPickHtml() : '')
     + (fee > 0 ? ckAddonBtnHtml(uid) : '')
     + (opt.applied ? '<p class="hit-meta">📱 本人の受付票が、そのままカードに変わります</p>' : '')
-    + (opt.isNew ? '<button id="stgUserQr"' + (opt.applied ? '' : ' class="primary"') + ' style="margin-top:8px;">📱 ' + (opt.applied ? '変わらない時：新規受付のQRを渡す' : '新規受付のQRを渡す') + '</button> ' : '')
-    + '<button id="stgUserLog" style="margin-top:8px;"' + (opt.isNew ? '' : ' class="primary"') + '>📋 体験・購入</button>',
+    + (opt.isNew ? '<button id="stgUserQr"' + (opt.applied ? '' : ' class="primary"') + ' style="margin-top:8px;">📱 ' + (opt.applied ? '変わらない時：新規受付のQRを渡す' : '新規受付のQRを渡す') + '</button> ' : ''),
     true);
   if(pick) ckBindPayPick(uid, fee);
   else if(gRec.addon && fee > 0) ckStageHold();
   ckBindAddon(uid);
   var b = $('stgUserQr');
   if(b) b.onclick = function(){ ckUserQrModal(data.name, opt.token, focusScan); };
-  $('stgUserLog').onclick = function(){ ckUserLogModal(uid); };
+  ckDayHint({ uid: uid, name: data.name || '', isNew: !!opt.isNew });   // 💜 v145: DAYの体感
 }
-/* 💜 段階2: 受付で PRYSMiO の数値・今日の体験・会場でのお買い上げを記録する。
-   本人のカード（cards）に pz_{イベント}（測定）・ex_{イベント}（体験）・rcpt_b_{イベント}（お買い上げの領収書）を入れる。
-   出席の記録にも同じ内容（イベントの記録用）、ユーザーの名簿には最新の数値だけ */
-var CK_EXP = ['フェイシャル体験', 'ボディ体験', 'ヘアケア体験', 'カウンセリング'];
-function ckUserLogModal(uid){
-  var a = gRec && gRec.att[uid];
-  if(!a || !a.cardToken){ toast('出席の記録が見つかりません'); return; }
-  var ev = gRec.ev, tok = a.cardToken;
-  db.collection('cards').doc(tok).get().then(function(sn){
-    var c = sn.exists ? sn.data() : {};
-    var ex = (c['ex_' + ev.id] && c['ex_' + ev.id].list) || a.exp || [], bu = c['rcpt_b_' + ev.id] || null;
-    var items = (bu && bu.items && bu.items.slice()) || [];
-    if(!items.length) items.push({ n: '', q: 1, p: '' });
-    var sellers = Object.keys(gRec.roster).map(function(no){ return gRec.roster[no]; })
-      .filter(function(m){ return !ckMemberOff(m) && m.name && m.union === (a.uUnion || m.union); });
-    // v144: PRYSMiO は受付では入れない（本人がアプリで・スタッフは「💜 Beauty」タブの「📏 今日の測定」で）
-    modal('<h2>📋 体験・購入</h2>'
-      + '<p style="font-size:13px;color:var(--sub);margin:-4px 0 8px;">' + esc(a.name || '') + ' さん・' + esc(ev.name || '') + '</p>'
-      + '<label>今日の体験</label><div class="ulg-chips" id="ulExp">'
-      + CK_EXP.concat(ex.filter(function(x){ return CK_EXP.indexOf(x) < 0; })).map(function(x){ return '<button type="button" data-x="' + esc(x) + '"' + (ex.indexOf(x) >= 0 ? ' class="on"' : '') + '>' + esc(x) + '</button>'; }).join('')
-      + '</div>'
-      + '<label style="margin-top:14px;">会場でのお買い上げ <small style="font-weight:400;color:var(--sub);">（金額は税込・ご注文は公式サイトから）</small></label>'
-      + '<div style="display:grid;grid-template-columns:1fr 64px 96px 34px;gap:6px;font-size:11.5px;color:var(--sub);"><span>製品名</span><span>数</span><span>単価</span><span></span></div>'
-      + '<div id="ulItems"></div><button type="button" id="ulAdd" style="margin-top:6px;">＋ 行を足す</button>'
-      + '<div class="ulg-tot"><span>合計</span><span class="mono" id="ulTot">¥0</span></div>'
-      + '<div id="ulBuyMore">'
-      + '<label>受け取り方法</label><select id="ulPm"><option value="現金">現金</option><option value="PayPay">PayPay</option><option value="クレジットカード">クレジットカード</option></select>'
-      + '<label>販売者（領収書の発行者）</label><input type="text" id="ulSeller" list="ulSellerList" autocomplete="off" value="' + esc((bu && bu.by) || a.referrer || '') + '">'
-      + '<datalist id="ulSellerList">' + sellers.map(function(m){ return '<option value="' + esc(m.name) + '"></option>'; }).join('') + '</datalist>'
-      + '</div>'
-      + '<p style="font-size:12px;color:var(--sub);margin:10px 0 0;">保存すると、本人のアプリに領収書が届きます（紙の領収書はいりません）。PRYSMiO は、本人がアプリで入れます。</p>'
-      + '<div class="btns"><button id="ulCancel">キャンセル</button><button class="primary" id="ulGo">保存して本人に送る</button></div>', true);
-    if(bu && bu.pm) $('ulPm').value = bu.pm;
-    function rowHtml(it, i){
-      return '<div class="ulg-row" data-i="' + i + '"><input type="text" class="ulN" value="' + esc(it.n || '') + '" placeholder="製品名">'
-        + '<input type="text" class="ulQ" inputmode="numeric" value="' + esc(String(it.q || 1)) + '">'
-        + '<input type="text" class="ulP" inputmode="numeric" value="' + esc(it.p === '' || it.p == null ? '' : String(it.p)) + '" placeholder="¥">'
-        + '<button type="button" class="ulDel" aria-label="この行を消す">✕</button></div>';
-    }
-    function readItems(){
-      return [].map.call(document.querySelectorAll('#ulItems .ulg-row'), function(r){
-        return { n: r.querySelector('.ulN').value.trim(), q: ckNum(r.querySelector('.ulQ').value), p: ckNum(r.querySelector('.ulP').value) };
-      });
-    }
-    function drawItems(){ $('ulItems').innerHTML = items.map(rowHtml).join(''); calc(); }
-    function calc(){
-      var t = 0;
-      readItems().forEach(function(it){ if(it.p > 0) t += it.p * Math.max(1, it.q || 1); });
-      $('ulTot').textContent = yen(t);
-      $('ulBuyMore').classList.toggle('hide', !(t > 0));
-      return t;
-    }
-    drawItems();
-    $('ulExp').onclick = function(e){ var bt = e.target.closest ? e.target.closest('button[data-x]') : null; if(bt) bt.classList.toggle('on'); };
-    $('ulItems').addEventListener('input', calc);
-    $('ulItems').addEventListener('click', function(e){
-      var d = e.target.closest ? e.target.closest('.ulDel') : null;
-      if(!d) return;
-      items = readItems(); items.splice(+d.parentNode.getAttribute('data-i'), 1);
-      if(!items.length) items.push({ n: '', q: 1, p: '' });
-      drawItems();
-    });
-    $('ulAdd').onclick = function(){ items = readItems(); items.push({ n: '', q: 1, p: '' }); drawItems(); };
-    $('ulCancel').onclick = function(){ closeModal(); focusScan(); };
-    $('ulGo').onclick = function(){
-      var its = readItems().filter(function(it){ return it.n || it.p > 0; });
-      for(var i = 0; i < its.length; i++){
-        if(!its[i].n){ toast('製品名を入れてください'); return; }
-        if(!(its[i].p > 0)){ toast(its[i].n + ' の単価を入れてください'); return; }
-        its[i].q = Math.max(1, Math.min(99, its[i].q || 1));
-      }
-      var total = 0; its.forEach(function(it){ total += it.p * it.q; });
-      var seller = total > 0 ? $('ulSeller').value.trim() : '';
-      if(total > 0 && !seller){ toast('販売者（領収書の発行者）を入れてください'); return; }
-      var exp = [].map.call(document.querySelectorAll('#ulExp button.on'), function(x){ return x.getAttribute('data-x'); });
-      ckUserLogSave(uid, { exp: exp, items: its, total: total, pm: $('ulPm').value, seller: seller });
-    };
-  }).catch(function(e){ toast(permMsg(e, 'カードを読めませんでした')); });
-}
+// v145: 受付の「体験・購入」はなくした（会場での購入はない・体験は「💜 Beauty」タブの「💆 DAYの体感」）
 function ckNum(s){ s = String(s == null ? '' : s).replace(/[０-９]/g, function(ch){ return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0); }).replace(/[^0-9]/g, ''); return s === '' ? 0 : parseInt(s, 10); }
-function ckUserLogSave(uid, o){
-  var a = gRec.att[uid], ev = gRec.ev, d = ev.date || todayStr(), now = Date.now(), tok = a.cardToken;
-  var cu = {}, au = {};
-  cu['ex_' + ev.id] = o.exp.length ? { d: d, ev: ev.name || '', list: o.exp } : FV.delete();
-  cu['rcpt_b_' + ev.id] = o.total > 0
-    ? { kind: 'buy', d: d, ev: 'お買い上げ（' + (ev.name || '') + '）', amt: o.total, no: uid, at: now, pm: o.pm, by: o.seller,
-        items: o.items.map(function(it){ return { n: it.n, q: it.q, p: it.p }; }) }
-    : FV.delete();
-  au.exp = o.exp;
-  au.buyAmt = o.total;
-  au.buyItems = o.items;
-  au.buyPm = o.total > 0 ? o.pm : '';
-  au.seller = o.seller;
-  Object.keys(au).forEach(function(k){ a[k] = au[k]; });
-  db.collection('cards').doc(tok).set(cu, { merge: true }).then(function(){
-    closeModal();
-    toast('保存しました。本人のカードに届きます');
-    var sb = $('stageBody');
-    if(sb && $('stgUserLog')){
-      var nt = $('stgUserLogDone') || document.createElement('p');
-      nt.id = 'stgUserLogDone'; nt.className = 'hit-meta';
-      nt.innerHTML = '✓ 記録済み' + (o.exp.length ? '・体験 ' + o.exp.length : '') + (o.total > 0 ? '・お買い上げ ' + yen(o.total) : '');
-      if(!nt.parentNode) sb.appendChild(nt);
-    }
-    focusScan();
-  }).catch(function(e){ toast(permMsg(e, '保存に失敗しました')); });
-  db.collection('checkinEvents').doc(ev.id).collection('attendance').doc(uid).set(au, { merge: true }).catch(function(){});
-  auditLog(ev.id, '体験・購入の記録', a.name || uid, (o.exp.length ? '体験 ' + o.exp.join('・') : '') + (o.total > 0 ? ' お買い上げ ' + yen(o.total) : ''));
-}
 // 本人のスマホで読んでもらう（カードのページが開く → ホーム画面に追加 → 次からそのQRで受付）
 function ckUserQrModal(name, token, onClose){
   // v142: お客さんにも見える画面なので「ユーザー」と出さない（見出しは「新規受付」）
@@ -14196,9 +14137,8 @@ function ckUserScan(uid, sig, method){
     beep('dup');
     setStage('dup', '<span class="hit-badge">出席済み</span><div class="hit-name">' + esc(gRec.att[uid].name || '') + '</div>'
       + '<div class="hit-group">NAVIGATOR Beauty</div>'
-      + '<p class="hit-meta">' + esc(gRec.att[uid].atLocal || '') + ' に受付済みです（記録は増えません）</p>'
-      + '<button id="stgUserLog" class="primary" style="margin-top:8px;">📋 体験・購入</button>', true);
-    $('stgUserLog').onclick = function(){ ckUserLogModal(uid); };
+      + '<p class="hit-meta">' + esc(gRec.att[uid].atLocal || '') + ' に受付済みです（記録は増えません）</p>', true);
+    ckDayHint({ uid: uid, name: gRec.att[uid].name || '' });   // 💜 v145
     return;
   }
   var ev0 = gRec.ev;
@@ -14727,6 +14667,7 @@ function renderUserNews(c, token){
       + ((next || items.length || pushRow) ? '<div class="next-head">NEWS</div>' : '')
       + (next ? '<div class="nw-box nw-next"><span class="nw-k">次のDAY</span><b>' + esc(ckMd(next.date)) + '（' + '日月火水木金土'.charAt(new Date(next.date + 'T00:00:00').getDay()) + '）' + esc(next.name || '') + '</b>'
           + (next.uInfo ? '<span class="nw-i">' + esc(next.uInfo) + '</span>' : '')
+          + ckExpLine(c, next.id)   // 💜 v145: 体感のメニュー・担当・順番
           + '<div class="nw-cal"><button type="button" id="nwCal">カレンダーに追加</button><a id="nwGcal" target="_blank" rel="noopener" href="' + esc(ckGcalUrl(next, c)) + '">Googleカレンダー</a></div></div>' : '')
       + items.map(function(n){
           return '<div class="nw-box"><span class="nw-k">' + esc(ckMd(n.d)) + (n.staff ? ' ・ お知らせ' : '') + '</span><span class="nw-t">' + esc(n.t) + '</span></div>';
@@ -14780,7 +14721,7 @@ function ckUaMount(c, token){
   mv('plan', 'mpArea');
   $('uaQrCard').appendChild($('mcTilt')); if($('mcErr')) $('uaQrCard').appendChild($('mcErr'));
   mv('friends', 'bdArea'); mv('friends', 'fiArea'); mv('friends', 'lgArea');
-  mv('me', 'pzArea'); mv('me', 'rcptArea'); mv('me', 'mcHelp'); mv('me', 'verCard');
+  mv('me', 'pzArea'); mv('me', 'exArea'); mv('me', 'rcptArea'); mv('me', 'mcHelp'); mv('me', 'verCard');
   var nav = document.createElement('nav'); nav.id = 'uaTabs'; nav.setAttribute('aria-label', 'メニュー');
   nav.innerHTML = ckUaTabs().map(function(t){
     var dt = t[0] === 'home' ? 'news' : t[0] === 'friends' ? 'lg' : '';
@@ -15395,10 +15336,10 @@ function ckLoungeClap(id){
     lgDraw(); toast('👏 できませんでした。電波の良いところで、もう一度押してください');
   });
 }
-/* 💜 v139: 「💜 Beauty」タブ（ユーザー向けの管理）。使えるのはオーナー・ユニオン管理者・DAYスタッフ（準備中のあいだは確認メンバーだけ）
+/* 💜 v139: 「💜 Beauty」タブ（ユーザー向けの管理）。使えるのはオーナー・ユニオン管理者・DAY HOST（準備中のあいだは確認メンバーだけ）
    ・いま対応すること（ラウンジの確認待ち・出ているお知らせ）。確認待ちがあるとタブに赤丸
    ・ユーザーへのお知らせ（ckNotice/{ユニオン}・新しい5件まで）・ラウンジの確認（確認待ち｜出ている｜出さなかった）
-   ・DAYスタッフを決める（オーナー・ユニオン管理者）
+   ・DAY HOST を決める（オーナー・ユニオン管理者）
    読み取りを減らす：開いた時に読むのはお知らせと確認待ちだけ。「出ている」「出さなかった」は押した時に読む。1分以内なら読み直さない */
 var gBtUnion = '', gBt = null, gBtSeg = 'wait';
 function ckBtUnions(){
@@ -15418,7 +15359,7 @@ function ckBtApply(){
   if(!gBt) btLoad();   // 赤丸のために、確認待ちを読んでおく
 }
 $('btUnionSel').onchange = function(){
-  gBtUnion = $('btUnionSel').value; gBt = null; gBtSeg = 'wait';
+  gBtUnion = $('btUnionSel').value; gBt = null; gBtSeg = 'wait';   // v145: DAYの体感（gBt.dy）も読み直し
   $('btnDayStaff').classList.toggle('hide', !isCoreAdmin(gBtUnion));
   btLoad();
 };
@@ -15495,6 +15436,7 @@ function btDraw(){
     +   '<button type="button" data-go="btLg"' + (nW ? ' class="hot"' : '') + '><b>' + nW + '件</b>ラウンジの確認待ち</button>'
     +   '<button type="button" data-go="btNt"><b>' + me.items.length + '件</b>出ているお知らせ（5件まで）</button>'
     + '</div>' + (nW ? '' : '<p class="bt-note">確認待ちの投稿はありません。</p>') + '</div>'
+    + '<div class="bt-box" id="btDay"></div>'
     + '<div class="bt-box" id="btNt"><h3>📣 ユーザーへのお知らせ' + hq('このユニオンのユーザーのアプリの「お知らせ」に出ます。新しい5件まで出ます。アプリには30分ほどで届きます。効果をうたう言葉（治る・やせる など）は書かないでください。') + '</h3>'
     +   '<label for="btNtText">新しいお知らせ（100文字まで）</label>'
     +   '<textarea id="btNtText" rows="3" maxlength="100" placeholder="例: 12月のDAYは、14時からの開始です。"></textarea>'
@@ -15519,6 +15461,7 @@ function btDraw(){
     + '<div class="bt-box" id="btQe"></div>'
     + '</div>';
   $('btNtText').value = keep;
+  btDyDraw();   // 💜 v145
   btPzDraw();   // 💜 v144
   btQeDraw();   // 💜 v140
   Array.prototype.forEach.call(box.querySelectorAll('[data-go]'), function(b){
@@ -15712,6 +15655,430 @@ function btPzDraw(){
         db.collection('checkinEvents').doc(a.ev.id).collection('attendance').doc(a.id).set({ prysm: v }, { merge: true }).catch(function(){});
         btPzDraw(); toast((a.name || '') + ' さんの PRYSMiO を保存しました');
       }).catch(function(e){ b.disabled = false; toast(permMsg(e, '保存できませんでした')); });
+    };
+  });
+}
+/* 💜 v145: DAYの体感（「💜 Beauty」タブ）。DAY ごとに、DAY HOST が DAYスタッフ・予約受付担当を任命し、参加者（事前登録）を入れて、担当と順番を割り振る
+   ・checkinEvents/{イベント}/btDay/{ユニオン} = { union, date, ev, key, staff: [{ no, name }], recv: [{ no, name }] }
+   ・ckBoard/{key}（掲示板の見出し）・ckBoard/{key}/p/{参加者}（DAYスタッフは会員証から鍵で読む）
+   ・任命した人の会員証に btd_{イベント} = { key, d, ev, union, role }。参加者（アプリ・会員証）には exp_{イベント} = { d, ev, menu, staff, ord, st }
+   ・時間は入れない。担当ごとの順番（ord）だけ。参加者のアプリへの写しは、この画面で変えた時に書く（担当の会員証から「済み」にした分は、ここを開いた時に写す） */
+var BT_KINDS = [['na1', 'NA・体感あり'], ['na0', 'NA・体感なし'], ['tr1', '研修生・体感あり'], ['fb1', 'フレッシュBA・体感あり']];
+var BT_MENUS0 = ['ルミスパ', 'ウェルスパ', 'カウンセリング'];
+var BT_ROLE_BADGES = ['EXPERT', 'ASSOCIATE', 'DIRECTOR', 'マコシエイト'];
+function btKindN(k){ for(var i = 0; i < BT_KINDS.length; i++) if(BT_KINDS[i][0] === k) return BT_KINDS[i][1]; return ''; }
+function btHas(k){ return k !== 'na0'; }   // 体感あり
+function btNameKey(s){ return String(s || '').replace(/[\s　]/g, ''); }
+// 担当ごとの順番（1から）
+function btPosMap(ps){
+  var g = {}, pos = {};
+  (ps || []).forEach(function(p){ if(p.staffNo && btHas(p.kind)) (g[p.staffNo] = g[p.staffNo] || []).push(p); });
+  Object.keys(g).forEach(function(k){ g[k].sort(function(a, b){ return (a.ord || 0) - (b.ord || 0) || (a.at || 0) - (b.at || 0); }).forEach(function(p, i){ pos[p.id] = i + 1; }); });
+  return pos;
+}
+function btDyLoad(){
+  var me = gBt, un = me.un, d0 = (function(){ var d = new Date(); d.setDate(d.getDate() - 3); return mpYmd(d); })();
+  me.dy = { loading: true }; btDyDraw();
+  var evq = db.collection('checkinEvents').where('unions', 'array-contains', un).where('date', '>=', d0).orderBy('date').limit(20).get()
+    .catch(function(){ return db.collection('checkinEvents').where('date', '>=', d0).orderBy('date').limit(40).get(); });
+  Promise.all([evq, db.collection('ckBtCfg').doc(un).get().catch(function(){ return null; })]).then(function(r){
+    if(gBt !== me) return;
+    var evs = [];
+    r[0].forEach(function(d){ var e = d.data(); e.id = d.id; if((e.unions || []).indexOf(un) >= 0) evs.push(e); });
+    evs.sort(function(a, b){ return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+    var menus = (r[1] && r[1].exists && r[1].data().menus && r[1].data().menus.length) ? r[1].data().menus : BT_MENUS0.slice();
+    var t = todayStr(), pick = evs.filter(function(e){ return e.date >= t && e.uDay === true; })[0] || evs.filter(function(e){ return e.date >= t; })[0] || evs[evs.length - 1];
+    me.dy = { evs: evs, menus: menus, hasCfg: !!(r[1] && r[1].exists) };
+    if(pick) btDyOpen(pick.id); else btDyDraw();
+  }).catch(function(e){ if(gBt === me){ me.dy = { err: permMsg(e, 'イベントを読めませんでした') }; btDyDraw(); } });
+}
+function btDyOpen(eid){
+  var me = gBt, dy = me.dy, un = me.un;
+  dy.eid = eid; dy.ev = dy.evs.filter(function(e){ return e.id === eid; })[0]; dy.day = null; dy.ps = null; dy.loadingP = true;
+  btDyDraw();
+  db.collection('checkinEvents').doc(eid).collection('btDay').doc(un).get().then(function(s){
+    if(gBt !== me || dy.eid !== eid) return null;
+    dy.day = s.exists ? s.data() : null;
+    if(!dy.day) return [];
+    return db.collection('ckBoard').doc(dy.day.key).collection('p').get().then(function(qs){ var a = []; qs.forEach(function(d){ var p = d.data(); p.id = d.id; a.push(p); }); return a; });
+  }).then(function(ps){
+    if(ps === null || gBt !== me || dy.eid !== eid) return;
+    dy.ps = ps; dy.loadingP = false;
+    btDyDraw();
+    btDyMirrorAll();   // 担当の会員証から「済み」にした分などを、参加者のアプリへ
+  }).catch(function(e){ if(gBt === me){ dy.loadingP = false; dy.err2 = permMsg(e, '読めませんでした'); btDyDraw(); } });
+}
+function btDyEnsure(){
+  var me = gBt, dy = me.dy, un = me.un;
+  if(dy.day) return Promise.resolve(dy.day);
+  var key = randToken().slice(0, 20), ev = dy.ev, now = Date.now();
+  var day = { union: un, date: ev.date || '', ev: ev.name || '', key: key, staff: [], recv: [], by: gUser.uid, at: now };
+  var b = db.batch();
+  b.set(db.collection('checkinEvents').doc(ev.id).collection('btDay').doc(un), day);
+  b.set(db.collection('ckBoard').doc(key), { eid: ev.id, union: un, date: ev.date || '', ev: ev.name || '', staff: [], by: gUser.uid, at: now });
+  return b.commit().then(function(){ dy.day = day; dy.ps = dy.ps || []; return day; });
+}
+// 名簿（ビジネス）・ユーザーの名簿（DAY HOST も読める）
+function btDyRoster(){
+  var dy = gBt.dy;
+  if(dy.roster) return Promise.resolve(dy.roster);
+  return fetchMembers(gBt.un).then(function(a){ dy.roster = a.filter(function(m){ return !ckMemberOff(m) && m.name; }); return dy.roster; });
+}
+function btDyUsers(){
+  var dy = gBt.dy;
+  if(dy.users) return Promise.resolve(dy.users);
+  return db.collection('checkinUsers').where('union', '==', gBt.un).get().then(function(qs){
+    var a = []; qs.forEach(function(d){ var u = d.data(); u.id = d.id; if(u.active !== false) a.push(u); });
+    dy.users = a; return a;
+  }).catch(function(){ dy.users = []; return []; });
+}
+function btDyDraw(){
+  var box = $('btDay'), me = gBt;
+  if(!box || !me) return;
+  var dy = me.dy, h = '<h3>💆 DAYの体感' + hq('DAY ごとに、DAYスタッフ・予約受付担当を任命し、参加者（事前登録）を入れて、体感の担当と順番を割り振ります。DAYスタッフ・予約受付担当には、その人の会員証に一覧が出ます。参加者のアプリには、体感のメニュー・担当・順番が出ます。') + '</h3>';
+  if(!dy){ box.innerHTML = h + '<button type="button" id="btDyGo">DAY を選ぶ</button>'; $('btDyGo').onclick = btDyLoad; return; }
+  if(dy.loading){ box.innerHTML = h + '<p class="bt-note">読み込み中…</p>'; return; }
+  if(dy.err){ box.innerHTML = h + '<p class="bt-note">' + esc(dy.err) + '</p>'; return; }
+  if(!dy.evs.length){ box.innerHTML = h + '<p class="bt-note">これからのイベントがありません。イベントのタブで作ってください。</p>'; return; }
+  h += '<div class="dy-top"><select id="btDyEv" aria-label="DAY">' + dy.evs.map(function(e){
+      return '<option value="' + esc(e.id) + '"' + (e.id === dy.eid ? ' selected' : '') + '>' + esc(ckMd(e.date)) + ' ' + esc(e.name || '') + (e.uDay === true ? ' 💜' : '') + '</option>';
+    }).join('') + '</select><button type="button" id="btDyMenu" class="ghost">メニュー</button></div>';
+  var day = dy.day, ps = dy.ps;
+  var staff = (day && day.staff) || [], recv = (day && day.recv) || [];
+  h += '<div class="dy-staff"><div><b>DAYスタッフ</b> ' + (staff.length ? staff.map(function(s){ return '<span class="pill">' + esc(s.name) + '</span>'; }).join(' ') : '<small>まだいません</small>') + '</div>'
+    + '<div><b>予約受付担当</b> ' + (recv.length ? recv.map(function(s){ return '<span class="pill n">' + esc(s.name) + '</span>'; }).join(' ') : '<small>まだいません</small>') + '</div>'
+    + '<button type="button" id="btDyStaff">👥 スタッフを任命</button></div>';
+  if(dy.loadingP || !ps){ box.innerHTML = h + '<p class="bt-note">' + (dy.err2 ? esc(dy.err2) : '読み込み中…') + '</p>'; btDyBind(); return; }
+  var pos = btPosMap(ps), inStaff = {};
+  staff.forEach(function(s){ inStaff[s.no] = true; });
+  var withExp = ps.filter(function(p){ return btHas(p.kind); }), noExp = ps.filter(function(p){ return !btHas(p.kind); });
+  var un0 = withExp.filter(function(p){ return !p.staffNo || !inStaff[p.staffNo]; }).sort(function(a, b){ return (a.at || 0) - (b.at || 0); });
+  var nDone = withExp.filter(function(p){ return p.st === 'done'; }).length;
+  h += '<div class="dy-sum">参加 <b>' + ps.length + '</b> 人（体感 ' + withExp.length + '・体感なし ' + noExp.length + '）・済み ' + nDone + (un0.length ? '・<span class="dy-hot">未割り振り ' + un0.length + '</span>' : '') + '</div>'
+    + '<button type="button" class="primary" id="btDyAdd">＋ 参加者を足す</button>';
+  var row = function(p, grp){
+    var n = grp ? pos[p.id] : 0, list = grp || [];
+    var stTxt = p.st === 'done' ? '<span class="dy-st ok">済み</span>' : p.st === 'absent' ? '<span class="dy-st ng">来なかった</span>' : '';
+    var wish = [p.w1, p.w2].filter(function(x){ return x && x !== '指定なし'; });
+    return '<div class="dy-row' + (p.st === 'done' ? ' done' : p.st === 'absent' ? ' absent' : '') + '" data-pid="' + esc(p.id) + '">'
+      + '<div class="dy-l"><span class="dy-n">' + (n || '・') + '</span><div class="dy-nm"><b>' + esc(p.name || '') + '</b>' + stTxt
+      + '<small>' + esc(btKindN(p.kind)) + (p.ref ? ' ・ 紹介 ' + esc(p.ref) : '') + '</small>'
+      + (btHas(p.kind) ? '<small>' + (p.menu ? '💆 ' + esc(p.menu) : '💆 メニュー未定') + (wish.length ? ' ・ 希望 ' + esc(wish.join(' → ')) : '') + (p.mist ? ' ・ 🧴ミストシート' : '') + '</small>' : '')
+      + (p.memo ? '<small>📝 ' + esc(p.memo) + '</small>' : '') + '</div></div>'
+      + '<div class="dy-a">'
+      + (btHas(p.kind) ? '<select data-dyst="' + esc(p.id) + '" aria-label="担当"><option value="">担当：未割り振り</option>' + staff.map(function(s){ return '<option value="' + esc(s.no) + '"' + (s.no === p.staffNo ? ' selected' : '') + '>担当：' + esc(s.name) + '</option>'; }).join('') + '</select>' : '')
+      + (grp ? '<button type="button" data-dyup="' + esc(p.id) + '" aria-label="上へ"' + (n > 1 ? '' : ' disabled') + '>↑</button><button type="button" data-dydn="' + esc(p.id) + '" aria-label="下へ"' + (n < list.length ? '' : ' disabled') + '>↓</button>' : '')
+      + (btHas(p.kind) ? (p.st === 'rsv' || !p.st ? '<button type="button" data-dyok="' + esc(p.id) + '">済み</button><button type="button" data-dyab="' + esc(p.id) + '" class="ghost">来なかった</button>' : '<button type="button" data-dyrs="' + esc(p.id) + '" class="ghost">戻す</button>') : '')
+      + '<button type="button" data-dyed="' + esc(p.id) + '" class="ghost" aria-label="直す">✏️</button></div></div>';
+  };
+  if(un0.length) h += '<div class="dy-g hot"><div class="dy-gh">未割り振り（' + un0.length + '）</div>' + un0.map(function(p){ return row(p, null); }).join('') + '</div>';
+  staff.forEach(function(s){
+    var L = withExp.filter(function(p){ return p.staffNo === s.no; }).sort(function(a, b){ return pos[a.id] - pos[b.id]; });
+    h += '<div class="dy-g"><div class="dy-gh">' + esc(s.name) + '（' + L.length + '）</div>' + (L.length ? L.map(function(p){ return row(p, L); }).join('') : '<p class="bt-note" style="margin:4px 0;">まだいません</p>') + '</div>';
+  });
+  if(noExp.length) h += '<div class="dy-g"><div class="dy-gh">体感なし（' + noExp.length + '）</div>' + noExp.map(function(p){ return row(p, null); }).join('') + '</div>';
+  if(!ps.length) h += '<p class="bt-note">まだ参加者がいません。「＋ 参加者を足す」で入れてください。</p>';
+  box.innerHTML = h;
+  btDyBind();
+}
+function btDyBind(){
+  var me = gBt, dy = me.dy, box = $('btDay');
+  if($('btDyEv')) $('btDyEv').onchange = function(){ btDyOpen($('btDyEv').value); };
+  if($('btDyMenu')) $('btDyMenu').onclick = btDyMenuModal;
+  if($('btDyStaff')) $('btDyStaff').onclick = btDyStaffModal;
+  if($('btDyAdd')) $('btDyAdd').onclick = function(){ btDyPModal(null); };
+  var byId = function(id){ return (dy.ps || []).filter(function(p){ return p.id === id; })[0]; };
+  Array.prototype.forEach.call(box.querySelectorAll('[data-dyst]'), function(sel){
+    sel.onchange = function(){
+      var p = byId(sel.getAttribute('data-dyst')), no = sel.value, s = ((dy.day && dy.day.staff) || []).filter(function(x){ return x.no === no; })[0];
+      var mx = 0; (dy.ps || []).forEach(function(q){ if(q.staffNo === no && q.id !== p.id) mx = Math.max(mx, q.ord || 0); });
+      btDyUpd(p, { staffNo: no, staffName: s ? s.name : '', ord: no ? mx + 1 : 0 }, s ? s.name + ' さんの担当にしました' : '未割り振りにしました');
+    };
+  });
+  var mv = function(id, dir){
+    var p = byId(id), L = (dy.ps || []).filter(function(q){ return q.staffNo === p.staffNo && btHas(q.kind); });
+    var pos = btPosMap(dy.ps);
+    L.sort(function(a, b){ return pos[a.id] - pos[b.id]; });
+    var i = L.indexOf(p), j = i + dir;
+    if(j < 0 || j >= L.length) return;
+    L.splice(j, 0, L.splice(i, 1)[0]);
+    var b = db.batch();
+    L.forEach(function(q, k){ if((q.ord || 0) !== k + 1){ q.ord = k + 1; b.update(db.collection('ckBoard').doc(dy.day.key).collection('p').doc(q.id), { ord: k + 1 }); } });
+    b.commit().then(function(){ btDyDraw(); btDyMirrorAll(); }).catch(function(e){ toast(permMsg(e, '保存できませんでした')); });
+  };
+  Array.prototype.forEach.call(box.querySelectorAll('[data-dyup]'), function(b){ b.onclick = function(){ mv(b.getAttribute('data-dyup'), -1); }; });
+  Array.prototype.forEach.call(box.querySelectorAll('[data-dydn]'), function(b){ b.onclick = function(){ mv(b.getAttribute('data-dydn'), 1); }; });
+  Array.prototype.forEach.call(box.querySelectorAll('[data-dyok]'), function(b){ b.onclick = function(){ btDyUpd(byId(b.getAttribute('data-dyok')), { st: 'done', doneAt: Date.now() }, '済みにしました'); }; });
+  Array.prototype.forEach.call(box.querySelectorAll('[data-dyab]'), function(b){ b.onclick = function(){ btDyUpd(byId(b.getAttribute('data-dyab')), { st: 'absent' }, '来なかったにしました'); }; });
+  Array.prototype.forEach.call(box.querySelectorAll('[data-dyrs]'), function(b){ b.onclick = function(){ btDyUpd(byId(b.getAttribute('data-dyrs')), { st: 'rsv' }, '戻しました'); }; });
+  Array.prototype.forEach.call(box.querySelectorAll('[data-dyed]'), function(b){ b.onclick = function(){ btDyPModal(byId(b.getAttribute('data-dyed'))); }; });
+}
+function btDyUpd(p, up, msg){
+  var dy = gBt.dy;
+  up.by = gUser.uid; up.at = p.at || Date.now();
+  db.collection('ckBoard').doc(dy.day.key).collection('p').doc(p.id).update(up).then(function(){
+    Object.keys(up).forEach(function(k){ p[k] = up[k]; });
+    btDyDraw(); btDyMirrorAll(); if(msg) toast(msg);
+  }).catch(function(e){ toast(permMsg(e, '保存できませんでした')); });
+}
+// 参加者のアプリ（ユーザー）・会員証（研修生・フレッシュBA）に、体感のメニュー・担当・順番・済みを写す（変わった分だけ）
+function btDyMirrorAll(){
+  var me = gBt, dy = me.dy;
+  if(!dy || !dy.day || !dy.ps) return;
+  var need = dy.ps.filter(function(p){ return p.ckNo || p.memNo; });
+  if(!need.length) return;
+  Promise.all([btDyUsers(), need.some(function(p){ return p.memNo; }) ? btDyRoster().catch(function(){ return []; }) : Promise.resolve([])]).then(function(r){
+    var tokU = {}, tokM = {};
+    r[0].forEach(function(u){ if(u.cardToken) tokU[u.id] = u.cardToken; });
+    r[1].forEach(function(m){ if(m.cardToken) tokM[m.no] = m.cardToken; });
+    var pos = btPosMap(dy.ps), ev = dy.ev;
+    need.forEach(function(p){
+      var tok = p.ckNo ? tokU[p.ckNo] : tokM[p.memNo];
+      if(!tok) return;
+      var mir = { d: ev.date || '', ev: ev.name || '', kind: p.kind || '', menu: btHas(p.kind) ? (p.menu || '') : '', staff: btHas(p.kind) ? (p.staffName || '') : '', ord: pos[p.id] || 0, st: p.st || 'rsv' };
+      var mj = JSON.stringify(mir);
+      if(p.mj === mj) return;
+      var up = {}; up['exp_' + ev.id] = mir;
+      db.collection('cards').doc(tok).update(up).then(function(){
+        p.mj = mj;
+        return db.collection('ckBoard').doc(dy.day.key).collection('p').doc(p.id).update({ mj: mj });
+      }).catch(function(){});
+    });
+  });
+}
+function btDyPModal(p0){
+  var me = gBt, dy = me.dy, p = p0 || { kind: 'na1', st: 'rsv' };
+  Promise.all([btDyRoster().catch(function(){ return []; }), btDyUsers()]).then(function(r){
+    var roster = r[0], users = r[1], staff = (dy.day && dy.day.staff) || [];
+    var stOpts = function(v){ return '<option value="">指定なし</option>' + staff.map(function(s){ return '<option' + (s.name === v ? ' selected' : '') + '>' + esc(s.name) + '</option>'; }).join(''); };
+    modal('<h2>' + (p0 ? '✏️ 参加者を直す' : '＋ 参加者を足す') + '</h2>'
+      + '<label for="dyKind">参加区分</label><select id="dyKind">' + BT_KINDS.map(function(k){ return '<option value="' + k[0] + '"' + (k[0] === p.kind ? ' selected' : '') + '>' + esc(k[1]) + '</option>'; }).join('') + '</select>'
+      + '<label for="dyName">名前</label><input type="text" id="dyName" maxlength="40" list="dyNameList" autocomplete="off" value="' + esc(p.name || '') + '" placeholder="名前を入れると候補が出ます"><datalist id="dyNameList"></datalist>'
+      + '<p id="dyLink" class="bt-note" style="margin:4px 0 0;"></p>'
+      + '<label for="dyRef">紹介者</label><input type="text" id="dyRef" maxlength="40" list="dyRefList" autocomplete="off" value="' + esc(p.ref || '') + '"><datalist id="dyRefList">' + roster.map(function(m){ return '<option value="' + esc(m.name) + '"></option>'; }).join('') + '</datalist>'
+      + '<div id="dyExpBox"><label>体感メニュー</label><div class="ulg-chips" id="dyMenu">' + dy.menus.map(function(x){ return '<button type="button" data-m="' + esc(x) + '"' + (x === p.menu ? ' class="on"' : '') + '>' + esc(x) + '</button>'; }).join('') + '</div>'
+      + '<div class="dy-2"><div><label for="dyW1">担当の第1希望</label><select id="dyW1">' + stOpts(p.w1) + '</select></div><div><label for="dyW2">第2希望</label><select id="dyW2">' + stOpts(p.w2) + '</select></div></div>'
+      + (staff.length ? '' : '<p class="bt-note" style="margin:4px 0 0;">担当の希望は、先に「👥 スタッフを任命」でDAYスタッフを決めると選べます。</p>')
+      + '<label class="chkrow" style="display:flex;gap:8px;align-items:center;margin-top:10px;font-weight:700;"><input type="checkbox" id="dyMist" style="width:auto;margin:0;"' + (p.mist ? ' checked' : '') + '>モイスチャーミストシートを購入する</label></div>'
+      + '<label for="dyMemo">メモ（60文字まで）</label><input type="text" id="dyMemo" maxlength="60" value="' + esc(p.memo || '') + '" placeholder="例: 付き添い 見本さん">'
+      + '<div class="btns">' + (p0 ? '<button id="dyDel" class="danger ghost">消す</button>' : '') + '<button id="dyCancel">キャンセル</button><button class="primary" id="dyGo">保存</button></div>', true);
+    function sync(){
+      var k = $('dyKind').value, biz = k === 'tr1' || k === 'fb1';
+      $('dyExpBox').classList.toggle('hide', !btHas(k));
+      $('dyNameList').innerHTML = (biz ? roster.map(function(m){ return m.name; }) : users.map(function(u){ return u.name; })).map(function(n){ return '<option value="' + esc(n) + '"></option>'; }).join('');
+      var key = btNameKey($('dyName').value), hit = key ? (biz ? roster.filter(function(m){ return btNameKey(m.name) === key; })[0] : users.filter(function(u){ return btNameKey(u.name) === key; })[0]) : null;
+      $('dyLink').textContent = hit ? (biz ? '✓ 名簿にいます（' + hit.no + '）。この人の会員証に体感が出ます' : '✓ NAVIGATOR Beauty の名簿にいます。この人のアプリに体感が出ます') : (key && !biz ? '名簿にいない人は、受付で登録した時につなぎます' : '');
+      return hit;
+    }
+    $('dyKind').onchange = sync; $('dyName').oninput = sync; sync();
+    $('dyMenu').onclick = function(e){ var b = e.target.closest ? e.target.closest('button[data-m]') : null; if(!b) return; var on = !b.classList.contains('on'); Array.prototype.forEach.call(document.querySelectorAll('#dyMenu button'), function(x){ x.classList.remove('on'); }); if(on) b.classList.add('on'); };
+    $('dyCancel').onclick = closeModal;
+    if($('dyDel')) $('dyDel').onclick = function(){
+      if(!window.confirm((p.name || '') + ' さんを、この DAY の参加者から消しますか？')) return;
+      db.collection('ckBoard').doc(dy.day.key).collection('p').doc(p.id).delete().then(function(){
+        dy.ps = dy.ps.filter(function(q){ return q.id !== p.id; });
+        closeModal(); btDyDraw(); toast('消しました');
+      }).catch(function(e){ toast(permMsg(e, '消せませんでした')); });
+    };
+    $('dyGo').onclick = function(){
+      var name = $('dyName').value.replace(/\s+/g, ' ').trim(), k = $('dyKind').value, hit = sync(), biz = k === 'tr1' || k === 'fb1';
+      if(!name){ toast('名前を入れてください'); return; }
+      var mb = document.querySelector('#dyMenu button.on'), refName = $('dyRef').value.trim();
+      var ref = roster.filter(function(m){ return btNameKey(m.name) === btNameKey(refName); })[0];
+      var d = { kind: k, name: name, ref: refName, refNo: ref ? ref.no : '', menu: btHas(k) && mb ? mb.getAttribute('data-m') : '',
+        w1: btHas(k) ? $('dyW1').value : '', w2: btHas(k) ? $('dyW2').value : '', mist: btHas(k) && $('dyMist').checked, memo: $('dyMemo').value.trim().slice(0, 60),
+        ckNo: !biz && hit ? hit.id : (biz ? '' : (p.ckNo || '')), memNo: biz && hit ? hit.no : '', by: gUser.uid };
+      if(!btHas(k)){ d.staffNo = ''; d.staffName = ''; d.ord = 0; }
+      $('dyGo').disabled = true;
+      btDyEnsure().then(function(day){
+        var col = db.collection('ckBoard').doc(day.key).collection('p');
+        if(p0) return col.doc(p.id).update(d).then(function(){ Object.keys(d).forEach(function(x){ p[x] = d[x]; }); });
+        d.staffNo = ''; d.staffName = ''; d.ord = 0; d.st = 'rsv'; d.mj = ''; d.at = Date.now();
+        var ref2 = col.doc();
+        return ref2.set(d).then(function(){ d.id = ref2.id; dy.ps.push(d); });
+      }).then(function(){ closeModal(); btDyDraw(); btDyMirrorAll(); toast(p0 ? '直しました' : name + ' さんを足しました'); })
+        .catch(function(e){ $('dyGo').disabled = false; toast(permMsg(e, '保存できませんでした')); });
+    };
+  });
+}
+// 👥 DAYスタッフ・予約受付担当の任命（名簿から。EXPERT・ASSOCIATE・DIRECTOR・マコシエイトのバッジの人を上に）
+function btDyStaffModal(){
+  var me = gBt, dy = me.dy;
+  btDyRoster().then(function(roster){
+    var cur = dy.day || { staff: [], recv: [] }, inS = {}, inR = {};
+    cur.staff.forEach(function(s){ inS[s.no] = 1; }); cur.recv.forEach(function(s){ inR[s.no] = 1; });
+    var rb = function(m){ return ckBadgesOf(m).filter(function(b){ return BT_ROLE_BADGES.indexOf(b) >= 0; }); };
+    var L = roster.slice().sort(function(a, b){
+      return ((inS[b.no] || inR[b.no]) ? 1 : 0) - ((inS[a.no] || inR[a.no]) ? 1 : 0) || (rb(b).length ? 1 : 0) - (rb(a).length ? 1 : 0) || String(a.kana || a.name).localeCompare(String(b.kana || b.name), 'ja');
+    });
+    modal('<h2>👥 スタッフを任命 — ' + esc(ckMd(dy.ev.date)) + ' ' + esc(dy.ev.name || '') + hq('チェックした人の会員証に、この DAY の体感の一覧が出ます。DAYスタッフは自分の担当を「済み」にできます。予約受付担当は一覧を見られます。会員証が無い人は選べません。') + '</h2>'
+      + '<input type="search" id="dySq" placeholder="名前で探す" autocomplete="off" style="margin-bottom:6px;">'
+      + '<div id="dySl" class="dy-sl">' + L.map(function(m, i){
+          var bs = rb(m);
+          return '<div class="dy-sr" data-n="' + esc(btNameKey(m.name) + (m.kana || '')) + '"><span class="dy-sn">' + esc(m.name) + bs.map(function(b){ return ' <span class="pill">' + esc(b) + '</span>'; }).join('') + (m.cardToken ? '' : ' <small>（会員証なし）</small>') + '</span>'
+            + '<label><input type="checkbox" data-ss="' + i + '"' + (inS[m.no] ? ' checked' : '') + (m.cardToken ? '' : ' disabled') + '>DAYスタッフ</label>'
+            + '<label><input type="checkbox" data-sr="' + i + '"' + (inR[m.no] ? ' checked' : '') + (m.cardToken ? '' : ' disabled') + '>予約受付</label></div>';
+        }).join('') + '</div>'
+      + '<div class="btns"><button id="dyScx">キャンセル</button><button class="primary" id="dySgo">保存</button></div>', true);
+    $('dySq').oninput = function(){ var q = btNameKey($('dySq').value); Array.prototype.forEach.call(document.querySelectorAll('#dySl .dy-sr'), function(r){ r.classList.toggle('hide', !!q && r.getAttribute('data-n').indexOf(q) < 0); }); };
+    $('dyScx').onclick = closeModal;
+    $('dySgo').onclick = function(){
+      var pick = function(attr){ return [].filter.call(document.querySelectorAll('#dySl [' + attr + ']'), function(x){ return x.checked; }).map(function(x){ var m = L[+x.getAttribute(attr)]; return { no: m.no, name: m.name }; }); };
+      var staff = pick('data-ss'), recv = pick('data-sr');
+      if(staff.length > 40 || recv.length > 10){ toast('DAYスタッフは40人・予約受付担当は10人までです'); return; }
+      $('dySgo').disabled = true;
+      btDyEnsure().then(function(day){
+        var b = db.batch(), now = Date.now(), ev = dy.ev;
+        b.update(db.collection('checkinEvents').doc(ev.id).collection('btDay').doc(me.un), { staff: staff, recv: recv, by: gUser.uid, at: now });
+        b.update(db.collection('ckBoard').doc(day.key), { staff: staff, by: gUser.uid, at: now });
+        return b.commit().then(function(){
+          var was = {}; day.staff.concat(day.recv).forEach(function(s){ was[s.no] = 1; });
+          var role = {}; staff.forEach(function(s){ role[s.no] = 'staff'; }); recv.forEach(function(s){ role[s.no] = role[s.no] ? 'both' : 'recv'; });
+          day.staff = staff; day.recv = recv;
+          // 会員証に印（任命から外れた人は消す）
+          L.forEach(function(m){
+            if(!m.cardToken || (!role[m.no] && !was[m.no])) return;
+            var up = {}; up['btd_' + ev.id] = role[m.no] ? { key: day.key, d: ev.date || '', ev: ev.name || '', union: me.un, role: role[m.no] } : FV.delete();
+            db.collection('cards').doc(m.cardToken).update(up).catch(function(){});
+          });
+        });
+      }).then(function(){ closeModal(); btDyDraw(); toast('任命しました（DAYスタッフ ' + staff.length + '人・予約受付担当 ' + recv.length + '人）'); })
+        .catch(function(e){ $('dySgo').disabled = false; toast(permMsg(e, '保存できませんでした')); });
+    };
+  }).catch(function(e){ toast(permMsg(e, '名簿を読めませんでした')); });
+}
+// 体感のメニュー（ユニオンごと）
+function btDyMenuModal(){
+  var me = gBt, dy = me.dy, L = dy.menus.slice();
+  function draw(){
+    $('dyMl').innerHTML = L.map(function(x, i){ return '<div class="ap-row"><input type="text" maxlength="20" data-mi="' + i + '" value="' + esc(x) + '" style="flex:1;"><button type="button" data-md="' + i + '" class="danger ghost">消す</button></div>'; }).join('');
+    Array.prototype.forEach.call(document.querySelectorAll('#dyMl [data-mi]'), function(inp){ inp.oninput = function(){ L[+inp.getAttribute('data-mi')] = inp.value; }; });
+    Array.prototype.forEach.call(document.querySelectorAll('#dyMl [data-md]'), function(b){ b.onclick = function(){ L.splice(+b.getAttribute('data-md'), 1); draw(); }; });
+  }
+  modal('<h2>💆 体感のメニュー — ' + esc(me.un) + '</h2><p class="bt-note" style="margin:-4px 0 8px;">参加者を足す時に選ぶメニューです（12こまで）。</p><div id="dyMl"></div>'
+    + '<button type="button" id="dyMa" style="margin-top:6px;">＋ メニューを足す</button>'
+    + '<div class="btns"><button id="dyMx">キャンセル</button><button class="primary" id="dyMs">保存</button></div>', true);
+  draw();
+  $('dyMa').onclick = function(){ if(L.length >= 12){ toast('12こまでです'); return; } L.push(''); draw(); };
+  $('dyMx').onclick = closeModal;
+  $('dyMs').onclick = function(){
+    var a = L.map(function(x){ return String(x || '').trim(); }).filter(function(x, i, arr){ return x && arr.indexOf(x) === i; });
+    if(!a.length){ toast('メニューを1つ以上入れてください'); return; }
+    db.collection('ckBtCfg').doc(me.un).set({ menus: a, by: gUser.uid, at: FV.serverTimestamp() }).then(function(){ dy.menus = a; closeModal(); btDyDraw(); toast('メニューを保存しました'); })
+      .catch(function(e){ toast(permMsg(e, '保存できませんでした')); });
+  };
+}
+/* 💜 v145: DAYの体感（会員証）。任命された DAYスタッフ・予約受付担当の会員証に、その DAY の担当と全体の一覧を出す（DAY の日まで）
+   DAYスタッフは自分の担当だけ「済み」にできる（ckBoard/{key}/done/{参加者} に会員証のトークンを書く＝だれも読めない・同じ一括書き込みで「済み」） */
+function renderDayBoard(c, token){
+  var el = $('dyArea');
+  if(!el) return;
+  el.innerHTML = '';
+  if(!c || c.kind === 'user' || c.active === false) return;
+  var t = todayStr(), L = Object.keys(c).filter(function(k){ return k.indexOf('btd_') === 0 && c[k] && c[k].key && (c[k].d || '') >= t; })
+    .map(function(k){ var x = c[k]; return { eid: k.slice(4), key: x.key, d: x.d, ev: x.ev, role: x.role || 'staff' }; })
+    .sort(function(a, b){ return a.d < b.d ? -1 : a.d > b.d ? 1 : 0; });
+  var myExp = Object.keys(c).filter(function(k){ return k.indexOf('exp_') === 0 && c[k] && (c[k].d || '') >= t && c[k].menu; }).map(function(k){ return c[k]; });
+  var expHtml = myExp.length ? '<div class="nextwrap"><div class="next-head">あなたの体感</div>' + myExp.map(function(x){
+      return '<div class="dy-me">' + esc(ckMd(x.d)) + ' ' + esc(x.ev || '') + '<b>💆 ' + esc(x.menu) + '</b>' + (x.staff ? '担当 ' + esc(x.staff) + (x.ord ? '・' + x.ord + '番目' : '') : '担当は当日までに決まります') + '</div>';
+    }).join('') + '</div>' : '';
+  if(!L.length){ el.innerHTML = expHtml; return; }
+  var b0 = L[0];
+  el.innerHTML = expHtml + '<div class="nextwrap"><div class="next-head">DAYの体感</div><p class="bt-note">読み込み中…</p></div>';
+  Promise.all([db.collection('ckBoard').doc(b0.key).get(), db.collection('ckBoard').doc(b0.key).collection('p').get()]).then(function(r){
+    var bd = r[0].exists ? r[0].data() : null, ps = [];
+    r[1].forEach(function(d){ var p = d.data(); p.id = d.id; ps.push(p); });
+    if(!bd){ el.innerHTML = expHtml; return; }
+    dyCardDraw(el, expHtml, b0, bd, ps, c, token);
+  }).catch(function(){ el.innerHTML = expHtml + '<div class="nextwrap"><div class="next-head">DAYの体感</div><p class="bt-note">読めませんでした。電波の良いところで開き直してください。</p></div>'; });
+}
+function dyCardDraw(el, expHtml, b0, bd, ps, c, token){
+  var pos = btPosMap(ps), staff = bd.staff || [], isStaff = b0.role === 'staff' || b0.role === 'both';
+  var mine = ps.filter(function(p){ return p.staffNo === c.no && btHas(p.kind); }).sort(function(a, b){ return pos[a.id] - pos[b.id]; });
+  var wd = '日月火水木金土'.charAt(new Date(b0.d + 'T00:00:00').getDay());
+  var row = function(p, me){
+    return '<div class="dy-crow' + (p.st === 'done' ? ' done' : p.st === 'absent' ? ' absent' : '') + '"><span class="dy-n">' + (pos[p.id] || '・') + '</span>'
+      + '<div class="dy-nm"><b>' + esc(p.name || '') + '</b><small>' + esc(btKindN(p.kind)) + (p.menu ? ' ・ 💆 ' + esc(p.menu) : '') + (p.ref ? ' ・ 紹介 ' + esc(p.ref) : '') + (p.mist ? ' ・ 🧴' : '') + '</small>'
+      + (me && p.memo ? '<small>📝 ' + esc(p.memo) + '</small>' : '') + '</div>'
+      + (me ? (p.st === 'done' ? '<button type="button" class="ghost" data-dcrs="' + esc(p.id) + '">戻す</button>' : p.st === 'absent' ? '<span class="dy-st ng">来なかった</span>' : '<button type="button" class="primary" data-dcok="' + esc(p.id) + '">済み</button>')
+        : (p.st === 'done' ? '<span class="dy-st ok">済み</span>' : p.st === 'absent' ? '<span class="dy-st ng">来なかった</span>' : '')) + '</div>';
+  };
+  var un0 = ps.filter(function(p){ return btHas(p.kind) && !staff.some(function(s){ return s.no === p.staffNo; }); });
+  var h = '<div class="nextwrap dy-card"><div class="next-head">DAYの体感</div>'
+    + '<div class="dy-ch"><b>' + esc(ckMd(b0.d)) + '（' + wd + '）' + esc(b0.ev || '') + '</b><small>あなたは ' + (b0.role === 'both' ? 'DAYスタッフ・予約受付担当' : b0.role === 'recv' ? '予約受付担当' : 'DAYスタッフ') + '</small></div>';
+  if(isStaff) h += '<div class="dy-cg mine"><div class="dy-gh">あなたの担当（' + mine.length + '）</div>' + (mine.length ? mine.map(function(p){ return row(p, true); }).join('') : '<p class="bt-note">まだ割り振られていません</p>') + '</div>';
+  staff.forEach(function(s){
+    if(isStaff && s.no === c.no) return;
+    var Lq = ps.filter(function(p){ return p.staffNo === s.no && btHas(p.kind); }).sort(function(a, b){ return pos[a.id] - pos[b.id]; });
+    h += '<div class="dy-cg"><div class="dy-gh">' + esc(s.name) + '（' + Lq.length + '）</div>' + Lq.map(function(p){ return row(p, false); }).join('') + '</div>';
+  });
+  if(un0.length) h += '<div class="dy-cg"><div class="dy-gh">未割り振り（' + un0.length + '）</div>' + un0.map(function(p){ return row(p, false); }).join('') + '</div>';
+  var no = ps.filter(function(p){ return !btHas(p.kind); });
+  if(no.length) h += '<div class="dy-cg"><div class="dy-gh">体感なし（' + no.length + '）</div>' + no.map(function(p){ return row(p, false); }).join('') + '</div>';
+  h += '<p class="bt-note">担当と順番は DAY HOST が決めます。変わった時は開き直すと出ます。</p></div>';
+  el.innerHTML = expHtml + h;
+  var setSt = function(pid, st, btn){
+    btn.disabled = true;
+    var b = db.batch(), rf = db.collection('ckBoard').doc(b0.key);
+    b.set(rf.collection('done').doc(pid), { tk: token, at: Date.now() });
+    b.update(rf.collection('p').doc(pid), { st: st, doneAt: st === 'done' ? Date.now() : 0 });
+    b.commit().then(function(){
+      ps.forEach(function(p){ if(p.id === pid){ p.st = st; } });
+      dyCardDraw(el, expHtml, b0, bd, ps, c, token); toast(st === 'done' ? '済みにしました' : '戻しました');
+    }).catch(function(){ btn.disabled = false; toast('保存できませんでした。電波の良いところでもう一度お試しください'); });
+  };
+  Array.prototype.forEach.call(el.querySelectorAll('[data-dcok]'), function(btn){ btn.onclick = function(){ setSt(btn.getAttribute('data-dcok'), 'done', btn); }; });
+  Array.prototype.forEach.call(el.querySelectorAll('[data-dcrs]'), function(btn){ btn.onclick = function(){ setSt(btn.getAttribute('data-dcrs'), 'rsv', btn); }; });
+}
+// ユーザーのアプリ：体感の予定（次のDAY）・体感の記録（マイページ）
+function ckExpLine(c, evId){
+  var x = c && c['exp_' + evId];
+  if(!x || !x.menu || x.st === 'absent') return '';
+  return '<span class="nw-i nw-exp">💆 体感：' + esc(x.menu) + (x.st === 'done' ? '（済み）' : x.staff ? '（担当 ' + esc(x.staff) + (x.ord ? '・' + x.ord + '番目' : '') + '）' : '（担当は当日までに決まります）') + '</span>';
+}
+function renderExpHist(c){
+  var el = $('exArea');
+  if(!el) return;
+  var L = Object.keys(c || {}).filter(function(k){ return k.indexOf('exp_') === 0 && c[k] && c[k].st === 'done' && c[k].menu; }).map(function(k){ return c[k]; })
+    .sort(function(a, b){ return a.d < b.d ? 1 : -1; });
+  el.innerHTML = L.length ? '<div class="nextwrap"><div class="next-head">体感の記録</div>' + L.slice(0, 12).map(function(x){
+      return '<div class="dy-me">' + esc(ckMd(x.d)) + ' ' + esc(x.ev || '') + '<b>💆 ' + esc(x.menu) + '</b>' + (x.staff ? '担当 ' + esc(x.staff) : '') + '</div>';
+    }).join('') + '</div>' : '';
+}
+// 受付：DAYの体感に登録されている人なら、体感・担当・順番を出す（初めての人は、名前が同じ登録とつなぐか聞く）
+function ckDayBoards(){
+  if(!gRec || !gRec.ev) return Promise.resolve([]);
+  var C = gRec.dyC;
+  if(C && C.ev === gRec.ev.id && Date.now() - C.at < 60000) return C.p;
+  var ev = gRec.ev, p = Promise.all((ev.unions || []).map(function(un){
+    return db.collection('checkinEvents').doc(ev.id).collection('btDay').doc(un).get().then(function(s){
+      if(!s.exists || !s.data().key) return [];
+      var key = s.data().key;
+      return db.collection('ckBoard').doc(key).collection('p').get().then(function(qs){ var a = []; qs.forEach(function(d){ var x = d.data(); x.id = d.id; x._key = key; a.push(x); }); return a; });
+    }).catch(function(){ return []; });
+  })).then(function(r){ return [].concat.apply([], r); });
+  gRec.dyC = { ev: ev.id, at: Date.now(), p: p };
+  return p;
+}
+function ckDayHint(o){
+  var nm = o.name || '';
+  ckDayBoards().then(function(ps){
+    if(!ps.length) return;
+    var key = btNameKey(nm), hit = ps.filter(function(p){ return (o.uid && p.ckNo === o.uid) || (o.no && p.memNo === o.no); })[0], byName = false;
+    if(!hit && key){ hit = ps.filter(function(p){ return btNameKey(p.name) === key && !p.ckNo && !p.memNo; })[0]; byName = !!hit; }
+    var sb = $('stageBody');
+    if(!hit || !sb || !sb.querySelector('.hit-name') || sb.querySelector('.hit-name').textContent !== nm || $('stgDay')) return;
+    var same = ps.filter(function(p){ return p._key === hit._key; }), pos = btPosMap(same)[hit.id];
+    var txt = btHas(hit.kind) ? '💆 体感：' + (hit.menu || 'メニュー未定') + (hit.staffName ? '（担当 ' + hit.staffName + (pos ? '・' + pos + '番目' : '') + '）' : '（担当は未定）') : '📋 事前登録あり（体感なし）';
+    var d = document.createElement('div');
+    d.id = 'stgDay'; d.className = 'hit-meta dy-hint';
+    d.innerHTML = esc(txt) + (hit.ref ? '<small>紹介 ' + esc(hit.ref) + '</small>' : '')
+      + (byName && o.uid && o.isNew ? '<button type="button" id="stgDayLink" class="primary" style="margin-top:6px;">この事前登録とつなぐ</button>' : (byName ? '<small>（名前が同じ事前登録です）</small>' : ''));
+    sb.appendChild(d);
+    if($('stgDayLink')) $('stgDayLink').onclick = function(){
+      db.collection('ckBoard').doc(hit._key).collection('p').doc(hit.id).update({ ckNo: o.uid }).then(function(){
+        hit.ckNo = o.uid; $('stgDayLink').remove(); toast('事前登録とつなぎました。本人のアプリに体感が出ます');
+      }).catch(function(e){ toast(permMsg(e, 'つなげませんでした')); });
     };
   });
 }
