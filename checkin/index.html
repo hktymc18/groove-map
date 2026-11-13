@@ -165,7 +165,11 @@ main{max-width:1080px;margin:0 auto;padding:18px 16px 70px;}
 .kb-new b{font-size:30px;line-height:1;}
 .kb-lock{background:#fff8e6;border:1px solid #ecd9a4;border-radius:10px;padding:8px 10px;font-size:12px;color:#6b5414;margin-top:12px;}
 .kb-prev{display:flex;justify-content:center;padding:16px 0 8px;margin:0 -16px;background:radial-gradient(circle at 50% 40%,#3a3550,#16151c 70%);}
-.kb-prev .olc-tilt{width:250px;}
+.kb-prev .ol-slot{display:block;position:relative;}
+.kb-mode{display:flex;flex-direction:column;gap:6px;margin-top:10px;}
+.kb-mode label{display:flex;align-items:flex-start;gap:8px;margin:0;font-weight:400;font-size:13px;line-height:1.45;padding:8px 10px;border:1px solid var(--line,#ddd);border-radius:10px;}
+.kb-mode label small{display:block;color:var(--sub);font-size:11.5px;}
+.kb-mode input{width:auto;margin-top:3px;}
 .kb-prevcap{text-align:center;font-size:11px;color:#bdb8d6;background:#16151c;margin:0 -16px 12px;padding:0 0 10px;}
 .kb-sec{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:10px;}
 .kb-sec h4{margin:0 0 8px;font-size:13.5px;}
@@ -953,6 +957,9 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
   filter:brightness(var(--sk-bright,1)) contrast(1.12) drop-shadow(0 0 3px var(--sk-glow-a)) drop-shadow(0 0 12px var(--sk-glow-b));
   animation:reaperSway 7s ease-in-out infinite alternate,skGlow 3.2s ease-in-out infinite alternate;}
 .mc-tilt.on .membercard.skin-x .mc-pop::before{animation:skGlow 3.2s ease-in-out infinite alternate;}
+/* v149: 「絵の中」＝イラストは枠の内側（飛び出さない）。ふつうの1枚絵向け。傾けると絵が少しずれる（--bx/--by） */
+.membercard.skin-x.skin-flat .mc-pop{display:none;}
+.membercard.skin-x.skin-flat .mc-art{background:var(--sk-art,none) var(--bx,50%) var(--by,42%)/112% auto no-repeat,var(--sk-bg,#3c3554);filter:brightness(var(--sk-bright,1));}
 @keyframes skGlow{
   from{filter:brightness(calc(var(--sk-bright,1) * .95)) contrast(1.12) drop-shadow(0 0 2px var(--sk-glow-b)) drop-shadow(0 0 8px var(--sk-glow-c));}
   to{filter:brightness(calc(var(--sk-bright,1) * 1.08)) contrast(1.12) drop-shadow(0 0 4px var(--sk-glow-a)) drop-shadow(0 0 18px var(--sk-glow-b));}
@@ -2690,10 +2697,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v148';
+var APP_VER = 'v149';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v149', d: '2026/11/14', items: ['🛠 細かい修正をしました'] },
   { v: 'v148', d: '2026/11/14', items: ['🛠 細かい修正をしました'] },
   { v: 'v147', d: '2026/11/13', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v146', d: '2026/11/13', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
@@ -3723,7 +3731,7 @@ function ckLum(c){ return (0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]) / 255; }
 function ckMix(c, w, t){ return [0, 1, 2].map(function(i){ return Math.round(c[i] + (w[i] - c[i]) * t); }); }
 var CK_SKIN_VARS = ['--sk-frame', '--sk-art', '--sk-holo', '--sk-bright', '--sk-glow-a', '--sk-glow-b', '--sk-glow-c', '--sk-band', '--sk-band-0', '--sk-bandink', '--sk-tag', '--sk-tagtx', '--sk-bg'];
 function ckSkinClear(card){
-  card.classList.remove('skin-x');
+  card.classList.remove('skin-x'); card.classList.remove('skin-flat');
   CK_SKIN_VARS.forEach(function(k){ card.style.removeProperty(k); });
 }
 // カードに色・画像をのせる（img は data URL。工房のプレビューも同じ関数）
@@ -3742,6 +3750,7 @@ function ckSkinPaint(card, def, img){
   st.setProperty('--sk-tag', ckRgba(t, 1)); st.setProperty('--sk-tagtx', ckRgba(ckMix(t, [255, 255, 255], .35), 1));
   st.setProperty('--sk-bg', ckRgba(ckMix(g, [20, 14, 34], .7), 1));
   card.classList.add('skin-x');
+  if(def && def.pop === false) card.classList.add('skin-flat');   // v149: 「絵の中」（飛び出さない）
   var orb = card.querySelector('.mc-hp .orb');
   if(orb) orb.textContent = (def && def.orb) || '✦';
 }
@@ -3757,7 +3766,7 @@ function ckSkinUse(card, id){
     if(!s.exists){ try{ localStorage.removeItem('bci_skd_' + id); }catch(e){} if(cur() && !/^x_/.test(id)) ckSkinClear(card); return; }
     var def = s.data();
     ckSkinDefCache(id, def);
-    if(cached && JSON.stringify(cached.v || {}) === JSON.stringify(def.v || {}) && JSON.stringify(cached.colors || {}) === JSON.stringify(def.colors || {}) && cached.bright === def.bright && cached.orb === def.orb && card.classList.contains('skin-x')) return;
+    if(cached && JSON.stringify(cached.v || {}) === JSON.stringify(def.v || {}) && JSON.stringify(cached.colors || {}) === JSON.stringify(def.colors || {}) && cached.bright === def.bright && cached.orb === def.orb && (cached.pop === false) === (def.pop === false) && card.classList.contains('skin-x')) return;
     return ckSkinImgs(id, def).then(function(img){ if(cur() && img.frame) ckSkinPaint(card, def, img); });
   }).catch(function(){});
 }
@@ -7686,9 +7695,11 @@ function koboEdit(def0, presetMem){
     };
     var els = String(txt('skinAtkEls')).split(',');
     modal('<h2>🃏 ' + esc(def.label || txt('skinName') || '新しいカード') + (mem ? ' <span class="pill g" style="font-size:12px;vertical-align:3px;">' + esc(mem.name || mem.no) + 'に付けています</span>' : '') + '</h2>'
-      + '<div class="kb-prev" id="kbPrev"></div><div class="kb-prevcap">↑ 本物の会員証と同じ見た目</div>'
+      + '<div class="kb-prev" id="kbPrev"></div><div class="kb-prevcap">↑ 本物の会員証と同じ見た目・同じ形（ドラッグで傾く・タップで裏返る）</div>'
       + '<div class="kb-sec"><h4>🖼 画像（選ぶと自動で軽量化）</h4><div class="kb-imgs">' + slot('frame') + slot('art') + slot('holo') + '</div>'
       + '<label style="display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:400;margin-top:8px;"><input type="checkbox" id="kbKey" style="width:auto;"> イラストの背景を透過する（白や単色の背景の時）</label>'
+      + '<div class="kb-mode"><label><input type="radio" name="kbPop" value="1"' + (def.pop !== false ? ' checked' : '') + '><span>🧍 飛び出す（死神のカードと同じ）<small>キャラが枠から浮き出て、傾けると手前で動きます。背景を透過したイラスト向け</small></span></label>'
+      + '<label><input type="radio" name="kbPop" value="0"' + (def.pop === false ? ' checked' : '') + '><span>🖼 絵の中<small>イラストは枠の内側に入ります（飛び出さない）。背景まで描いてある1枚絵向け</small></span></label></div>'
       + '<p style="font-size:11.5px;color:var(--sub);margin:4px 0 0;">枠・イラスト・ホロとは' + hq('枠＝カード全体の絵（縁）\nイラスト＝キャラクター（背景を透過した画像だと枠から飛び出して見えます）\nホロ＝絵の後ろのきらめき') + '</p>'
       + '<input type="file" id="kbFile" accept="image/*" class="hide"></div>'
       + '<div class="kb-sec"><h4>🎨 色</h4><div class="kb-cols">'
@@ -7726,6 +7737,8 @@ function koboEdit(def0, presetMem){
   function collect(){
     def.colors = { glow: $('kbGlow').value, band: $('kbBand').value, tag: $('kbTag').value };
     def.bright = Math.round(parseFloat($('kbBright').value) * 10) / 10 || 1;
+    var pm = document.querySelector('input[name="kbPop"]:checked');
+    if(pm){ if(pm.value === '0') def.pop = false; else delete def.pop; }
     def.orb = $('kbOrb').value.trim() || '✦';
     var v = function(x){ return $(x).value.trim(); };
     def.text = { skinName: v('kbName'), skinHp: v('kbHp'), skinSerial: v('kbSer'), skinRare: v('kbRare'), skinAbName: v('kbAb'), skinAbText: v('kbAbTx'),
@@ -7740,13 +7753,17 @@ function koboEdit(def0, presetMem){
     collect();
     var d = { no: mem ? mem.no : '0000', name: mem ? mem.name : '', union: mem ? mem.union : 'ANTARES', grade: '', badge: mem ? (mem.badge || '') : '', cardTitle: mem ? (mem.cardTitle || '') : 'TEAM ELITE', badges: mem ? ckBadgesOf(mem) : [], skin: id };
     KB_TEXT_KEYS.forEach(function(k){ d[k] = def.text[k]; });
-    var w = ckTcgBuild(d);
+    // v149: 会員証と同じ幅（328px）で組んで縮小する（前は 250px で組んでいて、縦長に見えていた）
+    var slot = document.createElement('span');
+    slot.className = 'ol-slot';
+    box.innerHTML = ''; box.appendChild(slot);
+    var w = ckTcgMini(slot, d, null, Math.min(280, Math.max(200, (box.clientWidth || 320) - 40)));
     var card = w.querySelector('.membercard');
     card.setAttribute('data-skid', 'preview');   // 保存済みの見た目で上書きさせない
     if(img.frame || img.art) ckSkinPaint(card, def, img); else ckSkinClear(card);
     var orb = card.querySelector('.mc-hp .orb'); if(orb) orb.textContent = def.orb;
-    box.innerHTML = ''; box.appendChild(w);
-    if(typeof ckTcgFit === 'function') try{ ckTcgFit(w); }catch(e){}
+    w._base = w.style.transform;
+    ckTcgGesture(w);   // 本物と同じに、ドラッグで傾く（飛び出す動きを確かめられる）
   }
   function prevSoon(){ clearTimeout(prevT); prevT = setTimeout(preview, 250); }
   var picking = '';
