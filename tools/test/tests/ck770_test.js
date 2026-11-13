@@ -64,7 +64,7 @@ T.run(async () => {
   const rows = $$('#adminBody .adm-row');
   c('一覧に「受付の名簿と紐付ける」', rows.some(r => /受付の名簿と紐付ける/.test(r.textContent)));
   c('紐付け済みは番号・名前・「受付で無効」', rows.some(r => /受付 101 天城 蓮司/.test(r.textContent) && /受付で無効/.test(r.textContent)));
-  c('オーナーの行には出さない', !rows.some(r => /オーナー/.test(r.querySelector('.adm-name').textContent) && r.querySelector('.adm-ck')));
+  c('v877: オーナーが見ると、オーナーの行にも出す（オーナーは受付で無効でも止まらない）', rows.some(r => /オーナー/.test(r.querySelector('.adm-name').textContent) && r.querySelector('.adm-ck')));
   w.admCkOpen('a1'); await sleep(30);
   const L = $$('#admCkOv .adm-ck-row');
   c('紐付けの画面に名簿が出る', !!$('#admCkOv') && L.length === 3);

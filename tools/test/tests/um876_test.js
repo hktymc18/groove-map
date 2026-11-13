@@ -52,5 +52,5 @@ T.run(async () => {
   c('DAY から2日なら、まだ出さない', !v({ uDays: [{ d: day(-2), st: 'done', menu: 'ルミスパ' }] }));
   c('来なかった DAY・91日より前の DAY では出さない', !v({ uDays: [{ d: day(-5), st: 'absent' }] }) && !v({ uDays: [{ d: day(-91), st: 'done' }] }));
   c('DAY のあとの購入があれば出さない・前の購入だけなら出す', !v({ buys: [{ t: 'x', d: day(-1) }] }) && v({ buys: [{ t: 'x', d: day(-20) }] }));
-  c('APP_JS_VERSION v876', /APP_JS_VERSION = 'v876'/.test(require('fs').readFileSync(require('path').join(__dirname, '../../../app.js'), 'utf8')));
+  c('APP_JS_VERSION v876 以上', +(/APP_JS_VERSION = 'v(\d+)'/.exec(require('fs').readFileSync(require('path').join(__dirname, '../../../app.js'), 'utf8')) || [0, 0])[1] >= 876);
 });

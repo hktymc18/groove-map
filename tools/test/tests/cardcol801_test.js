@@ -38,6 +38,6 @@ T.run(async () => {
   c('同じカードで何度も知らせない', toasts.length === 1);
   w.currentUser.ckNo = '';
   w.switchView('menu'); await sleep(100);
-  c('受付と紐付いていない人にはボタンを出さない', !/カードコレクション/.test(($('#view-menu') || {}).innerHTML || ''));
+  c('v877: 受付と紐付いていない人にもボタンは出す（新着の数は出さない）', /cardColOpen\(\)/.test(($('#view-menu') || {}).innerHTML || '') && !/<span class="nb">/.test((($('#view-menu') || {}).innerHTML || '').split('カードコレクション')[1].split('</span>')[0]));
   w.toastAction = ta; w.db.collection = col0;
 });
