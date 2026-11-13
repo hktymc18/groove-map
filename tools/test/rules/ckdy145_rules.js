@@ -1,0 +1,52 @@
+// 受付 v145（DAYの体感: checkinEvents/{e}/btDay・ckBoard・done・ckBtCfg・checkinUsers の読み取り）の firestore.rules を、エミュレータで試す（架空のデータだけ）
+// 準備・実行は ckpf109_rules.js と同じ
+const fs = require('fs'), path = require('path');
+const { initializeTestEnvironment } = require('@firebase/rules-unit-testing');
+const { doc, setDoc, getDoc, getDocs, updateDoc, collection, query, where, writeBatch } = require('firebase/firestore');
+let fails = 0;
+const c = (n, ok) => { console.log((ok ? 'PASS' : 'FAIL') + ': ' + n); if (!ok) fails++; };
+const ok = p => p.then(() => true, () => false);
+const _e = console.error; console.error = (...a) => { if (!/PERMISSION_DENIED|evaluation error/.test(String(a[0]) + String(a[1] || ''))) _e(...a); };
+const K = 'k1k1k1k1k1k1k1k1k1k1', TS1 = 'a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1', TS2 = 'b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2', TX = 'c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3';
+(async () => {
+  const env = await initializeTestEnvironment({ projectId: 'dy-test', firestore: { rules: fs.readFileSync(path.join(__dirname, '../../../firestore.rules'), 'utf8'), host: '127.0.0.1', port: +(process.env.PORT || 8089) } });
+  await env.clearFirestore();
+  await env.withSecurityRulesDisabled(async (cx) => {
+    const d = cx.firestore();
+    await setDoc(doc(d, 'checkinUnions/U1'), { name: 'U1', admins: ['adm1'], dayStaff: ['host1'] });
+    for (const [u, un] of [['host1', 'U2'], ['adm1', 'U2'], ['mem1', 'U1'], ['out1', 'U9']]) await setDoc(doc(d, 'users/' + u), { union: un, status: 'active' });
+    await setDoc(doc(d, 'checkinEvents/evD'), { date: '2026-12-14', name: '12月のDAY', unions: ['U1'], hostUnion: 'U1' });
+    await setDoc(doc(d, 'cards/' + TS1), { no: 'ANT0001', name: '見本 えきすぱ', union: 'U1', active: true, btd_evD: { key: K, d: '2026-12-14', role: 'staff' } });
+    await setDoc(doc(d, 'cards/' + TS2), { no: 'ANT0002', name: '見本 ふつう', union: 'U1', active: true, btd_evD: { key: K, d: '2026-12-14', role: 'staff' } });
+    await setDoc(doc(d, 'cards/' + TX), { no: 'ANT0001', name: '見本 えきすぱ（古い）', union: 'U1', active: true });
+    await setDoc(doc(d, 'checkinUsers/u1'), { uid: 'u1', name: '見本 はなこ', union: 'U1', cardToken: 'x', active: true });
+  });
+  const as = u => env.authenticatedContext(u).firestore(), anon = env.unauthenticatedContext().firestore();
+  const DAY = { union: 'U1', date: '2026-12-14', ev: '12月のDAY', key: K, staff: [{ no: 'ANT0001', name: '見本 えきすぱ' }], recv: [], by: 'host1', at: 1 };
+  c('DAY HOST（ほかのユニオンの所属）は DAYの体感を作れる', await ok(setDoc(doc(as('host1'), 'checkinEvents/evD/btDay/U1'), DAY)));
+  c('受付管理者だけの人・ふつうの人は作れない', !(await ok(setDoc(doc(as('adm1'), 'checkinEvents/evD/btDay/U1'), DAY))) && !(await ok(setDoc(doc(as('mem1'), 'checkinEvents/evD/btDay/U1'), DAY))));
+  c('鍵は変えられない', !(await ok(setDoc(doc(as('host1'), 'checkinEvents/evD/btDay/U1'), Object.assign({}, DAY, { key: 'z9z9z9z9z9z9z9z9z9z9' })))));
+  c('イベントの受付の人（参加ユニオンのメンバー）は読める・関係ない人は読めない', await ok(getDoc(doc(as('mem1'), 'checkinEvents/evD/btDay/U1'))) && !(await ok(getDoc(doc(as('out1'), 'checkinEvents/evD/btDay/U1')))));
+  c('DAY HOST は掲示板を作れる', await ok(setDoc(doc(as('host1'), 'ckBoard/' + K), { eid: 'evD', union: 'U1', date: '2026-12-14', ev: '12月のDAY', staff: DAY.staff, by: 'host1', at: 1 })));
+  c('ふつうの人は掲示板を作れない', !(await ok(setDoc(doc(as('mem1'), 'ckBoard/z9z9z9z9z9z9z9z9z9z9'), { eid: 'evD', union: 'U1', staff: [], by: 'mem1', at: 1 }))));
+  const P = { kind: 'na1', name: '見本 はなこ', menu: 'ルミスパ', staffNo: 'ANT0001', staffName: '見本 えきすぱ', ord: 1, st: 'rsv', ckNo: '', memNo: '', by: 'host1', at: 1 };
+  c('DAY HOST は参加者を入れられる', await ok(setDoc(doc(as('host1'), 'ckBoard/' + K + '/p/x1'), P)));
+  c('ふつうの人・ログインなしは参加者を入れられない', !(await ok(setDoc(doc(as('mem1'), 'ckBoard/' + K + '/p/x2'), P))) && !(await ok(setDoc(doc(anon, 'ckBoard/' + K + '/p/x2'), P))));
+  c('鍵を知っている人（会員証）は掲示板と参加者を読める・掲示板の一覧は見られない', await ok(getDoc(doc(anon, 'ckBoard/' + K))) && await ok(getDocs(collection(anon, 'ckBoard/' + K + '/p'))) && !(await ok(getDocs(collection(anon, 'ckBoard')))));
+  const done = (tk, st, extra) => { const b = writeBatch(anon); b.set(doc(anon, 'ckBoard/' + K + '/done/x1'), { tk, at: 2 }); b.update(doc(anon, 'ckBoard/' + K + '/p/x1'), Object.assign({ st, doneAt: 2 }, extra || {})); return b.commit(); };
+  c('ほかの DAYスタッフの会員証では「済み」にできない', !(await ok(done(TS2, 'done'))));
+  c('任命の印がない会員証（番号が同じでも）では「済み」にできない', !(await ok(done(TX, 'done'))));
+  c('担当の会員証でも、ほかの項目（担当・順番）は変えられない', !(await ok(done(TS1, 'done', { staffNo: 'ANT0002' }))));
+  c('「来なかった」は会員証からはできない', !(await ok(done(TS1, 'absent'))));
+  c('担当の DAYスタッフ（会員証・ログインなし）は自分の担当を「済み」にできる', await ok(done(TS1, 'done')));
+  c('「戻す」もできる', await ok(done(TS1, 'rsv')));
+  c('「済み」の印（トークン）はだれも読めない', !(await ok(getDoc(doc(anon, 'ckBoard/' + K + '/done/x1')))) && !(await ok(getDoc(doc(as('host1'), 'ckBoard/' + K + '/done/x1')))));
+  c('受付の人は、初めての人をつなげる（ckNo だけ）', await ok(updateDoc(doc(as('mem1'), 'ckBoard/' + K + '/p/x1'), { ckNo: 'u1' })));
+  c('つないだ後は受付の人は変えられない・ほかの項目も変えられない', !(await ok(updateDoc(doc(as('mem1'), 'ckBoard/' + K + '/p/x1'), { ckNo: 'u2' }))) && !(await ok(updateDoc(doc(as('mem1'), 'ckBoard/' + K + '/p/x1'), { menu: 'ウェルスパ' }))));
+  c('関係ない人はつなげない', !(await ok(updateDoc(doc(as('out1'), 'ckBoard/' + K + '/p/x1'), { ckNo: 'u3' }))));
+  c('DAY HOST はユニオンのユーザーの名簿を読める（参加者を選ぶ）', await ok(getDocs(query(collection(as('host1'), 'checkinUsers'), where('union', '==', 'U1')))));
+  c('ふつうの人はユーザーの名簿を読めない', !(await ok(getDocs(query(collection(as('mem1'), 'checkinUsers'), where('union', '==', 'U1'))))));
+  c('DAY HOST は体感のメニューを保存できる・ふつうの人はできない', await ok(setDoc(doc(as('host1'), 'ckBtCfg/U1'), { menus: ['ルミスパ'], by: 'host1', at: 1 })) && !(await ok(setDoc(doc(as('mem1'), 'ckBtCfg/U1'), { menus: ['x'], by: 'mem1', at: 1 }))));
+  await env.cleanup();
+  console.log(fails ? 'FAIL ' + fails : 'ALL PASS'); process.exit(fails ? 1 : 0);
+})();
