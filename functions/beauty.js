@@ -4,6 +4,8 @@
  *   thanks … 来場した日: 今日のイベントに受付したユーザー（出席の kind=user）に、来場のお礼を送る
  *   dayEve … DAYの前日: 明日のイベントのうち「ユーザーのカードに次のDAYとして出す」（uDay）にしたものを、
  *            そのユニオンで通知を受け取っているユーザーに知らせる
+ *   v146: 前日のお知らせに、その人の体感（カードの exp_{イベント}：メニュー・担当・順番）を入れる
+ *   cleanup … DAY のあと30日たった参加申し込み（ckReq・ckReqProof・紹介者の印）と、担当の会員証の事前情報（btp_）を消す
  * 送り先は ckPush/{ユーザーのID} = { card, union, t, on }（カードの「通知を受け取る」で本人が登録）。
  * 届かなくなった宛先は on=false にする。firebase-admin はここでは読み込まない（テストで、にせの db・messaging を渡せるように）
  */
@@ -59,9 +61,23 @@ async function dayEve(db, messaging, now) {
     }
     if (!subs.length) continue;
     const title = '明日は' + String(ev.name || 'DAY') + 'です';
-    const body = (ev.uInfo ? String(ev.uInfo) + '。' : '') + 'カードを開いて、受付で見せてください。';
-    const r = await sendTo(messaging, subs, title.slice(0, 60), body.slice(0, 120), 'nb-eve-' + e.id);
-    out.sent += r.ok; out.ng += r.ng;
+    const base = (ev.uInfo ? String(ev.uInfo) + '。' : '') + 'カードを開いて、受付で見せてください。';
+    // 体感がある人は、メニュー・担当・順番を入れる（同じ文の人ごとにまとめて送る）
+    const byBody = {};
+    for (const s of subs) {
+      let line = '';
+      try {
+        const cs = await db.collection('cards').doc(s.d.card).get();
+        const x = cs.exists ? (cs.data() || {})['exp_' + e.id] : null;
+        if (x && x.menu && x.st !== 'absent') line = '体感：' + x.menu + (x.staff ? '（担当 ' + x.staff + (x.ord ? '・' + x.ord + '番目' : '') + '）' : '') + '。';
+      } catch (er) { line = ''; }
+      const body = (line + base).slice(0, 120);
+      (byBody[body] = byBody[body] || []).push(s);
+    }
+    for (const body of Object.keys(byBody)) {
+      const r = await sendTo(messaging, byBody[body], title.slice(0, 60), body, 'nb-eve-' + e.id);
+      out.sent += r.ok; out.ng += r.ng;
+    }
   }
   return out;
 }
@@ -87,4 +103,32 @@ async function thanks(db, messaging, now) {
   return out;
 }
 
-module.exports = { jstYmd, dayEve, thanks, CARD };
+// DAY のあと30日たった参加申し込みと事前情報を消す（del = FieldValue.delete() を渡す）
+async function cleanup(db, now, del) {
+  const cut = jstYmd(now, -30), from = jstYmd(now, -40), out = { reqs: 0, cards: 0 };
+  const qs = await db.collection('ckReq').where('date', '<', cut).limit(300).get();
+  for (const d of qs.docs) {
+    const pf = await db.collection('ckReqProof').doc(d.id).get();
+    const tk = pf.exists ? (pf.data() || {}).tk : '';
+    if (tk) await db.collection('cards').doc(tk).collection('dreq').doc(d.id).delete().catch(() => {});
+    await pf.ref.delete().catch(() => {});
+    await d.ref.delete();
+    out.reqs++;
+  }
+  // 担当の会員証の事前情報（btp_{イベント}）
+  const evs = await db.collection('checkinEvents').where('date', '>=', from).where('date', '<', cut).get();
+  for (const e of evs.docs) {
+    const bs = await e.ref.collection('btDay').get();
+    for (const b of bs.docs) {
+      for (const s of ((b.data() || {}).staff || [])) {
+        const m = await db.collection('checkinMembers').doc(String(s.no || '_')).get();
+        const tk = m.exists ? (m.data() || {}).cardToken : '';
+        if (!tk) continue;
+        await db.collection('cards').doc(tk).update({ ['btp_' + e.id]: del }).then(() => { out.cards++; }, () => {});
+      }
+    }
+  }
+  return out;
+}
+
+module.exports = { jstYmd, dayEve, thanks, cleanup, CARD };

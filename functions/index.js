@@ -220,5 +220,6 @@ exports.beautyDaily = onSchedule(
     const db = admin.firestore(), m = admin.messaging(), now = Date.now();
     try { console.log('beauty thanks ' + JSON.stringify(await beauty.thanks(db, m, now))); } catch (e) { console.log('beauty thanks error ' + e); }
     try { console.log('beauty dayEve ' + JSON.stringify(await beauty.dayEve(db, m, now))); } catch (e) { console.log('beauty dayEve error ' + e); }
+    try { console.log('beauty cleanup ' + JSON.stringify(await beauty.cleanup(db, now, admin.firestore.FieldValue.delete()))); } catch (e) { console.log('beauty cleanup error ' + e); }
   }
 );
