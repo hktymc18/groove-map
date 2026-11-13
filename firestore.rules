@@ -724,7 +724,7 @@ service cloud.firestore {
         allow read: if ckLoungeStaff(un) || ckEventStaff(eid);
         allow create, update: if ckLoungeStaff(un)
           && request.resource.data.get('union', '') == un
-          && request.resource.data.keys().hasOnly(['union', 'date', 'ev', 'key', 'staff', 'recv', 'by', 'at'])
+          && request.resource.data.keys().hasOnly(['union', 'date', 'ev', 'key', 'staff', 'recv', 'recvNos', 'pmj', 'by', 'at'])
           && request.resource.data.get('key', '') is string && request.resource.data.get('key', '').matches('^[a-z0-9]{20}$')
           && request.resource.data.get('staff', []) is list && request.resource.data.get('staff', []).size() <= 40
           && request.resource.data.get('recv', []) is list && request.resource.data.get('recv', []).size() <= 10
@@ -1126,6 +1126,84 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/cards/$(tk))
         && get(/databases/$(database)/documents/cards/$(tk)).data.get('no', '') == staffNo
         && get(/databases/$(database)/documents/cards/$(tk)).data.get('btd_' + get(/databases/$(database)/documents/ckBoard/$(key)).data.get('eid', '_'), {}).get('key', '') == key;
+    }
+    // 💜 受付v146: DAYの参加申し込み（紹介者が会員証から送る・事前情報つき）
+    //   ckReq/{申し込みのキー} = { eid, union, date, ev, refNo, refName, kind, name, …事前情報…, st: new|ok|ng|cancel, note, chk…, pid, at, upAt }
+    //   ckReqProof/{同じキー} = { tk: 紹介者の会員証トークン, at } … 同じ一括書き込みで書く本人の印（だれも読めない）
+    //   cards/{トークン}/dreq/{キー} … 紹介者の会員証から自分の申し込みを探す印
+    //   読めるのは：キーを知っている紹介者（1件ずつ）・そのユニオンのオーナー・ユニオン管理者・DAY HOST・その DAY の予約受付担当（ログイン）
+    match /ckReq/{rid} {
+      allow get: if rid.matches('^[a-z0-9]{20}$');
+      allow list: if ckReqStaff(resource.data.get('union', ''), resource.data.get('eid', '_'));
+      allow create: if rid.matches('^[a-z0-9]{20}$') && ckReqKeysOk(request.resource.data)
+        && request.resource.data.get('st', '') == 'new'
+        && exists(/databases/$(database)/documents/checkinEvents/$(request.resource.data.get('eid', '_')))
+        && get(/databases/$(database)/documents/checkinEvents/$(request.resource.data.eid)).data.get('unions', []).hasAny([request.resource.data.get('union', '_')])
+        && ckReqProofOk(rid, request.resource.data);
+      // 紹介者：受付中のあいだは直す・取り消す
+      allow update: if resource.data.get('st', '') == 'new' && request.resource.data.get('st', '') in ['new', 'cancel']
+        && ckReqKeysOk(request.resource.data) && ckReqSame(request.resource.data, resource.data)
+        && request.resource.data.get('pid', '') == resource.data.get('pid', '')
+        && ckReqProofOk(rid, resource.data);
+      // 予約受付担当・DAY HOST：確かめる・直す・差し戻す・参加者に入れる
+      allow update: if ckReqStaff(resource.data.get('union', ''), resource.data.get('eid', '_'))
+        && ckReqKeysOk(request.resource.data) && ckReqSame(request.resource.data, resource.data);
+      allow delete: if ckLoungeStaff(resource.data.get('union', ''));
+    }
+    function ckReqKeysOk(d) {
+      return d.keys().hasOnly(['eid', 'union', 'date', 'ev', 'refNo', 'refName', 'kind', 'name', 'age', 'sex', 'upRuby', 'attendBa', 'menu', 'w1', 'w2', 'mist',
+          'goal', 'job', 'rel', 'times', 'status', 'items', 'why', 'talk', 'next', 'st', 'note', 'chkBy', 'chkName', 'chkAt', 'pid', 'at', 'upAt'])
+        && d.get('kind', '') in ['na1', 'na0', 'tr1', 'fb1']
+        && d.get('name', '') is string && d.get('name', '').size() > 0 && d.get('name', '').size() <= 40
+        && d.get('goal', '') is string && d.get('goal', '').size() <= 300
+        && d.get('st', '') in ['new', 'ok', 'ng', 'cancel'];
+    }
+    function ckReqSame(n, o) {
+      return n.get('eid', '') == o.get('eid', '') && n.get('union', '') == o.get('union', '') && n.get('refNo', '') == o.get('refNo', '');
+    }
+    function ckReqProofOk(rid, d) {
+      return existsAfter(/databases/$(database)/documents/ckReqProof/$(rid))
+        && getAfter(/databases/$(database)/documents/ckReqProof/$(rid)).data.get('at', null) == request.time
+        && ckReqByCard(getAfter(/databases/$(database)/documents/ckReqProof/$(rid)).data.get('tk', ''), d);
+    }
+    function ckReqByCard(tk, d) {
+      return tk is string && tk.size() == 32
+        && exists(/databases/$(database)/documents/cards/$(tk))
+        && get(/databases/$(database)/documents/cards/$(tk)).data.get('kind', '') != 'user'
+        && get(/databases/$(database)/documents/cards/$(tk)).data.get('active', true) != false
+        && get(/databases/$(database)/documents/cards/$(tk)).data.get('no', '') == d.get('refNo', '_')
+        && get(/databases/$(database)/documents/cards/$(tk)).data.get('union', '') == d.get('union', '_');
+    }
+    function ckReqStaff(un, eid) {
+      return ckLoungeStaff(un)
+        || (signedIn() && notDisabled(request.auth.uid)
+            && exists(/databases/$(database)/documents/checkinEvents/$(eid)/btDay/$(un))
+            && get(/databases/$(database)/documents/checkinEvents/$(eid)/btDay/$(un)).data.get('recvNos', []).hasAny([profile(request.auth.uid).get('ckNo', '_')]));
+    }
+    match /ckReqProof/{rid} {
+      allow get, list: if false;
+      allow create, update: if request.resource.data.keys().hasOnly(['tk', 'at']) && request.resource.data.get('at', null) == request.time
+        && request.resource.data.get('tk', '') is string && request.resource.data.get('tk', '').size() == 32
+        && existsAfter(/databases/$(database)/documents/ckReq/$(rid))
+        && ckReqByCard(request.resource.data.tk, getAfter(/databases/$(database)/documents/ckReq/$(rid)).data);
+      allow delete: if signedIn() && !existsAfter(/databases/$(database)/documents/ckReq/$(rid));
+    }
+    match /cards/{token}/dreq/{rid} {
+      allow get, list: if true;
+      allow create: if request.resource.data.keys().hasOnly(['at'])
+        && existsAfter(/databases/$(database)/documents/ckReq/$(rid))
+        && exists(/databases/$(database)/documents/cards/$(token))
+        && getAfter(/databases/$(database)/documents/ckReq/$(rid)).data.get('refNo', '_') == get(/databases/$(database)/documents/cards/$(token)).data.get('no', '');
+      allow update, delete: if false;
+    }
+    // 💜 受付v146: DAYの参加申し込みの窓口（会員証から読む）= { union, eid, date, ev, staff: [名前], menus, open, by, at }。DAY HOST がスタッフを任命すると開く
+    match /ckDayPub/{id} {
+      allow get: if true;
+      allow list: if false;
+      allow create, update: if ckLoungeStaff(request.resource.data.get('union', ''))
+        && id == request.resource.data.get('eid', '') + '_' + request.resource.data.get('union', '')
+        && request.resource.data.keys().hasOnly(['union', 'eid', 'date', 'ev', 'staff', 'menus', 'open', 'by', 'at']);
+      allow delete: if ckLoungeStaff(resource.data.get('union', ''));
     }
     // 💜 受付v145: 体感のメニュー（ユニオンごと）= { menus: [文字], by, at }。無いユニオンは組み込み（ルミスパ・ウェルスパ・カウンセリング）
     match /ckBtCfg/{un} {

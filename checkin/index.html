@@ -1075,6 +1075,22 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 #btLgSeg button{padding:7px 14px;}
 #btQeSeg button{padding:7px 14px;}
 /* 💜 v145: DAYの体感 */
+.rq-req{color:#c62828;font-weight:700;font-size:11px;}
+.rq-sec{margin:16px 0 0;padding-top:8px;border-top:1px solid var(--line);font-size:12.5px;font-weight:800;color:var(--sub);}
+.rq-info{display:grid;gap:0;margin:6px 0 4px;}
+.rq-ir{display:grid;grid-template-columns:7.5em minmax(0,1fr);gap:8px;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px;text-align:left;}
+.rq-ir span{color:var(--sub);}
+.rq-ir b{font-weight:600;overflow-wrap:anywhere;white-space:pre-wrap;}
+.rq-day{margin-top:12px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;text-align:left;}
+.rq-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line);}
+.rq-row > div{flex:1;min-width:0;display:grid;gap:2px;}
+.rq-row small{font-size:12px;color:var(--sub);}
+.rq-row button{flex:none;padding:5px 10px;}
+.rq-st{flex:none;font-size:11.5px;font-weight:800;padding:2px 8px;border-radius:99px;background:var(--paper);border:1px solid var(--line);}
+.rq-st.st-ok,.rq-st.st-in{color:#1f8a43;border-color:#1f8a43;}
+.rq-st.st-ng{color:#c62828;border-color:#c62828;}
+.rq-ng{color:#c62828 !important;font-size:12.5px;}
+.dy-pre summary{cursor:pointer;font-size:12.5px;font-weight:700;color:#7c5cff;margin-top:4px;}
 .dy-top{display:flex;gap:8px;align-items:center;margin-bottom:10px;}
 .dy-top select{flex:1;min-width:0;}
 .dy-staff{display:grid;gap:6px;font-size:13px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;margin-bottom:10px;}
@@ -1829,6 +1845,7 @@ body.practice .topbar{top:var(--pxh,36px);}
     <div id="rsvpArea"></div>
     <div id="nextArea"></div>
     <div id="uiArea"></div><!-- 💜 ビジネスメンバーの「ユーザーを招待」（準備中は指定した会員番号だけ） -->
+    <div id="rqArea"></div><!-- 💜 v146: DAYの参加申し込み（紹介者） -->
     <div id="rcptArea"></div>
     <div id="olArea"></div>
     <button class="mc-help" id="mcHelp" aria-label="ご利用ガイド">?</button>
@@ -2656,10 +2673,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v145';
+var APP_VER = 'v146';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v146', d: '2026/11/13', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v145', d: '2026/11/13', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v144', d: '2026/11/13', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v143', d: '2026/11/13', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
@@ -5053,6 +5071,7 @@ function showCardView(token){
       renderGoalHw(c);
       renderOlArea(c);
       renderUserInvite(c, token);
+      renderDayReq(c, token);   // 💜 v146
       try{ localStorage.setItem('bci_me', token); }catch(e){}   // 🎓 OLチェックアウト（カメラで読んだ時）に使う「このスマホの会員証」
       if(c.active === false){
         // ⛔ 無効メンバー: 先のハウディの予定・受付系をすべて非表示。
@@ -6498,7 +6517,8 @@ function ckMig33(list){
 
 /* ---------- 起動 ---------- */
 function afterLogin(){
-  ckBeautyLoad().then(function(){ if(gMembersLoaded) renderRoster(); ckBtApply(); });   // 💜 ユーザー機能の確認メンバー
+  ckBeautyLoad().then(function(){ if(gMembersLoaded) renderRoster(); ckBtApply(); });
+  ckRecvLoad();   // 💜 v146: 予約受付担当に任命されている DAY   // 💜 ユーザー機能の確認メンバー
   db.collection('checkinUnions').get().then(function(qs){
     gUnions = [];
     gCkAdmins = {};
@@ -7996,7 +8016,7 @@ Array.prototype.forEach.call(tabs, function(b){
       if(!(gFinLoaded.k === fk && Date.now() - gFinLoaded.at < 120000)) loadFinanceTab();
     }
     if(b.getAttribute('data-pane') === 'pStats' && (gStatDirty || !gStat)) loadStatsNow();
-    if(b.getAttribute('data-pane') === 'pBeauty'){ if(!gBt || Date.now() - gBt.at > 60000) btLoad(); else btDraw(); }
+    if(b.getAttribute('data-pane') === 'pBeauty'){ if(gBt && gBt.recvOnly) btDraw(); else if(!gBt || Date.now() - gBt.at > 60000) btLoad(); else btDraw(); }
   };
 });
 
@@ -15348,11 +15368,20 @@ function ckBtUnions(){
 }
 function ckBtApply(){
   var us = ckBtUnions(), t = document.querySelector('nav button[data-pane="pBeauty"]');
-  if(t) t.classList.toggle('hide', !us.length);
+  if(t) t.classList.toggle('hide', !us.length && !gRecvDays.length);
+  ['btUnionSel', 'btReload'].forEach(function(id){ var e = $(id); if(e) e.classList.toggle('hide', !us.length); });
+  var lb = document.querySelector('label[for="btUnionSel"]'); if(lb) lb.classList.toggle('hide', !us.length);
+  if(!us.length && gRecvDays.length){   // 💜 v146: 予約受付担当だけの人（ログインして、任命された DAY の申し込みを確かめる）
+    $('btnDayStaff').classList.add('hide');
+    if(!gBt || !gBt.recvOnly){ gBt = { un: gRecvDays[0].union, recvOnly: true, at: Date.now() }; }
+    if($('pBeauty') && $('pBeauty').classList.contains('on')) btDraw();
+    return;
+  }
   if(!us.length){
     if($('pBeauty') && $('pBeauty').classList.contains('on')){ var k = document.querySelector('nav button[data-pane="pKiosk"]'); if(k) k.click(); }
     return;
   }
+  if(gBt && gBt.recvOnly) gBt = null;
   if(us.indexOf(gBtUnion) < 0){ gBtUnion = us.indexOf(gUnion) >= 0 ? gUnion : us[0]; gBt = null; gBtSeg = 'wait'; }
   fillUnionSel($('btUnionSel'), gBtUnion, us);
   $('btnDayStaff').classList.toggle('hide', !isCoreAdmin(gBtUnion));
@@ -15423,6 +15452,7 @@ function btDraw(){
   btDot();
   var me = gBt, box = $('btBody');
   if(!box) return;
+  if(me && me.recvOnly){ box.innerHTML = '<div class="bt-wrap"><div class="bt-box" id="btRq"></div></div>'; btRqDraw(); return; }   // 💜 v146: 予約受付担当は申し込みだけ
   if(!me || me.items === null){
     box.innerHTML = me && me.err ? '<p class="bt-note">' + esc(me.err) + '</p>' : '<p style="color:var(--sub)">読み込み中…</p>';
     return;
@@ -15437,6 +15467,7 @@ function btDraw(){
     +   '<button type="button" data-go="btNt"><b>' + me.items.length + '件</b>出ているお知らせ（5件まで）</button>'
     + '</div>' + (nW ? '' : '<p class="bt-note">確認待ちの投稿はありません。</p>') + '</div>'
     + '<div class="bt-box" id="btDay"></div>'
+    + '<div class="bt-box" id="btRq"></div>'
     + '<div class="bt-box" id="btNt"><h3>📣 ユーザーへのお知らせ' + hq('このユニオンのユーザーのアプリの「お知らせ」に出ます。新しい5件まで出ます。アプリには30分ほどで届きます。効果をうたう言葉（治る・やせる など）は書かないでください。') + '</h3>'
     +   '<label for="btNtText">新しいお知らせ（100文字まで）</label>'
     +   '<textarea id="btNtText" rows="3" maxlength="100" placeholder="例: 12月のDAYは、14時からの開始です。"></textarea>'
@@ -15462,6 +15493,7 @@ function btDraw(){
     + '</div>';
   $('btNtText').value = keep;
   btDyDraw();   // 💜 v145
+  btRqDraw();   // 💜 v146
   btPzDraw();   // 💜 v144
   btQeDraw();   // 💜 v140
   Array.prototype.forEach.call(box.querySelectorAll('[data-go]'), function(b){
@@ -15706,13 +15738,15 @@ function btDyOpen(eid){
     dy.ps = ps; dy.loadingP = false;
     btDyDraw();
     btDyMirrorAll();   // 担当の会員証から「済み」にした分などを、参加者のアプリへ
+    btRqLoad(eid, un);   // 💜 v146: この DAY の申し込み（読んだあと、担当の会員証へ事前情報）
+    if(dy.day && (dy.day.staff || []).length) btDyPub();
   }).catch(function(e){ if(gBt === me){ dy.loadingP = false; dy.err2 = permMsg(e, '読めませんでした'); btDyDraw(); } });
 }
 function btDyEnsure(){
   var me = gBt, dy = me.dy, un = me.un;
   if(dy.day) return Promise.resolve(dy.day);
   var key = randToken().slice(0, 20), ev = dy.ev, now = Date.now();
-  var day = { union: un, date: ev.date || '', ev: ev.name || '', key: key, staff: [], recv: [], by: gUser.uid, at: now };
+  var day = { union: un, date: ev.date || '', ev: ev.name || '', key: key, staff: [], recv: [], recvNos: [], by: gUser.uid, at: now };
   var b = db.batch();
   b.set(db.collection('checkinEvents').doc(ev.id).collection('btDay').doc(un), day);
   b.set(db.collection('ckBoard').doc(key), { eid: ev.id, union: un, date: ev.date || '', ev: ev.name || '', staff: [], by: gUser.uid, at: now });
@@ -15825,6 +15859,7 @@ function btDyUpd(p, up, msg){
 function btDyMirrorAll(){
   var me = gBt, dy = me.dy;
   if(!dy || !dy.day || !dy.ps) return;
+  btDyPreMirror();   // 💜 v146: 担当の会員証へ事前情報
   var need = dy.ps.filter(function(p){ return p.ckNo || p.memNo; });
   if(!need.length) return;
   Promise.all([btDyUsers(), need.some(function(p){ return p.memNo; }) ? btDyRoster().catch(function(){ return []; }) : Promise.resolve([])]).then(function(r){
@@ -15929,12 +15964,13 @@ function btDyStaffModal(){
       $('dySgo').disabled = true;
       btDyEnsure().then(function(day){
         var b = db.batch(), now = Date.now(), ev = dy.ev;
-        b.update(db.collection('checkinEvents').doc(ev.id).collection('btDay').doc(me.un), { staff: staff, recv: recv, by: gUser.uid, at: now });
+        b.update(db.collection('checkinEvents').doc(ev.id).collection('btDay').doc(me.un), { staff: staff, recv: recv, recvNos: recv.map(function(s){ return s.no; }), by: gUser.uid, at: now });
         b.update(db.collection('ckBoard').doc(day.key), { staff: staff, by: gUser.uid, at: now });
         return b.commit().then(function(){
           var was = {}; day.staff.concat(day.recv).forEach(function(s){ was[s.no] = 1; });
           var role = {}; staff.forEach(function(s){ role[s.no] = 'staff'; }); recv.forEach(function(s){ role[s.no] = role[s.no] ? 'both' : 'recv'; });
-          day.staff = staff; day.recv = recv;
+          day.staff = staff; day.recv = recv; day.recvNos = recv.map(function(s){ return s.no; });
+          btDyPub();   // 💜 v146: 申し込みの窓口を開く（DAYスタッフの名前・メニュー）
           // 会員証に印（任命から外れた人は消す）
           L.forEach(function(m){
             if(!m.cardToken || (!role[m.no] && !was[m.no])) return;
@@ -15964,7 +16000,7 @@ function btDyMenuModal(){
   $('dyMs').onclick = function(){
     var a = L.map(function(x){ return String(x || '').trim(); }).filter(function(x, i, arr){ return x && arr.indexOf(x) === i; });
     if(!a.length){ toast('メニューを1つ以上入れてください'); return; }
-    db.collection('ckBtCfg').doc(me.un).set({ menus: a, by: gUser.uid, at: FV.serverTimestamp() }).then(function(){ dy.menus = a; closeModal(); btDyDraw(); toast('メニューを保存しました'); })
+    db.collection('ckBtCfg').doc(me.un).set({ menus: a, by: gUser.uid, at: FV.serverTimestamp() }).then(function(){ dy.menus = a; closeModal(); btDyDraw(); btDyPub(); toast('メニューを保存しました'); })
       .catch(function(e){ toast(permMsg(e, '保存できませんでした')); });
   };
 }
@@ -15993,13 +16029,14 @@ function renderDayBoard(c, token){
   }).catch(function(){ el.innerHTML = expHtml + '<div class="nextwrap"><div class="next-head">DAYの体感</div><p class="bt-note">読めませんでした。電波の良いところで開き直してください。</p></div>'; });
 }
 function dyCardDraw(el, expHtml, b0, bd, ps, c, token){
-  var pos = btPosMap(ps), staff = bd.staff || [], isStaff = b0.role === 'staff' || b0.role === 'both';
+  var pos = btPosMap(ps), staff = bd.staff || [], isStaff = b0.role === 'staff' || b0.role === 'both', pre = c['btp_' + b0.eid] || {};
   var mine = ps.filter(function(p){ return p.staffNo === c.no && btHas(p.kind); }).sort(function(a, b){ return pos[a.id] - pos[b.id]; });
   var wd = '日月火水木金土'.charAt(new Date(b0.d + 'T00:00:00').getDay());
   var row = function(p, me){
     return '<div class="dy-crow' + (p.st === 'done' ? ' done' : p.st === 'absent' ? ' absent' : '') + '"><span class="dy-n">' + (pos[p.id] || '・') + '</span>'
       + '<div class="dy-nm"><b>' + esc(p.name || '') + '</b><small>' + esc(btKindN(p.kind)) + (p.menu ? ' ・ 💆 ' + esc(p.menu) : '') + (p.ref ? ' ・ 紹介 ' + esc(p.ref) : '') + (p.mist ? ' ・ 🧴' : '') + '</small>'
-      + (me && p.memo ? '<small>📝 ' + esc(p.memo) + '</small>' : '') + '</div>'
+      + (me && p.memo ? '<small>📝 ' + esc(p.memo) + '</small>' : '')
+      + (me && pre[p.id] ? '<details class="dy-pre"><summary>事前情報</summary>' + rqInfoHtml(Object.assign({ kind: p.kind }, pre[p.id]), true) + '</details>' : '') + '</div>'
       + (me ? (p.st === 'done' ? '<button type="button" class="ghost" data-dcrs="' + esc(p.id) + '">戻す</button>' : p.st === 'absent' ? '<span class="dy-st ng">来なかった</span>' : '<button type="button" class="primary" data-dcok="' + esc(p.id) + '">済み</button>')
         : (p.st === 'done' ? '<span class="dy-st ok">済み</span>' : p.st === 'absent' ? '<span class="dy-st ng">来なかった</span>' : '')) + '</div>';
   };
@@ -16015,7 +16052,7 @@ function dyCardDraw(el, expHtml, b0, bd, ps, c, token){
   if(un0.length) h += '<div class="dy-cg"><div class="dy-gh">未割り振り（' + un0.length + '）</div>' + un0.map(function(p){ return row(p, false); }).join('') + '</div>';
   var no = ps.filter(function(p){ return !btHas(p.kind); });
   if(no.length) h += '<div class="dy-cg"><div class="dy-gh">体感なし（' + no.length + '）</div>' + no.map(function(p){ return row(p, false); }).join('') + '</div>';
-  h += '<p class="bt-note">担当と順番は DAY HOST が決めます。変わった時は開き直すと出ます。</p></div>';
+  h += '<p class="bt-note">担当と順番は DAY HOST が決めます。変わった時は開き直すと出ます。' + (b0.role === 'recv' || b0.role === 'both' ? '申し込みの確認は、受付の画面（BASE CHECK-IN）にログインして「💜 Beauty」タブで行います。' : '') + '</p></div>';
   el.innerHTML = expHtml + h;
   var setSt = function(pid, st, btn){
     btn.disabled = true;
@@ -16081,6 +16118,288 @@ function ckDayHint(o){
       }).catch(function(e){ toast(permMsg(e, 'つなげませんでした')); });
     };
   });
+}
+/* 💜 v146: DAYの参加申し込み（イベント用の C-DATA）。紹介者が会員証から送る → 予約受付担当（受付の画面にログイン）・DAY HOST が確かめる → DAY HOST が参加者に入れる
+   ・ckReq/{キー}（申し込み）・ckReqProof/{キー}（紹介者の会員証のトークン・だれも読めない）・cards/{トークン}/dreq/{キー}（紹介者が自分の分を探す印）
+   ・ckDayPub/{イベント}_{ユニオン}（窓口：DAYスタッフの名前・体感メニュー。DAY HOST がスタッフを任命すると開く）
+   ・担当の DAYスタッフの会員証に btp_{イベント} = { 参加者: 事前情報 }（その人の担当の分だけ） */
+var RQ_STATUS = ['ユーザー', 'NA（NS説明前）', 'NA（NS説明済）', '研修生', 'フレッシュBA'];
+var RQ_STN = { 'new': '受付中', ok: '確認済み', ng: '差し戻し', cancel: '取り消し' };
+function rqSel(id, opts, v, blank){ return '<select id="' + id + '">' + (blank ? '<option value="">' + esc(blank) + '</option>' : '') + opts.map(function(o){ return '<option' + (o === v ? ' selected' : '') + '>' + esc(o) + '</option>'; }).join('') + '</select>'; }
+function rqFormHtml(d, pub){
+  d = d || {}; pub = pub || {};
+  var staff = pub.staff || [], menus = pub.menus || BT_MENUS0;
+  var tx = function(id, lb, v, ph, max, req){ return '<label for="' + id + '">' + lb + (req ? ' <small class="rq-req">必須</small>' : '') + '</label><input type="text" id="' + id + '" maxlength="' + (max || 40) + '" value="' + esc(v || '') + '"' + (ph ? ' placeholder="' + esc(ph) + '"' : '') + ' autocomplete="off">'; };
+  var ta = function(id, lb, v, ph, req){ return '<label for="' + id + '">' + lb + (req ? ' <small class="rq-req">必須</small>' : '') + '</label><textarea id="' + id + '" rows="2" maxlength="300"' + (ph ? ' placeholder="' + esc(ph) + '"' : '') + '>' + esc(v || '') + '</textarea>'; };
+  return '<label for="rqKind">参加区分</label><select id="rqKind">' + BT_KINDS.map(function(k){ return '<option value="' + k[0] + '"' + (k[0] === (d.kind || 'na1') ? ' selected' : '') + '>' + esc(k[1]) + '</option>'; }).join('') + '</select>'
+    + '<div class="rq-sec">参加する人</div>'
+    + tx('rqName', '名前', d.name, '例: 見本 はなこ', 40, true)
+    + '<div class="dy-2"><div>' + tx('rqAge', '年齢', d.age, '例: 30代', 10) + '</div><div><label for="rqSex">性別</label>' + rqSel('rqSex', ['女性', '男性'], d.sex, '選ぶ') + '</div></div>'
+    + '<div class="dy-2"><div><label for="rqTimes">参加回数</label>' + rqSel('rqTimes', ['初回', '2回目以降'], d.times || '初回') + '</div><div><label for="rqSt">ステータス</label>' + rqSel('rqSt', RQ_STATUS, d.status, '選ぶ') + '</div></div>'
+    + '<div id="rqItemsBox">' + tx('rqItems', '使用中アイテム（ユーザーのみ）', d.items, '', 100) + '</div>'
+    + tx('rqJob', '職業', d.job, '', 40) + tx('rqRel', 'あなたとの関係性', d.rel, '例: 職場の友人', 60)
+    + ta('rqWhy', '参加に至った経緯', d.why, '')
+    + '<div class="rq-sec">付き添い</div>'
+    + tx('rqUp', 'UP RUBY の名前', d.upRuby, '', 40) + tx('rqBa', '付き添いBA（初めての人は必須）', d.attendBa, '', 40)
+    + '<div id="rqExpBox"><div class="rq-sec">体感（体感する人だけ）</div>'
+    + '<label>体感メニュー <small class="rq-req">必須</small></label><div class="ulg-chips" id="rqMenu">' + menus.map(function(m){ return '<button type="button" data-m="' + esc(m) + '"' + (m === d.menu ? ' class="on"' : '') + '>' + esc(m) + '</button>'; }).join('') + '</div>'
+    + '<div class="dy-2"><div><label for="rqW1">担当の第1希望</label>' + rqSel('rqW1', staff, d.w1, '指定なし') + '</div><div><label for="rqW2">第2希望</label>' + rqSel('rqW2', staff, d.w2, '指定なし') + '</div></div>'
+    + '<label for="rqMist">モイスチャーミストシート（＋50円/人）</label>' + rqSel('rqMist', ['購入しない', '購入する'], d.mist ? '購入する' : '購入しない') + '</div>'
+    + '<div class="rq-sec">希望・伝えたいこと</div>'
+    + ta('rqGoal', 'ゴール', d.goal, '', true)
+    + ta('rqTalk', 'スタッフ・スピーカーに話してほしいこと', d.talk, '')
+    + tx('rqNext', '次に繋げたい場所', d.next, '例: 個別体感、マケ', 60);
+}
+function rqFormBind(){
+  var sync = function(){
+    $('rqExpBox').classList.toggle('hide', !btHas($('rqKind').value));
+    $('rqItemsBox').classList.toggle('hide', $('rqSt').value !== 'ユーザー');
+  };
+  $('rqKind').onchange = sync; $('rqSt').onchange = sync; sync();
+  $('rqMenu').onclick = function(e){ var b = e.target.closest ? e.target.closest('button[data-m]') : null; if(!b) return; var on = !b.classList.contains('on'); Array.prototype.forEach.call(document.querySelectorAll('#rqMenu button'), function(x){ x.classList.remove('on'); }); if(on) b.classList.add('on'); };
+}
+function rqFormRead(){
+  var v = function(id){ return String($(id).value || '').replace(/[ \t]+/g, ' ').trim(); };
+  var k = $('rqKind').value, mb = document.querySelector('#rqMenu button.on'), exp = btHas(k);
+  var d = { kind: k, name: v('rqName'), age: v('rqAge'), sex: $('rqSex').value, times: $('rqTimes').value, status: $('rqSt').value,
+    items: $('rqSt').value === 'ユーザー' ? v('rqItems') : '', job: v('rqJob'), rel: v('rqRel'), why: v('rqWhy'), upRuby: v('rqUp'), attendBa: v('rqBa'),
+    menu: exp && mb ? mb.getAttribute('data-m') : '', w1: exp ? $('rqW1').value : '', w2: exp ? $('rqW2').value : '', mist: exp && $('rqMist').value === '購入する',
+    goal: v('rqGoal'), talk: v('rqTalk'), next: v('rqNext') };
+  if(!d.name) return { err: '参加する人の名前を入れてください' };
+  if(d.times === '初回' && !d.attendBa) return { err: '初めての人は、付き添いBAを入れてください' };
+  if(exp && !d.menu) return { err: '体感メニューを選んでください' };
+  if(!d.goal) return { err: 'ゴールを入れてください' };
+  return d;
+}
+var RQ_KEYS = ['kind', 'name', 'age', 'sex', 'times', 'status', 'items', 'job', 'rel', 'why', 'upRuby', 'attendBa', 'menu', 'w1', 'w2', 'mist', 'goal', 'talk', 'next'];
+function rqPick(r){ var d = {}; RQ_KEYS.forEach(function(k){ d[k] = k === 'mist' ? !!r[k] : (r[k] == null ? '' : r[k]); }); return d; }
+function rqInfoHtml(r, noExp){   // noExp: 体感の行（メニュー・希望・ミスト）を出さない（担当の会員証は上の行に出ている）
+  var row = function(k, v){ return v ? '<div class="rq-ir"><span>' + esc(k) + '</span><b>' + esc(v) + '</b></div>' : ''; };
+  return '<div class="rq-info">' + row('参加区分', btKindN(r.kind)) + row('年齢・性別', [r.age, r.sex].filter(Boolean).join('・')) + row('参加回数', r.times) + row('ステータス', r.status)
+    + row('使用中アイテム', r.items) + row('職業', r.job) + row('関係性', r.rel) + row('経緯', r.why) + row('UP RUBY', r.upRuby) + row('付き添いBA', r.attendBa)
+    + (btHas(r.kind) && !noExp ? row('体感', r.menu) + row('担当の希望', [r.w1, r.w2].filter(Boolean).join(' → ') || '指定なし') + row('ミストシート', r.mist ? '購入する' : '購入しない') : '')
+    + row('ゴール', r.goal) + row('話してほしいこと', r.talk) + row('次に繋げたい場所', r.next) + '</div>';
+}
+// ── 紹介者の会員証 ──
+function renderDayReq(c, token){
+  var el = $('rqArea');
+  if(!el) return;
+  el.innerHTML = '';
+  if(!c || c.kind === 'user' || c.trainee || c.active === false || c.rcptOnly || !c.no) return;
+  ckBeautyCardNos(function(nos){
+    if(nos.map(function(x){ return String(x).toUpperCase(); }).indexOf(String(c.no).toUpperCase()) < 0) return;
+    var t = todayStr();
+    Promise.all([
+      ckUpcomingQuery(c).then(function(qs){
+        var evs = []; qs.forEach(function(d){ var e = d.data(); e.id = d.id; if(e.uDay === true && (e.unions || []).indexOf(c.union) >= 0 && (e.date || '') >= t) evs.push(e); });
+        return Promise.all(evs.map(function(e){ return db.collection('ckDayPub').doc(e.id + '_' + c.union).get().then(function(s){ return s.exists && s.data().open !== false ? { ev: e, pub: s.data() } : null; }, function(){ return null; }); }));
+      }).catch(function(){ return []; }),
+      db.collection('cards').doc(token).collection('dreq').get().then(function(qs){
+        var ids = []; qs.forEach(function(d){ ids.push(d.id); });
+        return Promise.all(ids.map(function(id){ return db.collection('ckReq').doc(id).get().then(function(s){ if(!s.exists) return null; var r = s.data(); r.id = id; return r; }, function(){ return null; }); }));
+      }).catch(function(){ return []; })
+    ]).then(function(r){
+      var days = r[0].filter(Boolean), reqs = r[1].filter(Boolean);
+      if(!days.length && !reqs.filter(function(x){ return (x.date || '') >= t; }).length) return;
+      rqCardDraw(el, c, token, days, reqs);
+    });
+  });
+}
+function rqCardDraw(el, c, token, days, reqs){
+  var t = todayStr();
+  var stPill = function(r){ return '<span class="rq-st st-' + (r.pid ? 'in' : r.st) + '">' + (r.pid ? '参加者に入りました' : RQ_STN[r.st] || '') + '</span>'; };
+  var h = '<div class="nextwrap rq-card"><div class="next-head">DAYの参加申し込み</div>'
+    + '<p class="bt-note" style="margin:0 0 6px;">紹介する人の参加と体感を、DAY の前に申し込みます。予約受付担当が確かめて、DAY HOST が担当を決めます。</p>';
+  days.forEach(function(x){
+    var mine = reqs.filter(function(r){ return r.eid === x.ev.id; });
+    h += '<div class="rq-day"><b>' + esc(ckMd(x.ev.date)) + ' ' + esc(x.ev.name || '') + '</b>'
+      + mine.map(function(r){ return '<div class="rq-row"><div><b>' + esc(r.name) + '</b><small>' + esc(btKindN(r.kind)) + (r.menu ? ' ・ 💆 ' + esc(r.menu) : '') + '</small>' + (r.st === 'ng' && r.note ? '<small class="rq-ng">差し戻し：' + esc(r.note) + '</small>' : '') + '</div>' + stPill(r)
+        + (r.st === 'new' || r.st === 'ng' ? '<button type="button" class="ghost" data-rqe="' + esc(r.id) + '">直す</button>' : '') + '</div>'; }).join('')
+      + '<button type="button" class="primary" data-rqn="' + esc(x.ev.id) + '" style="width:100%;margin-top:8px;">＋ 申し込む</button></div>';
+  });
+  var gone = reqs.filter(function(r){ return !days.some(function(x){ return x.ev.id === r.eid; }) && (r.date || '') >= t; });
+  if(gone.length) h += '<div class="rq-day"><b>受付が閉じた DAY</b>' + gone.map(function(r){ return '<div class="rq-row"><div><b>' + esc(r.name) + '</b><small>' + esc(ckMd(r.date)) + ' ' + esc(r.ev || '') + '</small></div>' + stPill(r) + '</div>'; }).join('') + '</div>';
+  el.innerHTML = h + '</div>';
+  Array.prototype.forEach.call(el.querySelectorAll('[data-rqn]'), function(b){ b.onclick = function(){ var x = days.filter(function(y){ return y.ev.id === b.getAttribute('data-rqn'); })[0]; rqCardModal(c, token, x, null, function(){ renderDayReq(c, token); }); }; });
+  Array.prototype.forEach.call(el.querySelectorAll('[data-rqe]'), function(b){ b.onclick = function(){ var r = reqs.filter(function(y){ return y.id === b.getAttribute('data-rqe'); })[0], x = days.filter(function(y){ return y.ev.id === r.eid; })[0]; if(x) rqCardModal(c, token, x, r, function(){ renderDayReq(c, token); }); }; });
+}
+function rqCardModal(c, token, x, r0, done){
+  modal('<h2>' + (r0 ? '✏️ 申し込みを直す' : '📝 DAYの参加申し込み') + '</h2><p class="bt-note" style="margin:-4px 0 6px;">' + esc(ckMd(x.ev.date)) + ' ' + esc(x.ev.name || '') + ' ・ 紹介者：' + esc(c.name || '') + '</p>'
+    + (r0 && r0.st === 'ng' && r0.note ? '<p class="rq-ng">差し戻し：' + esc(r0.note) + '</p>' : '')
+    + rqFormHtml(r0, x.pub)
+    + '<p class="bt-note">ゴール・状況などは、予約受付担当・DAY HOST・担当の DAYスタッフだけが見ます。DAY のあと30日で消します。</p>'
+    + '<div class="btns">' + (r0 ? '<button id="rqCx" class="danger ghost">取り消す</button>' : '') + '<button id="rqNo">閉じる</button><button class="primary" id="rqGo">' + (r0 ? '直して送る' : '送る') + '</button></div>', true);
+  rqFormBind();
+  $('rqNo').onclick = closeModal;
+  var send = function(d, st){
+    var rid = r0 ? r0.id : randToken().slice(0, 20), b = db.batch();
+    var base = { eid: x.ev.id, union: c.union, date: x.ev.date || '', ev: x.ev.name || '', refNo: String(c.no), refName: c.name || '' };
+    var doc = Object.assign({}, base, d, { st: st, upAt: Date.now() });
+    if(!r0){ doc.at = Date.now(); doc.note = ''; doc.pid = ''; }
+    else { doc.note = r0.note || ''; doc.pid = r0.pid || ''; doc.at = r0.at || Date.now(); ['chkBy', 'chkName', 'chkAt'].forEach(function(k){ if(r0[k] != null) doc[k] = r0[k]; }); }
+    b.set(db.collection('ckReq').doc(rid), doc);
+    b.set(db.collection('ckReqProof').doc(rid), { tk: token, at: FV.serverTimestamp() });
+    if(!r0) b.set(db.collection('cards').doc(token).collection('dreq').doc(rid), { at: FV.serverTimestamp() });
+    return b.commit();
+  };
+  if($('rqCx')) $('rqCx').onclick = function(){
+    if(!window.confirm(r0.name + ' さんの申し込みを取り消しますか？')) return;
+    send(rqPick(r0), 'cancel').then(function(){ closeModal(); toast('取り消しました'); done(); })
+      .catch(function(){ toast('取り消せませんでした。確認済みの申し込みは予約受付担当に連絡してください'); });
+  };
+  $('rqGo').onclick = function(){
+    var d = rqFormRead();
+    if(d.err){ toast(d.err); return; }
+    $('rqGo').disabled = true;
+    send(d, 'new').then(function(){ closeModal(); toast(r0 ? '直して送りました' : '申し込みました。予約受付担当が確かめます'); done(); })
+      .catch(function(){ $('rqGo').disabled = false; toast('送れませんでした。電波の良いところでもう一度お試しください（確認済みの申し込みは直せません）'); });
+  };
+}
+// ── 受付の画面：予約受付担当・DAY HOST が申し込みを確かめる ──
+var gRecvDays = [];   // この人が予約受付担当に任命されている DAY（今日から）
+function ckRecvLoad(){
+  gRecvDays = [];
+  var no = gProf && gProf.ckNo;
+  if(!no) return Promise.resolve();
+  return db.collection('checkinMembers').doc(String(no)).get().then(function(s){
+    var tok = s.exists && s.data().cardToken;
+    if(!tok) return;
+    return db.collection('cards').doc(tok).get().then(function(cs){
+      var c = cs.exists ? cs.data() : {}, t = todayStr();
+      gRecvDays = Object.keys(c).filter(function(k){ return k.indexOf('btd_') === 0 && c[k] && (c[k].role === 'recv' || c[k].role === 'both') && (c[k].d || '') >= t; })
+        .map(function(k){ return { eid: k.slice(4), union: c[k].union, d: c[k].d, ev: c[k].ev }; }).sort(function(a, b){ return a.d < b.d ? -1 : 1; });
+    });
+  }).catch(function(){ gRecvDays = []; }).then(function(){ ckBtApply(); });
+}
+function btRqLoad(eid, un){
+  var me = gBt;
+  me.rq = { eid: eid, un: un, loading: true }; btRqDraw();
+  db.collection('ckReq').where('eid', '==', eid).where('union', '==', un).get().then(function(qs){
+    if(gBt !== me || me.rq.eid !== eid) return;
+    var a = []; qs.forEach(function(d){ var r = d.data(); r.id = d.id; a.push(r); });
+    a.sort(function(x, y){ return (x.at || 0) - (y.at || 0); });
+    me.rq = { eid: eid, un: un, list: a };
+    btRqDraw();
+    if(me.dy && me.dy.eid === eid) { me.dy.reqs = a; btDyMirrorAll(); }
+  }).catch(function(e){ if(gBt === me){ me.rq = { eid: eid, un: un, err: permMsg(e, '申し込みを読めませんでした') }; btRqDraw(); } });
+}
+function btRqDraw(){
+  var box = $('btRq'), me = gBt;
+  if(!box || !me) return;
+  var host = !me.recvOnly, h = '<h3>📝 DAYの参加申し込み' + hq('紹介者が会員証から送った申し込みです。予約受付担当・DAY HOST が中身を確かめて「確認済み」にし、DAY HOST が「参加者に入れる」と、上の「💆 DAYの体感」に入ります。') + '</h3>';
+  var days = host ? ((me.dy && me.dy.evs) || []).map(function(e){ return { eid: e.id, union: me.un, d: e.date, ev: e.name }; }) : gRecvDays;
+  if(!days.length){ box.innerHTML = h + (host ? '<p class="bt-note">上の「💆 DAYの体感」で DAY を選ぶと出ます。</p>' : '<p class="bt-note">予約受付担当に任命されている DAY はありません。</p>'); return; }
+  var cur = me.rq && me.rq.eid ? me.rq.eid : (host && me.dy && me.dy.eid) || days[0].eid;
+  var day = days.filter(function(x){ return x.eid === cur; })[0] || days[0];
+  if(!me.rq || me.rq.eid !== day.eid){ btRqLoad(day.eid, day.union); return; }
+  h += (host ? '' : '<select id="btRqEv">' + days.map(function(x){ return '<option value="' + esc(x.eid) + '"' + (x.eid === day.eid ? ' selected' : '') + '>' + esc(ckMd(x.d)) + ' ' + esc(x.ev || '') + '</option>'; }).join('') + '</select>');
+  var R = me.rq;
+  if(R.loading){ box.innerHTML = h + '<p class="bt-note">読み込み中…</p>'; btRqBind(days); return; }
+  if(R.err){ box.innerHTML = h + '<p class="bt-note">' + esc(R.err) + '</p>'; btRqBind(days); return; }
+  var L = R.list, grp = [['new', '受付中（確かめてください）'], ['ng', '差し戻し中'], ['ok', '確認済み'], ['cancel', '取り消し']];
+  var cnt = function(st){ return L.filter(function(r){ return r.st === st && !(st === 'ok' && r.pid); }).length; };
+  h += '<div class="dy-sum">申し込み <b>' + L.filter(function(r){ return r.st !== 'cancel'; }).length + '</b> 件（受付中 ' + cnt('new') + '・確認済み ' + L.filter(function(r){ return r.st === 'ok'; }).length + '）</div>';
+  if(host && cnt('ok')) h += '<button type="button" class="primary" id="btRqAll">確認済みの ' + cnt('ok') + ' 件を参加者に入れる</button>';
+  grp.forEach(function(g){
+    var A = L.filter(function(r){ return r.st === g[0]; });
+    if(!A.length) return;
+    h += '<div class="dy-g' + (g[0] === 'new' ? ' hot' : '') + '"><div class="dy-gh">' + g[1] + '（' + A.length + '）</div>' + A.map(function(r){
+      return '<div class="dy-row"><div class="dy-l"><div class="dy-nm"><b>' + esc(r.name) + '</b>' + (r.pid ? '<span class="dy-st ok">参加者に入った</span>' : '')
+        + '<small>' + esc(btKindN(r.kind)) + ' ・ 紹介 ' + esc(r.refName || '') + '</small>'
+        + (btHas(r.kind) ? '<small>💆 ' + esc(r.menu || '未定') + ([r.w1, r.w2].filter(Boolean).length ? ' ・ 希望 ' + esc([r.w1, r.w2].filter(Boolean).join(' → ')) : '') + (r.mist ? ' ・ 🧴' : '') + '</small>' : '')
+        + (r.note ? '<small>📝 ' + esc(r.note) + '</small>' : '') + (r.chkName ? '<small>確かめた人：' + esc(r.chkName) + '</small>' : '') + '</div></div>'
+        + '<div class="dy-a"><button type="button" data-rqo="' + esc(r.id) + '">詳しく</button></div></div>';
+    }).join('') + '</div>';
+  });
+  if(!L.length) h += '<p class="bt-note">まだ申し込みがありません。紹介者の会員証の「DAYの参加申し込み」から届きます。</p>';
+  box.innerHTML = h;
+  btRqBind(days);
+}
+function btRqBind(days){
+  var me = gBt, box = $('btRq');
+  if($('btRqEv')) $('btRqEv').onchange = function(){ var x = days.filter(function(y){ return y.eid === $('btRqEv').value; })[0]; btRqLoad(x.eid, x.union); };
+  if($('btRqAll')) $('btRqAll').onclick = function(){
+    var A = me.rq.list.filter(function(r){ return r.st === 'ok' && !r.pid; });
+    $('btRqAll').disabled = true;
+    A.reduce(function(p, r){ return p.then(function(){ return btRqPlace(r); }); }, Promise.resolve())
+      .then(function(){ btRqDraw(); btDyDraw(); toast(A.length + ' 件を参加者に入れました'); })
+      .catch(function(e){ btRqDraw(); toast(permMsg(e, '入れられませんでした')); });
+  };
+  Array.prototype.forEach.call(box.querySelectorAll('[data-rqo]'), function(b){ b.onclick = function(){ btRqModal(me.rq.list.filter(function(r){ return r.id === b.getAttribute('data-rqo'); })[0]); }; });
+}
+function btRqSet(r, up, msg){
+  up.chkBy = gUser.uid; up.chkName = (gProf && gProf.name) || ''; up.chkAt = Date.now(); up.upAt = Date.now();
+  return db.collection('ckReq').doc(r.id).update(up).then(function(){ Object.keys(up).forEach(function(k){ r[k] = up[k]; }); closeModal(); btRqDraw(); if(msg) toast(msg); })
+    .catch(function(e){ toast(permMsg(e, '保存できませんでした')); });
+}
+function btRqModal(r){
+  var host = !gBt.recvOnly;
+  modal('<h2>📝 ' + esc(r.name) + ' さん</h2><p class="bt-note" style="margin:-4px 0 6px;">紹介：' + esc(r.refName || '') + '（' + esc(r.refNo || '') + '）・' + esc(RQ_STN[r.st] || '') + (r.pid ? '・参加者に入った' : '') + '</p>'
+    + rqInfoHtml(r)
+    + (r.st !== 'cancel' ? '<label for="rqNote">メモ（差し戻す時は理由を書いてください）</label><input type="text" id="rqNote" maxlength="100" value="' + esc(r.note || '') + '">' : '')
+    + '<div class="btns" style="flex-wrap:wrap;"><button id="rqX">閉じる</button>'
+    + (r.st !== 'cancel' && !r.pid ? '<button id="rqEd" class="ghost">直す</button><button id="rqNg" class="ghost">差し戻す</button>' : '')
+    + (r.st === 'new' || r.st === 'ng' ? '<button class="primary" id="rqOk">確認済みにする</button>' : '')
+    + (host && r.st === 'ok' && !r.pid ? '<button class="primary" id="rqIn">参加者に入れる</button>' : '') + '</div>', true);
+  $('rqX').onclick = closeModal;
+  var note = function(){ return $('rqNote') ? $('rqNote').value.trim() : ''; };
+  if($('rqOk')) $('rqOk').onclick = function(){ btRqSet(r, { st: 'ok', note: note() }, '確認済みにしました'); };
+  if($('rqNg')) $('rqNg').onclick = function(){ if(!note()){ toast('差し戻す理由をメモに書いてください'); return; } btRqSet(r, { st: 'ng', note: note() }, '差し戻しました。紹介者の会員証に理由が出ます'); };
+  if($('rqIn')) $('rqIn').onclick = function(){ $('rqIn').disabled = true; btRqPlace(r).then(function(){ closeModal(); btRqDraw(); btDyDraw(); toast('参加者に入れました。上の「💆 DAYの体感」で担当を割り振れます'); }).catch(function(e){ $('rqIn').disabled = false; toast(permMsg(e, '入れられませんでした')); }); };
+  if($('rqEd')) $('rqEd').onclick = function(){
+    var pub = { staff: ((gBt.dy && gBt.dy.day && gBt.dy.day.staff) || []).map(function(s){ return s.name; }), menus: (gBt.dy && gBt.dy.menus) || BT_MENUS0 };
+    modal('<h2>✏️ ' + esc(r.name) + ' さんの申し込みを直す</h2>' + rqFormHtml(r, pub) + '<div class="btns"><button id="rqEx">キャンセル</button><button class="primary" id="rqEs">保存</button></div>', true);
+    rqFormBind();
+    $('rqEx').onclick = closeModal;
+    $('rqEs').onclick = function(){ var d = rqFormRead(); if(d.err){ toast(d.err); return; } btRqSet(r, d, '直しました'); };
+  };
+}
+// 確認済みの申し込みを、DAYの体感の参加者に入れる
+function btRqPlace(r){
+  var me = gBt, dy = me.dy;
+  if(!dy || dy.eid !== r.eid) return Promise.reject(new Error('先に「💆 DAYの体感」でこの DAY を選んでください'));
+  return Promise.all([btDyRoster().catch(function(){ return []; }), btDyUsers(), btDyEnsure()]).then(function(x){
+    var roster = x[0], users = x[1], day = x[2], biz = r.kind === 'tr1' || r.kind === 'fb1', key = btNameKey(r.name);
+    var hit = biz ? roster.filter(function(m){ return btNameKey(m.name) === key; })[0] : users.filter(function(u){ return btNameKey(u.name) === key; })[0];
+    var d = { kind: r.kind, name: r.name, ref: r.refName || '', refNo: r.refNo || '', menu: btHas(r.kind) ? r.menu || '' : '', w1: r.w1 || '', w2: r.w2 || '', mist: !!r.mist, memo: '',
+      ckNo: !biz && hit ? hit.id : '', memNo: biz && hit ? hit.no : '', rid: r.id, staffNo: '', staffName: '', ord: 0, st: 'rsv', mj: '', by: gUser.uid, at: Date.now() };
+    var ref = db.collection('ckBoard').doc(day.key).collection('p').doc();
+    return ref.set(d).then(function(){
+      d.id = ref.id; dy.ps.push(d);
+      return db.collection('ckReq').doc(r.id).update({ pid: ref.id, upAt: Date.now() }).then(function(){ r.pid = ref.id; });
+    });
+  });
+}
+// 担当の DAYスタッフの会員証に、その人の担当の事前情報（btp_{イベント}）。変わった時だけ書く（btDay.pmj に控え）
+function btDyPreMirror(){
+  var me = gBt, dy = me.dy;
+  if(!dy || !dy.day || !dy.ps || !dy.reqs) return;
+  var byRid = {}; dy.reqs.forEach(function(r){ byRid[r.id] = r; });
+  btDyRoster().then(function(roster){
+    var tok = {}; roster.forEach(function(m){ if(m.cardToken) tok[m.no] = m.cardToken; });
+    var pmj = dy.day.pmj || {}, changed = false;
+    dy.day.staff.forEach(function(s){
+      var mine = {};
+      dy.ps.forEach(function(p){
+        if(p.staffNo !== s.no || !p.rid || !byRid[p.rid]) return;
+        var r = byRid[p.rid];
+        mine[p.id] = { age: r.age || '', sex: r.sex || '', times: r.times || '', status: r.status || '', items: r.items || '', job: r.job || '', rel: r.rel || '', why: r.why || '',
+          upRuby: r.upRuby || '', attendBa: r.attendBa || '', goal: r.goal || '', talk: r.talk || '', next: r.next || '' };
+      });
+      var j = JSON.stringify(mine);
+      if(pmj[s.no] === j || !tok[s.no]) return;
+      var up = {}; up['btp_' + dy.eid] = mine;
+      db.collection('cards').doc(tok[s.no]).update(up).catch(function(){});
+      pmj[s.no] = j; changed = true;
+    });
+    if(changed){ dy.day.pmj = pmj; db.collection('checkinEvents').doc(dy.eid).collection('btDay').doc(me.un).update({ pmj: pmj }).catch(function(){}); }
+  });
+}
+// 窓口（会員証の申し込み画面が読む）：DAYスタッフの名前・体感メニュー
+function btDyPub(){
+  var me = gBt, dy = me.dy;
+  if(!dy || !dy.day || !dy.ev) return;
+  db.collection('ckDayPub').doc(dy.eid + '_' + me.un).set({ union: me.un, eid: dy.eid, date: dy.ev.date || '', ev: dy.ev.name || '', staff: (dy.day.staff || []).map(function(s){ return s.name; }), menus: dy.menus || BT_MENUS0, open: true, by: gUser.uid, at: Date.now() }).catch(function(){});
 }
 function btNtSave(me, items, msg, clear){
   db.collection('ckNotice').doc(me.un).set({ items: items, by: gUser.uid, at: FV.serverTimestamp() }).then(function(){
