@@ -71,7 +71,7 @@ const pick = re => { const m = H.match(re); if (!m) throw new Error('not found '
       return JSON.stringify({k:k, a:a, stage:document.getElementById('stageBody').innerText, total:document.getElementById('total').textContent, sub:document.getElementById('totalSub').textContent, recent:document.getElementById('recent').innerText, ut:document.getElementById('unionTally').innerText, gt:document.getElementById('groupTally').innerText}); })()`));
     c('出席に入る（union は空・uUnion・紹介者・カードのトークン）', r1.k && r1.a.union === '' && r1.a.uUnion === 'ANTARES' && r1.a.referrer === 'ジェッ子 ちゃん' && r1.a.referrerNo === undefined && /^[0-9a-f]{32}$/.test(r1.a.cardToken), JSON.stringify(r1.a));
     c('料金はゲストと同じ（この練習イベントは¥1,000）', r1.a.fee === 1000 && r1.a.paid === true);
-    c('画面: 出席（ユーザー登録）・紹介者・QRを渡すボタン', /出席（ユーザー登録）/.test(r1.stage) && /紹介: ジェッ子 ちゃん/.test(r1.stage) && /新規受付のQRを渡す/.test(r1.stage), r1.stage);
+    c('画面: 出席（新規受付）・紹介者・QRを渡すボタン（v143: 「ユーザー」と出さない）', /出席（新規受付）/.test(r1.stage) && !/ユーザー/.test(r1.stage) && /紹介: ジェッ子 ちゃん/.test(r1.stage) && /新規受付のQRを渡す/.test(r1.stage), r1.stage);
     c('人数に入り「うちユーザー 1」・履歴は「ユーザー」', r1.total === '1' && /うちユーザー 1/.test(r1.sub) && /ユーザー/.test(r1.recent));
     c('ユニオン別は「ユーザー」・系列別には入らない', /ユーザー/.test(r1.ut) && !/ユーザー/.test(r1.gt), r1.ut + ' / ' + r1.gt);
     const dbs = JSON.parse(await ev(`(function(){ var d=window.__ck.db(), k=${JSON.stringify(r1.k)}, t=${JSON.stringify(r1.a.cardToken)}, o={};
@@ -87,17 +87,20 @@ const pick = re => { const m = H.match(re); if (!m) throw new Error('not found '
     // 同じ人のQRをもう一度 → 出席済み
     const qr = 'u:' + r1.k + ':' + r1.a.cardToken.slice(0, 6);
     await ev(`window.__ck.scan(${JSON.stringify(qr)}, 'scan')`); await wt(300);
-    c('同じイベントでもう一度読むと出席済み（記録は増えない）', /出席済み/.test(await ev(`document.getElementById('stageBody').innerText`)) && (await ev(`document.getElementById('total').textContent`)) === '1');
+    const dupT = await ev(`document.getElementById('stageBody').innerText`);
+    c('同じイベントでもう一度読むと出席済み（記録は増えない）', /出席済み/.test(dupT) && (await ev(`document.getElementById('total').textContent`)) === '1');
+    c('v143: 出席済みの画面にも「ユーザー」と出さない（NAVIGATOR Beauty）', /NAVIGATOR Beauty/.test(dupT) && !/ユーザー/.test(dupT), dupT);
     // 次のイベント（別の日）: 出席を消して、QRだけで受付
     await ev(`(function(){ var r=window.__ck.rec(); delete r.att[${JSON.stringify(r1.k)}]; })()`);
     await ev(`window.__ck.scan(${JSON.stringify(qr)}, 'scan')`); await wt(500);
     const r2 = JSON.parse(await ev(`(function(){ var r=window.__ck.rec(), a=r.att[${JSON.stringify(r1.k)}]||{}; return window.__ck.db().collection('checkinUsers').doc(${JSON.stringify(r1.k)}).get().then(function(s){ return JSON.stringify({a:a, u:s.data(), stage:document.getElementById('stageBody').innerText}); }); })()`));
     c('ユーザーQRで受付できる（来場2回目・回数が増える）', r2.a.kind === 'user' && r2.a.method === 'scan' && /来場 2回目/.test(r2.stage) && r2.u.visits === 2, r2.stage);
+    c('v143: 2回目からは「✓ 出席（NAVIGATOR Beauty）」で「ユーザー」と出さない', /出席（NAVIGATOR Beauty）/.test(r2.stage) && !/ユーザー/.test(r2.stage), r2.stage);
     await ev(`window.__ck.scan(${JSON.stringify('u:' + r1.k + ':ffffff')}, 'scan')`); await wt(400);
     c('署名がちがうQRは出席済み判定より先に弾かれない（同じ人なら出席済み）', /出席済み/.test(await ev(`document.getElementById('stageBody').innerText`)));
     await ev(`(function(){ var r=window.__ck.rec(); delete r.att[${JSON.stringify(r1.k)}]; })()`);
     await ev(`window.__ck.scan(${JSON.stringify('u:' + r1.k + ':ffffff')}, 'scan')`); await wt(400);
-    c('署名がちがう（古い・作り直す前の）QRは受付しない', /読めないユーザーQR/.test(await ev(`document.getElementById('stageBody').innerText`)));
+    c('署名がちがう（古い・作り直す前の）QRは受付しない', /読めないQR/.test(await ev(`document.getElementById('stageBody').innerText`)) && !/ユーザー/.test(await ev(`document.getElementById('stageBody').innerText`)));
     // 名簿 → ユーザー
     await ev(`document.querySelector('nav button[data-pane="pRoster"]').click()`); await wt(600);
     c('名簿: 管理者には「ビジネス｜ユーザー」が見える', !(await ev(`document.getElementById('rosterKind').classList.contains('hide')`)));
