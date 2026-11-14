@@ -1333,6 +1333,28 @@ body.uapp #toast{bottom:calc(96px + env(safe-area-inset-bottom, 0px));}
 .col-sum b{font-size:18px;color:inherit;}
 .col-grid{gap:14px;justify-content:flex-start;}
 .col-empty{text-align:center;color:var(--sub);font-size:13.5px;line-height:1.8;padding:40px 10px;}
+/* 🃏 v151: これから集めるカードの枠（影のカード）。カード入れのように3列。押すとぶるっと震えて集め方を出す */
+.col-grid.bind{display:grid;grid-template-columns:repeat(3,1fr);gap:12px 10px;justify-items:center;}
+.col-grid.bind .ol-mini small{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.col-ghost .col-gs{position:relative;display:flex;align-items:center;justify-content:center;border-radius:9px;overflow:hidden;
+  background:radial-gradient(120% 80% at 50% 38%,#3b3160,#1a1528 62%,#100d1a);box-shadow:inset 0 0 0 1.5px rgba(201,162,255,.28),inset 0 0 18px rgba(0,0,0,.6);}
+.col-ghost .col-gs::before{content:'';position:absolute;inset:7%;border-radius:6px;border:1px dashed rgba(220,200,255,.22);}
+.col-ghost .col-gs::after{content:'';position:absolute;inset:0;background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.13) 48%,transparent 60%) -160% 0/250% 100% no-repeat;
+  animation:colGlint 5.5s ease-in-out infinite;animation-delay:var(--d,0s);}
+.col-ghost .col-gs i{font-style:normal;font-family:Verdana,sans-serif;font-weight:900;font-size:34px;color:rgba(255,224,138,.5);text-shadow:0 0 14px rgba(170,110,255,.6);}
+.col-ghost .col-gs em{position:absolute;left:0;right:0;bottom:8%;text-align:center;font-style:normal;font-family:"Manrope",sans-serif;font-size:10px;font-weight:800;letter-spacing:.12em;color:rgba(230,215,255,.45);}
+.col-ghost small{color:var(--sub);opacity:.75;}
+.col-ghost.shake .col-gs{animation:colShake .5s ease;}
+@keyframes colGlint{0%,62%{background-position:-160% 0;}100%{background-position:160% 0;}}
+@keyframes colShake{0%,100%{transform:none;}20%{transform:rotate(-5deg);}40%{transform:rotate(4deg);}60%{transform:rotate(-3deg);}80%{transform:rotate(2deg);}}
+@media (prefers-reduced-motion: reduce){ .col-ghost .col-gs::after,.col-ghost.shake .col-gs{animation:none;} }
+.col-how{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:12px 14px;margin:0 0 14px;}
+.col-how h3{margin:0 0 4px;font-size:15px;}
+.col-how p{margin:0 0 8px;font-size:12.5px;color:var(--sub);line-height:1.6;}
+.col-how ol{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;}
+.col-how li{display:flex;align-items:center;gap:10px;font-size:13px;line-height:1.5;}
+.col-how li b{flex:0 0 auto;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;color:#fff;background:linear-gradient(135deg,#8a55e0,#c46ad8);}
+.col-how .col-tip{margin:10px 0 0;padding:8px 10px;border-radius:10px;background:rgba(138,85,224,.1);font-size:12.5px;color:inherit;}
 .col-h{border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin:0 0 8px;font-size:13px;line-height:1.65;background:var(--card);}
 .col-h small{display:inline-block;font-size:10.5px;color:var(--sub);margin-right:6px;}
 .col-h-hd{display:flex;align-items:center;gap:8px;margin-bottom:2px;}
@@ -2703,10 +2725,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v150';
+var APP_VER = 'v151';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v151', d: '2026/11/14', items: ['🃏 カードコレクションに、これから集めるカードの枠（影のカード）を出しました。特別なカードのAさんのOLでチェックアウトすると、枠にカードが入ります'] },
   { v: 'v150', d: '2026/11/14', items: ['🛠 細かい修正をしました'] },
   { v: 'v149', d: '2026/11/14', items: ['🛠 細かい修正をしました'] },
   { v: 'v148', d: '2026/11/14', items: ['🛠 細かい修正をしました'] },
@@ -4982,16 +5005,30 @@ function colRender(){
   gCol.groups = groups;
   var h = '<div class="col-tabs"><button data-ct="col"' + (gCol.tab === 'col' ? ' class="on"' : '') + '>🃏 コレクション<b>' + groups.length + '</b></button>'
     + '<button data-ct="hist"' + (gCol.tab === 'hist' ? ' class="on"' : '') + '>🎓 OL履歴<b>' + L.length + '</b></button></div>';
+  // 🃏 v151: カード入れのように3列。集めたカードの後ろに「これから集めるカードの枠（影）」を20枠ごとに出す
   if(gCol.tab === 'col'){
+    var ghosts = Math.max(20, Math.ceil((groups.length + 1) / 20) * 20) - groups.length;
     if(!groups.length){
-      h += '<div class="col-empty"><div style="font-size:44px;">🃏</div><p>まだカードはありません。<br>特別なカードのAさんのアウトラインを受けて、チェックアウトすると集まります。</p></div>';
+      var nOl = L.length;
+      h += '<div class="col-how"><h3>🃏 カードを集めよう</h3>'
+        + '<p>特別なカードのAさんのアウトラインを受けると、そのAさんのカードが手に入ります。カードには通し番号が付きます（早く手に入れるほど小さい番号）。</p>'
+        + '<ol><li><b>1</b>特別なカードのAさんのアウトラインを受ける</li>'
+        + '<li><b>2</b>会員証の「📷 OLチェックアウト」で、AさんのQRを読む</li>'
+        + '<li><b>3</b>感想と気づきを送ると 🃏 カードGET!</li></ol>'
+        + (nOl ? '<p class="col-tip">OLはもう <b>' + nOl + '</b> 回受けています。次は特別なカードのAさんのOLで、1枚目を手に入れよう！</p>' : '')
+        + '</div>';
     } else {
-      h += '<div class="col-sum"><b>' + groups.length + '</b>種類・<b>' + n + '</b>枚</div><div class="ol-grid col-grid">'
-        + groups.map(function(g, i){
-            return '<button class="ol-mini" data-gi="' + i + '"><span class="ol-slot" id="colSlot' + i + '"></span>'
-              + (g.list.length > 1 ? '<i class="ol-cnt">×' + g.list.length + '</i>' : '') + '<small>' + esc(g.name || '') + '</small></button>';
-          }).join('') + '</div>';
+      h += '<div class="col-sum"><b>' + groups.length + '</b>種類・<b>' + n + '</b>枚</div>';
     }
+    h += '<div class="ol-grid col-grid bind">'
+      + groups.map(function(g, i){
+          return '<button class="ol-mini" data-gi="' + i + '"><span class="ol-slot" id="colSlot' + i + '"></span>'
+            + (g.list.length > 1 ? '<i class="ol-cnt">×' + g.list.length + '</i>' : '') + '<small>' + esc(g.name || '') + '</small></button>';
+        }).join('')
+      + Array.apply(null, Array(ghosts)).map(function(_, j){
+          var no = groups.length + j + 1;
+          return '<button class="ol-mini col-ghost" data-ghost="1" aria-label="まだ手に入れていないカード"><span class="col-gs" style="--d:' + ((no * 0.37) % 5.5).toFixed(2) + 's"><i>?</i><em>No.' + (no < 10 ? '0' : '') + no + '</em></span><small>？？？</small></button>';
+        }).join('') + '</div>';
   } else {
     h += L.length ? L.map(function(r, i){
       var t = r.task || {};
@@ -5003,7 +5040,20 @@ function colRender(){
   }
   box.innerHTML = '<div class="col-page">' + h + '</div>';
   [].forEach.call(box.querySelectorAll('[data-ct]'), function(b){ b.onclick = function(){ gCol.tab = b.getAttribute('data-ct'); colRender(); }; });
-  groups.forEach(function(g, i){ if($('colSlot' + i)) ckTcgMini($('colSlot' + i), g.d, olSerialText(g.d, g.list[0].serial), 150); });
+  // 3列に入る幅（並べた後の実際の幅から）。集めたカードと影の枠を同じ大きさに
+  var grid = box.querySelector('.col-grid.bind'), cw = 150;
+  if(grid){
+    cw = Math.max(84, Math.min(150, Math.floor((grid.clientWidth - 2 * 10) / 3)));
+    [].forEach.call(grid.querySelectorAll('.col-gs'), function(g){ g.style.width = cw + 'px'; g.style.height = Math.round(cw * 500 / 328) + 'px'; });
+    [].forEach.call(grid.querySelectorAll('.ol-mini small'), function(sm){ sm.style.maxWidth = cw + 'px'; });
+  }
+  groups.forEach(function(g, i){ if($('colSlot' + i)) ckTcgMini($('colSlot' + i), g.d, olSerialText(g.d, g.list[0].serial), cw); });
+  [].forEach.call(box.querySelectorAll('[data-ghost]'), function(b){
+    b.onclick = function(){
+      b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake');
+      toast('特別なカードのAさんのアウトラインを受けて、OLチェックアウトすると、ここにカードが入ります');
+    };
+  });
   [].forEach.call(box.querySelectorAll('[data-gi]'), function(b){ b.onclick = function(){ colShowcase(+b.getAttribute('data-gi')); }; });
   [].forEach.call(box.querySelectorAll('[data-hi]'), function(b){
     b.onclick = function(){
