@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v877';
+var APP_JS_VERSION = 'v878';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3836,6 +3836,7 @@ function _admCkUnion(unions, u) {
   var U = _ckNorm(u.union || ''), A = _ckNorm(u.area || ''), sel = '';
   var okA = function(x) { return !x.area || !A || _ckNorm(x.area) === A; };
   if (U) unions.forEach(function(x) { if (!sel && _ckNorm(x.id) === U && okA(x)) sel = x.id; });
+  if (U) unions.forEach(function(x) { if (!sel && _ckNorm(x.id) === U) sel = x.id; }); // v878: 名前が同じなら地域が違っても
   if (U) unions.forEach(function(x) { if (!sel && _ckNorm(x.id).indexOf(U) === 0 && okA(x)) sel = x.id; });
   return sel || (unions[0] ? unions[0].id : '');
 }
@@ -4596,7 +4597,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v877';
+  var DATA_VERSION = 'v878';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6708,6 +6709,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v878', d:'2026-11-14', items:['受付連携：同じユニオンの人が各地域にいても、受付のユニオンにつながるようにしました（ユニオン名が同じなら、地域が違ってもつなぎます）'] },
   { v:'v877', d:'2026-11-13', items:['🃏 カードコレクションを、HOMEのメニューにいつも出すようにしました。受付の名簿とまだ紐付いていない人は、押すと紐付け方の案内が出ます', 'オーナーも、アカウント管理の自分の行から受付の名簿と紐付けられるようになりました'] },
   { v:'v876', d:'2026-11-13', items:['🛠 細かい修正をしました'] },
   { v:'v875', d:'2026-11-10', items:['🛠 細かい修正をしました'] },
@@ -8208,13 +8210,15 @@ function _ckPickUnion(unions, unionId) {
   var sel = unionId || '';
   if (sel && _ckIsOwner()) return sel;
   sel = '';
-  // 自分のユニオン名＋地域で自動選択（地域欄が未設定の受付ユニオンは名前一致のみで許容）
+  // 自分のユニオン名で自動選択
+  // v878: 名前がまったく同じなら、地域は見ない（同じユニオンが各地域に散らばっていても1つの受付ユニオンにつなぐ。
+  //   プロフィールのユニオンは一覧から選ぶ形で、名簿を読める人もルールでユニオン名だけで決まるため）。
+  //   地域は、同じ名前が複数ある時と、名前で始まるユニオン（REVE東京 など）を選ぶ時の見分けにだけ使う
   var myU = _ckNorm((currentUser && currentUser.union) || '');
   var myA = _ckNorm((currentUser && currentUser.area) || '');
-  unions.forEach(function(u) {
-    if (sel) return;
-    if (_ckNorm(u.id) === myU && (!u.area || !myA || _ckNorm(u.area) === myA)) sel = u.id;
-  });
+  var same = unions.filter(function(u) { return myU && _ckNorm(u.id) === myU; });
+  same.forEach(function(u) { if (!sel && (!u.area || !myA || _ckNorm(u.area) === myA)) sel = u.id; });
+  if (!sel && same.length) sel = same[0].id;
   unions.forEach(function(u) {  // 部分一致（REVE東京 など）
     if (sel) return;
     if (myU && _ckNorm(u.id).indexOf(myU) === 0 && (!u.area || !myA || _ckNorm(u.area) === myA)) sel = u.id;
