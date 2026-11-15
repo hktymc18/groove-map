@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v878';
+var APP_JS_VERSION = 'v879';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4597,7 +4597,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v878';
+  var DATA_VERSION = 'v879';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -5838,7 +5838,13 @@ function _vvhTarget() {
     var iw = Math.round(window.innerWidth || 0), sw = (window.screen && screen.width) || 0, sh = (window.screen && screen.height) || 0, full = 0;
     if (sw && sh) { if (Math.abs(iw - sw) <= 2) full = sh; else if (Math.abs(iw - sh) <= 2) full = sw; }
     // v809 #16: 開いた直後にステータスバー分まで含む「画面いっぱい」の高さが返ってきた時は、前回落ち着いた高さを使う
-    if (full && h >= full - 2) { var ok = 0; try { ok = parseInt(localStorage.getItem(_vvhOkKey()) || '0', 10) || 0; } catch (eOk) {} if (ok && ok < h && ok > full - 120) return ok; }
+    // v879: ただし、ページそのもの（clientHeight）も画面いっぱいの時は、その高さが正しい（ステータスバーの下まで使う表示）。
+    //   前は覚えた「ステータスバーを除いた高さ」で置き換えていたため、カレンダーが下に1本分（約59px）空いて上にずれて見えた。覚えた値も消す
+    if (full && h >= full - 2) {
+      var ok = 0; try { ok = parseInt(localStorage.getItem(_vvhOkKey()) || '0', 10) || 0; } catch (eOk) {}
+      if (ch && ch >= h - 2) { if (ok) { try { localStorage.removeItem(_vvhOkKey()); } catch (eRm) {} } }
+      else if (ok && ok < h && ok > full - 120) return ok;
+    }
     // v821 #16: ページ本来の高さ（clientHeight＝ステータスバーの下からの高さ。キーボードでは変わらない）がもっともらしい時はそれを基準に。
     //   前は「画面いっぱい（ステータスバー分も含む）」を基準にしていたため、取り直しのたびにステータスバー分だけ下にはみ出すことがあった
     var base = (ch && full && ch <= full + 2 && ch >= full - 120) ? ch : Math.max(ch, full);
@@ -6709,6 +6715,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v879', d:'2026-11-15', items:['iPhoneのホーム画面アプリで、カレンダーが上にずれて下に空白ができることがあったのを直しました'] },
   { v:'v878', d:'2026-11-14', items:['受付連携：同じユニオンの人が各地域にいても、受付のユニオンにつながるようにしました（ユニオン名が同じなら、地域が違ってもつなぎます）'] },
   { v:'v877', d:'2026-11-13', items:['🃏 カードコレクションを、HOMEのメニューにいつも出すようにしました。受付の名簿とまだ紐付いていない人は、押すと紐付け方の案内が出ます', 'オーナーも、アカウント管理の自分の行から受付の名簿と紐付けられるようになりました'] },
   { v:'v876', d:'2026-11-13', items:['🛠 細かい修正をしました'] },
