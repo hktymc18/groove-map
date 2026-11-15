@@ -2725,10 +2725,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v151';
+var APP_VER = 'v152';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v152', d: '2026/11/15', items: ['🔗 研修生登録：研修生のページに「次の担当に送る」を追加。LINEで送ったリンクをタップすると、番号を入れなくてもその研修生が開きます', '📷 研修生登録：「📷 QR」で本人の会員証のQRを読んで、研修生のページを開けるようにしました', '📋 番号・リンク・QRで開いた研修生は、自分の一覧にも残るようにしました'] },
   { v: 'v151', d: '2026/11/14', items: ['🃏 カードコレクションに、これから集めるカードの枠（影のカード）を出しました。特別なカードのAさんのOLでチェックアウトすると、枠にカードが入ります'] },
   { v: 'v150', d: '2026/11/14', items: ['🛠 細かい修正をしました'] },
   { v: 'v149', d: '2026/11/14', items: ['🛠 細かい修正をしました'] },
@@ -3124,13 +3125,15 @@ var GX_ROLES = [
     { id: 'tr2', t: '研修後入力をひらく', sub: '1分・番号で開く', steps: [
       { sel: '#trTabList', click: true, t: '「研修後入力」タブ', x: '<b>「研修後入力」</b>を押してみて！研修した人の記録をつける画面だよ。' },
       { sel: '#trOpenNo', pre: gxTrTab('trTabList'), t: '番号で開く', x: '研修した人の<b>会員番号</b>（会員証に書いてある）を入れて「開く」。ほかの担当者が登録した人もここから開けるよ。' },
-      { sel: '#tsResults', pre: gxTrTab('trTabList'), t: '自分の研修生', x: '自分が登録した研修生はここに並ぶよ。<b>タップでチェックリスト</b>が開くよ。' }
+      { sel: '#trOpenQr', pre: gxTrTab('trTabList'), t: 'QRで開く', x: '<b>「📷 QR」</b>で本人の会員証のQRを読むと、番号を打たなくても開けるよ。前の担当から届いた<b>リンク</b>をタップしても開くよ。' },
+      { sel: '#tsResults', pre: gxTrTab('trTabList'), t: '自分の研修生', x: '自分が登録した研修生・受講済みにした研修生・番号やリンクやQRで開いた研修生がここに並ぶよ。<b>タップでチェックリスト</b>が開くよ。' }
     ] },
     { id: 'tr3', t: '受講を記録する', sub: '2分・面談シート・DLR予約も', steps: [
       { sel: gxQ('#tsResults [data-tr]'), pre: gxTrTab('trTabList'), click: true, t: '研修生をひらく', x: '一覧の研修生を<b>タップ</b>してみて！', miss: '研修生を登録すると、ここに一覧が出るよ。タップでチェックリストが開くよ。' },
       { sel: gxQ('.modal button[data-tk]:not([data-tundo])'), t: '受講済みにする', x: '受講した項目の<b>「✓ 受講済みにする」</b>で、受講した日（カレンダーで選べる）とあなたの名前で記録されるよ。間違えたら「取消」で戻せるよ。', miss: 'チェックリストの各項目に「✓ 受講済みにする」ボタンがあるよ。' },
       { sel: gxQ('.modal button[data-tsheet]'), t: 'CO面談シート', x: '<b>📝 面談シート</b>はここから。本人のスマホで入力してもらうこともできるよ。', miss: 'チェックリストのCOの行に「📝 面談シート」ボタンがあるよ。' },
-      { sel: gxQ('.modal button[data-tdlr]'), t: 'DLR会場受講の予約', x: '<b>📅 会場受講を予約</b>すると、本人の会員証に招待チケットが出るよ。', miss: 'チェックリストのDLRの行に「📅 会場受講を予約」ボタンがあるよ。' }
+      { sel: gxQ('.modal button[data-tdlr]'), t: 'DLR会場受講の予約', x: '<b>📅 会場受講を予約</b>すると、本人の会員証に招待チケットが出るよ。', miss: 'チェックリストのDLRの行に「📅 会場受講を予約」ボタンがあるよ。' },
+      { sel: '#tcShare', t: '次の担当に送る', x: '<b>「🔗 次の担当に送る」</b>で、この研修生のページのリンクを次に研修する担当へLINEで送れるよ。受け取った担当はタップするだけで開けるよ！', miss: 'チェックリストの下に「🔗 次の担当に送る」があるよ。' }
     ] },
     { id: 'tr4', t: '昇格のルール', sub: '1分・いつ正規メンバーになる？', steps: [
       { sel: null, t: '昇格の条件', x: '<b>' + trPromoteRule() + '</b>になると「昇格待ち」になるよ。足りないものは「あと: …」で教えてくれるよ。' },
@@ -10870,7 +10873,7 @@ function trainerEnter(){
     // 📜 初めて使う時は秘密保持契約に誓約してから
     trNdaGate(function(){
       $('trMain').classList.remove('hide');
-      trLoadMembers();
+      trLoadMembers().then(trOpenFromLink);
       trHwLoad();
     });
   }).catch(function(e){ toast('読込エラー: ' + e.message); });
@@ -11072,14 +11075,83 @@ function trPeople(m){
   Object.keys(tr).forEach(function(k){ var n = tr[k] && tr[k].byName; if(n && out.indexOf(n) < 0) out.push(n); });
   return out;
 }
+// 🔗 v152: 番号で研修生のページを開く（「開く」ボタン・次の担当から届いたリンク・QR の共通）
+function trOpenByNo(no){
+  no = String(no || '').toUpperCase();
+  var hit = null;
+  gTrMembers.forEach(function(m){ if(m.no === no) hit = m; });
+  function opened(m){
+    if($('trOpenNo')) $('trOpenNo').value = '';
+    trXRemember(no);   // 開いた人は自分の一覧にも残す（自分のユニオンの人も）
+    trRenderList();
+    trChecklist(m);
+  }
+  if(hit && hit.trainee && !ckMemberOff(hit)){ opened(hit); return; }
+  // 一覧の読込後に登録された分にも対応して最新を1件取得
+  db.collection('checkinMembers').doc(no).get().then(function(sn){
+    var m = sn.exists ? sn.data() : null;
+    if(m && m.trainee && !ckMemberOff(m)){
+      m.no = no;
+      // 一覧のデータにも入れておく（受講済みにしたら、そのまま自分の一覧に出るように）
+      if(m.union === gUnion) gTrMembers = gTrMembers.filter(function(x){ return x.no !== no; }).concat([m]);
+      else trXAdd(m);   // 🌐 v112: ほかのユニオンの研修生も番号で開ける
+      opened(m);
+    } else {
+      toast('この番号の研修生が見つかりません（' + no + '）');
+    }
+  }).catch(function(e){
+    // ほかのユニオンの正規メンバーなど、研修担当が開けない番号はルールで止まる
+    toast(e && e.code === 'permission-denied' ? 'この番号の研修生が見つかりません（' + no + '）' : '読み込みに失敗しました');
+  });
+}
+// 🔗 v152: 「次の担当に送る」のリンク（#trainer&open=番号）。ログイン・誓約の後に開く。開いたら URL から外す（再読み込みで何度も開かない）
+var gTrOpenLink = (function(){ var m = /[#&]open=([A-Za-z0-9]+)/.exec(location.hash); return m ? m[1].toUpperCase() : ''; })();
+function trOpenFromLink(){
+  var no = gTrOpenLink;
+  if(!no) return;
+  gTrOpenLink = '';
+  try{ history.replaceState(null, '', location.href.split('#')[0] + '#trainer'); }catch(e){}
+  trOpenByNo(no);
+}
+function trLinkUrl(no){ return location.href.split('#')[0] + '#trainer&open=' + encodeURIComponent(no); }
+// 研修生のページから、次に研修する担当へ LINE などで送る（リンクに入るのは番号だけ。開けるのは研修生登録の担当だけ）
+function trShareNext(m, btn){
+  var url = trLinkUrl(m.no);
+  var text = (m.name || '') + ' さん（' + m.no + '）の研修受講カードです。タップすると研修生登録ページで開きます。';
+  if(navigator.share){
+    navigator.share({ title: '研修受講カード', text: text, url: url }).catch(function(){});
+  } else {
+    copyText(text + '\n' + url, btn);
+  }
+}
+// 📷 v152: 本人の会員証（研修受講カード）の QR を読んで開く
+function trQrNo(tx){
+  tx = String(tx || '').trim();
+  var m = /^m:([A-Za-z0-9]+):/.exec(tx) || /[#&]open=([A-Za-z0-9]+)/.exec(tx) || /^([A-Za-z]{1,6}[0-9]{1,6})$/.exec(tx);
+  if(m) return { no: m[1].toUpperCase() };
+  var c = /[#&]c=([A-Za-z0-9_-]+)/.exec(tx);
+  return c ? { tok: c[1] } : null;
+}
+function trScanOpen(){
+  ckCamScan('📷 研修生のQRを読む', '本人の研修受講カード（会員証）のQRを、枠の中に入れてください', trQrNo,
+    'これは研修受講カードのQRではありません。本人の会員証のQRを読んでください',
+    function(hit){
+      if(hit.no){ trOpenByNo(hit.no); return; }
+      db.collection('cards').doc(hit.tok).get().then(function(s){
+        var no = s.exists ? String(s.data().no || '') : '';
+        if(no) trOpenByNo(no); else toast('この会員証は見つかりません');
+      }).catch(function(){ toast('読み込みに失敗しました'); });
+    });
+}
 function trSearchBase(){
   var seeAll = canEditUnion(gUnion);
   var allMode = !!(seeAll && gTrFilter.all && gTrAll);   // 担当している全ユニオンから検索（管理者）
   var src = allMode ? gTrAll : gTrMembers;
   if(!allMode) src = src.concat(gTrX.filter(function(x){ return !src.some(function(y){ return y.no === x.no; }); }));
+  var opened = {}; trXNos().forEach(function(no){ opened[no] = 1; });
   return src.filter(function(m){
     // 管理者は自分のユニオン（全ユニオン検索なら担当している全ユニオン）全員。ほかのユニオンの研修生は自分が担当した人だけ
-    return m.trainee && !ckMemberOff(m) && (allMode || (seeAll && m.union === gUnion) || trMine(m));
+    return m.trainee && !ckMemberOff(m) && (allMode || (seeAll && m.union === gUnion) || trMine(m) || !!opened[m.no]);
   });
 }
 function trRenderList(){
@@ -11117,8 +11189,8 @@ function trRenderList(){
     + '<p style="font-size:13px;font-weight:700;margin:4px 0 4px;">研修をした方の番号を入力してください</p>'
     + '<div style="display:flex;gap:8px;margin:0 0 6px;">'
     + '<input type="text" id="trOpenNo" placeholder="例: ' + esc(gUnionPrefix[gUnion] || 'ANT') + '0000（本人の会員証に記載）" style="flex:1;min-width:0;">'
-    + '<button id="trOpenGo">開く</button></div>'
-    + (seeAll ? '' : '<p style="font-size:11.5px;color:var(--sub);margin:0 0 8px;">一覧に出る研修生' + hq('下の一覧には、自分が登録した研修生と、自分が研修を受講済みにした研修生が出ます。それ以外の研修生は、会員番号（QRカード記載）を最後まで入れると出ます。ほかのユニオンの研修生は、上の欄に番号を入れて「開く」を押すと開けます。') + '</p>')
+    + '<button id="trOpenGo">開く</button><button id="trOpenQr" aria-label="QRで開く">📷 QR</button></div>'
+    + (seeAll ? '' : '<p style="font-size:11.5px;color:var(--sub);margin:0 0 8px;">一覧に出る研修生' + hq('下の一覧には、自分が登録した研修生・受講済みにした研修生・番号やリンクやQRで開いた研修生が出ます。それ以外の研修生は、上の欄に番号を入れて「開く」、本人の会員証のQRを「📷 QR」で読む、または前の担当から届いた「研修受講カード」のリンクをタップすると開けます（ほかのユニオンの研修生も同じ）。') + '</p>')
     + '<div style="margin-top:14px;">' + searchHtml + '</div>'
     + '<div id="tsResults"></div>';
   // 検索条件の変更
@@ -11143,26 +11215,10 @@ function trRenderList(){
       .replace(/[Ａ-Ｚａ-ｚ０-９]/g, function(ch){ return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0); })
       .toUpperCase().replace(/\s/g, '').trim();
     if(!no){ toast('番号を入力してください'); return; }
-    var hit = null;
-    gTrMembers.forEach(function(m){ if(m.no === no) hit = m; });
-    if(hit && hit.trainee && !ckMemberOff(hit)){ $('trOpenNo').value = ''; trChecklist(hit); return; }
-    // 一覧の読込後に登録された分にも対応して最新を1件取得
-    db.collection('checkinMembers').doc(no).get().then(function(sn){
-      var m = sn.exists ? sn.data() : null;
-      if(m && m.trainee && !ckMemberOff(m)){
-        m.no = no; $('trOpenNo').value = '';
-        // 一覧のデータにも入れておく（受講済みにしたら、そのまま自分の一覧に出るように）
-        if(m.union === gUnion) gTrMembers = gTrMembers.filter(function(x){ return x.no !== no; }).concat([m]);
-        else { trXAdd(m); trXRemember(no); }   // 🌐 v112: ほかのユニオンの研修生も番号で開ける
-        trChecklist(m);
-      } else {
-        toast('この番号の研修生が見つかりません（' + no + '）');
-      }
-    }).catch(function(e){
-      // ほかのユニオンの正規メンバーなど、研修担当が開けない番号はルールで止まる
-      toast(e && e.code === 'permission-denied' ? 'この番号の研修生が見つかりません（' + no + '）' : '読み込みに失敗しました');
-    });
+    trOpenByNo(no);
   };
+  var oq = $('trOpenQr');
+  if(oq) oq.onclick = trScanOpen;
   trRenderDlr();
 }
 // 検索条件を適用して結果だけを描画（フリーワード入力中にフォーカスを失わないよう分離）
@@ -11412,11 +11468,14 @@ function trChecklist(m){
     + (!m.trainee && canEditUnion(m.union || gUnion)
       ? '<div class="btns" style="justify-content:flex-start;"><button id="tcDemote">↩︎ 研修生に戻す（昇格の取り消し）</button></div>'
       : '')
+    + (m.trainee ? '<div style="display:flex;align-items:center;gap:8px;margin-top:14px;"><button id="tcShare" style="flex:1;">🔗 次の担当に送る</button>'
+      + hq('次に研修する担当へ、この研修生のページのリンクを LINE などで送れます。受け取った担当がタップすると、番号を入れなくても開きます（開けるのは研修生登録の担当だけ）。') + '</div>' : '')
     + '<div class="btns">'
     + (m.trainee && ((trMine(m) && m.union === gUnion) || canEditUnion(m.union)) ? '<button id="tcDel" class="danger ghost" style="margin-right:auto;">🗑 この研修生を削除</button>' : '')
     + '<button id="tcClose">閉じる</button></div>', true);
   $('tcClose').onclick = closeModal;
   if($('tcDel')) $('tcDel').onclick = function(){ trDeleteTrainee(m); };
+  if($('tcShare')) $('tcShare').onclick = function(){ trShareNext(m, $('tcShare')); };
   // 📝 宿題（目標設定）の状況をPGの行に表示（PGの記録がない以前の人はPAの行）
   if($('tcHw') && m.cardToken){
     db.collection('goalHw').doc(m.cardToken).get().then(function(s){

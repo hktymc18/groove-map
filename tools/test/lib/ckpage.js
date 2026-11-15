@@ -2,10 +2,12 @@
 //   const P = require('../lib/ckpage.js'); const b = await P.browser(); const { page, errs } = await P.open(b, { hash: '', data: {…}, dark: false });
 //   uid: 'xxx' でオーナー以外としてログイン（既定はオーナー）
 //   expose: true で window.__ck に practiceStart・scan・rec()（受付中のデータ）・db()（今のデータベース）を出す
+//   evalHook: true で window.__ckEval('式') ＝ページの中（関数・変数が見える所）で式を動かす（関数の差し替えもできる）
 const fs = require('fs'), path = require('path');
 const R = path.join(__dirname, '../../..'), ST = R + '/tools/test/shot';
 const PW = '/opt/node22/lib/node_modules/playwright';
 const QR = 'window.QRCode=function(el,o){el.setAttribute("data-qr",o.text);el.innerHTML="<div style=\\"width:"+o.width+"px;height:"+o.height+"px;background:repeating-conic-gradient(#000 0 25%,#fff 0 50%) 0 0/12px 12px\\"></div>";};window.QRCode.CorrectLevel={L:1,M:0,Q:3,H:2};';
+const EVALHOOK = '\nwindow.__ckEval = function(s){ return eval(s); };\n})();\n</script></body>';
 const EXPOSE = '\nwindow.__ck = { practiceStart: practiceStart, scan: scan, rec: function(){ return gRec; }, db: function(){ return db; } };\n})();\n</script></body>';
 async function browser() {
   const { chromium } = require(fs.existsSync(PW) ? PW : 'playwright');
@@ -28,7 +30,8 @@ async function open(b, o) {
       const f = R + '/checkin/' + (m[1].split('?')[0] || 'index.html');
       if (fs.existsSync(f) && fs.statSync(f).isFile()) {
         const html = /index\.html$/.test(f);
-        return route.fulfill({ status: 200, body: html && o.expose ? fs.readFileSync(f, 'utf8').replace(/\n\}\)\(\);\n<\/script>\s*<\/body>/, EXPOSE) : fs.readFileSync(f), contentType: html ? 'text/html; charset=utf-8' : 'application/octet-stream' });
+        const hook = o.expose ? EXPOSE : o.evalHook ? EVALHOOK : '';
+        return route.fulfill({ status: 200, body: html && hook ? fs.readFileSync(f, 'utf8').replace(/\n\}\)\(\);\n<\/script>\s*<\/body>/, hook) : fs.readFileSync(f), contentType: html ? 'text/html; charset=utf-8' : 'application/octet-stream' });
       }
     }
     return route.fulfill({ status: 404, body: '' });
