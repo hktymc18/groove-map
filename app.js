@@ -5838,12 +5838,13 @@ function _vvhTarget() {
     var iw = Math.round(window.innerWidth || 0), sw = (window.screen && screen.width) || 0, sh = (window.screen && screen.height) || 0, full = 0;
     if (sw && sh) { if (Math.abs(iw - sw) <= 2) full = sh; else if (Math.abs(iw - sh) <= 2) full = sw; }
     // v809 #16: 開いた直後にステータスバー分まで含む「画面いっぱい」の高さが返ってきた時は、前回落ち着いた高さを使う
-    // v879: ただし、ページそのもの（clientHeight）も画面いっぱいの時は、その高さが正しい（ステータスバーの下まで使う表示）。
-    //   前は覚えた「ステータスバーを除いた高さ」で置き換えていたため、カレンダーが下に1本分（約59px）空いて上にずれて見えた。覚えた値も消す
+    // v879: 覚えた高さで置き換えるのは「開いた直後・戻ってきた直後の5秒間」（iOSが一瞬だけ大きい値を返す間）だけ。
+    //   5秒たっても画面いっぱいのまま（ページそのものも画面いっぱい）なら、それが正しい高さ（ステータスバーの下まで使う表示）。
+    //   前はいつでも覚えた「ステータスバーを除いた高さ」で置き換えていたため、カレンダーが約59px低くなり、下に空白・上にずれて見えた。その時は覚えた値も消す
     if (full && h >= full - 2) {
       var ok = 0; try { ok = parseInt(localStorage.getItem(_vvhOkKey()) || '0', 10) || 0; } catch (eOk) {}
-      if (ch && ch >= h - 2) { if (ok) { try { localStorage.removeItem(_vvhOkKey()); } catch (eRm) {} } }
-      else if (ok && ok < h && ok > full - 120) return ok;
+      if (Date.now() < (window._vvhSetUntil || 0)) { if (ok && ok < h && ok > full - 120) return ok; }
+      else if (ok && ch && ch >= h - 2) { try { localStorage.removeItem(_vvhOkKey()); } catch (eRm) {} }
     }
     // v821 #16: ページ本来の高さ（clientHeight＝ステータスバーの下からの高さ。キーボードでは変わらない）がもっともらしい時はそれを基準に。
     //   前は「画面いっぱい（ステータスバー分も含む）」を基準にしていたため、取り直しのたびにステータスバー分だけ下にはみ出すことがあった
@@ -6010,6 +6011,7 @@ function _vvhOkKey() { return 'gm_vvhOK_' + Math.round(window.innerWidth || 0) +
 function _vvhSettle() {
   if (typeof isPCMode === 'function' && isPCMode()) return;
   var t0 = Date.now(); clearInterval(window._vvhSetT);
+  window._vvhSetUntil = t0 + 5000; // v879: 覚えた高さを使ってよい間（開いた直後・戻ってきた直後）
   window._vvhSetT = setInterval(function() {
     try {
       if (Date.now() - t0 > 5000) {
