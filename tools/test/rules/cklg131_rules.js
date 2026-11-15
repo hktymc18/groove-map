@@ -1,5 +1,6 @@
 // 受付 v131（ラウンジ: ckLounge・cards/{トークン}/lounge・👏）の firestore.rules を、Firestore エミュレータで試す（架空のデータだけ）
 // v139: スタッフ（出す・出さない・確認待ちの一覧・消す）はオーナー・ユニオン管理者・DAYスタッフだけ（受付管理者だけの人は不可）
+// v153: 承認なし。本人は st: ok・okAt（今の時刻）で投稿でき、すぐ一覧に出る。前の版の st: wait も受け付ける
 // 準備・実行は ckpf109_rules.js と同じ
 const fs = require('fs'), path = require('path');
 const { initializeTestEnvironment } = require('@firebase/rules-unit-testing');
@@ -10,7 +11,7 @@ const ok = p => p.then(() => true, () => false);
 const _e = console.error; console.error = (...a) => { if (!/PERMISSION_DENIED|evaluation error/.test(String(a[0]) + String(a[1] || ''))) _e(...a); };
 const TA = 'abababababababababababababababab', TB = 'cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd', TM = '0123456789abcdef0123456789abcdef';
 const UA = 'u17620000000001', UB = 'u17620000000002';
-const P1 = 'aaaaaaaaaaaaaaaaaaaa', P2 = 'bbbbbbbbbbbbbbbbbbbb', P3 = 'cccccccccccccccccccc';
+const P1 = 'aaaaaaaaaaaaaaaaaaaa', P2 = 'bbbbbbbbbbbbbbbbbbbb', P3 = 'cccccccccccccccccccc', P4 = 'dddddddddddddddddddd';
 (async () => {
   const env = await initializeTestEnvironment({ projectId: 'lg-test', firestore: { rules: fs.readFileSync(path.join(__dirname, '../../../firestore.rules'), 'utf8'), host: '127.0.0.1', port: +(process.env.PORT || 8089) } });
   await env.clearFirestore();
@@ -34,7 +35,14 @@ const P1 = 'aaaaaaaaaaaaaaaaaaaa', P2 = 'bbbbbbbbbbbbbbbbbbbb', P3 = 'cccccccccc
     b.set(doc(anon, 'ckLounge/' + pid), L(x)); b.set(doc(anon, 'cards/' + tok + '/lounge/' + pid), { at: serverTimestamp() }); return b.commit(); };
   c('ほかの人の名前では投稿できない', !(await ok(post(TA, P3, { n: '別の人' }))));
   c('ほかの人のIDでは投稿できない（自分のカードの印とIDが違う）', !(await ok(post(TA, P3, { uid: UB, n: '見本 さくら' }))));
-  c('はじめから ok では投稿できない', !(await ok(post(TA, P3, { st: 'ok' }))));
+  c('v153: ok でも出た時刻（okAt）が無いと投稿できない', !(await ok(post(TA, P3, { st: 'ok' }))));
+  c('v153: ok の出た時刻を自分で決められない（今の時刻だけ）', !(await ok(post(TA, P3, { st: 'ok', okAt: new Date(2030, 0, 1) }))));
+  c('v153: 確認待ち（wait）に出た時刻は付けられない', !(await ok(post(TA, P3, { st: 'wait', okAt: serverTimestamp() }))));
+  c('v153: 取り下げ（ng）では投稿できない', !(await ok(post(TA, P3, { st: 'ng' }))));
+  c('v153: 本人は ok で投稿できる（承認なし）', await ok(post(TA, P4, { st: 'ok', okAt: serverTimestamp(), t: 'すぐ出る投稿' })));
+  c('v153: ok で投稿したものは、すぐ一覧で読める（ログインなし）', await ok(getDocs(query(collection(anon, 'ckLounge'), where('union', '==', 'U1'), where('st', '==', 'ok')))).then(async (r) => r && (await getDocs(query(collection(anon, 'ckLounge'), where('union', '==', 'U1'), where('st', '==', 'ok')))).docs.some((d) => d.id === P4)));
+  c('v153: DAYスタッフは ok の投稿を取り下げられる', await ok(updateDoc(doc(day, 'ckLounge/' + P4), { st: 'ng', by: 'day1' })));
+  c('v153: 本人は取り下げられた投稿を ok に戻せない', !(await ok(updateDoc(doc(anon, 'ckLounge/' + P4), { st: 'ok' }))));
   c('61文字以上は投稿できない', !(await ok(post(TA, P3, { t: 'あ'.repeat(61) }))));
   c('ビジネスの会員証からは投稿できない', !(await ok(post(TM, P3, { uid: 'ZZ0001', n: '架空 太郎' }))));
   c('自分の印がないと投稿できない', !(await ok(setDoc(doc(anon, 'ckLounge/' + P3), L()))));
