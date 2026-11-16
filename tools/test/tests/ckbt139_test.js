@@ -13,7 +13,7 @@ const base = (x) => Object.assign({
   'users/day1': user('見本 でい'), 'users/day2': user('見本 じゅんび'), 'users/adm1': user('見本 うけつけ'), 'users/ua1': user('見本 かんり'), 'users/ld1': user('見本 りいだ'),
   'users/m1': user('見本 めんば'),
   'ckNotice/ANTARES': { items: [{ t: '12月のDAYは、14時からの開始です。', d: '2026-11-09' }] },
-  // v154: 承認なし。投稿はすぐ出る（ok）。効果をうたう言葉の入った投稿は「気になる投稿」
+  // v156: 承認なし。投稿はすぐ出る（ok）。効果をうたう言葉の入った投稿は「気になる投稿」
   'ckLounge/w1': { union: 'ANTARES', uid: 'u1', n: '見本 はなこ', co: 'ダイエット編', t: '今週は毎日歩けました', st: 'ok', at: 1, okAt: 6 },
   'ckLounge/w2': { union: 'ANTARES', uid: 'u2', n: '見本 さくら', t: 'これでアトピーが治った！', st: 'ok', at: 2, okAt: 7 },
   'ckLounge/o1': { union: 'ANTARES', uid: 'u3', n: '見本 ゆり', t: '夜のスキンケア、3日続きました', st: 'ok', okAt: 5 },
@@ -28,14 +28,14 @@ const dotOn = `!document.querySelector('nav button[data-pane="pBeauty"] .nav-dot
     await page.addStyleTag({ content: '#toast,#rnPopOv,#gxHint{display:none!important}' });
     c('DAYスタッフ：「💜 Beauty」タブが出る' + (dark ? '（ダーク）' : ''), await ev(tabOn));
     c('DAYスタッフ：名簿・集計・会計のタブは出ない', await ev(`['pRoster','pStats','pFin'].every(function(p){ return document.querySelector('nav button[data-pane="'+p+'"]').classList.contains('hide'); })`));
-    c('v154: 効果をうたう言葉の入った投稿が出ているとタブに赤丸', await ev(dotOn));
+    c('v156: 効果をうたう言葉の入った投稿が出ているとタブに赤丸', await ev(dotOn));
     await page.click('nav button[data-pane="pBeauty"]'); await wt(600);
     const t = await ev(`document.getElementById('btBody').innerText`);
     c('いま対応すること：気になる投稿1件・お知らせ1件', /いま対応すること — ANTARES/.test(t) && /1件\s*ラウンジの気になる投稿/.test(t) && /1件\s*出ているお知らせ/.test(t), t);
     c('お知らせ・ラウンジ・クエストの編集の3つ', /ユーザーへのお知らせ/.test(t) && /14時からの開始/.test(t) && /💬 ラウンジ/.test(t) && /クエストの編集/.test(t));
-    c('v154: ラウンジは「出ている｜取り下げた」（確認待ちは無い時は出ない）・はじめは出ている', (await ev(`[].map.call(document.querySelectorAll('#btLgSeg [data-seg]'), function(x){ return x.getAttribute('data-seg'); }).join('|')`)) === 'ok|ng'
+    c('v156: ラウンジは「出ている｜取り下げた」（確認待ちは無い時は出ない）・はじめは出ている', (await ev(`[].map.call(document.querySelectorAll('#btLgSeg [data-seg]'), function(x){ return x.getAttribute('data-seg'); }).join('|')`)) === 'ok|ng'
       && (await ev(`document.querySelector('#btLgSeg .on').getAttribute('data-seg')`)) === 'ok' && /出ている（3）/.test(await ev(`document.getElementById('btLgSeg').innerText`)));
-    c('v154: 気になる投稿は黄色・「取り下げてください」', (await ev(`document.querySelectorAll('#btLgList .lg-q.warn').length`)) === 1 && /取り下げてください/.test(await ev(`document.getElementById('btLgList').innerText`)));
+    c('v156: 気になる投稿は黄色・「取り下げてください」', (await ev(`document.querySelectorAll('#btLgList .lg-q.warn').length`)) === 1 && /取り下げてください/.test(await ev(`document.getElementById('btLgList').innerText`)));
     c('DAYスタッフ：「🌸 DAYスタッフ」を決めるボタンは出ない', await ev(`document.getElementById('btnDayStaff').classList.contains('hide')`));
     c('横にはみ出さない', (await ev('document.documentElement.scrollWidth')) === 390);
     await page.screenshot({ path: OUT + '/ckbt139_day' + (dark ? '_d' : '') + '.png', fullPage: true });

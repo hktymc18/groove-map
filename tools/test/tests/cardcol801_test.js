@@ -29,7 +29,7 @@ T.run(async () => {
   c('HOMEのボタンに「カードコレクション」（新着1）', /カードコレクション/.test(hub) && /cardColOpen\(\)/.test(hub) && /<span class="nb">1<\/span>/.test(hub.split('カードコレクション')[1] || ''));
   toasts[0][2]();
   const ov = w.document.getElementById('cardColOv'), fr = ov && ov.querySelector('iframe');
-  c('「見る」で受付の #col を埋め込んで開く（新着はカードGET!）', fr && /checkin\/index\.html#col&get=1$/.test(fr.getAttribute('src')));
+  c('「見る」で受付の #col を埋め込んで開く（新着はカードGET!）', fr && /checkin\/index\.html#col&get=1&th=(light|dark)$/.test(fr.getAttribute('src')));
   w.localStorage.setItem('gm_card_seen', JSON.stringify({ k0: 1 }));
   w.cardColClose();
   c('閉じると消える・見たら新着0', !w.document.getElementById('cardColOv') && w.cardColNew().length === 0);

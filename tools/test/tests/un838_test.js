@@ -20,7 +20,7 @@ T.run(async () => {
   // 一覧に無いユニオンの人
   w.currentUser.union = '前のユニオン'; w.currentUser.unionSelectedV2 = true;
   w.openProfileModal(); await sleep(10);
-  c('一覧に無いユニオンの人もプロフィールでは選んだまま', $('#profileUnion').value === '前のユニオン');
+  c('v880: 一覧に無いユニオンの人は、プロフィールで未選択（一覧から選び直してもらう）', $('#profileUnion').value === '' && ![].some.call($('#profileUnion').options, o => o.value === '前のユニオン'));
   w.closeProfileModal(null);
   // オーナーの設定画面
   w._adminUsersFetch = () => Promise.resolve([]); w._admCkLoad = () => {}; w._accLoad = () => { w._accA = { mode: 'open', unions: [] }; }; w._shAdmLoad = () => {}; w._admCoreAllLoad = () => {};

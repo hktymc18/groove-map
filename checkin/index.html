@@ -25,6 +25,21 @@
     --amber:#d6b75e; --amber-soft:#3a3320; --focus:#7ba7e0;
   }
 }
+/* v155: NAVIGATOR に埋め込んだ時は、NAVIGATOR のライト／ダークに合わせる（#…&th=light|dark → html[data-theme]）。端末の設定より優先 */
+:root[data-theme="light"]{
+  --paper:#f2f1ec; --card:#ffffff; --ink:#23261f; --sub:#6f6d63; --line:#dfddd3;
+  --accent:#c0392b; --accent-soft:#f7e6e2;
+  --green:#2e6b52; --green-soft:#e3efe8; --green-bar:#4d8b6f;
+  --amber:#8a6d1f; --amber-soft:#f5edd3; --focus:#2b5fa8;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --paper:#171915; --card:#22241f; --ink:#e9e7de; --sub:#a3a194; --line:#3a3c34;
+  --accent:#e0604f; --accent-soft:#3d2723;
+  --green:#79c29e; --green-soft:#243a2f; --green-bar:#4d8b6f;
+  --amber:#d6b75e; --amber-soft:#3a3320; --focus:#7ba7e0;
+  color-scheme:dark;
+}
 *{box-sizing:border-box;}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 html,body{margin:0;}
@@ -1058,7 +1073,7 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .lg-post .lg-t{grid-column:1;font-size:14px;line-height:1.6;overflow-wrap:anywhere;}
 .lg-clap{grid-column:2;grid-row:1 / span 2;padding:6px 10px;font-size:13px;border-radius:999px;}
 .lg-clap.on{background:#fff4e6;border-color:#f0892b;color:#7a3e0c;opacity:1;}
-.lg-del{grid-column:2;justify-self:end;padding:2px 6px;font-size:11.5px;background:none;border:none;color:var(--sub);text-decoration:underline;}   /* v154: 自分の投稿を消す */
+.lg-del{grid-column:2;justify-self:end;padding:2px 6px;font-size:11.5px;background:none;border:none;color:var(--sub);text-decoration:underline;}   /* v156: 自分の投稿を消す */
 .lg-mine{display:grid;gap:6px;margin-top:10px;}
 .lg-mrow{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px dashed var(--line);border-radius:10px;font-size:13px;}
 .lg-mrow .lg-t{flex:1;min-width:0;overflow-wrap:anywhere;}
@@ -1568,7 +1583,16 @@ body.practice .topbar{top:var(--pxh,36px);}
   .modal .btns button{flex:1 1 auto;padding:12px;}
   input,select,textarea{font-size:16px;}
 }
+/* v155: カードコレクションをPCの広い画面に（カードを横にたくさん並べる・OL履歴は読みやすい幅） */
+@media (min-width:760px){
+  #vCol .ol-page{max-width:1440px;padding:20px 28px 48px;}
+  #vCol .col-tabs{max-width:560px;margin-left:auto;margin-right:auto;}
+  #vCol .col-how{max-width:760px;margin-left:auto;margin-right:auto;}
+  #vCol .col-sum{text-align:center;}
+  #vCol .col-h,#vCol .col-empty{max-width:760px;margin-left:auto;margin-right:auto;}
+}
 </style>
+<script>/* v155: NAVIGATOR のライト／ダーク（#…&th=light|dark）を、描く前に当てる */try{var _thm=/[#&]th=(light|dark)/.exec(location.hash);if(_thm)document.documentElement.setAttribute('data-theme',_thm[1]);}catch(e){}</script>
 </head>
 <body>
 
@@ -1588,7 +1612,7 @@ body.practice .topbar{top:var(--pxh,36px);}
       <label for="suName">名前</label><input type="text" id="suName">
       <label for="suEmail">メールアドレス</label><input type="email" id="suEmail" autocomplete="email">
       <label for="suPw">パスワード（6文字以上）</label><input type="password" id="suPw" autocomplete="new-password">
-      <label for="suUnion">所属ユニオン</label><input type="text" id="suUnion" placeholder="例: ANTARES">
+      <label for="suUnion">所属ユニオン</label><select id="suUnion" class="ck-unsel"><option value="">所属ユニオンを選択</option></select>
       <label for="suArea">活動地域</label><input type="text" id="suArea" placeholder="例: 福岡">
       <label for="suUpRuby">アップRUBY</label><input type="text" id="suUpRuby">
       <label for="suUpBd">アップBD</label><input type="text" id="suUpBd">
@@ -1605,7 +1629,7 @@ body.practice .topbar{top:var(--pxh,36px);}
     <h1>プロフィール登録</h1>
     <p class="s">受付システムの利用には所属ユニオンの登録が必要です。</p>
     <label for="pfName">名前</label><input type="text" id="pfName">
-    <label for="pfUnion">所属ユニオン</label><input type="text" id="pfUnion" placeholder="例: ANTARES">
+    <label for="pfUnion">所属ユニオン</label><select id="pfUnion" class="ck-unsel"><option value="">所属ユニオンを選択</option></select>
     <label for="pfArea">活動地域</label><input type="text" id="pfArea">
     <label for="pfUpRuby">アップRUBY</label><input type="text" id="pfUpRuby">
     <label for="pfUpBd">アップBD</label><input type="text" id="pfUpBd">
@@ -1890,7 +1914,7 @@ body.practice .topbar{top:var(--pxh,36px);}
     <div id="mpArea"></div><!-- 💜 ユーザーのマイプラン（コース・毎日のクエスト・連続・レベル・バッジ） -->
     <div id="bdArea"></div><!-- 💜 ユーザーのバディ（QRを読み合う・連続日数とバッジだけ見える） -->
     <div id="fiArea"></div><!-- 💜 ユーザーの「友だちを招待」（招待リンク・来てくれた友だち） -->
-    <div id="lgArea"></div><!-- 💜 ユーザーのラウンジ（同じユニオンのひとこと・投稿するとすぐ出る。v154） -->
+    <div id="lgArea"></div><!-- 💜 ユーザーのラウンジ（同じユニオンのひとこと・投稿するとすぐ出る。v156） -->
     <div id="rsvpTop"></div>
     <div id="selfArea"></div>
     <div id="hwArea"></div><!-- 📝 宿題は受講記録の一覧より上（記録が増えても埋もれないように） -->
@@ -2371,6 +2395,35 @@ var gUnionPrefix = {};      // ユニオン名 → 会員番号プレフィッ�
 // 初期の命名規則（ユニオン設定で上書き可能）
 // 2026-10 のユニオン名変更（旧名 → 新名）。古いアプリから旧名で保存し直された人を、ログイン時に新しい名前へ直す
 var CK_UNION_RENAMED = { 'BASE ANTARES': 'ANTARES', 'BASE REVE': 'REVE', 'LIEN LOAD': 'ALTAIR', 'LOAD': 'ALTAIR' };   // 2026-11: LOAD → ALTAIR
+/* 🏷 v154: 登録・プロフィールの所属ユニオンは、オーナーが決めた一覧（NAVIGATOR のアカウント管理「ユニオンとUPBD」＝appConfig/unions）から選ぶだけ。
+   前は自由に文字を入れる欄で、表記ゆれ（大文字小文字・空白・別名）のユニオン名のアカウントができていた。
+   一覧を読めない時は、NAVIGATOR に入っている初期の一覧（名前だけ）を使う */
+var CK_UNION_NAMES0 = ['GRANT', 'PRESTO', 'LIEN', 'BEYOND', 'FELIN', 'FORMULA', 'REVITALIZE', 'INFLUENCE', 'ANTARES', 'REVE', 'ALTAIR', 'DEFI', 'GRANDIR', 'SFIDA', 'AMASIA', 'UPBD'];
+var gUnionList = null;   // [{ name, upbd }]
+function ckUnionL(){ return gUnionList || CK_UNION_NAMES0.map(function(n){ return { name: n, upbd: '' }; }); }
+function ckUnionNames(){ return ckUnionL().map(function(u){ return u.name; }); }
+function ckUnionFill(){
+  [['suUnion', 'suUpBd'], ['pfUnion', 'pfUpBd']].forEach(function(t){
+    var sel = $(t[0]); if(!sel || sel.tagName !== 'SELECT') return;
+    var v = sel.value;
+    sel.innerHTML = '<option value="">所属ユニオンを選択</option>' + ckUnionL().map(function(u){ return '<option value="' + esc(u.name) + '" data-upbd="' + esc(u.upbd || '') + '">' + esc(u.name) + '</option>'; }).join('');
+    sel.value = ckUnionNames().indexOf(v) >= 0 ? v : '';
+    // 選ぶと、そのユニオンのアップBDを入れる（空の時・前に自動で入れた名前のままの時だけ）
+    sel.onchange = function(){
+      var o = sel.options[sel.selectedIndex], ub = $(t[1]), nm = o ? (o.getAttribute('data-upbd') || '') : '';
+      if(ub && nm && (!ub.value.trim() || ub.value === ub.getAttribute('data-auto'))){ ub.value = nm; ub.setAttribute('data-auto', nm); }
+    };
+  });
+}
+function ckUnionLoad(){
+  ckUnionFill();
+  db.collection('appConfig').doc('unions').get().then(function(d){
+    var x = d.exists ? (d.data() || {}) : {};
+    var L = Array.isArray(x.list) ? x.list.filter(function(u){ return u && String(u.name || '').trim(); })
+      .map(function(u){ return { name: String(u.name).trim(), upbd: String(u.upbd || '').trim() }; }) : null;
+    if(L && L.length){ gUnionList = L; ckUnionFill(); }
+  }).catch(function(){});
+}
 // 🔁 v114: アカウント（NAVIGATOR・ATTACK LIST・GOAL共通の users）は旧ユニオン名のまま残っている人がいる
 //   （NAVIGATORはログイン時に直すが、ATTACK LISTだけ使う人などは直らない）。受付でアカウントを探す時は旧名も同じユニオンとして探す
 function ckUnionNames(un){ var a = [un]; Object.keys(CK_UNION_RENAMED).forEach(function(k){ if(CK_UNION_RENAMED[k] === un) a.push(k); }); return a; }
@@ -2594,7 +2647,7 @@ function fillUnionSel(sel, current, only){
 }
 
 /* ---------- auth ---------- */
-$('toSignup').onclick = function(){ $('loginForm').classList.add('hide'); $('signupForm').classList.remove('hide'); $('authErr').textContent=''; };
+$('toSignup').onclick = function(){ $('loginForm').classList.add('hide'); $('signupForm').classList.remove('hide'); $('authErr').textContent=''; ckUnionLoad(); };   // 🏷 v154: 決めたユニオンの一覧（開いた時だけ読む）
 $('toLogin').onclick = function(){ $('signupForm').classList.add('hide'); $('loginForm').classList.remove('hide'); $('authErr').textContent=''; };
 function authMsg(e){
   var c = e && e.code || '';
@@ -2616,6 +2669,7 @@ $('btnSignup').onclick = function(){
   var name = $('suName').value.trim(), un = $('suUnion').value.trim(),
       area = $('suArea').value.trim(), ur = $('suUpRuby').value.trim(), ub = $('suUpBd').value.trim();
   if(!name || !un || !area || !ur || !ub){ $('authErr').textContent = 'すべての項目を入力してください'; return; }
+  if(ckUnionNames().indexOf(un) < 0){ $('authErr').textContent = '所属ユニオンは一覧から選んでください'; return; }
   authPersistReady.then(function(){ return auth.createUserWithEmailAndPassword($('suEmail').value.trim(), $('suPw').value); })
     .then(function(cred){
       return db.collection('users').doc(cred.user.uid).set({
@@ -2731,11 +2785,13 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v154';
+var APP_VER = 'v156';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
-  { v: 'v154', d: '2026/11/16', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
+  { v: 'v156', d: '2026/11/16', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
+  { v: 'v155', d: '2026/11/16', items: ['🃏 カードコレクションを、パソコンの広い画面ではカードを横にたくさん並べるようにしました。NAVIGATOR のライト／ダークの表示にも合わせます'] },
+  { v: 'v154', d: '2026/11/16', items: ['🏷 新規登録とプロフィールの所属ユニオンを、一覧から選ぶ形にしました（ユニオン名の書き方がばらばらにならないように）'] },
   { v: 'v153', d: '2026/11/16', items: ['👑 名簿に「タイトル」の列を追加。タイトルで並べ替え・「〇〇以上」で絞り込みができます', '📋 名簿の「📋 名前をコピー」：タイトル（例: RUBY以上・BR以上）で絞った名前の一覧をコピー・CSVで保存できます（NAVIGATORの先行利用に貼り付け用）', '📊 名簿のCSV出力に、グレード・タイトル・タイトル順位を追加'] },
   { v: 'v152', d: '2026/11/15', items: ['🔗 研修生登録：研修生のページに「次の担当に送る」を追加。LINEで送ったリンクをタップすると、番号を入れなくてもその研修生が開きます', '📷 研修生登録：「📷 QR」で本人の会員証のQRを読んで、研修生のページを開けるようにしました', '📋 番号・リンク・QRで開いた研修生は、自分の一覧にも残るようにしました'] },
   { v: 'v151', d: '2026/11/14', items: ['🃏 カードコレクションに、これから集めるカードの枠（影のカード）を出しました。特別なカードのAさんのOLでチェックアウトすると、枠にカードが入ります'] },
@@ -4984,6 +5040,15 @@ function colMarkSeen(L){
   try{ localStorage.setItem('gm_card_seen', JSON.stringify(sn)); }catch(e){}
 }
 function colStart(){
+  // v155: 画面の幅が変わったら（PCで窓の大きさを変えた時など）、列の数を合わせ直す
+  var rzT = null;
+  window.addEventListener('resize', function(){
+    clearTimeout(rzT);
+    rzT = setTimeout(function(){
+      var g = document.querySelector('#colBox .col-grid.bind');
+      if(gCol && gCol.tab === 'col' && g && Math.abs(g.clientWidth - (gCol.w || 0)) > 30) colRender();
+    }, 200);
+  });
   showView('vCol');
   var box = $('colBox');
   box.innerHTML = '<p class="ol-load">読み込み中…</p>';
@@ -5063,10 +5128,14 @@ function colRender(){
   }
   box.innerHTML = '<div class="col-page">' + h + '</div>';
   [].forEach.call(box.querySelectorAll('[data-ct]'), function(b){ b.onclick = function(){ gCol.tab = b.getAttribute('data-ct'); colRender(); }; });
-  // 3列に入る幅（並べた後の実際の幅から）。集めたカードと影の枠を同じ大きさに
+  // 並べた後の実際の幅から、列の数とカードの幅を決める（スマホは3列・v155: PCは広さに合わせて4〜8列）。集めたカードと影の枠を同じ大きさに
   var grid = box.querySelector('.col-grid.bind'), cw = 150;
   if(grid){
-    cw = Math.max(84, Math.min(150, Math.floor((grid.clientWidth - 2 * 10) / 3)));
+    var gw = grid.clientWidth, wide = gw >= 600, gap = wide ? 16 : 10, max = wide ? 176 : 150;
+    var cols = wide ? Math.max(4, Math.min(8, Math.floor((gw + gap) / (max + gap)))) : 3;
+    grid.style.gridTemplateColumns = 'repeat(' + cols + ',1fr)'; grid.style.columnGap = gap + 'px';
+    cw = Math.max(84, Math.min(max, Math.floor((gw - (cols - 1) * gap) / cols)));
+    gCol.w = gw;
     [].forEach.call(grid.querySelectorAll('.col-gs'), function(g){ g.style.width = cw + 'px'; g.style.height = Math.round(cw * 500 / 328) + 'px'; });
     [].forEach.call(grid.querySelectorAll('.ol-mini small'), function(sm){ sm.style.maxWidth = cw + 'px'; });
   }
@@ -6581,7 +6650,7 @@ auth.onAuthStateChanged(function(u){
   if(!u){ gProf = null; showView('vLogin'); return; }
   db.collection('users').doc(u.uid).get().then(function(snap){
     if(!snap.exists || !(snap.data().union)){
-      showView('vProfile'); return;
+      showView('vProfile'); ckUnionLoad(); return;
     }
     gProf = snap.data();
     var renamed = CK_UNION_RENAMED[gProf.union];
@@ -6601,6 +6670,7 @@ $('btnProfile').onclick = function(){
   var name = $('pfName').value.trim(), un = $('pfUnion').value.trim(),
       area = $('pfArea').value.trim(), ur = $('pfUpRuby').value.trim(), ub = $('pfUpBd').value.trim();
   if(!name || !un || !area || !ur || !ub){ $('pfErr').textContent = 'すべての項目を入力してください'; return; }
+  if(ckUnionNames().indexOf(un) < 0){ $('pfErr').textContent = '所属ユニオンは一覧から選んでください'; return; }
   db.collection('users').doc(gUser.uid).set({
     name: name, union: un, area: area, upRuby: ur, upBd: ub,
     role: 'member', status: 'pending', email: gUser.email || ''
@@ -15530,7 +15600,7 @@ function ckBuddyRemoveAsk(ok){
   };
 }
 /* 💜 v131: ラウンジ（ユーザーのカード・友だちを招待の下）。同じユニオンのユーザーのひとこと（60文字まで・文字だけ）。
-   v154: 承認はいらない。投稿するとすぐ出る（st: ok）。効果をうたう言葉（CK_LG_WARN）が入った投稿はできない。
+   v156: 承認はいらない。投稿するとすぐ出る（st: ok）。効果をうたう言葉（CK_LG_WARN）が入った投稿はできない。
    ふさわしくない投稿は、スタッフが「💜 Beauty」タブで取り下げる。本人は自分の投稿を消せる。返事はなく、👏（1人1回）だけ。
    出ている投稿は端末に10分覚える（読み込みを減らす） */
 var CK_LG_WARN = ['治る', '治った', '治す', '治り', '完治', '効く', '効いた', '効き', '効果', 'やせ', '痩せ', '改善', '病気', '薬', 'アトピー', '副作用', '医師', '医者'];
@@ -15658,8 +15728,8 @@ function ckLoungeClap(id){
   });
 }
 /* 💜 v139: 「💜 Beauty」タブ（ユーザー向けの管理）。使えるのはオーナー・ユニオン管理者・DAY HOST（準備中のあいだは確認メンバーだけ）
-   ・いま対応すること（v154: 効果をうたう言葉が入ったラウンジの投稿・出ているお知らせ）。対応する投稿があるとタブに赤丸
-   ・ユーザーへのお知らせ（ckNotice/{ユニオン}・新しい5件まで）・ラウンジ（出ている｜取り下げた。v154: 承認はなく、投稿はすぐ出る）
+   ・いま対応すること（v156: 効果をうたう言葉が入ったラウンジの投稿・出ているお知らせ）。対応する投稿があるとタブに赤丸
+   ・ユーザーへのお知らせ（ckNotice/{ユニオン}・新しい5件まで）・ラウンジ（出ている｜取り下げた。v156: 承認はなく、投稿はすぐ出る）
    ・DAY HOST を決める（オーナー・ユニオン管理者）
    読み取りを減らす：開いた時に読むのはお知らせと、出ている投稿の新しい30件（と前の版の確認待ち）。「取り下げた」は押した時に読む */
 var gBtUnion = '', gBt = null, gBtSeg = 'ok';
@@ -15723,7 +15793,7 @@ function btLoad(){
     if(gBtSeg === 'ng') btSegLoad(gBtSeg);
   }).catch(function(e){ if(gBt === me){ me.err = permMsg(e, '読めませんでした。ルールの反映をオーナーに確認してください'); btDraw(); } });
 }
-// v154: 出ている投稿の新しい30件（索引 union・st・okAt。無い時は代わりの読み方）
+// v156: 出ている投稿の新しい30件（索引 union・st・okAt。無い時は代わりの読み方）
 function btOkQuery(un){
   var q = db.collection('ckLounge').where('union', '==', un).where('st', '==', 'ok');
   return q.orderBy('okAt', 'desc').limit(30).get().catch(function(){ return q.limit(60).get(); });
