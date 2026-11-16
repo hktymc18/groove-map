@@ -25,6 +25,21 @@
     --amber:#d6b75e; --amber-soft:#3a3320; --focus:#7ba7e0;
   }
 }
+/* v155: NAVIGATOR に埋め込んだ時は、NAVIGATOR のライト／ダークに合わせる（#…&th=light|dark → html[data-theme]）。端末の設定より優先 */
+:root[data-theme="light"]{
+  --paper:#f2f1ec; --card:#ffffff; --ink:#23261f; --sub:#6f6d63; --line:#dfddd3;
+  --accent:#c0392b; --accent-soft:#f7e6e2;
+  --green:#2e6b52; --green-soft:#e3efe8; --green-bar:#4d8b6f;
+  --amber:#8a6d1f; --amber-soft:#f5edd3; --focus:#2b5fa8;
+  color-scheme:light;
+}
+:root[data-theme="dark"]{
+  --paper:#171915; --card:#22241f; --ink:#e9e7de; --sub:#a3a194; --line:#3a3c34;
+  --accent:#e0604f; --accent-soft:#3d2723;
+  --green:#79c29e; --green-soft:#243a2f; --green-bar:#4d8b6f;
+  --amber:#d6b75e; --amber-soft:#3a3320; --focus:#7ba7e0;
+  color-scheme:dark;
+}
 *{box-sizing:border-box;}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 html,body{margin:0;}
@@ -1567,7 +1582,16 @@ body.practice .topbar{top:var(--pxh,36px);}
   .modal .btns button{flex:1 1 auto;padding:12px;}
   input,select,textarea{font-size:16px;}
 }
+/* v155: カードコレクションをPCの広い画面に（カードを横にたくさん並べる・OL履歴は読みやすい幅） */
+@media (min-width:760px){
+  #vCol .ol-page{max-width:1440px;padding:20px 28px 48px;}
+  #vCol .col-tabs{max-width:560px;margin-left:auto;margin-right:auto;}
+  #vCol .col-how{max-width:760px;margin-left:auto;margin-right:auto;}
+  #vCol .col-sum{text-align:center;}
+  #vCol .col-h,#vCol .col-empty{max-width:760px;margin-left:auto;margin-right:auto;}
+}
 </style>
+<script>/* v155: NAVIGATOR のライト／ダーク（#…&th=light|dark）を、描く前に当てる */try{var _thm=/[#&]th=(light|dark)/.exec(location.hash);if(_thm)document.documentElement.setAttribute('data-theme',_thm[1]);}catch(e){}</script>
 </head>
 <body>
 
@@ -2760,10 +2784,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v154';
+var APP_VER = 'v155';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v155', d: '2026/11/16', items: ['🃏 カードコレクションを、パソコンの広い画面ではカードを横にたくさん並べるようにしました。NAVIGATOR のライト／ダークの表示にも合わせます'] },
   { v: 'v154', d: '2026/11/16', items: ['🏷 新規登録とプロフィールの所属ユニオンを、一覧から選ぶ形にしました（ユニオン名の書き方がばらばらにならないように）'] },
   { v: 'v153', d: '2026/11/16', items: ['👑 名簿に「タイトル」の列を追加。タイトルで並べ替え・「〇〇以上」で絞り込みができます', '📋 名簿の「📋 名前をコピー」：タイトル（例: RUBY以上・BR以上）で絞った名前の一覧をコピー・CSVで保存できます（NAVIGATORの先行利用に貼り付け用）', '📊 名簿のCSV出力に、グレード・タイトル・タイトル順位を追加'] },
   { v: 'v152', d: '2026/11/15', items: ['🔗 研修生登録：研修生のページに「次の担当に送る」を追加。LINEで送ったリンクをタップすると、番号を入れなくてもその研修生が開きます', '📷 研修生登録：「📷 QR」で本人の会員証のQRを読んで、研修生のページを開けるようにしました', '📋 番号・リンク・QRで開いた研修生は、自分の一覧にも残るようにしました'] },
@@ -5013,6 +5038,15 @@ function colMarkSeen(L){
   try{ localStorage.setItem('gm_card_seen', JSON.stringify(sn)); }catch(e){}
 }
 function colStart(){
+  // v155: 画面の幅が変わったら（PCで窓の大きさを変えた時など）、列の数を合わせ直す
+  var rzT = null;
+  window.addEventListener('resize', function(){
+    clearTimeout(rzT);
+    rzT = setTimeout(function(){
+      var g = document.querySelector('#colBox .col-grid.bind');
+      if(gCol && gCol.tab === 'col' && g && Math.abs(g.clientWidth - (gCol.w || 0)) > 30) colRender();
+    }, 200);
+  });
   showView('vCol');
   var box = $('colBox');
   box.innerHTML = '<p class="ol-load">読み込み中…</p>';
@@ -5092,10 +5126,14 @@ function colRender(){
   }
   box.innerHTML = '<div class="col-page">' + h + '</div>';
   [].forEach.call(box.querySelectorAll('[data-ct]'), function(b){ b.onclick = function(){ gCol.tab = b.getAttribute('data-ct'); colRender(); }; });
-  // 3列に入る幅（並べた後の実際の幅から）。集めたカードと影の枠を同じ大きさに
+  // 並べた後の実際の幅から、列の数とカードの幅を決める（スマホは3列・v155: PCは広さに合わせて4〜8列）。集めたカードと影の枠を同じ大きさに
   var grid = box.querySelector('.col-grid.bind'), cw = 150;
   if(grid){
-    cw = Math.max(84, Math.min(150, Math.floor((grid.clientWidth - 2 * 10) / 3)));
+    var gw = grid.clientWidth, wide = gw >= 600, gap = wide ? 16 : 10, max = wide ? 176 : 150;
+    var cols = wide ? Math.max(4, Math.min(8, Math.floor((gw + gap) / (max + gap)))) : 3;
+    grid.style.gridTemplateColumns = 'repeat(' + cols + ',1fr)'; grid.style.columnGap = gap + 'px';
+    cw = Math.max(84, Math.min(max, Math.floor((gw - (cols - 1) * gap) / cols)));
+    gCol.w = gw;
     [].forEach.call(grid.querySelectorAll('.col-gs'), function(g){ g.style.width = cw + 'px'; g.style.height = Math.round(cw * 500 / 328) + 'px'; });
     [].forEach.call(grid.querySelectorAll('.ol-mini small'), function(sm){ sm.style.maxWidth = cw + 'px'; });
   }

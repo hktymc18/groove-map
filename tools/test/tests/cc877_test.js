@@ -47,7 +47,7 @@ T.run(async () => {
   c('その場で自分のカードの購読が始まる（開き直さなくてよい）', w.currentUser.ckNo === 'A001' && subs.indexOf('olCheckouts') >= 0);
   w.cardColOpen();
   ov = w.document.getElementById('cardColOv');
-  c('紐付けた後は受付の #col を埋め込んで開く', ov && ov.querySelector('iframe') && /checkin\/index\.html#col$/.test(ov.querySelector('iframe').getAttribute('src')));
+  c('紐付けた後は受付の #col を埋め込んで開く', ov && ov.querySelector('iframe') && /checkin\/index\.html#col&th=(light|dark)$/.test(ov.querySelector('iframe').getAttribute('src')));
   w.cardColClose();
   w.confirm = cf0; w.fsSet = set0; w.db.collection = col0;
   c('APP_JS_VERSION v877 以上', +(/APP_JS_VERSION = 'v(\d+)'/.exec(require('fs').readFileSync(require('path').join(__dirname, '../../../app.js'), 'utf8')) || [0, 0])[1] >= 877);
