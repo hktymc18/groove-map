@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v880';
+var APP_JS_VERSION = 'v881';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4636,7 +4636,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v880';
+  var DATA_VERSION = 'v881';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6756,6 +6756,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v881', d:'2026-11-16', items:['🃏 カードコレクションを、パソコンでは広い画面で見られるようにし、NAVIGATOR のライト／ダークの表示に合わせました'] },
   { v:'v880', d:'2026-11-16', items:['🏷 所属ユニオンは、決めたユニオンの一覧からしか選べないようにしました。一覧に無い書き方のユニオン名の人は、次に開いた時に選び直してもらいます（オーナーはアカウント管理の「ユニオン名が一覧に無い」から直せます）'] },
   { v:'v879', d:'2026-11-15', items:['iPhoneのホーム画面アプリで、カレンダーが上にずれて下に空白ができることがあったのを直しました'] },
   { v:'v878', d:'2026-11-14', items:['受付連携：同じユニオンの人が各地域にいても、受付のユニオンにつながるようにしました（ユニオン名が同じなら、地域が違ってもつなぎます）'] },
@@ -16073,7 +16074,7 @@ function cardColOpen(get) {
   ov.innerHTML = '<div style="display:flex;align-items:center;gap:8px;padding:calc(env(safe-area-inset-top,0px) + 8px) 12px 8px;border-bottom:1px solid var(--border,#223)">'
     + '<b style="flex:1;font-size:16px">🃏 カードコレクション</b>'
     + '<span onclick="cardColClose()" style="padding:6px 10px;font-size:20px;cursor:pointer;color:var(--text-mid)" title="閉じる">✕</span></div>'
-    + (linked ? '<iframe src="checkin/index.html#col' + (get ? '&get=1' : '') + '" title="カードコレクション" style="flex:1;width:100%;border:0;background:transparent" allow="camera"></iframe>'
+    + (linked ? '<iframe src="checkin/index.html#col' + (get ? '&get=1' : '') + '&th=' + (document.body.classList.contains('light') ? 'light' : 'dark') + '" title="カードコレクション" style="flex:1;width:100%;border:0;background:transparent" allow="camera"></iframe>'
       : _cardColGuide()); // v877: まだ受付の名簿と紐付いていない人には案内
   document.body.appendChild(ov);
 }
