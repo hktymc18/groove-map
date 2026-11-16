@@ -13,8 +13,9 @@ const base = (x) => Object.assign({
   'users/day1': user('見本 でい'), 'users/day2': user('見本 じゅんび'), 'users/adm1': user('見本 うけつけ'), 'users/ua1': user('見本 かんり'), 'users/ld1': user('見本 りいだ'),
   'users/m1': user('見本 めんば'),
   'ckNotice/ANTARES': { items: [{ t: '12月のDAYは、14時からの開始です。', d: '2026-11-09' }] },
-  'ckLounge/w1': { union: 'ANTARES', uid: 'u1', n: '見本 はなこ', co: 'ダイエット編', t: '今週は毎日歩けました', st: 'wait', at: 1 },
-  'ckLounge/w2': { union: 'ANTARES', uid: 'u2', n: '見本 さくら', t: 'これでアトピーが治った！', st: 'wait', at: 2 },
+  // v156: 承認なし。投稿はすぐ出る（ok）。効果をうたう言葉の入った投稿は「気になる投稿」
+  'ckLounge/w1': { union: 'ANTARES', uid: 'u1', n: '見本 はなこ', co: 'ダイエット編', t: '今週は毎日歩けました', st: 'ok', at: 1, okAt: 6 },
+  'ckLounge/w2': { union: 'ANTARES', uid: 'u2', n: '見本 さくら', t: 'これでアトピーが治った！', st: 'ok', at: 2, okAt: 7 },
   'ckLounge/o1': { union: 'ANTARES', uid: 'u3', n: '見本 ゆり', t: '夜のスキンケア、3日続きました', st: 'ok', okAt: 5 },
   'ckLounge/n1': { union: 'ANTARES', uid: 'u4', n: '見本 まり', t: 'やせた！', st: 'ng', at: 3 } }, x || {});
 const tabOn = `!document.querySelector('nav button[data-pane="pBeauty"]').classList.contains('hide')`;
@@ -27,27 +28,28 @@ const dotOn = `!document.querySelector('nav button[data-pane="pBeauty"] .nav-dot
     await page.addStyleTag({ content: '#toast,#rnPopOv,#gxHint{display:none!important}' });
     c('DAYスタッフ：「💜 Beauty」タブが出る' + (dark ? '（ダーク）' : ''), await ev(tabOn));
     c('DAYスタッフ：名簿・集計・会計のタブは出ない', await ev(`['pRoster','pStats','pFin'].every(function(p){ return document.querySelector('nav button[data-pane="'+p+'"]').classList.contains('hide'); })`));
-    c('確認待ちがあるとタブに赤丸', await ev(dotOn));
+    c('v156: 効果をうたう言葉の入った投稿が出ているとタブに赤丸', await ev(dotOn));
     await page.click('nav button[data-pane="pBeauty"]'); await wt(600);
     const t = await ev(`document.getElementById('btBody').innerText`);
-    c('いま対応すること：確認待ち2件・お知らせ1件', /いま対応すること — ANTARES/.test(t) && /2件\s*ラウンジの確認待ち/.test(t) && /1件\s*出ているお知らせ/.test(t), t);
-    c('お知らせ・ラウンジ・クエストの編集の3つ', /ユーザーへのお知らせ/.test(t) && /14時からの開始/.test(t) && /ラウンジの確認/.test(t) && /クエストの編集/.test(t));
+    c('いま対応すること：気になる投稿1件・お知らせ1件', /いま対応すること — ANTARES/.test(t) && /1件\s*ラウンジの気になる投稿/.test(t) && /1件\s*出ているお知らせ/.test(t), t);
+    c('お知らせ・ラウンジ・クエストの編集の3つ', /ユーザーへのお知らせ/.test(t) && /14時からの開始/.test(t) && /💬 ラウンジ/.test(t) && /クエストの編集/.test(t));
+    c('v156: ラウンジは「出ている｜取り下げた」（確認待ちは無い時は出ない）・はじめは出ている', (await ev(`[].map.call(document.querySelectorAll('#btLgSeg [data-seg]'), function(x){ return x.getAttribute('data-seg'); }).join('|')`)) === 'ok|ng'
+      && (await ev(`document.querySelector('#btLgSeg .on').getAttribute('data-seg')`)) === 'ok' && /出ている（3）/.test(await ev(`document.getElementById('btLgSeg').innerText`)));
+    c('v156: 気になる投稿は黄色・「取り下げてください」', (await ev(`document.querySelectorAll('#btLgList .lg-q.warn').length`)) === 1 && /取り下げてください/.test(await ev(`document.getElementById('btLgList').innerText`)));
     c('DAYスタッフ：「🌸 DAYスタッフ」を決めるボタンは出ない', await ev(`document.getElementById('btnDayStaff').classList.contains('hide')`));
     c('横にはみ出さない', (await ev('document.documentElement.scrollWidth')) === 390);
     await page.screenshot({ path: OUT + '/ckbt139_day' + (dark ? '_d' : '') + '.png', fullPage: true });
     if (!dark) {
-      await ev(`document.querySelector('#btLgList [data-lgok="w1"]').click()`); await wt(500);
-      const w1 = JSON.parse(await ev(`JSON.stringify(window.__FBDATA['ckLounge/w1'])`));
-      c('DAYスタッフが「出す」→ ok・出した人', w1.st === 'ok' && w1.by === 'day1', JSON.stringify(w1));
-      c('一覧と件数がその場で変わる（確認待ち1）', /確認待ち（1）/.test(await ev(`document.getElementById('btLgSeg').innerText`)) && /1件\s*ラウンジの確認待ち/.test(await ev(`document.getElementById('btBody').innerText`)));
       await ev(`document.querySelector('#btLgList [data-lgng="w2"]').click()`); await wt(500);
-      c('「出さない」→ 確認待ちが0で赤丸が消える', (await ev(`window.__FBDATA['ckLounge/w2'].st`)) === 'ng' && !(await ev(dotOn)) && /確認待ちの投稿はありません/.test(await ev(`document.getElementById('btLgList').innerText`)));
+      const w2 = JSON.parse(await ev(`JSON.stringify(window.__FBDATA['ckLounge/w2'])`));
+      c('DAYスタッフが「取り下げる」→ ng・した人', w2.st === 'ng' && w2.by === 'day1', JSON.stringify(w2));
+      c('気になる投稿が0で赤丸が消える・一覧がその場で変わる', !(await ev(dotOn)) && /0件\s*ラウンジの気になる投稿/.test(await ev(`document.getElementById('btBody').innerText`)) && /出ている（2）/.test(await ev(`document.getElementById('btLgSeg').innerText`)));
       await ev(`document.querySelector('#btLgSeg [data-seg="ng"]').click()`); await wt(500);
       const ng = await ev(`document.getElementById('btLgList').innerText`);
-      c('「出さなかった」に前の分といま出さなかった分', /やせた！/.test(ng) && /アトピー/.test(ng), ng);
+      c('「取り下げた」に前の分といま取り下げた分', /やせた！/.test(ng) && /アトピー/.test(ng), ng);
       await page.screenshot({ path: OUT + '/ckbt139_ng.png', fullPage: true });
       await ev(`document.querySelector('#btLgList [data-lgok="n1"]').click()`); await wt(500);
-      c('「やっぱり出す」→ ok', (await ev(`window.__FBDATA['ckLounge/n1'].st`)) === 'ok');
+      c('「戻す」→ ok', (await ev(`window.__FBDATA['ckLounge/n1'].st`)) === 'ok');
       await ev(`document.querySelector('#btLgSeg [data-seg="ok"]').click()`); await wt(500);
       const okt = await ev(`document.getElementById('btLgList').innerText`);
       c('「出ている」に出した投稿', /今週は毎日歩けました/.test(okt) && /やせた！/.test(okt) && /夜のスキンケア/.test(okt), okt);

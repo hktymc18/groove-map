@@ -41,7 +41,7 @@ const TA = '0123456789abcdef0123456789abcdef', UA = 'u17620000000001';
   await page.click('#uaTabs [data-tab="home"]'); await wt(200);
   // ③ 自分の投稿が出せなかった
   await reopen({ 'ckLounge/m1': { union: 'ANTARES', uid: UA, n: '見本 はなこ', t: 'やせた！', st: 'ng', at: 1 }, ['cards/' + TA + '/lounge/m1']: { at: 1 } });
-  c('自分の投稿が「出せませんでした」→ なかまに赤丸', /friends:1/.test(await dots()), await dots());
+  c('自分の投稿をスタッフが取り下げた → なかまに赤丸', /friends:1/.test(await dots()), await dots());
   await page.click('#uaTabs [data-tab="friends"]'); await wt(300);
   c('見ると消える', /friends:0/.test(await dots()), await dots());
   // ④ 自分の投稿が出た（ほかの人の投稿ではない）→ 赤丸なし

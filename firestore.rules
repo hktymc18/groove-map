@@ -1308,7 +1308,9 @@ service cloud.firestore {
         && existsAfter(/databases/$(database)/documents/cards/$(tk)/buddy/me)
         && getAfter(/databases/$(database)/documents/cards/$(tk)/buddy/me).data.get('k', '') == k;
     }
-    // 💜 受付v131: ラウンジ（同じユニオンのユーザーのひとこと）。スタッフが「出す」を押した投稿だけが出る
+    // 💜 受付v131: ラウンジ（同じユニオンのユーザーのひとこと）。st == 'ok' の投稿だけが出る
+    //   v156: 承認はいらない。本人は st: ok・okAt（今の時刻）で投稿し、すぐ出る。スタッフは取り下げ（ng）・戻す（ok）
+    //   （前の版の画面から来る st: wait の投稿も受け付ける。スタッフが「出す」と出る）
     //   ckLounge/{投稿のキー} = { union, uid, n, co, t, st: wait|ok|ng, at, okAt, by }
     //   cards/{トークン}/lounge/{投稿のキー} … 自分の投稿の印（パスにトークン＝本人だけ。投稿・取り消しと同じ一括書き込み）
     //   ckLounge/{投稿のキー}/clap/{ユーザーのID} と cards/{トークン}/clap/{投稿のキー} … 👏（1人1回）
@@ -1316,15 +1318,16 @@ service cloud.firestore {
       allow get: if true;
       allow list: if resource.data.st == 'ok' || ckLoungeStaff(resource.data.get('union', ''));
       allow create: if pid.matches('^[a-z0-9]{20}$')
-        && request.resource.data.keys().hasOnly(['union', 'uid', 'n', 'co', 't', 'st', 'at'])
-        && request.resource.data.get('st', '') == 'wait'
+        && request.resource.data.keys().hasOnly(['union', 'uid', 'n', 'co', 't', 'st', 'at', 'okAt'])
+        && ((request.resource.data.get('st', '') == 'ok' && request.resource.data.get('okAt', null) == request.time)
+            || (request.resource.data.get('st', '') == 'wait' && !('okAt' in request.resource.data)))
         && request.resource.data.get('at', null) == request.time
         && request.resource.data.get('t', '') is string && request.resource.data.get('t', '').size() > 0 && request.resource.data.get('t', '').size() <= 60
         && request.resource.data.get('co', '') is string && request.resource.data.get('co', '').size() <= 30
         && request.resource.data.get('uid', '') is string && request.resource.data.get('uid', '') != ''
         && exists(/databases/$(database)/documents/cardClaims/$(request.resource.data.uid))
         && ckLoungeOwn(pid, request.resource.data, get(/databases/$(database)/documents/cardClaims/$(request.resource.data.uid)).data.get('t', '_'));
-      // スタッフ：出す・出さない・取り下げ
+      // スタッフ：取り下げ（ng）・戻す（ok）・前の版の確認待ちを出す
       allow update: if ckLoungeStaff(resource.data.get('union', ''))
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['st', 'okAt', 'by'])
         && request.resource.data.st in ['ok', 'ng']

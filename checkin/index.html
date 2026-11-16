@@ -1073,6 +1073,7 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .lg-post .lg-t{grid-column:1;font-size:14px;line-height:1.6;overflow-wrap:anywhere;}
 .lg-clap{grid-column:2;grid-row:1 / span 2;padding:6px 10px;font-size:13px;border-radius:999px;}
 .lg-clap.on{background:#fff4e6;border-color:#f0892b;color:#7a3e0c;opacity:1;}
+.lg-del{grid-column:2;justify-self:end;padding:2px 6px;font-size:11.5px;background:none;border:none;color:var(--sub);text-decoration:underline;}   /* v156: 自分の投稿を消す */
 .lg-mine{display:grid;gap:6px;margin-top:10px;}
 .lg-mrow{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px dashed var(--line);border-radius:10px;font-size:13px;}
 .lg-mrow .lg-t{flex:1;min-width:0;overflow-wrap:anywhere;}
@@ -1913,7 +1914,7 @@ body.practice .topbar{top:var(--pxh,36px);}
     <div id="mpArea"></div><!-- 💜 ユーザーのマイプラン（コース・毎日のクエスト・連続・レベル・バッジ） -->
     <div id="bdArea"></div><!-- 💜 ユーザーのバディ（QRを読み合う・連続日数とバッジだけ見える） -->
     <div id="fiArea"></div><!-- 💜 ユーザーの「友だちを招待」（招待リンク・来てくれた友だち） -->
-    <div id="lgArea"></div><!-- 💜 ユーザーのラウンジ（同じユニオンのひとこと・スタッフが確認してから出る） -->
+    <div id="lgArea"></div><!-- 💜 ユーザーのラウンジ（同じユニオンのひとこと・投稿するとすぐ出る。v156） -->
     <div id="rsvpTop"></div>
     <div id="selfArea"></div>
     <div id="hwArea"></div><!-- 📝 宿題は受講記録の一覧より上（記録が増えても埋もれないように） -->
@@ -2784,10 +2785,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v155';
+var APP_VER = 'v156';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v156', d: '2026/11/16', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v155', d: '2026/11/16', items: ['🃏 カードコレクションを、パソコンの広い画面ではカードを横にたくさん並べるようにしました。NAVIGATOR のライト／ダークの表示にも合わせます'] },
   { v: 'v154', d: '2026/11/16', items: ['🏷 新規登録とプロフィールの所属ユニオンを、一覧から選ぶ形にしました（ユニオン名の書き方がばらばらにならないように）'] },
   { v: 'v153', d: '2026/11/16', items: ['👑 名簿に「タイトル」の列を追加。タイトルで並べ替え・「〇〇以上」で絞り込みができます', '📋 名簿の「📋 名前をコピー」：タイトル（例: RUBY以上・BR以上）で絞った名前の一覧をコピー・CSVで保存できます（NAVIGATORの先行利用に貼り付け用）', '📊 名簿のCSV出力に、グレード・タイトル・タイトル順位を追加'] },
@@ -15598,7 +15600,8 @@ function ckBuddyRemoveAsk(ok){
   };
 }
 /* 💜 v131: ラウンジ（ユーザーのカード・友だちを招待の下）。同じユニオンのユーザーのひとこと（60文字まで・文字だけ）。
-   投稿はスタッフが「出す」を押してから出る（名簿 → ユーザー → 💬 ラウンジの確認）。返事はなく、👏（1人1回）だけ。
+   v156: 承認はいらない。投稿するとすぐ出る（st: ok）。効果をうたう言葉（CK_LG_WARN）が入った投稿はできない。
+   ふさわしくない投稿は、スタッフが「💜 Beauty」タブで取り下げる。本人は自分の投稿を消せる。返事はなく、👏（1人1回）だけ。
    出ている投稿は端末に10分覚える（読み込みを減らす） */
 var CK_LG_WARN = ['治る', '治った', '治す', '治り', '完治', '効く', '効いた', '効き', '効果', 'やせ', '痩せ', '改善', '病気', '薬', 'アトピー', '副作用', '医師', '医者'];
 function ckLoungeOk(un, fresh){
@@ -15651,21 +15654,22 @@ function lgDraw(){
   var L = gLg, el = $('lgArea');
   if(!el || !L) return;
   el.innerHTML = '<div class="lgwrap"><div class="next-head">LOUNGE</div>'
-    + '<p class="ui-s">同じユニオンの人のひとこと。スタッフが確認してから出ます。</p>'
+    + '<p class="ui-s">同じユニオンの人のひとこと。投稿すると、すぐに出ます。</p>'
     + (L.list.length ? '<div class="lg-list">' + L.list.map(function(p){
         var mine = p.uid === String(L.c.no), on = !!L.claps[p.id];
         return '<div class="lg-post"><span class="lg-who">' + esc(p.n) + ' さん' + (p.co ? ' ・ ' + esc(p.co) : '') + '</span>'
           + '<span class="lg-t">' + esc(p.t) + '</span>'
-          + '<button type="button" class="lg-clap' + (on ? ' on' : '') + '" data-clap="' + esc(p.id) + '"' + (mine || on ? ' disabled' : '') + ' aria-label="拍手">👏 ' + (p.claps || 0) + '</button></div>';
+          + '<button type="button" class="lg-clap' + (on ? ' on' : '') + '" data-clap="' + esc(p.id) + '"' + (mine || on ? ' disabled' : '') + ' aria-label="拍手">👏 ' + (p.claps || 0) + '</button>'
+          + (mine ? '<button type="button" class="lg-del" data-lgdel="' + esc(p.id) + '">消す</button>' : '') + '</div>';
       }).join('') + '</div>' : '<p class="pz-note">まだ投稿はありません。</p>')
     + (L.mine.length ? '<div class="lg-mine">' + L.mine.map(function(m){
-        return '<div class="lg-mrow"><span class="lg-t">' + esc(m.t) + '</span><span class="lg-st' + (m.st === 'ng' ? ' ng' : '') + '">' + (m.st === 'ng' ? '出せませんでした' : '確認待ち') + '</span>'
+        return '<div class="lg-mrow"><span class="lg-t">' + esc(m.t) + '</span><span class="lg-st' + (m.st === 'ng' ? ' ng' : '') + '">' + (m.st === 'ng' ? 'スタッフが取り下げました' : '確認待ち') + '</span>'
           + '<button type="button" data-lgdel="' + esc(m.id) + '">' + (m.st === 'ng' ? '消す' : '取り消す') + '</button></div>';
       }).join('') + '</div>' : '')
     + '<label for="lgText" class="lg-lb">ひとこと投稿する</label>'
     + '<textarea id="lgText" rows="2" maxlength="60" placeholder="例: 今週は毎日15分歩けました"></textarea>'
     + '<button type="button" class="primary" id="lgGo" style="width:100%;margin-top:8px;">投稿する</button>'
-    + '<p class="pz-note">60文字まで。お名前と一緒に、同じユニオンの人に出ます。スタッフが確認してから出ます。</p>'
+    + '<p class="pz-note">60文字まで。お名前と一緒に、同じユニオンの人にすぐ出ます。治る・やせる など、効果をうたう言葉は投稿できません。ふさわしくない投稿は、スタッフが取り下げることがあります。</p>'
     + '</div>';
   $('lgGo').onclick = ckLoungePost;
   Array.prototype.forEach.call(el.querySelectorAll('[data-clap]'), function(b){ b.onclick = function(){ ckLoungeClap(b.getAttribute('data-clap')); }; });
@@ -15676,19 +15680,23 @@ function ckLoungePost(){
   var L = gLg, c = L.c, tx = $('lgText').value.replace(/\s+/g, ' ').trim();
   if(!tx){ toast('ひとことを入れてください'); return; }
   if(tx.length > 60){ toast('60文字までで入れてください'); return; }
+  var ws = CK_LG_WARN.filter(function(w){ return tx.indexOf(w) >= 0; });
+  if(ws.length){ toast('効果をうたう言葉（' + ws.join('・') + '）は投稿できません。言いかえてください'); return; }
   var dk = 'bci_lgn_' + c.no + '_' + todayStr(), n = 0;
   try{ n = +localStorage.getItem(dk) || 0; }catch(e){}
   if(n >= 3){ toast('投稿は1日3回までです。また明日どうぞ'); return; }
   var co = (gMp && gMp.token === L.token && gMp.plan && mpCourse(gMp.plan.course)) ? mpCourse(gMp.plan.course).n : '';
   var id = ckApplyNewId(20), adb = ckAnonDb(), b = adb.batch();
-  b.set(adb.collection('ckLounge').doc(id), { union: c.union || '', uid: String(c.no), n: c.name || '', co: co, t: tx, st: 'wait', at: FV.serverTimestamp() });
+  b.set(adb.collection('ckLounge').doc(id), { union: c.union || '', uid: String(c.no), n: c.name || '', co: co, t: tx, st: 'ok', at: FV.serverTimestamp(), okAt: FV.serverTimestamp() });
   b.set(adb.collection('cards').doc(L.token).collection('lounge').doc(id), { at: FV.serverTimestamp() });
   $('lgGo').disabled = true;
   b.commit().then(function(){
     try{ localStorage.setItem(dk, String(n + 1)); }catch(e){}
-    L.mine.unshift({ id: id, t: tx, st: 'wait', at: Date.now() });
+    L.list.unshift({ id: id, n: c.name || '', co: co, t: tx, uid: String(c.no), okAt: Date.now(), claps: 0 });
+    L.list = L.list.slice(0, 10);
+    ckLoungeForget(c.union || '');   // 端末の覚えを捨てる（開き直しても自分の投稿が出る）
     lgDraw();
-    toast('投稿しました。スタッフが確認してから出ます');
+    toast('投稿しました。同じユニオンの人に出ています');
   }).catch(function(){ $('lgGo').disabled = false; toast('投稿できませんでした。電波の良いところで、もう一度押してください'); });
 }
 function ckLoungeCancel(id){
@@ -15700,7 +15708,9 @@ function ckLoungeCancel(id){
     return adb.collection('cards').doc(L.token).collection('lounge').doc(id)['delete']();
   }).then(function(){
     L.mine = L.mine.filter(function(m){ return m.id !== id; });
-    lgDraw(); toast('取り消しました');
+    L.list = L.list.filter(function(p){ return p.id !== id; });
+    ckLoungeForget(L.c.union || '');
+    lgDraw(); toast('消しました');
   }).catch(function(){ toast('取り消せませんでした。電波の良いところで、もう一度押してください'); });
 }
 function ckLoungeClap(id){
@@ -15718,11 +15728,11 @@ function ckLoungeClap(id){
   });
 }
 /* 💜 v139: 「💜 Beauty」タブ（ユーザー向けの管理）。使えるのはオーナー・ユニオン管理者・DAY HOST（準備中のあいだは確認メンバーだけ）
-   ・いま対応すること（ラウンジの確認待ち・出ているお知らせ）。確認待ちがあるとタブに赤丸
-   ・ユーザーへのお知らせ（ckNotice/{ユニオン}・新しい5件まで）・ラウンジの確認（確認待ち｜出ている｜出さなかった）
+   ・いま対応すること（v156: 効果をうたう言葉が入ったラウンジの投稿・出ているお知らせ）。対応する投稿があるとタブに赤丸
+   ・ユーザーへのお知らせ（ckNotice/{ユニオン}・新しい5件まで）・ラウンジ（出ている｜取り下げた。v156: 承認はなく、投稿はすぐ出る）
    ・DAY HOST を決める（オーナー・ユニオン管理者）
-   読み取りを減らす：開いた時に読むのはお知らせと確認待ちだけ。「出ている」「出さなかった」は押した時に読む。1分以内なら読み直さない */
-var gBtUnion = '', gBt = null, gBtSeg = 'wait';
+   読み取りを減らす：開いた時に読むのはお知らせと、出ている投稿の新しい30件（と前の版の確認待ち）。「取り下げた」は押した時に読む */
+var gBtUnion = '', gBt = null, gBtSeg = 'ok';
 function ckBtUnions(){
   if(!gUser || !ckBeautyOn()) return [];
   return gUnions.filter(function(u){ return isCoreAdmin(u) || isDayStaff(u); });
@@ -15743,13 +15753,13 @@ function ckBtApply(){
     return;
   }
   if(gBt && gBt.recvOnly) gBt = null;
-  if(us.indexOf(gBtUnion) < 0){ gBtUnion = us.indexOf(gUnion) >= 0 ? gUnion : us[0]; gBt = null; gBtSeg = 'wait'; }
+  if(us.indexOf(gBtUnion) < 0){ gBtUnion = us.indexOf(gUnion) >= 0 ? gUnion : us[0]; gBt = null; gBtSeg = 'ok'; }
   fillUnionSel($('btUnionSel'), gBtUnion, us);
   $('btnDayStaff').classList.toggle('hide', !isCoreAdmin(gBtUnion));
-  if(!gBt) btLoad();   // 赤丸のために、確認待ちを読んでおく
+  if(!gBt) btLoad();   // 赤丸のために、出ている投稿を読んでおく
 }
 $('btUnionSel').onchange = function(){
-  gBtUnion = $('btUnionSel').value; gBt = null; gBtSeg = 'wait';   // v145: DAYの体感（gBt.dy）も読み直し
+  gBtUnion = $('btUnionSel').value; gBt = null; gBtSeg = 'ok';   // v145: DAYの体感（gBt.dy）も読み直し
   $('btnDayStaff').classList.toggle('hide', !isCoreAdmin(gBtUnion));
   btLoad();
 };
@@ -15768,18 +15778,28 @@ function btLoad(){
   btDraw();
   Promise.all([
     db.collection('ckNotice').doc(un).get(),
-    db.collection('ckLounge').where('union', '==', un).where('st', '==', 'wait').get(),
-    db.collection('ckQuest').doc(un).get()
+    db.collection('ckLounge').where('union', '==', un).where('st', '==', 'wait').get(),   // 前の版で投稿された確認待ち（ふつうは0件）
+    db.collection('ckQuest').doc(un).get(),
+    btOkQuery(un)
   ]).then(function(r){
     if(gBt !== me) return;
     me.items = ((r[0].exists && r[0].data().items) || []).slice(0, 5);
     me.wait = btRows(r[1], 'wait', un);
+    me.ok = btRows(r[3], 'ok', un);
     me.qd = (r[2].exists && r[2].data().co) || null;
     if(!(gBtQe && gBtQe.un === un && gBtQe.dirty)) gBtQe = null;   // 直している途中なら、読み直しても消さない
+    if(gBtSeg === 'wait' && !me.wait.length) gBtSeg = 'ok';
     btDraw();
-    if(gBtSeg !== 'wait') btSegLoad(gBtSeg);
+    if(gBtSeg === 'ng') btSegLoad(gBtSeg);
   }).catch(function(e){ if(gBt === me){ me.err = permMsg(e, '読めませんでした。ルールの反映をオーナーに確認してください'); btDraw(); } });
 }
+// v156: 出ている投稿の新しい30件（索引 union・st・okAt。無い時は代わりの読み方）
+function btOkQuery(un){
+  var q = db.collection('ckLounge').where('union', '==', un).where('st', '==', 'ok');
+  return q.orderBy('okAt', 'desc').limit(30).get().catch(function(){ return q.limit(60).get(); });
+}
+function btLgWarn(x){ return CK_LG_WARN.some(function(w){ return String(x.t || '').indexOf(w) >= 0; }); }
+function btLgTodo(me){ return (me.wait || []).length + (me.ok || []).filter(btLgWarn).length; }
 function btSegLoad(seg){
   var me = gBt;
   if(!me || me[seg]){ btDraw(); return; }
@@ -15791,7 +15811,7 @@ function btSegLoad(seg){
 }
 function btDot(){
   var d = document.querySelector('nav button[data-pane="pBeauty"] .nav-dot');
-  if(d) d.hidden = !(gBt && gBt.wait && gBt.wait.length);
+  if(d) d.hidden = !(gBt && gBt.ok && btLgTodo(gBt));
 }
 // 名前・コース・文（効果をうたう言葉は黄色）と、押せるボタン
 function ckLgMark(t){
@@ -15800,13 +15820,13 @@ function ckLgMark(t){
   return s;
 }
 function btLgRow(x, seg){
-  var warn = CK_LG_WARN.some(function(w){ return String(x.t || '').indexOf(w) >= 0; });
+  var warn = btLgWarn(x);
   var btns = seg === 'wait' ? '<button data-lgok="' + esc(x.id) + '" class="primary">出す</button><button data-lgng="' + esc(x.id) + '">出さない</button>'
     : seg === 'ok' ? '<button data-lgng="' + esc(x.id) + '" class="danger ghost">取り下げる</button>'
-    : '<button data-lgok="' + esc(x.id) + '">やっぱり出す</button>';
+    : '<button data-lgok="' + esc(x.id) + '">戻す</button>';
   return '<div class="lg-q' + (warn ? ' warn' : '') + '"><div class="lg-qh"><b>' + esc(x.n || '') + '</b>' + (x.co ? ' <small>' + esc(x.co) + '</small>' : '') + '</div>'
     + '<div class="lg-qt">' + ckLgMark(x.t || '') + '</div>'
-    + (warn && seg !== 'ng' ? '<p class="lg-qw">⚠️ 効果をうたう言葉が入っています。出さないでください</p>' : '')
+    + (warn && seg !== 'ng' ? '<p class="lg-qw">⚠️ 効果をうたう言葉が入っています。' + (seg === 'ok' ? '取り下げてください' : '出さないでください') + '</p>' : '')
     + '<div class="lg-qb">' + btns + '</div></div>';
 }
 function btDraw(){
@@ -15819,14 +15839,14 @@ function btDraw(){
     return;
   }
   var keep = $('btNtText') ? $('btNtText').value : '';
-  var nW = me.wait.length, list = me[gBtSeg];
+  var nW = me.wait.length, nT = btLgTodo(me), list = me[gBtSeg];
   var empty = function(t){ return '<p style="font-size:12.5px;color:var(--sub);margin:6px 0 0;">' + t + '</p>'; };
-  var segs = [['wait', '確認待ち'], ['ok', '出ている'], ['ng', '出さなかった']];
+  var segs = (nW ? [['wait', '確認待ち']] : []).concat([['ok', '出ている'], ['ng', '取り下げた']]);
   box.innerHTML = '<div class="bt-wrap">'
     + '<div class="bt-box"><h3>いま対応すること — ' + esc(me.un) + '</h3><div class="bt-todo">'
-    +   '<button type="button" data-go="btLg"' + (nW ? ' class="hot"' : '') + '><b>' + nW + '件</b>ラウンジの確認待ち</button>'
+    +   '<button type="button" data-go="btLg"' + (nT ? ' class="hot"' : '') + '><b>' + nT + '件</b>ラウンジの気になる投稿</button>'
     +   '<button type="button" data-go="btNt"><b>' + me.items.length + '件</b>出ているお知らせ（5件まで）</button>'
-    + '</div>' + (nW ? '' : '<p class="bt-note">確認待ちの投稿はありません。</p>') + '</div>'
+    + '</div>' + (nT ? '' : '<p class="bt-note">効果をうたう言葉が入った投稿はありません。</p>') + '</div>'
     + '<div class="bt-box" id="btDay"></div>'
     + '<div class="bt-box" id="btRq"></div>'
     + '<div class="bt-box hide" id="btFu"></div>'
@@ -15840,13 +15860,13 @@ function btDraw(){
             + '<button type="button" data-del="' + i + '" class="danger ghost" style="flex:0 0 auto;">消す</button></div>';
         }).join('') : empty('まだありません。'))
     +   '</div></div>'
-    + '<div class="bt-box" id="btLg"><h3>💬 ラウンジの確認' + hq('ユーザーのアプリの「ラウンジ」に出す投稿を決めます。「出す」を押した投稿だけが、同じユニオンのユーザーに出ます。治る・やせる・効く など、効果をうたう言葉が入った投稿は出さないでください（黄色で目立たせています）。') + '</h3>'
+    + '<div class="bt-box" id="btLg"><h3>💬 ラウンジ' + hq('ユーザーの投稿は、承認なしで、すぐ同じユニオンのユーザーのアプリに出ます。治る・やせる・効く など効果をうたう言葉は、アプリで投稿できないようにしています。ふさわしくない投稿は「取り下げる」で出ないようにできます（アプリには10分ほどで反映）。効果をうたう言葉が入った投稿は黄色で目立たせ、タブに赤丸が付きます。') + '</h3>'
     +   '<div class="rkseg" id="btLgSeg" role="tablist">' + segs.map(function(g){
           var n = g[0] === 'wait' ? nW : me[g[0]] ? me[g[0]].length : null;
           return '<button type="button" role="tab" data-seg="' + g[0] + '"' + (g[0] === gBtSeg ? ' class="on" aria-selected="true"' : ' aria-selected="false"') + '>' + g[1] + (n === null ? '' : '（' + n + '）') + '</button>';
         }).join('') + '</div>'
     +   '<div id="btLgList">' + (list ? (list.length ? list.map(function(x){ return btLgRow(x, gBtSeg); }).join('')
-          : empty(gBtSeg === 'wait' ? '確認待ちの投稿はありません。' : gBtSeg === 'ok' ? '出ている投稿はありません。' : '出さなかった投稿はありません。'))
+          : empty(gBtSeg === 'wait' ? '確認待ちの投稿はありません。' : gBtSeg === 'ok' ? '出ている投稿はありません。' : '取り下げた投稿はありません。'))
           + (gBtSeg !== 'wait' && list.length >= 30 ? '<p class="bt-note">新しい30件を出しています。</p>' : '')
         : empty('読み込み中…')) + '</div>'
     + '</div>'
@@ -16882,7 +16902,7 @@ function btLgSet(b){
   if(okk) up.okAt = FV.serverTimestamp();
   b.disabled = true;
   db.collection('ckLounge').doc(id).update(up).then(function(){
-    toast(okk ? '出しました。ユーザーのアプリには10分ほどで出ます' : '出さないにしました');
+    toast(okk ? '出しました。ユーザーのアプリには10分ほどで出ます' : '取り下げました。ユーザーのアプリからは10分ほどで消えます');
     if(gBt !== me) return;
     // 読み直さずに、手元の一覧を動かす
     var post = null;
