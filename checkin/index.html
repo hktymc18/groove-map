@@ -1587,7 +1587,7 @@ body.practice .topbar{top:var(--pxh,36px);}
       <label for="suName">名前</label><input type="text" id="suName">
       <label for="suEmail">メールアドレス</label><input type="email" id="suEmail" autocomplete="email">
       <label for="suPw">パスワード（6文字以上）</label><input type="password" id="suPw" autocomplete="new-password">
-      <label for="suUnion">所属ユニオン</label><input type="text" id="suUnion" placeholder="例: ANTARES">
+      <label for="suUnion">所属ユニオン</label><select id="suUnion" class="ck-unsel"><option value="">所属ユニオンを選択</option></select>
       <label for="suArea">活動地域</label><input type="text" id="suArea" placeholder="例: 福岡">
       <label for="suUpRuby">アップRUBY</label><input type="text" id="suUpRuby">
       <label for="suUpBd">アップBD</label><input type="text" id="suUpBd">
@@ -1604,7 +1604,7 @@ body.practice .topbar{top:var(--pxh,36px);}
     <h1>プロフィール登録</h1>
     <p class="s">受付システムの利用には所属ユニオンの登録が必要です。</p>
     <label for="pfName">名前</label><input type="text" id="pfName">
-    <label for="pfUnion">所属ユニオン</label><input type="text" id="pfUnion" placeholder="例: ANTARES">
+    <label for="pfUnion">所属ユニオン</label><select id="pfUnion" class="ck-unsel"><option value="">所属ユニオンを選択</option></select>
     <label for="pfArea">活動地域</label><input type="text" id="pfArea">
     <label for="pfUpRuby">アップRUBY</label><input type="text" id="pfUpRuby">
     <label for="pfUpBd">アップBD</label><input type="text" id="pfUpBd">
@@ -2370,6 +2370,35 @@ var gUnionPrefix = {};      // ユニオン名 → 会員番号プレフィッ�
 // 初期の命名規則（ユニオン設定で上書き可能）
 // 2026-10 のユニオン名変更（旧名 → 新名）。古いアプリから旧名で保存し直された人を、ログイン時に新しい名前へ直す
 var CK_UNION_RENAMED = { 'BASE ANTARES': 'ANTARES', 'BASE REVE': 'REVE', 'LIEN LOAD': 'ALTAIR', 'LOAD': 'ALTAIR' };   // 2026-11: LOAD → ALTAIR
+/* 🏷 v154: 登録・プロフィールの所属ユニオンは、オーナーが決めた一覧（NAVIGATOR のアカウント管理「ユニオンとUPBD」＝appConfig/unions）から選ぶだけ。
+   前は自由に文字を入れる欄で、表記ゆれ（大文字小文字・空白・別名）のユニオン名のアカウントができていた。
+   一覧を読めない時は、NAVIGATOR に入っている初期の一覧（名前だけ）を使う */
+var CK_UNION_NAMES0 = ['GRANT', 'PRESTO', 'LIEN', 'BEYOND', 'FELIN', 'FORMULA', 'REVITALIZE', 'INFLUENCE', 'ANTARES', 'REVE', 'ALTAIR', 'DEFI', 'GRANDIR', 'SFIDA', 'AMASIA', 'UPBD'];
+var gUnionList = null;   // [{ name, upbd }]
+function ckUnionL(){ return gUnionList || CK_UNION_NAMES0.map(function(n){ return { name: n, upbd: '' }; }); }
+function ckUnionNames(){ return ckUnionL().map(function(u){ return u.name; }); }
+function ckUnionFill(){
+  [['suUnion', 'suUpBd'], ['pfUnion', 'pfUpBd']].forEach(function(t){
+    var sel = $(t[0]); if(!sel || sel.tagName !== 'SELECT') return;
+    var v = sel.value;
+    sel.innerHTML = '<option value="">所属ユニオンを選択</option>' + ckUnionL().map(function(u){ return '<option value="' + esc(u.name) + '" data-upbd="' + esc(u.upbd || '') + '">' + esc(u.name) + '</option>'; }).join('');
+    sel.value = ckUnionNames().indexOf(v) >= 0 ? v : '';
+    // 選ぶと、そのユニオンのアップBDを入れる（空の時・前に自動で入れた名前のままの時だけ）
+    sel.onchange = function(){
+      var o = sel.options[sel.selectedIndex], ub = $(t[1]), nm = o ? (o.getAttribute('data-upbd') || '') : '';
+      if(ub && nm && (!ub.value.trim() || ub.value === ub.getAttribute('data-auto'))){ ub.value = nm; ub.setAttribute('data-auto', nm); }
+    };
+  });
+}
+function ckUnionLoad(){
+  ckUnionFill();
+  db.collection('appConfig').doc('unions').get().then(function(d){
+    var x = d.exists ? (d.data() || {}) : {};
+    var L = Array.isArray(x.list) ? x.list.filter(function(u){ return u && String(u.name || '').trim(); })
+      .map(function(u){ return { name: String(u.name).trim(), upbd: String(u.upbd || '').trim() }; }) : null;
+    if(L && L.length){ gUnionList = L; ckUnionFill(); }
+  }).catch(function(){});
+}
 // 🔁 v114: アカウント（NAVIGATOR・ATTACK LIST・GOAL共通の users）は旧ユニオン名のまま残っている人がいる
 //   （NAVIGATORはログイン時に直すが、ATTACK LISTだけ使う人などは直らない）。受付でアカウントを探す時は旧名も同じユニオンとして探す
 function ckUnionNames(un){ var a = [un]; Object.keys(CK_UNION_RENAMED).forEach(function(k){ if(CK_UNION_RENAMED[k] === un) a.push(k); }); return a; }
@@ -2593,7 +2622,7 @@ function fillUnionSel(sel, current, only){
 }
 
 /* ---------- auth ---------- */
-$('toSignup').onclick = function(){ $('loginForm').classList.add('hide'); $('signupForm').classList.remove('hide'); $('authErr').textContent=''; };
+$('toSignup').onclick = function(){ $('loginForm').classList.add('hide'); $('signupForm').classList.remove('hide'); $('authErr').textContent=''; ckUnionLoad(); };   // 🏷 v154: 決めたユニオンの一覧（開いた時だけ読む）
 $('toLogin').onclick = function(){ $('signupForm').classList.add('hide'); $('loginForm').classList.remove('hide'); $('authErr').textContent=''; };
 function authMsg(e){
   var c = e && e.code || '';
@@ -2615,6 +2644,7 @@ $('btnSignup').onclick = function(){
   var name = $('suName').value.trim(), un = $('suUnion').value.trim(),
       area = $('suArea').value.trim(), ur = $('suUpRuby').value.trim(), ub = $('suUpBd').value.trim();
   if(!name || !un || !area || !ur || !ub){ $('authErr').textContent = 'すべての項目を入力してください'; return; }
+  if(ckUnionNames().indexOf(un) < 0){ $('authErr').textContent = '所属ユニオンは一覧から選んでください'; return; }
   authPersistReady.then(function(){ return auth.createUserWithEmailAndPassword($('suEmail').value.trim(), $('suPw').value); })
     .then(function(cred){
       return db.collection('users').doc(cred.user.uid).set({
@@ -2730,10 +2760,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v153';
+var APP_VER = 'v154';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v154', d: '2026/11/16', items: ['🏷 新規登録とプロフィールの所属ユニオンを、一覧から選ぶ形にしました（ユニオン名の書き方がばらばらにならないように）'] },
   { v: 'v153', d: '2026/11/16', items: ['👑 名簿に「タイトル」の列を追加。タイトルで並べ替え・「〇〇以上」で絞り込みができます', '📋 名簿の「📋 名前をコピー」：タイトル（例: RUBY以上・BR以上）で絞った名前の一覧をコピー・CSVで保存できます（NAVIGATORの先行利用に貼り付け用）', '📊 名簿のCSV出力に、グレード・タイトル・タイトル順位を追加'] },
   { v: 'v152', d: '2026/11/15', items: ['🔗 研修生登録：研修生のページに「次の担当に送る」を追加。LINEで送ったリンクをタップすると、番号を入れなくてもその研修生が開きます', '📷 研修生登録：「📷 QR」で本人の会員証のQRを読んで、研修生のページを開けるようにしました', '📋 番号・リンク・QRで開いた研修生は、自分の一覧にも残るようにしました'] },
   { v: 'v151', d: '2026/11/14', items: ['🃏 カードコレクションに、これから集めるカードの枠（影のカード）を出しました。特別なカードのAさんのOLでチェックアウトすると、枠にカードが入ります'] },
@@ -6579,7 +6610,7 @@ auth.onAuthStateChanged(function(u){
   if(!u){ gProf = null; showView('vLogin'); return; }
   db.collection('users').doc(u.uid).get().then(function(snap){
     if(!snap.exists || !(snap.data().union)){
-      showView('vProfile'); return;
+      showView('vProfile'); ckUnionLoad(); return;
     }
     gProf = snap.data();
     var renamed = CK_UNION_RENAMED[gProf.union];
@@ -6599,6 +6630,7 @@ $('btnProfile').onclick = function(){
   var name = $('pfName').value.trim(), un = $('pfUnion').value.trim(),
       area = $('pfArea').value.trim(), ur = $('pfUpRuby').value.trim(), ub = $('pfUpBd').value.trim();
   if(!name || !un || !area || !ur || !ub){ $('pfErr').textContent = 'すべての項目を入力してください'; return; }
+  if(ckUnionNames().indexOf(un) < 0){ $('pfErr').textContent = '所属ユニオンは一覧から選んでください'; return; }
   db.collection('users').doc(gUser.uid).set({
     name: name, union: un, area: area, upRuby: ur, upBd: ub,
     role: 'member', status: 'pending', email: gUser.email || ''

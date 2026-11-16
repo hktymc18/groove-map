@@ -84,6 +84,12 @@ service cloud.firestore {
           && profile(request.auth.uid).get('union','__a') == resource.data.get('union','__b');
     }
 
+    // 🏷 v880: 所属ユニオンは、オーナーが決めた一覧（appConfig/unions.names）の名前だけ。
+    //   一覧（names）がまだ無い時は今までどおり（オーナーが NAVIGATOR を開くと names が入る）
+    function unionNameOk(un) {
+      let c = /databases/$(database)/documents/appConfig/unions;
+      return !exists(c) || !('names' in get(c).data) || un in get(c).data.names;
+    }
     // 新規プロフィールの必須項目
     function hasRequiredProfile(d) {
       return d.union  is string && d.union.size()  > 0
@@ -101,6 +107,7 @@ service cloud.firestore {
       // （status 未設定=GOAL/ATTACK も可、pending=MAP も可。active だけ禁止＝自己承認防止）
       allow create: if isSelf(uid)
         && hasRequiredProfile(request.resource.data)
+        && unionNameOk(request.resource.data.union)
         && (!('role'   in request.resource.data) || request.resource.data.role   == 'member')
         && request.resource.data.get('status','pending') != 'active'
         && !('ckNo' in request.resource.data)
@@ -118,6 +125,8 @@ service cloud.firestore {
             && request.resource.data.get('ckNo','')         == resource.data.get('ckNo','')
             && request.resource.data.get('early', false)    == resource.data.get('early', false) // v790: 先行利用は本人が変えられない
             && request.resource.data.get('alLeader', false) == resource.data.get('alLeader', false) // ATTACK LIST のリーダー指定は本人が変えられない
+            // 🏷 v880: 所属ユニオンを変える時は、決めた一覧の名前だけ（変えない保存は今までどおり。一覧を読むのは変える時だけ）
+            && (request.resource.data.get('union', '') == resource.data.get('union', '') || unionNameOk(request.resource.data.get('union', '')))
             // v831: 管理者は自分の所属ユニオンを変えられない（変えると別のユニオンの管理者になれてしまうため。オーナーに頼む）
             && (resource.data.get('role', 'member') != 'admin'
                 || resource.data.get('unionSelectedV2', false) != true
@@ -254,9 +263,10 @@ service cloud.firestore {
     match /appConfig/{doc} {
       allow read: if doc == 'unions' || (doc == 'features' && signedIn());
       allow write: if doc == 'unions' && isOwnerAdmin()
-        && request.resource.data.keys().hasOnly(['list', 'at', 'by'])
+        && request.resource.data.keys().hasOnly(['list', 'names', 'at', 'by'])
         && request.resource.data.list is list
-        && request.resource.data.list.size() <= 100;
+        && request.resource.data.list.size() <= 100
+        && (!('names' in request.resource.data) || (request.resource.data.names is list && request.resource.data.names.size() <= 100));
       allow write: if doc == 'features' && isOwnerAdmin()
         && request.resource.data.keys().hasOnly(['flags', 'at', 'by'])
         && request.resource.data.flags is map
