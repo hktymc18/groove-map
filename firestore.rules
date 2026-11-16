@@ -1299,7 +1299,7 @@ service cloud.firestore {
         && getAfter(/databases/$(database)/documents/cards/$(tk)/buddy/me).data.get('k', '') == k;
     }
     // 💜 受付v131: ラウンジ（同じユニオンのユーザーのひとこと）。st == 'ok' の投稿だけが出る
-    //   v153: 承認はいらない。本人は st: ok・okAt（今の時刻）で投稿し、すぐ出る。スタッフは取り下げ（ng）・戻す（ok）
+    //   v154: 承認はいらない。本人は st: ok・okAt（今の時刻）で投稿し、すぐ出る。スタッフは取り下げ（ng）・戻す（ok）
     //   （前の版の画面から来る st: wait の投稿も受け付ける。スタッフが「出す」と出る）
     //   ckLounge/{投稿のキー} = { union, uid, n, co, t, st: wait|ok|ng, at, okAt, by }
     //   cards/{トークン}/lounge/{投稿のキー} … 自分の投稿の印（パスにトークン＝本人だけ。投稿・取り消しと同じ一括書き込み）

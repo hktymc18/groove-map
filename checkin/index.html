@@ -1058,7 +1058,7 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .lg-post .lg-t{grid-column:1;font-size:14px;line-height:1.6;overflow-wrap:anywhere;}
 .lg-clap{grid-column:2;grid-row:1 / span 2;padding:6px 10px;font-size:13px;border-radius:999px;}
 .lg-clap.on{background:#fff4e6;border-color:#f0892b;color:#7a3e0c;opacity:1;}
-.lg-del{grid-column:2;justify-self:end;padding:2px 6px;font-size:11.5px;background:none;border:none;color:var(--sub);text-decoration:underline;}   /* v153: 自分の投稿を消す */
+.lg-del{grid-column:2;justify-self:end;padding:2px 6px;font-size:11.5px;background:none;border:none;color:var(--sub);text-decoration:underline;}   /* v154: 自分の投稿を消す */
 .lg-mine{display:grid;gap:6px;margin-top:10px;}
 .lg-mrow{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px dashed var(--line);border-radius:10px;font-size:13px;}
 .lg-mrow .lg-t{flex:1;min-width:0;overflow-wrap:anywhere;}
@@ -1539,13 +1539,15 @@ body.practice .topbar{top:var(--pxh,36px);}
   #pRoster thead th:last-child{display:none;}
   #pRoster.umode thead{display:none;}   /* ユーザーの名簿は並べ替えが無い（来場が新しい順） */
   #pRoster tbody{display:grid;gap:8px;}
-  #pRoster tbody tr{display:grid;grid-template-columns:auto 1fr auto;grid-template-areas:"sel nm st" "sel no gr" "op op op";
+  #pRoster tbody tr{display:grid;grid-template-columns:auto 1fr auto;grid-template-areas:"sel nm st" "sel no gr" "sel ti ti" "op op op";
     column-gap:10px;row-gap:2px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;}
   #pRoster tbody td{border:none;padding:0;white-space:normal;min-width:0;}
   #pRoster td.rc-sel{grid-area:sel;align-self:start;padding-top:3px;}
   #pRoster td.rc-sel input{width:22px;height:22px;}
   #pRoster td.rc-nm{grid-area:nm;font-size:15px;}
   #pRoster td.rc-no{grid-area:no;font-size:12.5px;color:var(--sub);}
+  #pRoster td.rc-ti{grid-area:ti;}
+  #pRoster td.rc-ti:empty{display:none;}
   #pRoster td.rc-gr{grid-area:gr;font-size:12.5px;color:var(--sub);text-align:right;}
   #pRoster td.rc-st{grid-area:st;text-align:right;white-space:nowrap;}
   #pRoster td.rc-op{grid-area:op;margin-top:8px;}
@@ -1747,10 +1749,12 @@ body.practice .topbar{top:var(--pxh,36px);}
       <button id="btnDelUnion" class="ghost hide rmore" title="綴り間違いなどで不要なユニオンを削除（オーナーのみ）">🗑 ユニオン削除</button>
       <span class="pill n hide" id="roBadge">閲覧のみ</span>
       <input type="search" id="q" placeholder="氏名・番号・系列で検索">
+      <select id="qTitle" title="タイトルで絞り込み" style="width:auto;"></select>
       <label style="display:flex;align-items:center;gap:4px;font-size:12.5px;font-weight:400;white-space:nowrap;margin:0;cursor:pointer;"><input type="checkbox" id="qShowOff" style="width:auto;margin:0;">無効も表示</label>
       <button class="primary" id="btnAddMember">＋ メンバー追加</button>
       <button id="btnCsvIn" class="rmore">CSV取込</button>
       <button id="btnCsvOut" class="rmore">CSV出力</button>
+      <button id="btnNameCopy" class="rmore" title="タイトルで絞って名前の一覧をコピー（NAVIGATORの先行利用に貼り付け）">📋 名前をコピー</button>
       <button id="btnGroupRen" class="hide rmore">系列名変更</button>
     </div>
     <div class="toolrow hide rmore" id="bulkRow">
@@ -1886,7 +1890,7 @@ body.practice .topbar{top:var(--pxh,36px);}
     <div id="mpArea"></div><!-- 💜 ユーザーのマイプラン（コース・毎日のクエスト・連続・レベル・バッジ） -->
     <div id="bdArea"></div><!-- 💜 ユーザーのバディ（QRを読み合う・連続日数とバッジだけ見える） -->
     <div id="fiArea"></div><!-- 💜 ユーザーの「友だちを招待」（招待リンク・来てくれた友だち） -->
-    <div id="lgArea"></div><!-- 💜 ユーザーのラウンジ（同じユニオンのひとこと・投稿するとすぐ出る。v153） -->
+    <div id="lgArea"></div><!-- 💜 ユーザーのラウンジ（同じユニオンのひとこと・投稿するとすぐ出る。v154） -->
     <div id="rsvpTop"></div>
     <div id="selfArea"></div>
     <div id="hwArea"></div><!-- 📝 宿題は受講記録の一覧より上（記録が増えても埋もれないように） -->
@@ -2415,6 +2419,7 @@ var gMembersLoaded = false;
 // 列見出しタップで並べ替え（番号は TS2→TS10 になる自然順）
 var gRosterShowOff = (function(){ try{ return localStorage.getItem('bci_roster_showoff') === '1'; }catch(e){ return false; } })();
 var gRosterSort = { k: 'no', asc: true };
+var gRosterTi = 0;   // 📋 v153: タイトルで絞り込み（この順位以上だけ表示。0＝すべて）
 var gSel = {};              // 名簿の選択状態 {no: true}
 var gMonth = (function(){ var d = new Date(); return {y: d.getFullYear(), m: d.getMonth()+1}; })();
 var gEvents = [];           // 表示月のイベント（gUnion 参加分）
@@ -2726,11 +2731,12 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v153';
+var APP_VER = 'v154';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
-  { v: 'v153', d: '2026/11/15', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
+  { v: 'v154', d: '2026/11/16', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
+  { v: 'v153', d: '2026/11/16', items: ['👑 名簿に「タイトル」の列を追加。タイトルで並べ替え・「〇〇以上」で絞り込みができます', '📋 名簿の「📋 名前をコピー」：タイトル（例: RUBY以上・BR以上）で絞った名前の一覧をコピー・CSVで保存できます（NAVIGATORの先行利用に貼り付け用）', '📊 名簿のCSV出力に、グレード・タイトル・タイトル順位を追加'] },
   { v: 'v152', d: '2026/11/15', items: ['🔗 研修生登録：研修生のページに「次の担当に送る」を追加。LINEで送ったリンクをタップすると、番号を入れなくてもその研修生が開きます', '📷 研修生登録：「📷 QR」で本人の会員証のQRを読んで、研修生のページを開けるようにしました', '📋 番号・リンク・QRで開いた研修生は、自分の一覧にも残るようにしました'] },
   { v: 'v151', d: '2026/11/14', items: ['🃏 カードコレクションに、これから集めるカードの枠（影のカード）を出しました。特別なカードのAさんのOLでチェックアウトすると、枠にカードが入ります'] },
   { v: 'v150', d: '2026/11/14', items: ['🛠 細かい修正をしました'] },
@@ -3835,6 +3841,18 @@ var CARD_BADGES = [
 ];
 // 🔒 オーナーだけが付け外しできるタイトル（firestore.rules の ckTopBadge と一致させること）
 function ckTopTitle(k){ return k === 'BLUE DIAMOND' || k === 'TEAM ELITE'; }
+// 📋 v153: タイトルの順位（BR=1 … TEAM ELITE=8・無し=0）。タイトルが無くても、グレードが BR・JETCLUB（旧名も）なら BR と同じ1
+function ckTitleRank(m){
+  var t = ckTitleOf(m);
+  for(var i = 0; i < CARD_TITLES.length; i++) if(CARD_TITLES[i].k === t) return i + 1;
+  return (m && m.grade && GRADE_STYLES[m.grade]) ? 1 : 0;
+}
+function ckTitleLabel(m){ var t = ckTitleOf(m); return ckIsTitle(t) ? t : (ckTitleRank(m) ? 'BR（グレード）' : ''); }
+// 「〇〇以上」の選択肢（値は順位）
+function ckTitleMinOpts(cur, allLabel){
+  return '<option value="0"' + (!cur ? ' selected' : '') + '>' + esc(allLabel) + '</option>'
+    + CARD_TITLES.map(function(t, i){ var r = i + 1; return '<option value="' + r + '"' + (cur === r ? ' selected' : '') + '>' + esc(t.k) + (r < CARD_TITLES.length ? ' 以上' : '') + '</option>'; }).join('');
+}
 function ckIsTitle(k){ for(var i = 0; i < CARD_TITLES.length; i++) if(CARD_TITLES[i].k === k) return true; return false; }
 // 古いデータ（1つの badge に宝石か役職が入っている）も読めるように、タイトルとバッジを取り出す
 function ckTitleOf(m){
@@ -8213,6 +8231,7 @@ function renderRoster(){
   if(!ukOn) gRosterKind = 'biz';
   $('btnBeautyTesters').classList.toggle('hide', !isOwner());
   ckRosterKindSync();
+  $('qTitle').classList.toggle('hide', gRosterKind === 'user');
   if(gRosterKind === 'user'){ renderUserRoster(); return; }
   function sth(k, label){
     var cur = gRosterSort.k === k;
@@ -8220,7 +8239,9 @@ function renderRoster(){
       + label + (cur ? (gRosterSort.asc ? ' ▲' : ' ▼') : '') + '</th>';
   }
   $('rosterHead').innerHTML = (edit ? '<th style="width:2em;"><input type="checkbox" id="selAllChk" title="表示中を全選択"></th>' : '')
-    + sth('no', '番号') + sth('name', '氏名') + sth('group', '系列') + sth('st', '状態') + '<th>操作</th>';
+    + sth('no', '番号') + sth('name', '氏名') + sth('ti', 'タイトル') + sth('group', '系列') + sth('st', '状態') + '<th>操作</th>';
+  var qt = $('qTitle');
+  if(qt){ qt.innerHTML = ckTitleMinOpts(gRosterTi, 'タイトル: すべて'); }
   $('roBadge').classList.toggle('hide', edit);
   // 会員証の発行・印刷はログイン済みなら誰でも可。削除・グレード変更・取込は管理者のみ
   $('bulkRow').classList.remove('hide');
@@ -8258,12 +8279,15 @@ function renderRoster(){
       r = groupKey(a.group).localeCompare(groupKey(b.group), 'ja');
     } else if(k === 'st'){
       r = (ckMemberOff(a) ? 1 : 0) - (ckMemberOff(b) ? 1 : 0);
+    } else if(k === 'ti'){
+      r = ckTitleRank(a) - ckTitleRank(b);
     }
     return gRosterSort.asc ? r : -r;
   }
   var tb = $('rosterBody'), html = '', shown = 0, offHidden = 0;
   gMembers.slice().sort(rosterCmp).forEach(function(m){
     if(!gRosterShowOff && ckMemberOff(m)){ offHidden++; return; }
+    if(gRosterTi && ckTitleRank(m) < gRosterTi) return;
     var name = m.name || '';
     if(q && name.indexOf(q) < 0 && m.no.indexOf(q) < 0 && (m.group||'').indexOf(q) < 0) return;
     shown++;
@@ -8273,6 +8297,7 @@ function renderRoster(){
       + (m.grade ? ' <span class="pill a">' + esc(m.grade) + '</span>' : '')
       + (m.trainee ? ' <span class="pill n">研修生</span>'
           + (trPromoteReady(m) ? ' <span class="pill g">昇格待ち</span>' : '') : '') + '</td>'
+      + '<td class="rc-ti">' + (ckTitleLabel(m) ? '<span class="pill' + (ckIsTitle(ckTitleOf(m)) ? ' a' : ' n') + '">' + esc(ckTitleLabel(m)) + '</span>' : '') + '</td>'
       + '<td class="rc-gr">' + esc(m.group || '') + '</td>'
       + '<td class="rc-st">' + (ckMemberOff(m) ? '<span class="pill n">無効</span>' : '<span class="pill g">有効</span>')
       + (m.cardToken ? ' <span class="pill a" title="スマホ会員証 発行済み">証</span>' : '') + '</td>'
@@ -8289,10 +8314,11 @@ function renderRoster(){
       + '</div></td>'
       + '</tr>';
   });
-  var cols = edit ? 6 : 5;
+  var cols = edit ? 7 : 6;
   tb.innerHTML = html || '<tr><td colspan="' + cols + '" style="color:var(--sub)">メンバーがいません。'
     + (edit ? '「＋ メンバー追加」または「CSV取込」で登録してください。' : '') + '</td></tr>';
   $('rosterCount').textContent = gRosterUnion + '：' + gMembers.length + '名（表示 ' + shown + '名'
+    + (gRosterTi ? '・' + CARD_TITLES[gRosterTi - 1].k + (gRosterTi < CARD_TITLES.length ? ' 以上' : '') + 'だけ' : '')
     + (offHidden ? '・無効 ' + offHidden + '名は非表示' : '') + '）'
     + (edit ? '' : ' ※閲覧のみ（編集はこのユニオンの管理者が行えます）');
   var so = $('qShowOff');
@@ -8301,6 +8327,7 @@ function renderRoster(){
   updateSelCount();
 }
 $('q').addEventListener('input', renderRoster);
+$('qTitle').onchange = function(){ gRosterTi = parseInt(this.value, 10) || 0; renderRoster(); };
 $('qShowOff').onchange = function(){
   gRosterShowOff = this.checked;
   try{ localStorage.setItem('bci_roster_showoff', gRosterShowOff ? '1' : '0'); }catch(e){}
@@ -8320,7 +8347,7 @@ $('rosterHead').addEventListener('click', function(e){
   if(!th) return;
   var k = th.getAttribute('data-sk');
   if(gRosterSort.k === k) gRosterSort.asc = !gRosterSort.asc;
-  else gRosterSort = { k: k, asc: true };
+  else gRosterSort = { k: k, asc: k !== 'ti' };   // タイトルは最初は高い順
   renderRoster();
 });
 
@@ -9864,12 +9891,69 @@ function imDone(target, done){
   };
 }
 $('btnCsvOut').onclick = function(){
-  var rows = [['番号','氏名','系列','かな','状態','性別']];
+  // 📋 v153: グレード・タイトル・タイトルの順位（BR=1〜TEAM ELITE=8。並べ替え・「〇〇以上」の絞り込み用）も出す
+  var rows = [['番号','氏名','系列','かな','状態','性別','グレード','タイトル','タイトル順位']];
   gMembers.forEach(function(m){
     rows.push([m.no, m.name || '', m.group || '', m.kana || '', ckMemberOff(m) ? '無効' : '有効',
-      m.sex === 'm' ? '男' : (m.sex === 'f' ? '女' : '')]);
+      m.sex === 'm' ? '男' : (m.sex === 'f' ? '女' : ''), m.grade || '', ckTitleLabel(m), ckTitleRank(m) || '']);
   });
   csvDownload('members_' + gRosterUnion + '.csv', rows);
+};
+/* ── 📋 v153: タイトルで絞って名前の一覧をコピー（NAVIGATORの「名簿を貼り付けて先行利用に」へ）──
+   有効な人だけ（研修生・無効は入れない）。範囲は表示中のユニオンか、見られる全ユニオン */
+$('btnNameCopy').onclick = function(){
+  var uns = ckRosterUnions().filter(function(u){ return ckCanView(u); });
+  if(uns.indexOf(gRosterUnion) < 0) uns.unshift(gRosterUnion);
+  var st = { all: false, ti: gRosterTi || 4 };   // 初めはルビー以上
+  modal('<h2>📋 名前をコピー</h2>'
+    + '<p style="font-size:12.5px;color:var(--sub);margin:0 0 8px;">NAVIGATORの「アカウント管理 → 名簿を貼り付けて先行利用に」に、そのまま貼り付けられます（1行に1人）。'
+    + hq('有効なメンバーだけです（研修生・無効の人は入りません）。タイトルが無くても、グレードが BR・JETCLUB の人は BR と同じに数えます。') + '</p>'
+    + '<label>タイトル</label><select id="ncTi">' + ckTitleMinOpts(st.ti, 'すべての人（タイトル無しも）') + '</select>'
+    + (uns.length > 1
+      ? '<label>範囲</label><select id="ncUn"><option value="one">' + esc(gRosterUnion) + ' だけ</option><option value="all">見られる全ユニオン（' + uns.length + '）</option></select>'
+      : '')
+    + '<p id="ncCnt" style="font-size:13px;font-weight:700;margin:10px 0 4px;">読み込み中…</p>'
+    + '<textarea id="ncOut" rows="10" readonly style="font-size:13px;"></textarea>'
+    + '<div class="btns"><button id="ncCsv">CSVで保存</button><button id="ncClose">閉じる</button><button class="primary" id="ncCopy">コピー</button></div>', true);
+  var rows = [];
+  function draw(){
+    var tgt = st.all ? uns : [gRosterUnion];
+    $('ncCnt').textContent = '読み込み中…';
+    Promise.all(tgt.map(function(u){ return fetchMembers(u).catch(function(){ return []; }); })).then(function(lists){
+      if(!$('ncOut')) return;
+      rows = [];
+      lists.forEach(function(L, i){
+        L.forEach(function(m){
+          if(ckMemberOff(m) || m.trainee || !m.name || (m.union && m.union !== tgt[i])) return;
+          var r = ckTitleRank(m);
+          if(st.ti && r < st.ti) return;
+          rows.push({ m: m, r: r, un: m.union || tgt[i] });
+        });
+      });
+      rows.sort(function(a, b){ return (b.r - a.r) || (a.un < b.un ? -1 : a.un > b.un ? 1 : 0) || (a.m.no < b.m.no ? -1 : 1); });
+      var seen = {}, names = [];
+      rows.forEach(function(x){ var n = String(x.m.name).trim(); if(!seen[n]){ seen[n] = 1; names.push(n); } });
+      $('ncOut').value = names.join('\n');
+      $('ncCnt').textContent = names.length + '人' + (rows.length !== names.length ? '（同じ名前を1つにまとめました・全' + rows.length + '人）' : '')
+        + (st.ti ? '・' + CARD_TITLES[st.ti - 1].k + (st.ti < CARD_TITLES.length ? ' 以上' : '') : '') + '・' + (st.all ? '全ユニオン' : gRosterUnion);
+    });
+  }
+  $('ncTi').onchange = function(){ st.ti = parseInt(this.value, 10) || 0; draw(); };
+  if($('ncUn')) $('ncUn').onchange = function(){ st.all = this.value === 'all'; draw(); };
+  $('ncClose').onclick = closeModal;
+  $('ncCopy').onclick = function(){
+    var t = $('ncOut').value;
+    if(!t){ toast('該当する人がいません'); return; }
+    copyText(t, $('ncCopy'));
+  };
+  $('ncCsv').onclick = function(){
+    if(!rows.length){ toast('該当する人がいません'); return; }
+    csvDownload('名前一覧_' + (st.ti ? CARD_TITLES[st.ti - 1].k + '以上' : 'すべて') + '_' + (st.all ? '全ユニオン' : gRosterUnion) + '.csv',
+      [['番号', '氏名', 'ユニオン', '系列', 'グレード', 'タイトル', 'タイトル順位']].concat(rows.map(function(x){
+        return [x.m.no, x.m.name || '', x.un, x.m.group || '', x.m.grade || '', ckTitleLabel(x.m), x.r || ''];
+      })));
+  };
+  draw();
 };
 /* ── 系列名の一括変更（名簿と発行済み会員証に反映。過去の出席記録の表記は変えない）── */
 $('btnGroupRen').onclick = function(){
@@ -15446,7 +15530,7 @@ function ckBuddyRemoveAsk(ok){
   };
 }
 /* 💜 v131: ラウンジ（ユーザーのカード・友だちを招待の下）。同じユニオンのユーザーのひとこと（60文字まで・文字だけ）。
-   v153: 承認はいらない。投稿するとすぐ出る（st: ok）。効果をうたう言葉（CK_LG_WARN）が入った投稿はできない。
+   v154: 承認はいらない。投稿するとすぐ出る（st: ok）。効果をうたう言葉（CK_LG_WARN）が入った投稿はできない。
    ふさわしくない投稿は、スタッフが「💜 Beauty」タブで取り下げる。本人は自分の投稿を消せる。返事はなく、👏（1人1回）だけ。
    出ている投稿は端末に10分覚える（読み込みを減らす） */
 var CK_LG_WARN = ['治る', '治った', '治す', '治り', '完治', '効く', '効いた', '効き', '効果', 'やせ', '痩せ', '改善', '病気', '薬', 'アトピー', '副作用', '医師', '医者'];
@@ -15574,8 +15658,8 @@ function ckLoungeClap(id){
   });
 }
 /* 💜 v139: 「💜 Beauty」タブ（ユーザー向けの管理）。使えるのはオーナー・ユニオン管理者・DAY HOST（準備中のあいだは確認メンバーだけ）
-   ・いま対応すること（v153: 効果をうたう言葉が入ったラウンジの投稿・出ているお知らせ）。対応する投稿があるとタブに赤丸
-   ・ユーザーへのお知らせ（ckNotice/{ユニオン}・新しい5件まで）・ラウンジ（出ている｜取り下げた。v153: 承認はなく、投稿はすぐ出る）
+   ・いま対応すること（v154: 効果をうたう言葉が入ったラウンジの投稿・出ているお知らせ）。対応する投稿があるとタブに赤丸
+   ・ユーザーへのお知らせ（ckNotice/{ユニオン}・新しい5件まで）・ラウンジ（出ている｜取り下げた。v154: 承認はなく、投稿はすぐ出る）
    ・DAY HOST を決める（オーナー・ユニオン管理者）
    読み取りを減らす：開いた時に読むのはお知らせと、出ている投稿の新しい30件（と前の版の確認待ち）。「取り下げた」は押した時に読む */
 var gBtUnion = '', gBt = null, gBtSeg = 'ok';
@@ -15639,7 +15723,7 @@ function btLoad(){
     if(gBtSeg === 'ng') btSegLoad(gBtSeg);
   }).catch(function(e){ if(gBt === me){ me.err = permMsg(e, '読めませんでした。ルールの反映をオーナーに確認してください'); btDraw(); } });
 }
-// v153: 出ている投稿の新しい30件（索引 union・st・okAt。無い時は代わりの読み方）
+// v154: 出ている投稿の新しい30件（索引 union・st・okAt。無い時は代わりの読み方）
 function btOkQuery(un){
   var q = db.collection('ckLounge').where('union', '==', un).where('st', '==', 'ok');
   return q.orderBy('okAt', 'desc').limit(30).get().catch(function(){ return q.limit(60).get(); });
