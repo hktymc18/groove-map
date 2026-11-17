@@ -35,7 +35,7 @@ const dotOn = `!document.querySelector('nav button[data-pane="pBeauty"] .nav-dot
     c('お知らせ・ラウンジ・クエストの編集の3つ', /ユーザーへのお知らせ/.test(t) && /14時からの開始/.test(t) && /💬 ラウンジ/.test(t) && /クエストの編集/.test(t));
     c('v156: ラウンジは「出ている｜取り下げた」（確認待ちは無い時は出ない）・はじめは出ている', (await ev(`[].map.call(document.querySelectorAll('#btLgSeg [data-seg]'), function(x){ return x.getAttribute('data-seg'); }).join('|')`)) === 'ok|ng'
       && (await ev(`document.querySelector('#btLgSeg .on').getAttribute('data-seg')`)) === 'ok' && /出ている（3）/.test(await ev(`document.getElementById('btLgSeg').innerText`)));
-    c('v156: 気になる投稿は黄色・「取り下げてください」', (await ev(`document.querySelectorAll('#btLgList .lg-q.warn').length`)) === 1 && /取り下げてください/.test(await ev(`document.getElementById('btLgList').innerText`)));
+    c('v157: 気になる投稿は黄色・「内容を確かめてください」', (await ev(`document.querySelectorAll('#btLgList .lg-q.warn').length`)) === 1 && /内容を確かめてください/.test(await ev(`document.getElementById('btLgList').innerText`)));
     c('DAYスタッフ：「🌸 DAYスタッフ」を決めるボタンは出ない', await ev(`document.getElementById('btnDayStaff').classList.contains('hide')`));
     c('横にはみ出さない', (await ev('document.documentElement.scrollWidth')) === 390);
     await page.screenshot({ path: OUT + '/ckbt139_day' + (dark ? '_d' : '') + '.png', fullPage: true });

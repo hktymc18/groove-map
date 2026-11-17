@@ -2785,10 +2785,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v156';
+var APP_VER = 'v157';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v157', d: '2026/11/17', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v156', d: '2026/11/16', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v155', d: '2026/11/16', items: ['🃏 カードコレクションを、パソコンの広い画面ではカードを横にたくさん並べるようにしました。NAVIGATOR のライト／ダークの表示にも合わせます'] },
   { v: 'v154', d: '2026/11/16', items: ['🏷 新規登録とプロフィールの所属ユニオンを、一覧から選ぶ形にしました（ユニオン名の書き方がばらばらにならないように）'] },
@@ -15601,6 +15602,7 @@ function ckBuddyRemoveAsk(ok){
 }
 /* 💜 v131: ラウンジ（ユーザーのカード・友だちを招待の下）。同じユニオンのユーザーのひとこと（60文字まで・文字だけ）。
    v156: 承認はいらない。投稿するとすぐ出る（st: ok）。効果をうたう言葉（CK_LG_WARN）が入った投稿はできない。
+   v157: 効果をうたう言葉の投稿の制限は外した（ユーザー本人の体験の投稿はできる・オーナーの判断）。スタッフの画面では黄色で目立たせ、件数を出すだけ
    ふさわしくない投稿は、スタッフが「💜 Beauty」タブで取り下げる。本人は自分の投稿を消せる。返事はなく、👏（1人1回）だけ。
    出ている投稿は端末に10分覚える（読み込みを減らす） */
 var CK_LG_WARN = ['治る', '治った', '治す', '治り', '完治', '効く', '効いた', '効き', '効果', 'やせ', '痩せ', '改善', '病気', '薬', 'アトピー', '副作用', '医師', '医者'];
@@ -15669,7 +15671,7 @@ function lgDraw(){
     + '<label for="lgText" class="lg-lb">ひとこと投稿する</label>'
     + '<textarea id="lgText" rows="2" maxlength="60" placeholder="例: 今週は毎日15分歩けました"></textarea>'
     + '<button type="button" class="primary" id="lgGo" style="width:100%;margin-top:8px;">投稿する</button>'
-    + '<p class="pz-note">60文字まで。お名前と一緒に、同じユニオンの人にすぐ出ます。治る・やせる など、効果をうたう言葉は投稿できません。ふさわしくない投稿は、スタッフが取り下げることがあります。</p>'
+    + '<p class="pz-note">60文字まで。お名前と一緒に、同じユニオンの人にすぐ出ます。ふさわしくない投稿は、スタッフが取り下げることがあります。</p>'
     + '</div>';
   $('lgGo').onclick = ckLoungePost;
   Array.prototype.forEach.call(el.querySelectorAll('[data-clap]'), function(b){ b.onclick = function(){ ckLoungeClap(b.getAttribute('data-clap')); }; });
@@ -15680,8 +15682,6 @@ function ckLoungePost(){
   var L = gLg, c = L.c, tx = $('lgText').value.replace(/\s+/g, ' ').trim();
   if(!tx){ toast('ひとことを入れてください'); return; }
   if(tx.length > 60){ toast('60文字までで入れてください'); return; }
-  var ws = CK_LG_WARN.filter(function(w){ return tx.indexOf(w) >= 0; });
-  if(ws.length){ toast('効果をうたう言葉（' + ws.join('・') + '）は投稿できません。言いかえてください'); return; }
   var dk = 'bci_lgn_' + c.no + '_' + todayStr(), n = 0;
   try{ n = +localStorage.getItem(dk) || 0; }catch(e){}
   if(n >= 3){ toast('投稿は1日3回までです。また明日どうぞ'); return; }
@@ -15826,7 +15826,7 @@ function btLgRow(x, seg){
     : '<button data-lgok="' + esc(x.id) + '">戻す</button>';
   return '<div class="lg-q' + (warn ? ' warn' : '') + '"><div class="lg-qh"><b>' + esc(x.n || '') + '</b>' + (x.co ? ' <small>' + esc(x.co) + '</small>' : '') + '</div>'
     + '<div class="lg-qt">' + ckLgMark(x.t || '') + '</div>'
-    + (warn && seg !== 'ng' ? '<p class="lg-qw">⚠️ 効果をうたう言葉が入っています。' + (seg === 'ok' ? '取り下げてください' : '出さないでください') + '</p>' : '')
+    + (warn && seg !== 'ng' ? '<p class="lg-qw">⚠️ 効果をうたう言葉が入っています。内容を確かめてください</p>' : '')
     + '<div class="lg-qb">' + btns + '</div></div>';
 }
 function btDraw(){
@@ -15860,7 +15860,7 @@ function btDraw(){
             + '<button type="button" data-del="' + i + '" class="danger ghost" style="flex:0 0 auto;">消す</button></div>';
         }).join('') : empty('まだありません。'))
     +   '</div></div>'
-    + '<div class="bt-box" id="btLg"><h3>💬 ラウンジ' + hq('ユーザーの投稿は、承認なしで、すぐ同じユニオンのユーザーのアプリに出ます。治る・やせる・効く など効果をうたう言葉は、アプリで投稿できないようにしています。ふさわしくない投稿は「取り下げる」で出ないようにできます（アプリには10分ほどで反映）。効果をうたう言葉が入った投稿は黄色で目立たせ、タブに赤丸が付きます。') + '</h3>'
+    + '<div class="bt-box" id="btLg"><h3>💬 ラウンジ' + hq('ユーザーの投稿は、承認なしで、すぐ同じユニオンのユーザーのアプリに出ます。ふさわしくない投稿は「取り下げる」で出ないようにできます（アプリには10分ほどで反映）。効果をうたう言葉が入った投稿は黄色で目立たせ、タブに赤丸が付きます。') + '</h3>'
     +   '<div class="rkseg" id="btLgSeg" role="tablist">' + segs.map(function(g){
           var n = g[0] === 'wait' ? nW : me[g[0]] ? me[g[0]].length : null;
           return '<button type="button" role="tab" data-seg="' + g[0] + '"' + (g[0] === gBtSeg ? ' class="on" aria-selected="true"' : ' aria-selected="false"') + '>' + g[1] + (n === null ? '' : '（' + n + '）') + '</button>';

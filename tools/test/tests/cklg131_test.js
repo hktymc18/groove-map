@@ -1,5 +1,5 @@
 // 受付 v131・v132：ユーザーのカードの「ラウンジ」（NAVIGATOR Beauty・準備中）。同じユニオンのひとこと（60文字・文字だけ）。
-//   v156: 承認なし。投稿するとすぐ出る（効果をうたう言葉は投稿できない）。スタッフは取り下げる。👏 は1人1回。本人は消せる（架空データ）
+//   v156: 承認なし。投稿するとすぐ出る。v157: 効果をうたう言葉の制限は外した。スタッフは取り下げる。👏 は1人1回。本人は消せる（架空データ）
 const path = require('path');
 const P = require('../lib/ckpage.js');
 let fails = 0;
@@ -41,9 +41,9 @@ const OWNER = 'j2DPDAccCygHmR9i5K3bTvHnH0V2';
       await ev(`document.querySelector('[data-lgdel]').click()`); await wt(400);
       c('「消す」と投稿と印が消え、一覧からも消える', !(await ev(`!!window.__FBDATA['ckLounge/' + ${JSON.stringify(id)}] || !!window.__FBDATA['cards/${tok}/lounge/' + ${JSON.stringify(id)}]`)) && !/朝のスキンケア、7日/.test(await ev(`document.getElementById('lgArea').innerText`)));
       await ev(`(function(){ document.getElementById('lgText').value='これで肌荒れが改善して、やせた！'; document.getElementById('lgGo').click(); })()`); await wt(400);
-      c('v156: 効果をうたう言葉（やせ・改善）は投稿できない', /効果をうたう言葉（やせ・改善）は投稿できません/.test(await ev(`document.getElementById('toast').textContent`))
-        && (await ev(`Object.keys(window.__FBDATA).filter(function(k){ return /^ckLounge\\/[a-z0-9]{20}$/.test(k); }).length`)) === 0);
-      c('説明：すぐ出る・効果をうたう言葉は投稿できない・取り下げることがある', /すぐ出ます/.test(await ev(`document.getElementById('lgArea').innerText`)) && /投稿できません/.test(await ev(`document.getElementById('lgArea').innerText`)) && /取り下げることがあります/.test(await ev(`document.getElementById('lgArea').innerText`)));
+      c('v157: 効果をうたう言葉（やせ・改善）も投稿できる（制限なし）', /投稿しました/.test(await ev(`document.getElementById('toast').textContent`))
+        && (await ev(`Object.keys(window.__FBDATA).filter(function(k){ return /^ckLounge\\/[a-z0-9]{20}$/.test(k) && window.__FBDATA[k].st === 'ok'; }).length`)) === 1 && /肌荒れが改善して、やせた！/.test(await ev(`document.getElementById('lgArea').innerText`)));
+      c('説明：すぐ出る・取り下げることがある（v157: 効果の言葉の制限の説明は無い）', /すぐ出ます/.test(await ev(`document.getElementById('lgArea').innerText`)) && !/投稿できません/.test(await ev(`document.getElementById('lgArea').innerText`)) && /取り下げることがあります/.test(await ev(`document.getElementById('lgArea').innerText`)));
       c('横にはみ出さない', (await ev(`document.documentElement.scrollWidth`)) === 390);
     } else {
       await ev(`document.getElementById('lgArea').scrollIntoView()`);
@@ -84,7 +84,7 @@ const OWNER = 'j2DPDAccCygHmR9i5K3bTvHnH0V2';
     await ev(`document.querySelector('#btLgSeg [data-seg="wait"]').click()`); await wt(300);
     const m = await ev(`document.getElementById('btLg').innerText`);
     c('v156: 確認待ちが残っていれば「確認待ち」も出る。2件（ほかのユニオンは出ない）', /確認待ち（2）/.test(m) && /今週は毎日歩けました/.test(m) && !/ほかのユニオン/.test(m), m);
-    c('効果をうたう言葉（アトピー・治った）を目立たせる', (await ev(`document.querySelectorAll('#btLgList .lg-q.warn').length`)) === 1 && (await ev(`document.querySelectorAll('#btLgList mark.lg-warn').length`)) >= 2 && /出さないでください/.test(m));
+    c('効果をうたう言葉（アトピー・治った）を目立たせる', (await ev(`document.querySelectorAll('#btLgList .lg-q.warn').length`)) === 1 && (await ev(`document.querySelectorAll('#btLgList mark.lg-warn').length`)) >= 2 && /内容を確かめてください/.test(m));
     await page.screenshot({ path: OUT + '/cklg131_staff.png' });
     await ev(`document.querySelector('#btLgList [data-lgok="w1"]').click()`); await wt(500);
     const w1 = JSON.parse(await ev(`JSON.stringify(window.__FBDATA['ckLounge/w1'])`));
