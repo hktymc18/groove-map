@@ -40,6 +40,15 @@
   --amber:#d6b75e; --amber-soft:#3a3320; --focus:#7ba7e0;
   color-scheme:dark;
 }
+/* 🎓 v158: 研修生登録ページ（#trainer）は緑を使わない。受付の画面と同じ黒・白・グレー基調
+   （ボタン・受講済みの✓・バッジの「緑」を、文字の色と同じ黒／ダークでは明るいグレーに置きかえる） */
+html.trm{ --green:#23261f; --green-soft:#ecebe5; --green-bar:#6f6d63; --on-green:#ffffff; }
+@media (prefers-color-scheme: dark){
+  html.trm{ --green:#e9e7de; --green-soft:#2e302a; --green-bar:#a3a194; --on-green:#171915; }
+}
+html.trm[data-theme="light"]{ --green:#23261f; --green-soft:#ecebe5; --green-bar:#6f6d63; --on-green:#ffffff; }
+html.trm[data-theme="dark"]{ --green:#e9e7de; --green-soft:#2e302a; --green-bar:#a3a194; --on-green:#171915; }
+html.trm button.primary, html.trm .paypick button.on, html.trm .ok .hit-badge, html.trm .ol-ok-ic{color:var(--on-green);}
 *{box-sizing:border-box;}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 html,body{margin:0;}
@@ -2759,6 +2768,7 @@ var gJoinKey = gCardToken ? null : (function(){ var m = /[#&]uj=([A-Za-z0-9_-]+)
 var gApplyId = (gCardToken || gJoinKey) ? null : (function(){ var m = /[#&]ua=([a-z0-9]{24})/.exec(location.hash); return m ? m[1] : null; })();
 if(gJoinKey || gApplyId){ gReceiveMode = false; gColMode = false; }
 var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#trainer/.test(location.hash);   // 🎓 研修生登録ページ
+if(gTrainerMode) document.documentElement.classList.add('trm');   // 🎓 v158: 研修生登録ページは緑を使わない（CSS の html.trm）
 // 用途ごとに「ホーム画面に追加」用のアイコンと名前を差し替える
 // （同じHTMLを共有しているため、会員証（BASE CHECK-IN）と同じアイコン・名前が並んで
 //   区別できなくなるのを防ぐ。iOSは追加操作の時点のタグを読むので、動的な差し替えで反映される）
@@ -2785,10 +2795,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v157';
+var APP_VER = 'v158';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v158', d: '2026/11/18', items: ['🎨 研修生登録の画面の色を、受付の画面と同じ黒・白・グレーに（緑のボタン・✓をやめました）'] },
   { v: 'v157', d: '2026/11/17', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v156', d: '2026/11/16', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v155', d: '2026/11/16', items: ['🃏 カードコレクションを、パソコンの広い画面ではカードを横にたくさん並べるようにしました。NAVIGATOR のライト／ダークの表示にも合わせます'] },
