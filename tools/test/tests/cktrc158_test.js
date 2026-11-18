@@ -40,7 +40,8 @@ const greenish = rgb => { const m = /(\d+), (\d+), (\d+)/.exec(rgb || ''); retur
   // ほかの画面（受付管理）は今までどおり
   {
     const { ev, ctx } = await P.open(b, { data: {} });
-    c('受付管理の画面には印が付かない（緑はそのまま）', !(await ev(`document.documentElement.classList.contains('trm')`)) && greenish(await ev(`getComputedStyle(document.getElementById('btnAddMember')).backgroundColor`)));
+    // v160 から受付管理の画面も同じ色（青）
+    c('受付管理の画面には印が付かない・色は同じ青', !(await ev(`document.documentElement.classList.contains('trm')`)) && !greenish(await ev(`getComputedStyle(document.getElementById('btnAddMember')).backgroundColor`)));
     await ctx.close();
   }
   await b.close();

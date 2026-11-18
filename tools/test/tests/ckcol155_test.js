@@ -1,4 +1,5 @@
 // 受付 v155・NAVIGATOR v881：カードコレクション（#col）を、PCの広い画面ではカードを横にたくさん並べる。NAVIGATOR のライト／ダーク（&th=）に合わせる（架空データ）
+// v160: 背景の色はコムギニュースと同じ（ライト #f2f2f3・ダーク #1f2023）
 const fs = require('fs'), path = require('path');
 const P = require('../lib/ckpage.js');
 let fails = 0;
@@ -19,7 +20,7 @@ const data = { ['users/' + OWNER]: me, 'olCheckouts/k2_A0009_20261103': { key: '
     const a = await look(pc);
     c('PC: カードを横にたくさん並べる（6列以上）・はみ出さない', a.cols >= 6 && a.fit && a.ghosts === 19, JSON.stringify(a));
     c('PC: カードは大きめ（150px より大きい）', a.cw > 150, a.cw);
-    c('端末がダークでも、NAVIGATOR がライトならライト（明るい背景）', a.th === 'light' && a.bg === 'rgb(242, 241, 236)', JSON.stringify(a));
+    c('端末がダークでも、NAVIGATOR がライトならライト（明るい背景）', a.th === 'light' && a.bg === 'rgb(242, 242, 243)', JSON.stringify(a));
     await pc.page.screenshot({ path: path.join(OUT, 'ckcol155_pc_light.png') });
     // 窓を狭くすると列が減る
     await pc.page.setViewportSize({ width: 900, height: 800 }); await pc.wt(700);
@@ -28,7 +29,7 @@ const data = { ['users/' + OWNER]: me, 'olCheckouts/k2_A0009_20261103': { key: '
     // PC（ダーク・端末はライト）
     const dk = await P.open(b, { hash: '#col&th=dark', data, dark: false, vw: 1280, vh: 800, wait: 2400 });
     const d = await look(dk);
-    c('端末がライトでも、NAVIGATOR がダークならダーク（暗い背景）', d.th === 'dark' && d.bg === 'rgb(23, 25, 21)', JSON.stringify(d));
+    c('端末がライトでも、NAVIGATOR がダークならダーク（暗い背景）', d.th === 'dark' && d.bg === 'rgb(31, 32, 35)', JSON.stringify(d));
     await dk.page.screenshot({ path: path.join(OUT, 'ckcol155_pc_dark.png') });
     // スマホは3列のまま
     const sp = await P.open(b, { hash: '#col&th=light', data, vw: 390, vh: 844, wait: 2400 });
@@ -37,7 +38,7 @@ const data = { ['users/' + OWNER]: me, 'olCheckouts/k2_A0009_20261103': { key: '
     // th が無い時（会員証から直接など）は端末の設定のまま
     const no = await P.open(b, { hash: '#col', data, dark: true, vw: 390, vh: 844, wait: 2400 });
     const n = await look(no);
-    c('th が無い時は端末の設定に合わせる（今までどおり）', n.th === null && n.bg === 'rgb(23, 25, 21)', JSON.stringify(n));
+    c('th が無い時は端末の設定に合わせる（今までどおり）', n.th === null && n.bg === 'rgb(31, 32, 35)', JSON.stringify(n));
     const errs = pc.errs.concat(dk.errs, sp.errs, no.errs);
     c('ページのエラーなし', errs.length === 0, JSON.stringify(errs));
     const H = fs.readFileSync(path.join(__dirname, '../../../checkin/index.html'), 'utf8'), A = fs.readFileSync(path.join(__dirname, '../../../app.js'), 'utf8');
