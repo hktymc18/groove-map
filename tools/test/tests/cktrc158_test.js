@@ -1,4 +1,5 @@
-// 受付 v158：研修生登録ページ（#trainer）は緑を使わない（受付の画面と同じ黒・白・グレー基調）。ほかの画面の緑はそのまま（架空データ）
+// 受付 v158/v159：研修生登録ページ（#trainer）は緑を使わない。v159 からコムギニュースと同じ色（大事なボタンは青・丸いボタン・
+//   ライトは白とうすいグレー／ダークは濃いグレー）。ほかの画面の色はそのまま（架空データ）
 const path = require('path');
 const P = require('../lib/ckpage.js');
 let fails = 0;
@@ -22,6 +23,10 @@ const greenish = rgb => { const m = /(\d+), (\d+), (\d+)/.exec(rgb || ''); retur
     const go = await ev(`(function(){ var s=getComputedStyle(document.getElementById('trGo')); return [s.backgroundColor, s.color]; })()`);
     c('「登録して会員証QRを表示」が緑でない' + W, !greenish(go[0]), go.join(' / '));
     c('ボタンの文字が読める（背景と文字の色が違う）' + W, go[0] !== go[1]);
+    c('大事なボタンは青・文字は白' + W, go[0] === (dark ? 'rgb(91, 156, 246)' : 'rgb(59, 130, 246)') && go[1] === 'rgb(255, 255, 255)', go.join(' / '));
+    const bg = await ev(`getComputedStyle(document.body).backgroundColor`);
+    c('背景は ' + (dark ? '濃いグレー' : 'うすいグレー') + W, bg === (dark ? 'rgb(31, 32, 35)' : 'rgb(242, 242, 243)'), bg);
+    c('ボタンは丸い（角丸が大きい）' + W, parseFloat(await ev(`getComputedStyle(document.getElementById('trGo')).borderTopLeftRadius`)) >= 30);
     await page.screenshot({ path: OUT + '/cktrc158_reg' + (dark ? '_d' : '') + '.png' });
     await ev(`document.getElementById('trOpenNo') || document.getElementById('trTabList').click()`); await wt(300);
     await ev(`document.getElementById('trTabList').click()`); await wt(300);
