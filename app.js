@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v881';
+var APP_JS_VERSION = 'v882';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3627,18 +3627,21 @@ function admCoreSave(uid) {
 }
 // ── v849: アカウント管理を見やすく（アカウント｜設定 のタブ・絞り込み・設定は1行ずつのメニュー）──
 var _admTab = 'acc', _admPg = '', _admF = 'all';
-var ADM_F = [['all', 'すべて'], ['pend', '承認待ち'], ['pv', '未同意'], ['adm', '管理者'], ['early', '先行利用'], ['ok', '使える人'], ['unx', 'ユニオン名が一覧に無い']];
+var ADM_F = [['all', 'すべて'], ['pend', '承認待ち'], ['pv', '未同意'], ['adm', '管理者'], ['early', '先行利用'], ['ok', '使える人'], ['unx', 'ユニオン名が一覧に無い'], ['dup', '同じ名前が複数'], ['del', '削除したアカウント']];
 function _admOwner() { return !!(currentUser && isOwnerUid(currentUser.uid)); }
 function admTab(t) { _admTab = t === 'set' ? 'set' : 'acc'; _admPg = ''; renderAdminList(); try { document.getElementById('adminBody').scrollTop = 0; } catch (e) {} }
 function admPg(k) { _admPg = k || ''; renderAdminList(); try { document.getElementById('adminBody').scrollTop = 0; } catch (e) {} }
 function admF(k) { _admF = k || 'all'; renderAdminList(); }
 function _admFOk(u, k) {
+  if (k === 'del') return u.deleted === true; // v882: 削除したアカウント（戻せる）
+  if (u.deleted === true) return false; // v882: 削除したアカウントは、ほかの一覧には出さない
   if (k === 'pend') return u.status === 'pending';
   if (k === 'pv') return _pvNeed(u);
   if (k === 'adm') return isOwnerUid(u.id) || u.role === 'admin';
   if (k === 'early') return u.early === true && !_accExempt({ uid: u.id, role: u.role });
   if (k === 'ok') return !!_accA && u.status !== 'pending' && _accAllowed({ uid: u.id, role: u.role, early: u.early, union: u.union }, _accA);
   if (k === 'unx') return !_unionInList(u.union); // v880: 表記ゆれ・一覧から外したユニオン・空
+  if (k === 'dup') return _admDupN(u) > 1; // v882: 同じ名前でメールアドレス違いのアカウント
   return true;
 }
 function _admCss() {
@@ -3719,7 +3722,7 @@ function renderAdminList() {
   _admTabsSync(owner);
   var scoped = _adminScopedUsers();
   var cnt = document.getElementById('adminCount');
-  if (cnt) cnt.textContent = scoped.length + '人';
+  if (cnt) cnt.textContent = scoped.filter(function(u) { return u.deleted !== true; }).length + '人'; // v882: 削除したアカウントは数えない
   if (owner && _admTab === 'set') { body.innerHTML = _admPg ? _admPgHtml(_admPg, true) : _admSetMenuHtml(); return; }
   if (_admPg === 'acc') { body.innerHTML = _admPgHtml('acc', false); return; }
   var q = ((document.getElementById('adminSearch')||{}).value||'').toLowerCase();
@@ -3728,12 +3731,13 @@ function renderAdminList() {
     return ((u.name||'')+(u.union||'')+(u.area||'')+(u.email||'')+(u.upRuby||'')+(u.upBd||'')).toLowerCase().indexOf(q) >= 0;
   });
   if (_admF === 'ok' && !(_accA && (_accA.mode || 'open') !== 'open')) _admF = 'all';
-  var F = ADM_F.filter(function(f) { return (f[0] !== 'ok' || (_accA && (_accA.mode || 'open') !== 'open')) && (f[0] !== 'unx' || (owner && (_admF === 'unx' || hit.some(function(u) { return !_unionInList(u.union); })))); }); // v880: 一覧に無い人がいる時だけ（オーナー）
+  var F = ADM_F.filter(function(f) { return (f[0] !== 'ok' || (_accA && (_accA.mode || 'open') !== 'open')) && (f[0] !== 'unx' || (owner && (_admF === 'unx' || hit.some(function(u) { return !_unionInList(u.union); })))) && (f[0] !== 'dup' || (owner && (_admF === 'dup' || hit.some(function(u) { return _admDupN(u) > 1 && !u.deleted; })))) && (f[0] !== 'del' || (owner && (_admF === 'del' || hit.some(function(u) { return u.deleted === true; })))); }); // v880: 一覧に無い人がいる時だけ（オーナー）
   var fl = '<div class="adm-fl">' + F.map(function(f) { var n = hit.filter(function(u) { return _admFOk(u, f[0]); }).length; return '<span class="' + (_admF === f[0] ? 'on' : '') + (f[0] === 'pend' && n ? ' hot' : '') + '" onclick="admF(\'' + f[0] + '\')">' + f[1] + '<b>' + n + '</b></span>'; }).join('') + '</div>';
   var list = hit.filter(function(u) { return _admFOk(u, _admF); });
   var pending = list.filter(function(u){ return u.status === 'pending'; });
   var others  = list.filter(function(u){ return u.status !== 'pending'; });
-  others.sort(function(a,b) {
+  if (_admF === 'dup') others.sort(function(a, b) { return _admNameKey(a).localeCompare(_admNameKey(b)) || String(b.lastSeenAt || '').localeCompare(String(a.lastSeenAt || '')); }); // v882: 同じ名前どうしを並べる（最近開いた方が上）
+  else others.sort(function(a,b) {
     function rank(u){ return isOwnerUid(u.id) ? 0 : (u.role==='admin' ? 1 : 2); }
     var ra=rank(a), rb=rank(b);
     if (ra!==rb) return ra-rb;
@@ -3776,6 +3780,51 @@ function admUnFixSave(uid) {
     .catch(function() { u.union = old; toast('保存できませんでした'); renderAdminList(); });
   _accDlgClose(); renderAdminList();
 }
+// ── v882: 同じ名前でメールアドレス違いのアカウント（作り直し・打ち間違い）を、オーナーが見比べて削除する ──
+//   削除＝使えなくして（status: disabled）一覧から消す（deleted: true）。「削除したアカウント」から元に戻せる。
+//   アカウントの情報（users/{uid}）そのものを消すと、そのアドレスではログインも登録のやり直しもできなくなり、戻すのも難しいため。
+//   MAPのデータ（maps/{uid}）は触らない
+function _admNameKey(u) { return String((u && u.name) || '').replace(/[\s　]/g, '').replace(/[Ａ-Ｚａ-ｚ０-９]/g, function(ch) { return String.fromCharCode(ch.charCodeAt(0) - 0xFEE0); }).toLowerCase(); }
+function _admDupN(u) {
+  var k = _admNameKey(u); if (!k) return 0;
+  return _adminUsers.filter(function(x) { return !x.deleted && _admNameKey(x) === k; }).length;
+}
+function _admDelOk(u) { return _admOwner() && u && !u.deleted && !isOwnerUid(u.id) && u.role !== 'admin' && !(currentUser && u.id === currentUser.uid) && _admDupN(u) > 1; }
+function _admDupLine(u) {
+  if (!_admOwner()) return '';
+  var n = _admDupN(u); if (n < 2) return '';
+  return '<div class="adm-sub" style="color:#FFB454">👥 同じ名前のアカウントが' + n + '件 ・ ' + fmtLastSeen(u.lastSeenAt) + '</div>';
+}
+function _admDelBtn(u) {
+  if (_admOwner() && u && u.deleted === true) return '<button class="adm-btn on" onclick="admUndelUser(\'' + u.id + '\')">元に戻す</button>';
+  return _admDelOk(u) ? '<button class="adm-btn" style="border-color:#FF5D73;color:#FF5D73" onclick="admDelUser(\'' + u.id + '\')">削除</button>' : '';
+}
+function admDelUser(uid) {
+  var u = _adminFindUser(uid); if (!_admDelOk(u)) return;
+  var others = _adminUsers.filter(function(x) { return x.id !== uid && _admNameKey(x) === _admNameKey(u); });
+  var warn = [];
+  if (u.ckNo) warn.push('・受付の名簿（' + u.ckNo + '）と紐付いています');
+  if (u.status === 'active') warn.push('・承認ずみで使えるアカウントです');
+  var tx = function(x) { var e = String(fmtLastSeen(x.lastSeenAt) || '').replace(/<[^>]+>/g, ''); return (x.email || '(メールなし)') + '（' + e + '）'; };
+  if (!confirm('このアカウントを削除しますか？\n\n' + (u.name || '') + '\n' + tx(u)
+    + '\n\n残す同じ名前のアカウント：\n' + others.map(function(x) { return '・' + tx(x); }).join('\n')
+    + (warn.length ? '\n\n⚠ ' + warn.join('\n') : '')
+    + '\n\nこのアカウントは使えなくなり、一覧から消えます。間違えた時は「削除したアカウント」から元に戻せます。')) return;
+  var d = { deleted: true, status: 'disabled', deletedFrom: u.status || 'active', deletedBy: currentUser.uid, deletedAt: new Date().toISOString() };
+  var old = { deleted: u.deleted, status: u.status };
+  Object.assign(u, d);
+  fsSet('users/' + uid, d).then(function() { toast('削除しました（' + (u.email || u.name || '') + '）'); })
+    .catch(function(e) { Object.assign(u, old); toast('削除できませんでした' + (e && e.code === 'permission-denied' ? '（権限がありません）' : '')); renderAdminList(); });
+  renderAdminList();
+}
+function admUndelUser(uid) {
+  var u = _adminFindUser(uid); if (!u || !_admOwner() || u.deleted !== true) return;
+  if (!confirm((u.name || '') + '（' + (u.email || '') + '）を元に戻しますか？')) return;
+  var st = u.deletedFrom || 'active', d = { deleted: false, status: st, restoredBy: currentUser.uid, restoredAt: new Date().toISOString() };
+  Object.assign(u, d);
+  fsSet('users/' + uid, d).then(function() { toast('元に戻しました'); }).catch(function() { toast('戻せませんでした'); loadAdminUsers(); });
+  renderAdminList();
+}
 function adminPendingRowHtml(u){
   var uid = u.id;
   var name = evEsc(u.name || '(名前未設定)');
@@ -3787,8 +3836,8 @@ function adminPendingRowHtml(u){
     + (sub  ? '<div class="adm-sub">' + sub  + '</div>' : '')
     + (sub2 ? '<div class="adm-sub">' + sub2 + '</div>' : '')
     + (email? '<div class="adm-sub" style="opacity:.7">' + email + '</div>' : '')
-    + _admUnxLine(u) + _admCkLine(u) + _accRowChip(u)
-    + '</div><div class="adm-actions">'
+    + _admUnxLine(u) + _admDupLine(u) + _admCkLine(u) + _accRowChip(u)
+    + '</div><div class="adm-actions">' + _admDelBtn(u)
     + '<button class="adm-btn on" onclick="adminApprove(\'' + uid + '\')">承認</button>'
     + '<button class="adm-btn" style="border-color:#FF5D73;color:#FF5D73" onclick="adminReject(\'' + uid + '\')">却下</button>'
     + '</div></div>';
@@ -3831,8 +3880,8 @@ function adminRowHtml(u) {
     + (sub  ? '<div class="adm-sub">' + sub  + '</div>' : '')
     + (sub2 ? '<div class="adm-sub">' + sub2 + '</div>' : '')
     + (email? '<div class="adm-sub" style="opacity:.7">' + email + '</div>' : '')
-    + _admUnxLine(u) + _admCkLine(u) + _accRowChip(u) + _admCoreChip(u)
-    + '</div><div class="adm-actions">' + actions + '</div></div>';
+    + _admUnxLine(u) + _admDupLine(u) + _admCkLine(u) + _accRowChip(u) + _admCoreChip(u)
+    + '</div><div class="adm-actions">' + actions + _admDelBtn(u) + '</div></div>';
 }
 // ── v770: 受付（BASE CHECK-IN）の名簿とアカウントの紐付け ──
 //  users/{uid}.ckNo = 受付の会員番号。設定できるのはオーナーと同じユニオンの管理者だけ（本人は変えられない＝ルール）。
@@ -4636,7 +4685,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v881';
+  var DATA_VERSION = 'v882';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6756,6 +6805,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v882', d:'2026-11-18', items:['アカウント管理（オーナー）：同じ名前でメールアドレスが違うアカウントを「同じ名前が複数」で見比べて、いらない方を削除できるようにしました（使えなくして一覧から消します。「削除したアカウント」から元に戻せます）'] },
   { v:'v881', d:'2026-11-16', items:['🃏 カードコレクションを、パソコンでは広い画面で見られるようにし、NAVIGATOR のライト／ダークの表示に合わせました'] },
   { v:'v880', d:'2026-11-16', items:['🏷 所属ユニオンは、決めたユニオンの一覧からしか選べないようにしました。一覧に無い書き方のユニオン名の人は、次に開いた時に選び直してもらいます（オーナーはアカウント管理の「ユニオン名が一覧に無い」から直せます）'] },
   { v:'v879', d:'2026-11-15', items:['iPhoneのホーム画面アプリで、カレンダーが上にずれて下に空白ができることがあったのを直しました'] },
