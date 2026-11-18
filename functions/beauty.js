@@ -2,6 +2,7 @@
  * NAVIGATOR Beauty: ユーザー（お客さん）のスマホの通知（受付 v129）
  *   毎日20時（index.js の beautyDailyから）:
  *   thanks … 来場した日: 今日のイベントに受付したユーザー（出席の kind=user）に、来場のお礼を送る
+ *   nudge … v158: 今日まだクエストをチェックしていない人に「今日まだ」（お礼・前日のお知らせを送った人には送らない）
  *   dayEve … DAYの前日: 明日のイベントのうち「ユーザーのカードに次のDAYとして出す」（uDay）にしたものを、
  *            そのユニオンで通知を受け取っているユーザーに知らせる
  *   v146: 前日のお知らせに、その人の体感（カードの exp_{イベント}：メニュー・担当・順番）を入れる
@@ -18,13 +19,13 @@ function jstYmd(ms, add) {
 }
 
 // subs: [{ id, ref, d }]（d = ckPush の中身）。1人ずつ自分のカードを開くリンクで送る（500件ずつ）
-async function sendTo(messaging, subs, title, body, tag) {
+async function sendTo(messaging, subs, title, body, tag, extra) {
   let ok = 0, ng = 0;
   for (let i = 0; i < subs.length; i += 500) {
     const part = subs.slice(i, i + 500);
     const msgs = part.map((s) => ({
       token: s.d.t,
-      data: { title, body, url: CARD + s.d.card, tag },
+      data: Object.assign({ title, body, url: CARD + s.d.card, tag }, extra || {}),
       webpush: {
         headers: { Urgency: 'high', TTL: '21600' },
         notification: { title, body, icon: ICON, badge: ICON, tag },
@@ -46,7 +47,7 @@ async function sendTo(messaging, subs, title, body, tag) {
 
 function subOk(s) { return s && s.d && s.d.on === true && typeof s.d.t === 'string' && s.d.t && typeof s.d.card === 'string' && s.d.card.length === 32; }
 
-async function dayEve(db, messaging, now) {
+async function dayEve(db, messaging, now, sentIds) {
   const tomorrow = jstYmd(now, 1);
   const evs = await db.collection('checkinEvents').where('date', '==', tomorrow).get();
   const out = { date: tomorrow, events: 0, sent: 0, ng: 0 };
@@ -76,13 +77,14 @@ async function dayEve(db, messaging, now) {
     }
     for (const body of Object.keys(byBody)) {
       const r = await sendTo(messaging, byBody[body], title.slice(0, 60), body, 'nb-eve-' + e.id);
+      if (sentIds) byBody[body].forEach((x) => { sentIds[x.id] = 1; });
       out.sent += r.ok; out.ng += r.ng;
     }
   }
   return out;
 }
 
-async function thanks(db, messaging, now) {
+async function thanks(db, messaging, now, sentIds) {
   const today = jstYmd(now, 0);
   const evs = await db.collection('checkinEvents').where('date', '==', today).get();
   const uids = {};
@@ -99,6 +101,34 @@ async function thanks(db, messaging, now) {
   const out = { date: today, users: Object.keys(uids).length, sent: 0, ng: 0 };
   if (!subs.length) return out;
   const r = await sendTo(messaging, subs, 'ご来場ありがとうございました', '今日の記録が、カードに届いています。', 'nb-thanks-' + today);
+  if (sentIds) subs.forEach((x) => { sentIds[x.id] = 1; });
+  out.sent = r.ok; out.ng = r.ng;
+  return out;
+}
+
+// v158: 「今日まだ」。マイプランを始めていて、今日まだチェックしていない人だけ。
+//   やめてしまった人にずっと送らないように、最後にチェックした日（無ければ始めた日）から14日までの人だけ。
+//   同じ夜にお礼・前日のお知らせを送った人（skip）には送らない（1晩に1通まで）
+async function nudge(db, messaging, now, skip) {
+  const today = jstYmd(now, 0), from = jstYmd(now, -14);
+  const qs = await db.collection('ckPush').where('on', '==', true).get();
+  const subs = [], out = { date: today, subs: 0, sent: 0, ng: 0 };
+  for (const d of qs.docs) {
+    const s = { id: d.id, ref: d.ref, d: d.data() || {} };
+    if (!subOk(s) || (skip && skip[d.id])) continue;
+    out.subs++;
+    const p = await db.collection('cards').doc(s.d.card).collection('plan').doc('me').get();
+    const pl = p.exists ? (p.data() || {}) : null;
+    if (!pl || !pl.course) continue;
+    const days = pl.days || {};
+    if ((days[today] || []).length) continue;
+    let last = String(pl.start || '');
+    Object.keys(days).forEach((k) => { if ((days[k] || []).length && k > last) last = k; });
+    if (!last || last < from) continue;
+    subs.push(s);
+  }
+  if (!subs.length) return out;
+  const r = await sendTo(messaging, subs, 'NAVIGATOR Beauty', '今日のクエスト、まだだよ。1つだけでもチェックしよう', 'nb-nudge-' + today, { badge: '1' });
   out.sent = r.ok; out.ng = r.ng;
   return out;
 }
@@ -131,4 +161,4 @@ async function cleanup(db, now, del) {
   return out;
 }
 
-module.exports = { jstYmd, dayEve, thanks, cleanup, CARD };
+module.exports = { jstYmd, dayEve, thanks, nudge, cleanup, CARD };

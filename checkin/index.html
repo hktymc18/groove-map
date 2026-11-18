@@ -1269,6 +1269,83 @@ body.uapp #uaTabs{display:grid;}
 #uaTabs .ua-qrc{width:56px;height:56px;border-radius:50%;background:var(--ua-vio);color:#fff;display:grid;place-items:center;border:4px solid var(--paper);box-shadow:0 6px 16px rgba(106,63,209,.35);}
 #uaTabs .ua-qrc svg{width:25px;height:25px;}
 body.uapp #toast{bottom:calc(96px + env(safe-area-inset-bottom, 0px));}
+/* 💜 v158: 相棒のキャラ・「今日」・はじめの準備・まだ開いていないなかま */
+.pal{display:inline-block;width:64px;height:64px;flex:none;}
+.pal.big{width:110px;height:110px;}
+.pal img{width:100%;height:100%;object-fit:contain;}
+.td-hero{display:flex;align-items:center;gap:10px;margin:4px 0 2px;}
+.td-hero .pal{transform-origin:50% 90%;}
+.td-hero.pop .pal{animation:palPop .7s ease;}
+@keyframes palPop{0%{transform:scale(1);}30%{transform:scale(1.18) rotate(-6deg);}60%{transform:scale(.95) rotate(4deg);}100%{transform:scale(1);}}
+@media (prefers-reduced-motion: reduce){.td-hero.pop .pal{animation:none;}}
+.td-bub{position:relative;flex:1;min-width:0;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:10px 12px;font-size:14px;font-weight:700;line-height:1.55;}
+.td-bub::before{content:"";position:absolute;left:-7px;top:50%;width:12px;height:12px;background:var(--card);border-left:1px solid var(--line);border-bottom:1px solid var(--line);transform:translateY(-50%) rotate(45deg);}
+#uaApp .td-go{font-size:16px;padding:14px;}
+.td-7 .td-dots{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:8px 0 6px;}
+.td-dots i{display:grid;place-items:center;height:26px;border-radius:8px;border:1.5px solid var(--line);font-style:normal;font-size:11px;font-weight:800;color:var(--sub);}
+.td-dots i.on{background:var(--ua-or);border-color:var(--ua-or);color:#fff;}
+.td-dots i.td{border-color:var(--ua-vio);color:var(--ua-vio);}
+.td-dots i.miss{opacity:.45;}
+.td-7t{display:block;font-size:15px;}
+.td-cd{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px;margin-top:12px;}
+.td-cd>div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:8px 10px;min-width:0;}
+.td-cd small{display:block;font-size:11px;font-weight:700;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.td-cd b{font-size:18px;font-weight:900;}
+.td-q{cursor:default;}
+.td-qh{display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;align-items:center;}
+.td-qh b{display:block;font-size:16px;}
+.td-qh small{font-size:12px;color:var(--sub);}
+.td-slot{margin-top:12px;padding-top:10px;border-top:1px solid var(--line);display:grid;gap:8px;}
+.td-slot.now{border-top-color:var(--ua-vio);}
+.td-sl{font-size:12px;font-weight:800;color:var(--sub);}
+.td-sl em{font-style:normal;margin-left:6px;font-size:10.5px;color:#fff;background:var(--ua-vio);border-radius:999px;padding:1px 7px;}
+#uaApp .td-qb,.ob-wrap .td-qb{font-size:15px;padding:6px 0;}
+.ob-wrap .td-qb{display:flex;align-items:center;gap:8px;width:100%;text-align:left;background:none;border:0;font-weight:700;color:var(--ink);}
+.ob-wrap .td-qb i{width:24px;height:24px;flex:none;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-style:normal;font-size:12px;color:#fff;}
+.ob-wrap .td-qb.on i{background:var(--ua-or);border-color:var(--ua-or);}
+.td-all{margin-top:12px;text-align:center;font-weight:900;font-size:15px;background:var(--ua-vio-soft);color:var(--ua-vio);border-radius:14px;padding:12px;}
+.td-all small{display:block;font-size:12px;font-weight:700;margin-top:4px;}
+#uaApp .ua-qrtop{margin-left:auto;}
+#uaApp .ua-qrtop + .ua-bell{margin-left:6px;}
+#uaApp .ua-qrtop.on{color:var(--ua-vio);border-color:var(--ua-vio);}
+.ua-lk{margin-left:3px;font-size:11px;}
+#uaApp .ua-pg[data-lock] > #bdArea,#uaApp .ua-pg[data-lock] > #lgArea{display:none !important;}
+.ua-lock{margin-top:14px;text-align:center;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 14px;}
+.ua-lock b{display:block;font-size:16px;margin-top:6px;}
+.ua-lock p{font-size:13px;color:var(--sub);margin:6px 0 0;}
+.ob-wrap h2{margin-bottom:4px;}
+.ob-dots{display:flex;gap:6px;justify-content:center;margin:0 0 10px;}
+.ob-dots i{width:8px;height:8px;border-radius:50%;background:var(--line);}
+.ob-dots i.on{background:var(--ua-vio, #6a3fd1);}
+.ob-wrap input[type="text"],.ob-wrap input[type="date"]{margin-top:8px;width:100%;}
+.ob-wrap .mpco.on{border-color:var(--mc);background:color-mix(in srgb,var(--mc) 10%,var(--card));}
+.ob-lvl{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px;}
+.ob-lvl button{display:grid;gap:2px;padding:10px 4px;border-radius:12px;}
+.ob-lvl button b{font-size:15px;}
+.ob-lvl button small{font-size:11px;font-weight:400;color:var(--sub);}
+.ob-lvl button.on{background:var(--ink);color:var(--card);border-color:var(--ink);}
+.ob-lvl button.on small{color:inherit;opacity:.8;}
+.ob-q{border:1px solid var(--line);border-radius:12px;padding:8px 10px;margin-top:6px;opacity:.6;}
+.ob-q.on{opacity:1;}
+.ob-q .mpqs{margin:0;}
+.ob-sl{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap;}
+.ob-sl button{padding:4px 10px;font-size:12px;border-radius:999px;}
+.ob-sl button.on{background:var(--ink);color:var(--card);border-color:var(--ink);}
+.ob-sum{display:grid;gap:6px;margin:10px 0;}
+.ob-sum div{display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid var(--line);padding-bottom:6px;}
+.ob-sum small{color:var(--sub);}
+.ob-li{margin:4px 0;font-size:13.5px;}
+.ob-next{margin-top:12px;display:grid;gap:8px;}
+.ob-next p{margin:0;font-size:13px;color:var(--sub);}
+.mt-big{display:flex;align-items:baseline;gap:8px;margin:4px 0 10px;}
+.mt-big b{font-size:40px;font-weight:900;color:var(--ink);}
+.mt-big span{font-weight:700;}
+.mt-big small{display:block;font-size:12px;font-weight:400;color:var(--sub);}
+.mt-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;}
+.mt-grid>div{border:1px solid var(--line);border-radius:12px;padding:8px 10px;min-width:0;}
+.mt-grid small{display:block;font-size:11.5px;color:var(--sub);}
+.mt-grid b{font-size:22px;font-weight:900;}
+.mt-grid i{font-style:normal;font-size:11.5px;color:var(--sub);margin-left:6px;}
 /* 💜 v136: 新しいお知らせ・ラウンジの赤丸 */
 #uaTabs button,#uaApp .ua-bell,#uaApp .ua-seg button{position:relative;}
 .ua-dot{position:absolute;top:3px;right:calc(50% - 19px);width:9px;height:9px;border-radius:50%;background:#e2475f;border:2px solid var(--card);box-sizing:content-box;}
@@ -2785,10 +2862,11 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v157';
+var APP_VER = 'v158';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v158', d: '2026/11/18', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v157', d: '2026/11/17', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v156', d: '2026/11/16', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v155', d: '2026/11/16', items: ['🃏 カードコレクションを、パソコンの広い画面ではカードを横にたくさん並べるようにしました。NAVIGATOR のライト／ダークの表示にも合わせます'] },
@@ -4237,6 +4315,7 @@ function renderPrysm(c){
 }
 /* 💜 段階5: マイプラン（ユーザーのカードの上で。本人＝カードのリンクを持っている人だけが書ける）
    cards/{トークン}/plan/me = { course, goal, qs:[使うクエスト], start, days:{ 'YYYY-MM-DD': [できたクエスト] }, atMs }
+   v158: why（なりたい私）・by（いつまでに YYYY-MM-DD）・when（クエスト → am|noon|pm|bed）・lvl（easy|std|hard）・ob（はじめの準備をした時刻）
    ※ 効果をうたわない（薬機法）。クエストは「習慣」だけ。製品の名前はスタッフが会場で伝える */
 var MP_COURSES = [
   { k: 'diet', n: 'ダイエット編', sub: '体を動かす・食事のリズムを整える', c: '#f28c28',
@@ -4307,6 +4386,7 @@ function renderMyPlan(c, token){
   Promise.all([pl, ckQuestGet(c.union || '')]).then(function(r){
     gMp.plan = r[0]; gMpQuest = r[1];
     mpDraw();
+    ckObAuto();   // 💜 v158
   }).catch(function(){ mpDraw(); });
 }
 function mpDraw(){
@@ -4364,7 +4444,8 @@ function mpToggle(qk){
   Object.keys(days).forEach(function(k){ if(k < cut) delete days[k]; });
   plan.days = days;
   var before = mpStats(gMp.plan, today).streak;
-  mpSave(plan).then(function(){
+  if(i < 0 && gUa) gUa.cheer = true;   // 💜 v158: 「今日」のキャラが喜ぶ
+  return mpSave(plan).then(function(){
     var st = mpStats(plan, today);
     if(i < 0 && st.streak > before && (st.streak === 3 || st.streak === 7 || st.streak === 30)) toast('🔥 ' + st.streak + '日連続！バッジをもらいました');
   });
@@ -4391,11 +4472,245 @@ function mpSetup(courseK){
       if(!pick.length){ toast('クエストを1つ以上選んでください'); return; }
       if(pick.length > 5){ toast('クエストは5つまでです'); return; }
       var plan = { course: sel, goal: $('mypGoal').value.trim().slice(0, 40), qs: pick, start: (gMp.plan && gMp.plan.start) || todayStr(), days: (gMp.plan && gMp.plan.days) || {} };
+      ['why', 'by', 'when', 'lvl', 'ob'].forEach(function(k){ if(gMp.plan && gMp.plan[k] != null) plan[k] = gMp.plan[k]; });   // 💜 v158: 準備で決めたことは残す
       closeModal();
       mpSave(plan).then(function(){ toast(gMp.plan && gMp.plan.course ? 'プランを保存しました' : 'マイプランを始めました'); });
     };
   };
   draw();
+}
+/* 💜 v158: 相棒のキャラ（NAVIGATOR Beauty のアプリ）。あとで別のキャラに差し替えられるように、名前・絵・ことばはここだけに書く。
+   差し替える時は CK_PAL だけを書きかえる（絵は svg に SVG の文字列か、img に画像のファイル名。img があれば img を使う）。
+   ことばの {name}・{n}・{r}・{d} は、その時の名前・できた数・残りの数・日数に置きかわる。配列は日ごとに順番に使う */
+var CK_PAL = {
+  name: GX_NAME,
+  svg: JETKO_SVG,
+  img: '',
+  say: {
+    hello: 'はじめまして、{name}だよ！これから毎日いっしょにケアしよう。2分で準備できるよ',
+    start: ['今日の1つめ、いっしょにやってみよう！', 'まずは1つだけ。できたらチェックしてね', '今日もいっしょにがんばろう！'],
+    part: ['{n}こできたね！あと{r}こ！', 'いい調子！あと{r}こだよ', 'ナイス！のこり{r}こ'],
+    all: ['今日のクエスト、全部できた！えらい！', '今日もばっちり！また明日ね', 'すごい！{d}日つづいてるよ'],
+    back: 'おかえり！また会えてうれしい。今日は1つだけやってみよう',
+    promise: '{name}と約束する',
+    first: '最初の1つ、今ここでやってみよう！',
+    firstDone: 'やったね！これで1日目クリア！'
+  }
+};
+function ckPalImg(cls){
+  return '<span class="pal' + (cls ? ' ' + cls : '') + '" aria-hidden="true">' + (CK_PAL.img ? '<img src="' + esc(CK_PAL.img) + '" alt="">' : CK_PAL.svg) + '</span>';
+}
+function ckPalSay(key, v){
+  var s = CK_PAL.say[key] || '';
+  if(Array.isArray(s)){ var t = todayStr().replace(/-/g, ''); s = s[(+t + (v && v.seed || 0)) % s.length]; }
+  v = v || {};
+  return String(s).replace(/\{(\w+)\}/g, function(m, k){ return k === 'name' ? CK_PAL.name : (v[k] != null ? v[k] : ''); });
+}
+/* 💜 v158: クエストの時間帯（朝・昼・夜・寝る前）。今の時間帯のクエストを上に出す */
+var MP_SLOTS = [['am', '朝', '🌅'], ['noon', '昼', '☀️'], ['pm', '夜', '🌙'], ['bed', '寝る前', '🛏']];
+var MP_SLOT_DEF = { water: 'am', walk: 'noon', dinner: 'pm', stretch: 'bed', care: 'bed', am: 'am', pm: 'bed', moist: 'bed', sleep: 'am', water2: 'noon',
+  supp: 'am', veg: 'noon', water3: 'pm', walk2: 'noon', early: 'am' };
+function mpSlotNow(){ var h = new Date().getHours(); return h >= 5 && h < 10 ? 'am' : h >= 10 && h < 16 ? 'noon' : h >= 16 && h < 21 ? 'pm' : 'bed'; }
+function mpSlotOf(plan, qk){ var w = (plan && plan.when) || {}; return w[qk] || MP_SLOT_DEF[qk] || 'pm'; }
+function mpQs(plan){
+  var co = plan && mpCourse(plan.course);
+  if(!co) return [];
+  var qs = co.q.filter(function(q){ return (plan.qs || []).indexOf(q[0]) >= 0; });
+  return qs.length ? qs : co.q.slice(0, 3);
+}
+/* 💜 v158: はじめの7日（準備をした人＝plan.ob がある人）。1日ずつ小さな出来事。
+   バディはチェックした日が3日・ラウンジは7日で開く（友だちの招待はいつでも） */
+var MP_UNLOCK = { buddy: 3, lounge: 7 };
+function mpDayN(plan){ return plan && plan.ob && plan.start ? ckYmdDays(plan.start, todayStr()) + 1 : 0; }
+function mpLockLeft(plan, seg){
+  if(!plan || !plan.ob || !MP_UNLOCK[seg]) return 0;
+  return Math.max(0, MP_UNLOCK[seg] - mpStats(plan, todayStr()).daysDone);
+}
+function mp7Event(plan){
+  var n = mpDayN(plan), st = mpStats(plan, todayStr());
+  if(n < 1 || n > 7) return null;
+  var ev = [
+    { t: 'はじめの一歩', d: '今日の1つめにチェックしたら、1日目クリア！' },
+    { t: '時間帯ごとに', d: '今の時間のクエストが上に出るよ。いつやるか決めておくと続けやすい' },
+    { t: 'バディが開く日', d: mpLockLeft(plan, 'buddy') ? 'チェックした日が3日になると「バディ」が使えるよ（あと' + mpLockLeft(plan, 'buddy') + '日）' : '「バディ」が使えるようになったよ。会場で会った人とつながろう', go: mpLockLeft(plan, 'buddy') ? '' : 'buddy' },
+    { t: 'すぐ開けるように', d: ckIsStandalone() ? 'ホーム画面から開けているね。ばっちり！' : 'ホーム画面に追加すると、毎日すぐ開けるよ', a2: !ckIsStandalone() },
+    { t: '次のDAYを楽しみに', d: 'DAYで測るPRYSMiOで、続けた成果を答え合わせしよう' },
+    { t: '夜のお知らせ', d: 'まだチェックしていない日は、夜8時ごろにお知らせできるよ', push: true },
+    { t: 'ラウンジが開く日', d: mpLockLeft(plan, 'lounge') ? 'チェックした日が7日になると「ラウンジ」が開くよ（あと' + mpLockLeft(plan, 'lounge') + '日）' : '「ラウンジ」が開いたよ。みんなのひとことを見てみよう', go: mpLockLeft(plan, 'lounge') ? '' : 'lounge' }
+  ][n - 1];
+  var dots = [];
+  for(var i = 0; i < 7; i++){ var d = mpAddDays(plan.start, i); dots.push(((plan.days || {})[d] || []).length ? 'on' : d === todayStr() ? 'td' : d < todayStr() ? 'miss' : ''); }
+  ev.n = n; ev.dots = dots; ev.done = st.daysDone;
+  return ev;
+}
+// ホーム画面のアイコンの数字（ホーム画面に追加したアプリで、今日のこりのクエストの数）
+function ckUaAppBadge(left){
+  try{
+    if(!ckIsStandalone() || !navigator.setAppBadge) return;
+    if(left > 0) navigator.setAppBadge(left).catch(function(){}); else navigator.clearAppBadge().catch(function(){});
+  }catch(e){}
+}
+/* 💜 v158: 「今日」のタブ（真ん中）。キャラのひとこと・はじめの7日・次のDAYと目標までの日数・時間帯ごとのクエスト */
+function ckUaToday(){
+  var el = $('uaToday');
+  if(!el || !gUa) return;
+  if(!gMp || gMp.token !== gUa.token){ el.innerHTML = '<p class="ua-p">読み込み中…</p>'; return; }
+  var plan = gMp.plan, co = plan && mpCourse(plan.course), today = todayStr();
+  if(!co){
+    el.innerHTML = '<div class="td-hero">' + ckPalImg('big') + '<div class="td-bub">' + esc(ckPalSay('hello')) + '</div></div>'
+      + '<button type="button" class="primary ua-btn td-go" id="tdStart">はじめる（2分）</button>'
+      + '<p class="ua-p" style="text-align:center;">なりたい私・コース・毎日のクエストを決めます</p>';
+    $('tdStart').onclick = ckObOpen;
+    ckUaAppBadge(0);
+    return;
+  }
+  var qs = mpQs(plan), done = ((plan.days || {})[today] || []).filter(function(k){ return qs.some(function(q){ return q[0] === k; }); });
+  var st = mpStats(plan, today), left = qs.length - done.length, last = '';
+  Object.keys(plan.days || {}).forEach(function(k){ if(k < today && (plan.days[k] || []).length && k > last) last = k; });
+  var away = last ? ckYmdDays(last, today) : 0;
+  var line = !done.length ? (away >= 3 ? ckPalSay('back') : ckPalSay('start')) : left ? ckPalSay('part', { n: done.length, r: left }) : ckPalSay('all', { d: st.streak });
+  var h = '<div class="td-hero' + (gUa.cheer ? ' pop' : '') + '">' + ckPalImg() + '<div class="td-bub">' + esc(line) + '</div></div>';
+  gUa.cheer = false;
+  // はじめの7日
+  var e7 = mp7Event(plan);
+  if(e7) h += '<div class="ua-cd td-7"><div class="ua-lb">はじめの7日<em>' + e7.n + '日目</em></div><div class="td-dots">'
+    + e7.dots.map(function(x, i){ return '<i class="' + x + '">' + (i + 1) + '</i>'; }).join('') + '</div>'
+    + '<b class="td-7t">' + esc(e7.t) + '</b><p class="ua-p">' + esc(e7.d) + '</p>'
+    + (e7.go ? '<button type="button" class="ua-btn" data-go="friends" data-gos="' + e7.go + '">見てみる</button>' : '')
+    + (e7.a2 ? '<button type="button" class="ua-btn" id="td7A2">やり方を見る</button>' : '')
+    + (e7.push && ckPushState(gUa.c) === 'off' ? '<button type="button" class="ua-btn" id="td7Push">通知を受け取る</button>' : '') + '</div>';
+  // 次のDAY・目標の日まで
+  var nx = gUa.next, cd = [];
+  if(nx && nx.date >= today) cd.push('<div><small>次のDAYまで</small><b class="mono">' + (nx.date === today ? '今日' : 'あと' + ckYmdDays(today, nx.date) + '日') + '</b></div>');
+  if(plan.by && plan.by >= today) cd.push('<div><small>' + esc(plan.why || '目標') + '</small><b class="mono">あと' + ckYmdDays(today, plan.by) + '日</b></div>');
+  cd.push('<div><small>つづいている日</small><b class="mono">' + st.streak + '日</b></div>');
+  h += '<div class="td-cd">' + cd.join('') + '</div>';
+  // 時間帯ごとのクエスト（今の時間帯が上）
+  var now = mpSlotNow(), order = MP_SLOTS.slice(), ni = 0;
+  MP_SLOTS.forEach(function(s, i){ if(s[0] === now) ni = i; });
+  order = order.slice(ni).concat(order.slice(0, ni));
+  var len = 163.4;
+  h += '<div class="ua-cd td-q"><div class="td-qh"><svg class="ua-ring" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="26" fill="none" stroke="var(--line)" stroke-width="7"/>'
+    + '<circle cx="32" cy="32" r="26" fill="none" stroke="var(--ua-or)" stroke-width="7" stroke-linecap="round" transform="rotate(-90 32 32)" stroke-dasharray="' + len + '" stroke-dashoffset="' + (len * (1 - done.length / qs.length)).toFixed(1) + '"/>'
+    + '<text x="32" y="37" text-anchor="middle">' + done.length + '/' + qs.length + '</text></svg><div><b>今日のクエスト</b><small>' + esc(co.n) + '</small></div></div>';
+  order.forEach(function(s){
+    var L = qs.filter(function(q){ return mpSlotOf(plan, q[0]) === s[0]; });
+    if(!L.length) return;
+    h += '<div class="td-slot' + (s[0] === now ? ' now' : '') + '"><span class="td-sl">' + s[2] + ' ' + s[1] + (s[0] === now ? '<em>いま</em>' : '') + '</span>'
+      + L.map(function(q){ var on = done.indexOf(q[0]) >= 0; return '<button type="button" class="ua-q td-qb' + (on ? ' on' : '') + '" data-uq="' + q[0] + '" aria-pressed="' + on + '"><i>' + (on ? '✓' : '') + '</i><span>' + esc(q[1]) + '</span></button>'; }).join('') + '</div>';
+  });
+  h += '</div>';
+  if(!left) h += '<div class="td-all">🎉 今日のクエストは全部できました' + (gBd && gBd.token === gUa.token && gBd.me && (gBd.me.list || []).length ? '<small>バディにも「今日できた」が届いています</small>' : '') + '</div>';
+  el.innerHTML = h;
+  if($('td7A2')) $('td7A2').onclick = ckA2hsHowModal;
+  if($('td7Push')) $('td7Push').onclick = function(){ $('td7Push').disabled = true; ckPushToggle(gUa.c, gUa.token, true, function(){ renderUserNews(gUa.c, gUa.token); ckUaToday(); }); };
+  ckUaAppBadge(left);
+}
+/* 💜 v158: はじめの準備（会場でスタッフと一緒に2分）。なりたい私と期限 → コース → 難しさとクエスト・時間帯 → 約束 → その場で1つ目のチェック → ホーム画面・通知
+   はじめての来場の日（受付したその日）に、プランが無ければ1回だけ自動で開く。あとは「今日」の「はじめる」から */
+var MP_WHY = ['夏までにきれいになりたい', '自信をもって写真に写りたい', '毎日を気持ちよく過ごしたい', '大事な日までに整えたい', '健康的な体になりたい'];
+var MP_LVL = [['easy', 'ゆるく', 1, 'まずは1つだけ'], ['std', 'ふつう', 3, '3つでバランスよく'], ['hard', '本気', 5, '5つ全部やる']];
+function ckObOpen(){
+  if(!gMp || !gUa) return;
+  try{ localStorage.setItem('bci_ob_' + gUa.token, '1'); }catch(e){}
+  var o = { step: 0, why: '', by: '', co: '', lvl: 'std', qs: [], when: {} };
+  var nx = gUa.next, today = todayStr();
+  // 次のDAY は後から読み込まれる。読めたら「いつまでに？」に足す（はじめの画面を開いている時だけ）
+  gUa.obRedraw = function(){ if(!nx && gUa.next && o.step === 0 && $('obBy')){ nx = gUa.next; draw(); } };
+  var draw = function(){
+    var dots = '<div class="ob-dots">' + [0, 1, 2, 3].map(function(i){ return '<i class="' + (i <= o.step ? 'on' : '') + '"></i>'; }).join('') + '</div>';
+    var body = '';
+    if(o.step === 0){
+      var bys = [['', '決めない']].concat(nx && nx.date > today ? [[nx.date, '次のDAY（' + ckMd(nx.date) + '）']] : []).concat([[mpAddDays(today, 30), '1か月後'], [mpAddDays(today, 90), '3か月後']]);
+      body = '<div class="td-hero">' + ckPalImg() + '<div class="td-bub">' + esc(ckPalSay('hello')) + '</div></div>'
+        + '<label>なりたい私</label><div class="ulg-chips" id="obWhy">' + MP_WHY.map(function(w){ return '<button type="button" data-v="' + esc(w) + '"' + (o.why === w ? ' class="on"' : '') + '>' + esc(w) + '</button>'; }).join('') + '</div>'
+        + '<input type="text" id="obWhyT" maxlength="40" placeholder="自分の言葉で書いてもOK" value="' + esc(MP_WHY.indexOf(o.why) < 0 ? o.why : '') + '">'
+        + '<label style="margin-top:14px;">いつまでに？</label><div class="ulg-chips" id="obBy">' + bys.map(function(b){ return '<button type="button" data-v="' + b[0] + '"' + (o.by === b[0] ? ' class="on"' : '') + '>' + esc(b[1]) + '</button>'; }).join('') + '</div>'
+        + '<input type="date" id="obByD" min="' + today + '" value="' + esc(o.by && !bys.some(function(b){ return b[0] === o.by; }) ? o.by : '') + '" aria-label="日付を選ぶ">';
+    } else if(o.step === 1){
+      body = '<label>コースを選んでね</label>' + MP_COURSES.map(function(x){ return '<button class="mpco' + (o.co === x.k ? ' on' : '') + '" data-co="' + x.k + '" style="--mc:' + x.c + ';"><b>' + esc(x.n) + '</b><span>' + esc(x.sub) + '</span></button>'; }).join('');
+    } else if(o.step === 2){
+      var co = mpCourse(o.co);
+      body = '<label>どのくらいやる？</label><div class="ob-lvl" id="obLvl">' + MP_LVL.map(function(l){ return '<button type="button" data-v="' + l[0] + '"' + (o.lvl === l[0] ? ' class="on"' : '') + '><b>' + l[1] + '</b><small>' + l[3] + '</small></button>'; }).join('') + '</div>'
+        + '<label style="margin-top:14px;">毎日のクエストと、やる時間</label><div id="obQs">'
+        + co.q.map(function(q){
+            var on = o.qs.indexOf(q[0]) >= 0, sl = o.when[q[0]] || MP_SLOT_DEF[q[0]] || 'pm';
+            return '<div class="ob-q' + (on ? ' on' : '') + '"><label class="mpqs"><input type="checkbox" value="' + q[0] + '"' + (on ? ' checked' : '') + '>' + esc(q[1]) + '</label>'
+              + '<div class="ob-sl">' + MP_SLOTS.map(function(s){ return '<button type="button" data-q="' + q[0] + '" data-s="' + s[0] + '"' + (sl === s[0] ? ' class="on"' : '') + '>' + s[1] + '</button>'; }).join('') + '</div></div>';
+          }).join('') + '</div>'
+        + '<p style="font-size:11.5px;color:var(--sub);margin:10px 0 0;">クエストは毎日の習慣のチェックです。使う製品やケアの方法は、会場でスタッフに聞いてください。</p>';
+    } else {
+      var co2 = mpCourse(o.co);
+      body = '<div class="td-hero">' + ckPalImg() + '<div class="td-bub">' + esc(o.why ? '「' + o.why + '」のために、毎日いっしょにがんばろう！' : '毎日いっしょにがんばろう！') + '</div></div>'
+        + '<div class="ob-sum"><div><small>コース</small><b>' + esc(co2.n) + '</b></div>' + (o.by ? '<div><small>いつまでに</small><b>' + esc(ckMd(o.by)) + '（あと' + ckYmdDays(today, o.by) + '日）</b></div>' : '')
+        + '<div><small>毎日のクエスト</small><b>' + o.qs.length + 'こ</b></div></div>'
+        + co2.q.filter(function(q){ return o.qs.indexOf(q[0]) >= 0; }).map(function(q){ var s = MP_SLOTS.filter(function(x){ return x[0] === (o.when[q[0]] || MP_SLOT_DEF[q[0]] || 'pm'); })[0]; return '<p class="ob-li">' + s[2] + ' ' + s[1] + '　' + esc(q[1]) + '</p>'; }).join('');
+    }
+    modal('<div class="ob-wrap"><h2>はじめの準備</h2>' + dots + body
+      + '<div class="btns"><button id="obBack">' + (o.step ? 'もどる' : 'あとで') + '</button><button class="primary" id="obNext">' + (o.step === 3 ? esc(ckPalSay('promise')) : '次へ') + '</button></div></div>');
+    var pickOne = function(id, key){ var box = $(id); if(box) box.onclick = function(e){ var b = e.target.closest ? e.target.closest('button[data-v]') : null; if(!b) return; o[key] = b.getAttribute('data-v'); [].forEach.call(box.querySelectorAll('button'), function(x){ x.classList.toggle('on', x === b); }); if(key === 'why' && $('obWhyT')) $('obWhyT').value = ''; if(key === 'by' && $('obByD')) $('obByD').value = ''; }; };
+    pickOne('obWhy', 'why'); pickOne('obBy', 'by');
+    if($('obWhyT')) $('obWhyT').oninput = function(){ var v = $('obWhyT').value.trim(); if(v){ o.why = v.slice(0, 40); [].forEach.call($('obWhy').querySelectorAll('button'), function(x){ x.classList.remove('on'); }); } };
+    if($('obByD')) $('obByD').onchange = function(){ if($('obByD').value){ o.by = $('obByD').value; [].forEach.call($('obBy').querySelectorAll('button'), function(x){ x.classList.remove('on'); }); } };
+    [].forEach.call(document.querySelectorAll('.ob-wrap [data-co]'), function(b){ b.onclick = function(){ o.co = b.getAttribute('data-co'); var co = mpCourse(o.co); o.qs = co.q.slice(0, 3).map(function(q){ return q[0]; }); o.lvl = 'std'; o.step = 2; draw(); }; });
+    if($('obLvl')) $('obLvl').onclick = function(e){
+      var b = e.target.closest ? e.target.closest('button[data-v]') : null; if(!b) return;
+      o.lvl = b.getAttribute('data-v'); var n = MP_LVL.filter(function(l){ return l[0] === o.lvl; })[0][2];
+      o.qs = mpCourse(o.co).q.slice(0, n).map(function(q){ return q[0]; }); draw();
+    };
+    if($('obQs')) $('obQs').onclick = function(e){
+      var t = e.target;
+      if(t.closest && t.closest('button[data-s]')){ var b = t.closest('button[data-s]'); o.when[b.getAttribute('data-q')] = b.getAttribute('data-s'); [].forEach.call(b.parentNode.querySelectorAll('button'), function(x){ x.classList.toggle('on', x === b); }); return; }
+      if(t.tagName === 'INPUT'){ o.qs = [].map.call(document.querySelectorAll('#obQs input:checked'), function(x){ return x.value; }); t.closest('.ob-q').classList.toggle('on', t.checked); }
+    };
+    $('obBack').onclick = function(){ if(!o.step){ closeModal(); return; } o.step = o.step === 2 ? 1 : o.step - 1; draw(); };
+    $('obNext').onclick = function(){
+      if(o.step === 0){ if(!o.why){ toast('なりたい私を選ぶか、書いてね'); return; } o.step = 1; draw(); return; }
+      if(o.step === 1){ if(!o.co){ toast('コースを選んでね'); return; } o.step = 2; draw(); return; }
+      if(o.step === 2){
+        if(!o.qs.length){ toast('クエストを1つ以上選んでね'); return; }
+        if(o.qs.length > 5){ toast('クエストは5つまでです'); return; }
+        o.step = 3; draw(); return;
+      }
+      var when = {}; o.qs.forEach(function(k){ when[k] = o.when[k] || MP_SLOT_DEF[k] || 'pm'; });
+      var plan = { course: o.co, goal: o.why.slice(0, 40), why: o.why.slice(0, 40), qs: o.qs, when: when, lvl: o.lvl, ob: Date.now(), start: today, days: (gMp.plan && gMp.plan.days) || {} };
+      if(o.by) plan.by = o.by;
+      $('obNext').disabled = true;
+      mpSave(plan).then(function(){ if(gMp.plan === plan) ckObFirst(); else $('obNext').disabled = false; });
+    };
+  };
+  draw();
+}
+// 約束のあと：その場で1つ目のチェック → ホーム画面・通知
+function ckObFirst(){
+  var plan = gMp.plan, qs = mpQs(plan);
+  var draw = function(){
+    var done = ((plan.days || {})[todayStr()] || []);
+    modal('<div class="ob-wrap"><h2>はじめの準備</h2><div class="td-hero' + (done.length ? ' pop' : '') + '">' + ckPalImg() + '<div class="td-bub">' + esc(done.length ? ckPalSay('firstDone') : ckPalSay('first')) + '</div></div>'
+      + qs.map(function(q){ var on = done.indexOf(q[0]) >= 0; return '<button type="button" class="ua-q td-qb' + (on ? ' on' : '') + '" data-ob1="' + q[0] + '"><i>' + (on ? '✓' : '') + '</i><span>' + esc(q[1]) + '</span></button>'; }).join('')
+      + (done.length ? '<div class="ob-next"><p>毎日すぐ開けるように、ここまでやっておこう</p>'
+          + (ckIsStandalone() ? '' : '<button type="button" id="obA2">📲 ホーム画面に追加する</button>')
+          + (ckPushState(gUa.c) === 'off' ? '<button type="button" id="obPush">🔔 夜のお知らせを受け取る</button>' : '') + '</div>' : '')
+      + '<div class="btns"><button class="primary" id="obEnd">' + (done.length ? 'はじめる！' : 'あとでやる') + '</button></div></div>');
+    [].forEach.call(document.querySelectorAll('[data-ob1]'), function(b){ b.onclick = function(){
+      b.disabled = true; mpToggle(b.getAttribute('data-ob1')).then(function(){ plan = gMp.plan; draw(); });
+    }; });
+    if($('obA2')) $('obA2').onclick = ckA2hsHowModal;
+    if($('obPush')) $('obPush').onclick = function(){ $('obPush').disabled = true; ckPushToggle(gUa.c, gUa.token, true, function(){ renderUserNews(gUa.c, gUa.token); draw(); }); };
+    $('obEnd').onclick = function(){ closeModal(); ckUaGo('today'); };
+  };
+  draw();
+}
+// はじめての来場の日（受付したその日・来場1回）に、プランが無ければ1回だけ準備を開く（会場でスタッフと一緒に）。
+//   それ以外の人は「今日」の「はじめる」から
+function ckObAuto(){
+  if(!gUa || !gMp || gMp.token !== gUa.token || (gMp.plan && gMp.plan.course)) return;
+  var c = gUa.c || {};
+  if((+c.visits || 0) > 1 || !c.lastVisit || c.lastVisit.d !== todayStr()) return;
+  var k = 'bci_ob_' + gUa.token, seen = '';
+  try{ seen = localStorage.getItem(k) || ''; }catch(e){}
+  if(seen || document.querySelector('.modalback') || gUa.tab === 'qr') return;   // DAY の当日に受付QRを出している時は出さない
+  ckObOpen();
 }
 function ckRenderUserCard(c, card, brand){
   gCardLast = c;
@@ -15057,7 +15372,7 @@ function renderUserNews(c, token){
           return '<div class="nw-box"><span class="nw-k">' + esc(ckMd(n.d)) + (n.staff ? ' ・ お知らせ' : '') + '</span><span class="nw-t">' + esc(n.t) + '</span></div>';
         }).join('')
       + (pushRow ? '<div class="nw-box nw-push"><span class="nw-k">スマホの通知</span><span class="nw-t">'
-          + (ps === 'on' ? '受け取っています（DAYの前日のお知らせ・来場のお礼）' : ps === 'denied' ? 'スマホの設定で、この画面の通知が止められています。受け取る時は、設定から許可してください' : 'DAYの前日のお知らせと、来場のお礼が届きます（どちらも夜8時ごろ）')
+          + (ps === 'on' ? '受け取っています（DAYの前日のお知らせ・来場のお礼・クエストがまだの日の「今日まだ」）' : ps === 'denied' ? 'スマホの設定で、この画面の通知が止められています。受け取る時は、設定から許可してください' : 'DAYの前日のお知らせ・来場のお礼・クエストがまだの日の「今日まだ」が届きます（どれも夜8時ごろ・1晩に1つまで）')
           + '</span>' + (ps === 'denied' ? '' : '<button type="button" id="nwPush"' + (ps === 'on' ? '' : ' class="primary"') + '>' + (ps === 'on' ? '通知をやめる' : '通知を受け取る') + '</button>') + '</div>' : '')
       + '</div>';
     if($('nwPush')) $('nwPush').onclick = function(){
@@ -15078,26 +15393,32 @@ var gUa = gUa || null;   // { c, token, tab, seg, picked }
 function ckUaTabs(){ return [
   ['home', 'ホーム', '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>'],
   ['plan', 'プラン', '<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>'],
-  ['qr', '受付QR', '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/>'],
+  ['today', '今日', '<path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/>'],   // 💜 v158: 真ん中は毎日使う「今日」（受付QRは右上へ）
   ['friends', 'なかま', '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.4-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.7"/><path d="M16.5 14.6c2.6.2 4.5 1.9 5 5"/>'],
   ['me', 'マイページ', '<circle cx="12" cy="8" r="4"/><path d="M4 21c.8-4.2 4-6.5 8-6.5s7.2 2.3 8 6.5"/>']
 ]; }
+// 会員証のページは読み込みの途中で描かれるので、ここで使う決まった値は関数で返す（var だと、まだ入っていない時に呼ばれる）
+function ckUaQrSvg(){ return '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/>'; }
+function ckUaPages(){ return ['home', 'plan', 'today', 'qr', 'friends', 'me']; }
 function ckUaSvg(p){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + p + '</svg>'; }
 function ckUaMount(c, token){
   if(gUa && gUa.token === token){ gUa.c = c; ckUaInfo(); ckUaHome(); return; }
   var vc = $('vCard'), wrap = vc ? vc.querySelector('.cardwrap') : null;
   if(!wrap || $('uaApp')) return;
-  gUa = { c: c, token: token, tab: 'home', seg: 'lounge', picked: false };
+  gUa = { c: c, token: token, tab: 'today', seg: 'lounge', picked: false };
   document.body.classList.add('uapp');
   var app = document.createElement('div'); app.id = 'uaApp';
   app.innerHTML = '<div class="ua-top"><span class="ua-brand">NAVIGATOR Beauty</span><span class="ua-un" id="uaUn"></span>'
+      + '<button type="button" class="ua-bell ua-qrtop" id="uaQrTop" aria-label="受付QR">' + ckUaSvg(ckUaQrSvg()) + '</button>'
       + '<button type="button" class="ua-bell" id="uaBell" aria-label="お知らせ">' + ckUaSvg('<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/>') + '<i class="ua-dot" data-dot="news" hidden></i></button></div>'
     + '<section class="ua-pg" data-p="home"><h2 class="ua-hello" id="uaHello"></h2><div id="uaHomeQ"></div><div id="uaHomePz"></div><div id="uaHomeLg"></div></section>'
     + '<section class="ua-pg" data-p="plan"><h2 class="ua-ttl">マイプラン</h2></section>'
+    + '<section class="ua-pg" data-p="today"><div id="uaToday"></div></section>'
     + '<section class="ua-pg" data-p="qr"><h2 class="ua-ttl ua-c">受付</h2><div id="uaQrCard"></div><p class="ua-visits" id="uaVisits"></p>'
       + '<p class="ua-qrnote">受付でこの画面を見せてください。<br>画面を明るくすると読みやすくなります。</p></section>'
     + '<section class="ua-pg" data-p="friends" data-seg="lounge"><h2 class="ua-ttl">なかま</h2><div class="ua-seg" role="tablist">'
-      + [['lounge', 'ラウンジ'], ['buddy', 'バディ'], ['invite', '招待']].map(function(x){ return '<button type="button" role="tab" data-seg="' + x[0] + '">' + x[1] + (x[0] === 'lounge' ? '<i class="ua-dot" data-dot="lg" hidden></i>' : '') + '</button>'; }).join('') + '</div></section>'
+      + [['lounge', 'ラウンジ'], ['buddy', 'バディ'], ['invite', '招待']].map(function(x){ return '<button type="button" role="tab" data-seg="' + x[0] + '">' + x[1] + '<span class="ua-lk" hidden>🔒</span>' + (x[0] === 'lounge' ? '<i class="ua-dot" data-dot="lg" hidden></i>' : '') + '</button>'; }).join('') + '</div>'
+      + '<div class="ua-lock" id="uaLock" hidden></div></section>'
     + '<section class="ua-pg" data-p="me"><h2 class="ua-ttl">マイページ</h2><div class="ua-me" id="uaMe"></div><div id="uaMeNw"></div></section>';
   wrap.insertBefore(app, wrap.firstChild);
   var pg = function(p){ return app.querySelector('.ua-pg[data-p="' + p + '"]'); }, mv = function(p, id, before){ var el = $(id); if(el) pg(p).insertBefore(el, before ? $(before) : null); };
@@ -15109,7 +15430,7 @@ function ckUaMount(c, token){
   var nav = document.createElement('nav'); nav.id = 'uaTabs'; nav.setAttribute('aria-label', 'メニュー');
   nav.innerHTML = ckUaTabs().map(function(t){
     var dt = t[0] === 'home' ? 'news' : t[0] === 'friends' ? 'lg' : '';
-    return '<button type="button" data-tab="' + t[0] + '"' + (t[0] === 'qr' ? ' class="ua-qrb"' : '') + '>' + (t[0] === 'qr' ? '<span class="ua-qrc">' + ckUaSvg(t[2]) + '</span>' : ckUaSvg(t[2])) + '<span>' + t[1] + '</span>'
+    return '<button type="button" data-tab="' + t[0] + '"' + (t[0] === 'today' ? ' class="ua-qrb"' : '') + '>' + (t[0] === 'today' ? '<span class="ua-qrc">' + ckUaSvg(t[2]) + '</span>' : ckUaSvg(t[2])) + '<span>' + t[1] + '</span>'
       + (dt ? '<i class="ua-dot" data-dot="' + dt + '" hidden></i>' : '') + '</button>';
   }).join('');
   vc.appendChild(nav);   // .cardwrap の外（中だと position:fixed が効かない）
@@ -15120,6 +15441,7 @@ function ckUaMount(c, token){
     var s = t.closest('[data-seg]'); if(s && s.tagName === 'BUTTON'){ ckUaSeg(s.getAttribute('data-seg')); return; }
     var g = t.closest('[data-go]'); if(g){ ckUaGo(g.getAttribute('data-go')); if(g.getAttribute('data-gos')) ckUaSeg(g.getAttribute('data-gos')); }
   });
+  $('uaQrTop').onclick = function(){ ckUaGo('qr'); };   // 💜 v158: 受付QRは右上から
   $('uaBell').onclick = function(){
     ckUaGo('home'); var n = $('nwArea'); if(n && n.scrollIntoView) n.scrollIntoView({ block: 'start' });
     // v141: ベルを押したら、お知らせを読み直す（1分以内に読んでいれば読まない）
@@ -15131,7 +15453,7 @@ function ckUaMount(c, token){
   try{ t0 = sessionStorage.getItem('bci_ua_tab_' + token) || ''; }catch(e){}
   if(t0) gUa.picked = true;
   ckUaSeg('lounge');
-  ckUaGo(ckUaTabs().some(function(x){ return x[0] === t0; }) ? t0 : 'home', true);
+  ckUaGo(ckUaPages().indexOf(t0) >= 0 ? t0 : 'today', true);   // 💜 v158: 開いたら「今日」
   ckUaInfo(); ckUaHome();
 }
 function ckUaGo(tab, auto){
@@ -15139,6 +15461,7 @@ function ckUaGo(tab, auto){
   gUa.tab = tab; if(!auto) gUa.picked = true;
   Array.prototype.forEach.call(document.querySelectorAll('#uaApp .ua-pg'), function(p){ p.classList.toggle('on', p.getAttribute('data-p') === tab); });
   Array.prototype.forEach.call(document.querySelectorAll('#uaTabs [data-tab]'), function(b){ var on = b.getAttribute('data-tab') === tab; b.classList.toggle('on', on); b.setAttribute('aria-current', on ? 'page' : 'false'); });
+  var qt = $('uaQrTop'); if(qt) qt.classList.toggle('on', tab === 'qr');
   try{ sessionStorage.setItem('bci_ua_tab_' + gUa.token, tab); }catch(e){}
   if(!auto) try{ window.scrollTo(0, 0); }catch(e2){}
   ckUaBadges();
@@ -15148,7 +15471,20 @@ function ckUaSeg(seg){
   gUa.seg = seg;
   var p = document.querySelector('#uaApp .ua-pg[data-p="friends"]'); if(p) p.setAttribute('data-seg', seg);
   Array.prototype.forEach.call(document.querySelectorAll('#uaApp .ua-seg button'), function(b){ var on = b.getAttribute('data-seg') === seg; b.classList.toggle('on', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
+  ckUaLockDraw();
   ckUaBadges();
+}
+// 💜 v158: はじめの準備をした人は、チェックした日が3日でバディ・7日でラウンジが開く（友だちの招待はいつでも）
+function ckUaLockDraw(){
+  if(!gUa) return;
+  var plan = gMp && gMp.token === gUa.token ? gMp.plan : null, p = document.querySelector('#uaApp .ua-pg[data-p="friends"]'), box = $('uaLock');
+  Array.prototype.forEach.call(document.querySelectorAll('#uaApp .ua-seg button'), function(b){ var lk = b.querySelector('.ua-lk'); if(lk) lk.hidden = !mpLockLeft(plan, b.getAttribute('data-seg')); });
+  var left = mpLockLeft(plan, gUa.seg), nm = gUa.seg === 'buddy' ? 'バディ' : 'ラウンジ';
+  if(p){ if(left) p.setAttribute('data-lock', '1'); else p.removeAttribute('data-lock'); }
+  if(!box) return;
+  box.hidden = !left;
+  if(left) box.innerHTML = ckPalImg() + '<b>' + nm + 'は、あと' + left + '日で開くよ</b><p>クエストをチェックした日が' + MP_UNLOCK[gUa.seg] + '日になると使えます。今日の分をチェックしよう！</p>'
+    + '<button type="button" class="primary ua-btn" data-go="today">今日のクエストへ</button>';
 }
 // 名前・ユニオン・来場（受付QR・マイページ）
 function ckUaInfo(){
@@ -15168,12 +15504,12 @@ function ckUaHome(){
   var qh = '';
   if(gMp && gMp.token === gUa.token){
     if(!co){
-      qh = '<div class="ua-cd" data-go="plan"><div class="ua-lb">今日のクエスト<em>プランへ ›</em></div><p class="ua-p">コースを選ぶと、毎日のケアのクエストが始まります。</p>'
-        + '<button type="button" class="primary ua-btn" data-go="plan">コースを選ぶ</button></div>';
+      qh = '<div class="ua-cd" data-go="today"><div class="ua-lb">今日のクエスト<em>今日へ ›</em></div><p class="ua-p">なりたい私とコースを決めると、毎日のケアのクエストが始まります。</p>'
+        + '<button type="button" class="primary ua-btn" data-go="today">はじめる</button></div>';
     } else {
       var qs = co.q.filter(function(x){ return (plan.qs || []).indexOf(x[0]) >= 0; }); if(!qs.length) qs = co.q.slice(0, 3);
       var done = (plan.days && plan.days[today]) || [], n = qs.filter(function(x){ return done.indexOf(x[0]) >= 0; }).length, len = 163.4;
-      qh = '<div class="ua-cd" data-go="plan"><div class="ua-lb">今日のクエスト<em>プランへ ›</em></div><div class="ua-qz">'
+      qh = '<div class="ua-cd" data-go="today"><div class="ua-lb">今日のクエスト<em>今日へ ›</em></div><div class="ua-qz">'
         + '<svg class="ua-ring" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="26" fill="none" stroke="var(--line)" stroke-width="7"/>'
         + '<circle cx="32" cy="32" r="26" fill="none" stroke="var(--ua-or)" stroke-width="7" stroke-linecap="round" transform="rotate(-90 32 32)" stroke-dasharray="' + len + '" stroke-dashoffset="' + (len * (1 - n / qs.length)).toFixed(1) + '"/>'
         + '<text x="32" y="37" text-anchor="middle">' + n + '/' + qs.length + '</text></svg><div class="ua-ql">'
@@ -15200,6 +15536,8 @@ function ckUaHome(){
     lg = '<div class="ua-cd" data-go="friends" data-gos="lounge"><div class="ua-lb">ラウンジの新着<em>ラウンジへ ›</em></div><div class="ua-post"><div><small>' + esc(p0.n) + ' さん' + (p0.co ? ' ・ ' + esc(p0.co) : '') + '</small><span>' + esc(p0.t) + '</span></div><i>👏 ' + (p0.claps || 0) + '</i></div></div>';
   }
   $('uaHomeLg').innerHTML = lg;
+  ckUaToday();     // 💜 v158
+  ckUaLockDraw();
   ckUaBadges();
 }
 // NEWS を描いたあと：スマホの通知の行はマイページへ。DAY の当日（自分で画面を選ぶ前）は受付QRから
@@ -15212,7 +15550,10 @@ function ckUaNews(next){
   if(nw && !nw.querySelector('.nw-box')){ var hd = nw.querySelector('.next-head'); if(hd) hd.parentNode.removeChild(hd); }
   // 💜 v136: お知らせの中身（次のDAY・お礼・スタッフから）の印。変わったら赤丸
   gUa.newsSig = ckUaHash([].map.call(document.querySelectorAll('#nwArea .nw-box'), function(b){ var x = b.cloneNode(true), cal = x.querySelector('.nw-cal'); if(cal) cal.parentNode.removeChild(cal); return x.textContent; }).join('|'));
+  gUa.next = next || null;   // 💜 v158: 「今日」の次のDAYまでの日数
+  if(gUa.obRedraw) gUa.obRedraw();
   if(next && next.date === todayStr() && !gUa.picked) ckUaGo('qr', true);
+  ckUaToday();
   ckUaBadges();
 }
 function ckUaHash(t){ var h = 5381; t = String(t || ''); for(var i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0; return t ? String(h >>> 0) : ''; }
@@ -15384,7 +15725,7 @@ function ckPushToggle(c, token, wantOn, done){
     if(!t) throw { code: 'na' };
     return ckPushSave(c, token, t, true).then(function(){
       try{ localStorage.setItem('bci_push_' + c.no, t); }catch(e){}
-      fin('通知を受け取ります。DAYの前日と来場した日の、夜8時ごろに届きます');
+      fin('通知を受け取ります。夜8時ごろに届きます（1晩に1つまで）');
     });
   }).catch(function(e){
     fin(e && e.code === 'denied' ? '通知が許可されませんでした。スマホの設定で、この画面の通知を許可してください'
@@ -15871,6 +16212,7 @@ function btDraw(){
         : empty('読み込み中…')) + '</div>'
     + '</div>'
     + '<div class="bt-box" id="btPz"></div>'
+    + '<div class="bt-box" id="btMt"></div>'
     + '<div class="bt-box" id="btQe"></div>'
     + '</div>';
   $('btNtText').value = keep;
@@ -15878,6 +16220,7 @@ function btDraw(){
   btRqDraw();   // 💜 v146
   btFuDraw();   // 💜 v147
   btPzDraw();   // 💜 v144
+  btMtDraw();   // 💜 v158
   btQeDraw();   // 💜 v140
   Array.prototype.forEach.call(box.querySelectorAll('[data-go]'), function(b){
     b.onclick = function(){ var t = $(b.getAttribute('data-go')); if(t && t.scrollIntoView) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
@@ -16034,6 +16377,61 @@ function btPzLoad(){
     me.pz = { rows: rows };
     btPzDraw();
   }).catch(function(e){ if(gBt === me){ me.pz = { err: permMsg(e, '今日の来場者を読めませんでした') }; btPzDraw(); } });
+}
+/* 💜 v158: 続いているか（このユニオンのお客さん）。いちばん大事な数は「この7日で4日以上チェックした人」。
+   押した時だけ読む（お客さんの名簿＋一人ひとりのマイプラン）。結果は端末に1日覚える */
+function ckRetention(rows, today){
+  var r = { n: 0, started: 0, wk4: 0, d7: [0, 0], d30: [0, 0], rev: 0 }, w0 = mpAddDays(today, -6);
+  rows.forEach(function(x){
+    r.n++;
+    if((+x.visits || 0) >= 2) r.rev++;
+    var pl = x.plan;
+    if(!pl || !pl.course) return;
+    r.started++;
+    var ks = Object.keys(pl.days || {}).filter(function(k){ return (pl.days[k] || []).length; });
+    if(ks.filter(function(k){ return k >= w0 && k <= today; }).length >= 4) r.wk4++;
+    var st = String(pl.start || '');
+    if(st && st <= mpAddDays(today, -7)){ r.d7[1]++; if(ks.some(function(k){ return k >= mpAddDays(st, 6); })) r.d7[0]++; }
+    if(st && st <= mpAddDays(today, -30)){ r.d30[1]++; if(ks.some(function(k){ return k >= mpAddDays(st, 29); })) r.d30[0]++; }
+  });
+  return r;
+}
+function btMtLoad(){
+  var me = gBt; if(!me) return;
+  me.mt = { loading: true }; btMtDraw();
+  db.collection('checkinUsers').where('union', '==', me.un).get().then(function(qs){
+    var rows = []; qs.forEach(function(d){ var x = d.data() || {}; if(x.active !== false && x.cardToken) rows.push({ visits: x.visits || 0, t: x.cardToken }); });
+    return Promise.all(rows.map(function(x){
+      return db.collection('cards').doc(x.t).collection('plan').doc('me').get().then(function(s){ x.plan = s.exists ? s.data() : null; }, function(){ x.plan = null; });
+    })).then(function(){ return rows; });
+  }).then(function(rows){
+    if(gBt !== me) return;
+    me.mt = { at: Date.now(), r: ckRetention(rows, todayStr()) };
+    try{ localStorage.setItem('bci_mt_' + me.un, JSON.stringify(me.mt)); }catch(e){}
+    btMtDraw();
+  }).catch(function(e){ if(gBt === me){ me.mt = { err: permMsg(e, 'お客さんの名簿を読めませんでした') }; btMtDraw(); } });
+}
+function btMtDraw(){
+  var box = $('btMt'), me = gBt;
+  if(!box || !me) return;
+  if(!me.mt){ try{ var o = JSON.parse(localStorage.getItem('bci_mt_' + me.un) || 'null'); if(o && o.r && Date.now() - o.at < 864e5) me.mt = o; }catch(e){} }
+  var M = me.mt, pc = function(a){ return a[1] ? Math.round(a[0] / a[1] * 100) + '%' : '—'; };
+  var h = '<h3>📈 続いているか' + hq('このユニオンのお客さんが、アプリを続けているかの数字です。いちばん大事なのは「この7日で4日以上チェックした人」。7日後・30日後に続いている人は、マイプランを始めた日から数えて、7日目（30日目）以降にもチェックした人の割合です。押した時だけ数えます（お客さんの人数分だけ読み込みます）。') + '</h3>';
+  if(!M) h += '<p class="bt-note" style="margin:0 0 8px;">お客さんのマイプランを読んで数えます。</p><button type="button" id="btMtGo">数える</button>';
+  else if(M.loading) h += '<p class="bt-note">数えています…</p>';
+  else if(M.err) h += '<p class="bt-note">' + esc(M.err) + '</p>';
+  else {
+    var r = M.r;
+    h += '<div class="mt-big"><b class="mono">' + r.wk4 + '</b><span>人<small>この7日で4日以上チェックした人（マイプランを始めた ' + r.started + '人のうち）</small></span></div>'
+      + '<div class="mt-grid"><div><small>7日後も続いている</small><b class="mono">' + pc(r.d7) + '</b><i>' + r.d7[0] + '/' + r.d7[1] + '人</i></div>'
+      + '<div><small>30日後も続いている</small><b class="mono">' + pc(r.d30) + '</b><i>' + r.d30[0] + '/' + r.d30[1] + '人</i></div>'
+      + '<div><small>2回以上来場した</small><b class="mono">' + pc([r.rev, r.n]) + '</b><i>' + r.rev + '/' + r.n + '人</i></div>'
+      + '<div><small>マイプランを始めた</small><b class="mono">' + pc([r.started, r.n]) + '</b><i>' + r.started + '/' + r.n + '人</i></div></div>'
+      + '<p class="bt-note">' + esc(new Date(M.at).getMonth() + 1 + '/' + new Date(M.at).getDate() + ' ' + pad(new Date(M.at).getHours()) + ':' + pad(new Date(M.at).getMinutes())) + ' に数えました</p>'
+      + '<button type="button" id="btMtGo" class="ghost">↻ 数え直す</button>';
+  }
+  box.innerHTML = h;
+  if($('btMtGo')) $('btMtGo').onclick = btMtLoad;
 }
 function btPzDraw(){
   var box = $('btPz'), me = gBt;

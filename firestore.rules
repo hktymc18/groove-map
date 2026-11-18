@@ -982,8 +982,14 @@ service cloud.firestore {
       allow get: if true;
       allow list: if false;
       allow create, update: if pid == 'me'
-        && request.resource.data.keys().hasOnly(['course', 'goal', 'qs', 'start', 'days', 'atMs'])
+        && request.resource.data.keys().hasOnly(['course', 'goal', 'qs', 'start', 'days', 'atMs', 'why', 'by', 'when', 'lvl', 'ob'])
         && request.resource.data.course in ['diet', 'yuragi', 'inner']
+        // 💜 受付v158: はじめの準備（なりたい私・いつまでに・クエストの時間帯・難しさ・準備をした時刻）
+        && request.resource.data.get('why', '') is string && request.resource.data.get('why', '').size() <= 40
+        && request.resource.data.get('by', '') is string && request.resource.data.get('by', '').size() <= 10
+        && request.resource.data.get('when', {}) is map && request.resource.data.get('when', {}).size() <= 12
+        && request.resource.data.get('lvl', 'std') in ['easy', 'std', 'hard']
+        && request.resource.data.get('ob', 0) is int
         && request.resource.data.get('goal', '') is string && request.resource.data.get('goal', '').size() <= 40
         && request.resource.data.qs is list && request.resource.data.qs.size() >= 1 && request.resource.data.qs.size() <= 5
         && request.resource.data.get('days', {}) is map && request.resource.data.get('days', {}).size() <= 400

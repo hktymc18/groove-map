@@ -30,6 +30,14 @@ const _e = console.error; console.error = (...a) => { if (!/PERMISSION_DENIED|ev
   c('クエスト0こは保存できない', !(await ok(setDoc(doc(anon, 'cards/tokU/plan/me'), P({ qs: [] })))));
   c('クエスト6こは保存できない', !(await ok(setDoc(doc(anon, 'cards/tokU/plan/me'), P({ qs: ['a', 'b', 'c', 'd', 'e', 'f'] })))));
   c('決まった項目以外は入れられない', !(await ok(setDoc(doc(anon, 'cards/tokU/plan/me'), P({ x: 1 })))));
+  // 受付 v158：はじめの準備（なりたい私・いつまで・時間帯・難しさ・準備の印）
+  const OB = { why: '夏までにきれいになりたい', by: '2026-12-18', when: { water: 'am', walk: 'noon' }, lvl: 'std', ob: Date.now() };
+  c('v158: なりたい私・いつまで・時間帯・難しさ・準備の印を保存できる', await ok(setDoc(doc(anon, 'cards/tokU/plan/me'), P(OB))));
+  c('v158: なりたい私は40字まで', !(await ok(setDoc(doc(anon, 'cards/tokU/plan/me'), P(Object.assign({}, OB, { why: 'あ'.repeat(41) }))))));
+  c('v158: 難しさは easy・std・hard だけ', !(await ok(setDoc(doc(anon, 'cards/tokU/plan/me'), P(Object.assign({}, OB, { lvl: 'max' }))))));
+  c('v158: 時間帯は12こまで', !(await ok(setDoc(doc(anon, 'cards/tokU/plan/me'), P(Object.assign({}, OB, { when: Object.fromEntries([...Array(13).keys()].map(i => ['q' + i, 'am'])) }))))));
+  c('v158: 準備の印は数字だけ', !(await ok(setDoc(doc(anon, 'cards/tokU/plan/me'), P(Object.assign({}, OB, { ob: 'yes' }))))));
+  c('v158: いつまでは10字まで', !(await ok(setDoc(doc(anon, 'cards/tokU/plan/me'), P(Object.assign({}, OB, { by: '2026-12-18-x' }))))));
   c('ログインしていない人は消せない', !(await ok(require('firebase/firestore').deleteDoc(doc(anon, 'cards/tokU/plan/me')))));
   await env.cleanup();
   console.log(fails ? 'FAIL ' + fails : 'ALL PASS'); process.exit(fails ? 1 : 0);

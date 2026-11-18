@@ -25,7 +25,7 @@ const IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_4 like Mac OS X) AppleWebK
   for (const dark of [false, true]) {
     const { ctx, page, ev, wt, errs } = await P.open(b, { dark, hash: '#c=' + tok, data: { ['cards/' + tok]: card() }, init: fake({ tok: 'fcm-token-1' }) });
     const t0 = await ev(`document.getElementById('uaMeNw').innerText`);
-    c('マイページに「スマホの通知」と「通知を受け取る」（v135：アプリの形）' + (dark ? '（ダーク）' : ''), /スマホの通知/.test(t0) && /DAYの前日のお知らせと、来場のお礼が届きます/.test(t0) && /通知を受け取る/.test(t0), t0);
+    c('マイページに「スマホの通知」と「通知を受け取る」（v135：アプリの形）' + (dark ? '（ダーク）' : ''), /スマホの通知/.test(t0) && /DAYの前日のお知らせ・来場のお礼・クエストがまだの日の「今日まだ」が届きます/.test(t0) && /通知を受け取る/.test(t0), t0);
     if (!dark) {
       await page.screenshot({ path: OUT + '/ckpu129_off.png' });
       await ev(`document.getElementById('nwPush').click()`); await wt(800);
