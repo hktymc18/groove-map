@@ -40,15 +40,42 @@
   --amber:#d6b75e; --amber-soft:#3a3320; --focus:#7ba7e0;
   color-scheme:dark;
 }
-/* 🎓 v158: 研修生登録ページ（#trainer）は緑を使わない。受付の画面と同じ黒・白・グレー基調
-   （ボタン・受講済みの✓・バッジの「緑」を、文字の色と同じ黒／ダークでは明るいグレーに置きかえる） */
-html.trm{ --green:#23261f; --green-soft:#ecebe5; --green-bar:#6f6d63; --on-green:#ffffff; }
-@media (prefers-color-scheme: dark){
-  html.trm{ --green:#e9e7de; --green-soft:#2e302a; --green-bar:#a3a194; --on-green:#171915; }
+/* 🎓 v159: 研修生登録ページ（#trainer）の色は「コムギニュース」と同じ（v158 の緑なしを置きかえ）。
+   ライト＝白とうすいグレー・黒の文字／ダーク＝青みのない濃いグレー・白の文字。大事なボタンは青、ほかは丸い枠のボタン。
+   --green（ボタン・受講済みの✓）は青に、--on-green はボタンの文字（白） */
+html.trm{
+  --paper:#f2f2f3; --card:#ffffff; --ink:#111214; --sub:#6e6e73; --line:#e3e3e6;
+  --accent:#e5484d; --accent-soft:#fdecec;
+  --green:#3b82f6; --green-soft:#e8f0fe; --green-bar:#3b82f6; --on-green:#ffffff;
+  --amber:#8a6d1f; --amber-soft:#f5edd3; --focus:#3b82f6; --chip:#ececee;
 }
-html.trm[data-theme="light"]{ --green:#23261f; --green-soft:#ecebe5; --green-bar:#6f6d63; --on-green:#ffffff; }
-html.trm[data-theme="dark"]{ --green:#e9e7de; --green-soft:#2e302a; --green-bar:#a3a194; --on-green:#171915; }
+@media (prefers-color-scheme: dark){
+  html.trm{
+    --paper:#1f2023; --card:#2a2b2f; --ink:#f2f2f4; --sub:#9b9ca1; --line:#3a3b40;
+    --accent:#ff6b6b; --accent-soft:#3a2426;
+    --green:#5b9cf6; --green-soft:#22324a; --green-bar:#5b9cf6; --on-green:#ffffff;
+    --amber:#d6b75e; --amber-soft:#3a3320; --focus:#5b9cf6; --chip:#3a3b40;
+  }
+}
+html.trm[data-theme="light"]{
+  --paper:#f2f2f3; --card:#ffffff; --ink:#111214; --sub:#6e6e73; --line:#e3e3e6;
+  --accent:#e5484d; --accent-soft:#fdecec;
+  --green:#3b82f6; --green-soft:#e8f0fe; --green-bar:#3b82f6; --on-green:#ffffff;
+  --amber:#8a6d1f; --amber-soft:#f5edd3; --focus:#3b82f6; --chip:#ececee;
+}
+html.trm[data-theme="dark"]{
+  --paper:#1f2023; --card:#2a2b2f; --ink:#f2f2f4; --sub:#9b9ca1; --line:#3a3b40;
+  --accent:#ff6b6b; --accent-soft:#3a2426;
+  --green:#5b9cf6; --green-soft:#22324a; --green-bar:#5b9cf6; --on-green:#ffffff;
+  --amber:#d6b75e; --amber-soft:#3a3320; --focus:#5b9cf6; --chip:#3a3b40;
+}
 html.trm button.primary, html.trm .paypick button.on, html.trm .ok .hit-badge, html.trm .ol-ok-ic{color:var(--on-green);}
+/* 形：ボタンは丸い枠（ふつうのボタンは枠だけ・文字はグレー）、入力欄とポップアップは角を大きめに */
+html.trm button{border-radius:999px;}
+html.trm #vTrainer input:not([type=checkbox]), html.trm #vTrainer select, html.trm #vTrainer textarea,
+html.trm .modal input[type=text], html.trm .modal input[type=date], html.trm .modal select, html.trm .modal textarea{border-radius:14px;background:var(--card);}
+html.trm .modal{border-radius:22px;}
+html.trm .trtabs button.on, html.trm .trsex button.on{background:var(--chip);color:var(--ink);border-color:var(--chip);font-weight:700;}
 *{box-sizing:border-box;}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 html,body{margin:0;}
@@ -2768,7 +2795,7 @@ var gJoinKey = gCardToken ? null : (function(){ var m = /[#&]uj=([A-Za-z0-9_-]+)
 var gApplyId = (gCardToken || gJoinKey) ? null : (function(){ var m = /[#&]ua=([a-z0-9]{24})/.exec(location.hash); return m ? m[1] : null; })();
 if(gJoinKey || gApplyId){ gReceiveMode = false; gColMode = false; }
 var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#trainer/.test(location.hash);   // 🎓 研修生登録ページ
-if(gTrainerMode) document.documentElement.classList.add('trm');   // 🎓 v158: 研修生登録ページは緑を使わない（CSS の html.trm）
+if(gTrainerMode) document.documentElement.classList.add('trm');   // 🎓 v158/v159: 研修生登録ページはコムギニュースの色（CSS の html.trm）
 // 用途ごとに「ホーム画面に追加」用のアイコンと名前を差し替える
 // （同じHTMLを共有しているため、会員証（BASE CHECK-IN）と同じアイコン・名前が並んで
 //   区別できなくなるのを防ぐ。iOSは追加操作の時点のタグを読むので、動的な差し替えで反映される）
@@ -2795,10 +2822,11 @@ if(gTrainerMode) document.documentElement.classList.add('trm');   // 🎓 v158: 
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v158';
+var APP_VER = 'v159';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v159', d: '2026/11/18', items: ['🎨 研修生登録の画面の色と形を一新（白・グレーの背景、大事なボタンは青、ほかは丸い枠のボタン。ダークは濃いグレー）'] },
   { v: 'v158', d: '2026/11/18', items: ['🎨 研修生登録の画面の色を、受付の画面と同じ黒・白・グレーに（緑のボタン・✓をやめました）'] },
   { v: 'v157', d: '2026/11/17', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v156', d: '2026/11/16', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
