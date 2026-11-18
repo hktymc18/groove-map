@@ -984,7 +984,7 @@ service cloud.firestore {
       allow create, update: if pid == 'me'
         && request.resource.data.keys().hasOnly(['course', 'goal', 'qs', 'start', 'days', 'atMs', 'why', 'by', 'when', 'lvl', 'ob'])
         && request.resource.data.course in ['diet', 'yuragi', 'inner']
-        // 💜 受付v158: はじめの準備（なりたい私・いつまでに・クエストの時間帯・難しさ・準備をした時刻）
+        // 💜 受付v161: はじめの準備（なりたい私・いつまでに・クエストの時間帯・難しさ・準備をした時刻）
         && request.resource.data.get('why', '') is string && request.resource.data.get('why', '').size() <= 40
         && request.resource.data.get('by', '') is string && request.resource.data.get('by', '').size() <= 10
         && request.resource.data.get('when', {}) is map && request.resource.data.get('when', {}).size() <= 12

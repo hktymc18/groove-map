@@ -210,7 +210,7 @@ exports.sendReminders = onSchedule(
 );
 
 // 💜 NAVIGATOR Beauty（受付 v129）: ユーザー（お客さん）のスマホの通知。中身は beauty.js
-//   毎日20時に1回だけ動く（来場のお礼＝今日来た人／前日のお知らせ＝明日のDAY／v158: 今日まだ＝今日まだチェックしていない人。1晩に1通まで）。
+//   毎日20時に1回だけ動く（来場のお礼＝今日来た人／前日のお知らせ＝明日のDAY／v161: 今日まだ＝今日まだチェックしていない人。1晩に1通まで）。
 //   定時の実行（Cloud Scheduler）は3つまで無料なので、2つに分けずに1つにまとめている（今は overdueReminders・sendReminders と合わせて3つ）
 //   デプロイ: firebase deploy --only functions:beautyDaily
 const beauty = require('./beauty');

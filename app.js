@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v883';
+var APP_JS_VERSION = 'v884';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4685,7 +4685,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v883';
+  var DATA_VERSION = 'v884';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6805,7 +6805,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
-  { v:'v883', d:'2026-11-18', items:['🛠 細かい修正をしました'] },
+  { v:'v884', d:'2026-11-18', items:['🛠 細かい修正をしました'] },
+  { v:'v883', d:'2026-11-18', items:['📷 メンバーの写真の画質を上げました（これから入れる写真から。今の写真をきれいにしたい時は、選び直してください）'] },
   { v:'v882', d:'2026-11-18', items:['アカウント管理（オーナー）：同じ名前でメールアドレスが違うアカウントを「同じ名前が複数」で見比べて、いらない方を削除できるようにしました（使えなくして一覧から消します。「削除したアカウント」から元に戻せます）'] },
   { v:'v881', d:'2026-11-16', items:['🃏 カードコレクションを、パソコンでは広い画面で見られるようにし、NAVIGATOR のライト／ダークの表示に合わせました'] },
   { v:'v880', d:'2026-11-16', items:['🏷 所属ユニオンは、決めたユニオンの一覧からしか選べないようにしました。一覧に無い書き方のユニオン名の人は、次に開いた時に選び直してもらいます（オーナーはアカウント管理の「ユニオン名が一覧に無い」から直せます）'] },
@@ -10450,7 +10451,7 @@ function titleRingColor(title) {
   return isLight ? '#64748b' : '#8D9AB8';
 }
 
-// ── 写真アバター保存（Firestore base64・8分割チャンクで1MiB上限を回避） ──
+// ── 写真アバター保存（Firestore base64・8分割チャンクで1MiB上限を回避。v883: 1枚 約12〜19KB＝約350人分） ──
 // maps/{uid}/meta/avatars0..7 に {memberId: dataUrl} で格納。
 // メンバーIDに紐づくため翌月コピーでも複製されず1人1枚のまま。
 var _avatars = {}, _avatarsUid = '';
@@ -16406,12 +16407,26 @@ function cropSetZoom(v) {
   _cropOy = CROP_V/2 - cy * sNew;
   _cropApply();
 }
+// v883: 写真の画質を上げる。128px・画質62%（1枚約5〜8KB）→ 192px・画質82%（1枚約12〜18KB）。
+//   写真は最大 約64ポイントで出すので、iPhone（1ポイント＝3ドット）でぼやけない 192px に。
+//   1人のMAPの写真は8つの文書（1つ約1MBまで）に分けて入れるので、重い写真は画質を少し下げて約19KBまでにする（約350人分）
+var AV_PX = 192, AV_Q = 0.82, AV_MAX = 26000;
 function _cropOut() {
-  var s = _cropS0 * _cropZ, S = 128; // 高解像度画面でもボケないサイズ（1枚約8KB）
+  var s = _cropS0 * _cropZ, S = AV_PX;
   var c = document.createElement('canvas'); c.width = S; c.height = S;
   var ctx = c.getContext('2d');
+  try { ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; } catch (e) {} // 大きい写真から縮める時のギザギザを減らす
   ctx.drawImage(_cropImg, (-_cropOx)/s, (-_cropOy)/s, CROP_V/s, CROP_V/s, 0, 0, S, S);
-  return c.toDataURL('image/jpeg', 0.62);
+  var q = AV_Q, out = c.toDataURL('image/jpeg', q);
+  while (out.length > AV_MAX && q > 0.55) { q -= 0.08; out = c.toDataURL('image/jpeg', q); }
+  return out;
+}
+// 写真を保存できなかった時の知らせ（保存場所がいっぱいの時はそう伝える）
+function _avSaveErr(e) {
+  var c = (e && (e.code || e.message)) || '';
+  return /invalid-argument|exceeds the maximum|too large/i.test(c)
+    ? '⚠️ 写真の保存場所がいっぱいです（このMAPの写真が多すぎます）。使っていない人の写真を消してからもう一度お試しください'
+    : '⚠️ 写真を保存できませんでした（通信・ログイン状態を確認してください）';
 }
 function cropConfirm() {
   if (!_cropImg) return;
@@ -16421,7 +16436,7 @@ function cropConfirm() {
   if (typeof editingId !== 'undefined' && editingId) {
     saveAvatar(editingId, dataUrl)
       .then(function(){ toast('📷 写真を保存しました'); renderCurrentView(); })
-      .catch(function(){ toast('⚠️ 写真を保存できませんでした（通信・ログイン状態を確認してください）'); _photoPrevSet(_avatars[editingId] || null); });
+      .catch(function(e){ toast(_avSaveErr(e)); _photoPrevSet(_avatars[editingId] || null); });
   } else {
     _pendingPhoto = dataUrl;
     toast('📷 メンバー保存時に写真も保存されます');
@@ -20409,7 +20424,7 @@ function ppPhSave() {
   var id = _pp.id, url = _cropOut();
   _pp.ph = null; _cropImg = null;
   saveAvatar(id, url).then(function() { toast('📷 写真を保存しました'); try { renderCurrentView(); } catch (e) {} if (_pp && _pp.id === id) _ppRender(); })
-    .catch(function() { toast('⚠️ 写真を保存できませんでした（通信・ログイン状態を確認してください）'); });
+    .catch(function(e) { toast(_avSaveErr(e)); });
   ppGo('');
 }
 function ppPhDel() {
@@ -23443,7 +23458,7 @@ function _uxIb(k) { return UX_INFO[k] ? '<span class="ux-ib" onclick="uxInfo(\''
 //   ユーザー側は一覧（スマホ）／表（PC）で、ADP・購入・ニーズ・プロフィールを持つ。「研修生にする」でビジネスのMAPへ。
 //   項目：adp {on, next}／buys [{t, d}]（新しい順・20件まで）／needs [タグ]／needMemo／uMemo／fromUser（研修生にした日）
 //   あとで（ユーザー用QR会員証）：ckNo・cardToken・uVisits（イベント来場回数）・uGrade（グレード）を受付から入れる予定（今は画面に出さない）
-var UM_KEYS = ['adp', 'buys', 'needs', 'needMemo', 'uMemo', 'fromUser', 'toUser', 'ckNo', 'cardToken', 'uVisits', 'uGrade', 'uLastAt', 'uPrysm', 'uPrysmD', 'uCkAt', 'ckToMember', 'uDays', 'shopReg', 'fuJ', 'uAct']; // メンバー画面の保存で落とさない（v864: 受付から・v883: アプリの活動）
+var UM_KEYS = ['adp', 'buys', 'needs', 'needMemo', 'uMemo', 'fromUser', 'toUser', 'ckNo', 'cardToken', 'uVisits', 'uGrade', 'uLastAt', 'uPrysm', 'uPrysmD', 'uCkAt', 'ckToMember', 'uDays', 'shopReg', 'fuJ', 'uAct']; // メンバー画面の保存で落とさない（v864: 受付から・v884: アプリの活動）
 var _umMode = false, _umFlt = 'all', _umRef = '', _umSort = 'ref', _umOpenId = '', _umBuyF = false;
 try { _umMode = localStorage.getItem('gm_umMode') === '1'; } catch (e) {}
 function isUserM(m) { if (!m || m.deleted) return false; var t = String(m.title || '').trim(); return t === 'ユーザー' || /^U$/i.test(t); }
@@ -23505,7 +23520,7 @@ function _umFiltered() {
   else if (_umFlt === 'old') L = L.filter(function(u) { var b = _umLast(u), d = b ? _umDays(b.d) : null; return d !== null && d >= 60; });
   else if (_umFlt === 'needs') L = L.filter(_umHasNeeds);
   else if (_umFlt === 'fu') L = L.filter(_umFuNeed);
-  else if (_umFlt === 'stop') L = L.filter(_umActStop); // v883
+  else if (_umFlt === 'stop') L = L.filter(_umActStop); // v884
   var pt = function(u) { return parseInt(u.ptCurrent, 10) || 0; };
   if (_umSort === 'pt') L.sort(function(a, b) { return pt(b) - pt(a); });
   else if (_umSort === 'old') L.sort(function(a, b) { var x = _umLast(a), y = _umLast(b); return (x ? x.d : '0000') < (y ? y.d : '0000') ? -1 : 1; });
@@ -23748,7 +23763,7 @@ function _bxLoad() {
   if (_bxTesters || !db) return Promise.resolve(_bxTesters || []);
   return db.doc('checkinConfig/beauty').get().then(function(d) { _bxTesters = (d.exists && (d.data() || {}).testers) || []; return _bxTesters; }).catch(function() { _bxTesters = []; return []; });
 }
-// v883: NAVIGATOR Beauty のアプリの活動（受付から取り込む時にマイプランを読む）。uAct = { co, st, wk, last, start } または null（まだプランなし）
+// v884: NAVIGATOR Beauty のアプリの活動（受付から取り込む時にマイプランを読む）。uAct = { co, st, wk, last, start } または null（まだプランなし）
 var UM_ACT_CO = { diet: 'ダイエット編', yuragi: 'ゆらぎ肌ケア編', inner: '体内編' };
 function _umActOf(pl) {
   if (!pl || !pl.course) return null;
@@ -23867,7 +23882,7 @@ function umCkSync(force) {
         var D = Object.keys(cd).filter(function(k) { return k.indexOf('exp_') === 0 && cd[k] && cd[k].d; }).map(function(k) { var x = cd[k]; return { e: k.slice(4), d: x.d, ev: String(x.ev || '').slice(0, 40), kind: x.kind || '', menu: x.menu || '', staff: x.staff || '', st: x.st || 'rsv' }; })
           .sort(function(a, b) { return String(b.d).localeCompare(String(a.d)); }).slice(0, 20);
         if (JSON.stringify(D) !== JSON.stringify(u.uDays || [])) { u.uDays = D; ch = 1; }
-        // v883: NAVIGATOR Beauty のアプリの活動（マイプラン：連続日数・この7日・最後にチェックした日）
+        // v884: NAVIGATOR Beauty のアプリの活動（マイプラン：連続日数・この7日・最後にチェックした日）
         return db.doc('cards/' + cu.cardToken + '/plan/me').get().then(function(p) {
           var A = _umActOf(p.exists ? (p.data() || {}) : null);
           if (u.uAct === undefined || JSON.stringify(A) !== JSON.stringify(u.uAct)) { u.uAct = A; ch = 1; }

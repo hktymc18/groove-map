@@ -11,41 +11,48 @@
 <meta name="apple-mobile-web-app-title" content="BASE CHECK-IN">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Noto+Sans+JP:wght@400;500;700&family=Manrope:wght@400;500;600;700;800&display=swap">
 <style>
+/* 🎨 v160: 色は「コムギニュース」と同じ（v159 で研修生登録ページだけ先に変えたものを全部の画面に）。
+   ライト＝うすいグレーの背景・白のカード・黒の文字／ダーク＝青みのない濃いグレー・白の文字。
+   大事なボタン・できた印は青（変数名は昔のまま --green）、ほかのボタンは丸い枠 */
 :root{
-  --paper:#f2f1ec; --card:#ffffff; --ink:#23261f; --sub:#6f6d63; --line:#dfddd3;
-  --accent:#c0392b; --accent-soft:#f7e6e2;
-  --green:#2e6b52; --green-soft:#e3efe8; --green-bar:#4d8b6f;
-  --amber:#8a6d1f; --amber-soft:#f5edd3; --focus:#2b5fa8;
+  --paper:#f2f2f3; --card:#ffffff; --ink:#111214; --sub:#6e6e73; --line:#e3e3e6;
+  --accent:#e5484d; --accent-soft:#fdecec;
+  --green:#3b82f6; --green-soft:#e8f0fe; --green-bar:#3b82f6; --on-green:#ffffff;
+  --amber:#8a6d1f; --amber-soft:#f5edd3; --focus:#3b82f6; --chip:#ececee;
 }
 @media (prefers-color-scheme: dark){
   :root{
-    --paper:#171915; --card:#22241f; --ink:#e9e7de; --sub:#a3a194; --line:#3a3c34;
-    --accent:#e0604f; --accent-soft:#3d2723;
-    --green:#79c29e; --green-soft:#243a2f; --green-bar:#4d8b6f;
-    --amber:#d6b75e; --amber-soft:#3a3320; --focus:#7ba7e0;
+    --paper:#1f2023; --card:#2a2b2f; --ink:#f2f2f4; --sub:#9b9ca1; --line:#3a3b40;
+    --accent:#ff6b6b; --accent-soft:#3a2426;
+    --green:#5b9cf6; --green-soft:#22324a; --green-bar:#5b9cf6; --on-green:#ffffff;
+    --amber:#d6b75e; --amber-soft:#3a3320; --focus:#5b9cf6; --chip:#3a3b40;
   }
 }
 /* v155: NAVIGATOR に埋め込んだ時は、NAVIGATOR のライト／ダークに合わせる（#…&th=light|dark → html[data-theme]）。端末の設定より優先 */
 :root[data-theme="light"]{
-  --paper:#f2f1ec; --card:#ffffff; --ink:#23261f; --sub:#6f6d63; --line:#dfddd3;
-  --accent:#c0392b; --accent-soft:#f7e6e2;
-  --green:#2e6b52; --green-soft:#e3efe8; --green-bar:#4d8b6f;
-  --amber:#8a6d1f; --amber-soft:#f5edd3; --focus:#2b5fa8;
+  --paper:#f2f2f3; --card:#ffffff; --ink:#111214; --sub:#6e6e73; --line:#e3e3e6;
+  --accent:#e5484d; --accent-soft:#fdecec;
+  --green:#3b82f6; --green-soft:#e8f0fe; --green-bar:#3b82f6; --on-green:#ffffff;
+  --amber:#8a6d1f; --amber-soft:#f5edd3; --focus:#3b82f6; --chip:#ececee;
   color-scheme:light;
 }
 :root[data-theme="dark"]{
-  --paper:#171915; --card:#22241f; --ink:#e9e7de; --sub:#a3a194; --line:#3a3c34;
-  --accent:#e0604f; --accent-soft:#3d2723;
-  --green:#79c29e; --green-soft:#243a2f; --green-bar:#4d8b6f;
-  --amber:#d6b75e; --amber-soft:#3a3320; --focus:#7ba7e0;
+  --paper:#1f2023; --card:#2a2b2f; --ink:#f2f2f4; --sub:#9b9ca1; --line:#3a3b40;
+  --accent:#ff6b6b; --accent-soft:#3a2426;
+  --green:#5b9cf6; --green-soft:#22324a; --green-bar:#5b9cf6; --on-green:#ffffff;
+  --amber:#d6b75e; --amber-soft:#3a3320; --focus:#5b9cf6; --chip:#3a3b40;
   color-scheme:dark;
 }
+/* 形：ボタンは丸く、入力欄とポップアップは角を大きめに。選んでいるタブはグレーの丸 */
+button{border-radius:999px;}
+.modal{border-radius:22px;}
+.trtabs button.on, .trsex button.on{background:var(--chip);color:var(--ink);border-color:var(--chip);font-weight:700;}
 *{box-sizing:border-box;}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 html,body{margin:0;}
 body{background:var(--paper);color:var(--ink);
   font-family:"Noto Sans JP",-apple-system,"Hiragino Sans",sans-serif;font-size:14.5px;line-height:1.7;}
-button{font-family:inherit;font-size:14px;cursor:pointer;border-radius:7px;
+button{font-family:inherit;font-size:14px;cursor:pointer;border-radius:999px;
   border:1px solid var(--line);background:var(--card);color:var(--ink);padding:7px 14px;}
 button:hover{border-color:var(--sub);}
 button:disabled{opacity:.5;cursor:default;}
@@ -54,7 +61,7 @@ button.danger{color:var(--accent);}
 button.ghost{background:transparent;}
 button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
 input[type=text],input[type=search],input[type=email],input[type=password],input[type=date],select,textarea{
-  font-family:inherit;font-size:14px;padding:8px 12px;border-radius:7px;
+  font-family:inherit;font-size:14px;padding:8px 12px;border-radius:12px;
   border:1px solid var(--line);background:var(--card);color:var(--ink);}
 .mono{font-family:"Manrope",sans-serif;font-variant-numeric:tabular-nums;}
 h1,h2,h3{font-family:"Zen Kaku Gothic New","Noto Sans JP",sans-serif;}
@@ -68,8 +75,8 @@ h1,h2,h3{font-family:"Zen Kaku Gothic New","Noto Sans JP",sans-serif;}
 .unionchip{background:var(--paper);border:1px solid var(--line);border-radius:99px;
   padding:2px 14px;font-weight:700;font-size:13px;}
 nav{display:flex;gap:2px;margin-left:auto;flex-wrap:wrap;}
-nav button{border:none;background:transparent;padding:8px 12px;font-weight:700;color:var(--sub);border-radius:7px;}
-nav button.on{background:var(--paper);color:var(--ink);}
+nav button{border:none;background:transparent;padding:8px 12px;font-weight:700;color:var(--sub);border-radius:999px;}
+nav button.on{background:var(--chip);color:var(--ink);}
 main{max-width:1080px;margin:0 auto;padding:18px 16px 70px;}
 .pane{display:none;}
 .pane.on{display:block;}
@@ -1133,7 +1140,7 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .rq-row small{font-size:12px;color:var(--sub);}
 .rq-row button{flex:none;padding:5px 10px;}
 .rq-st{flex:none;font-size:11.5px;font-weight:800;padding:2px 8px;border-radius:99px;background:var(--paper);border:1px solid var(--line);}
-.rq-st.st-ok,.rq-st.st-in{color:#1f8a43;border-color:#1f8a43;}
+.rq-st.st-ok,.rq-st.st-in{color:var(--green);border-color:var(--green);}
 .rq-st.st-ng{color:#c62828;border-color:#c62828;}
 .rq-ng{color:#c62828 !important;font-size:12.5px;}
 .dy-pre summary{cursor:pointer;font-size:12.5px;font-weight:700;color:#7c5cff;margin-top:4px;}
@@ -1159,7 +1166,7 @@ body:has(#pStats.on) main{max-width:min(1600px,100%);}
 .dy-a select{max-width:12em;}
 .dy-a button{padding:6px 10px;}
 .dy-st{font-size:11.5px;font-weight:800;margin-left:6px;}
-.dy-st.ok{color:#1f8a43;} .dy-st.ng{color:var(--sub);}
+.dy-st.ok{color:var(--green);} .dy-st.ng{color:var(--sub);}
 .dy-2{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .dy-sl{max-height:50vh;overflow:auto;border:1px solid var(--line);border-radius:10px;}
 .dy-sr{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:8px 10px;border-bottom:1px solid var(--line);}
@@ -1269,7 +1276,7 @@ body.uapp #uaTabs{display:grid;}
 #uaTabs .ua-qrc{width:56px;height:56px;border-radius:50%;background:var(--ua-vio);color:#fff;display:grid;place-items:center;border:4px solid var(--paper);box-shadow:0 6px 16px rgba(106,63,209,.35);}
 #uaTabs .ua-qrc svg{width:25px;height:25px;}
 body.uapp #toast{bottom:calc(96px + env(safe-area-inset-bottom, 0px));}
-/* 💜 v158: 相棒のキャラ・「今日」・はじめの準備・まだ開いていないなかま */
+/* 💜 v161: 相棒のキャラ・「今日」・はじめの準備・まだ開いていないなかま */
 .pal{display:inline-block;width:64px;height:64px;flex:none;}
 .pal.big{width:110px;height:110px;}
 .pal img{width:100%;height:100%;object-fit:contain;}
@@ -2836,6 +2843,7 @@ var gJoinKey = gCardToken ? null : (function(){ var m = /[#&]uj=([A-Za-z0-9_-]+)
 var gApplyId = (gCardToken || gJoinKey) ? null : (function(){ var m = /[#&]ua=([a-z0-9]{24})/.exec(location.hash); return m ? m[1] : null; })();
 if(gJoinKey || gApplyId){ gReceiveMode = false; gColMode = false; }
 var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#trainer/.test(location.hash);   // 🎓 研修生登録ページ
+if(gTrainerMode) document.documentElement.classList.add('trm');   // 🎓 研修生登録ページの印（v160 から色は全部の画面で同じ）
 // 用途ごとに「ホーム画面に追加」用のアイコンと名前を差し替える
 // （同じHTMLを共有しているため、会員証（BASE CHECK-IN）と同じアイコン・名前が並んで
 //   区別できなくなるのを防ぐ。iOSは追加操作の時点のタグを読むので、動的な差し替えで反映される）
@@ -2862,11 +2870,14 @@ var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#tra
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v158';
+var APP_VER = 'v161';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
-  { v: 'v158', d: '2026/11/18', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
+  { v: 'v161', d: '2026/11/18', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
+  { v: 'v160', d: '2026/11/18', items: ['🎨 受付の画面全部の色と形を一新（研修生登録と同じ。白・グレーの背景、大事なボタンは青、ほかは丸いボタン。ダークは濃いグレー）'] },
+  { v: 'v159', d: '2026/11/18', items: ['🎨 研修生登録の画面の色と形を一新（白・グレーの背景、大事なボタンは青、ほかは丸い枠のボタン。ダークは濃いグレー）'] },
+  { v: 'v158', d: '2026/11/18', items: ['🎨 研修生登録の画面の色を、受付の画面と同じ黒・白・グレーに（緑のボタン・✓をやめました）'] },
   { v: 'v157', d: '2026/11/17', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v156', d: '2026/11/16', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v155', d: '2026/11/16', items: ['🃏 カードコレクションを、パソコンの広い画面ではカードを横にたくさん並べるようにしました。NAVIGATOR のライト／ダークの表示にも合わせます'] },
@@ -4315,7 +4326,7 @@ function renderPrysm(c){
 }
 /* 💜 段階5: マイプラン（ユーザーのカードの上で。本人＝カードのリンクを持っている人だけが書ける）
    cards/{トークン}/plan/me = { course, goal, qs:[使うクエスト], start, days:{ 'YYYY-MM-DD': [できたクエスト] }, atMs }
-   v158: why（なりたい私）・by（いつまでに YYYY-MM-DD）・when（クエスト → am|noon|pm|bed）・lvl（easy|std|hard）・ob（はじめの準備をした時刻）
+   v161: why（なりたい私）・by（いつまでに YYYY-MM-DD）・when（クエスト → am|noon|pm|bed）・lvl（easy|std|hard）・ob（はじめの準備をした時刻）
    ※ 効果をうたわない（薬機法）。クエストは「習慣」だけ。製品の名前はスタッフが会場で伝える */
 var MP_COURSES = [
   { k: 'diet', n: 'ダイエット編', sub: '体を動かす・食事のリズムを整える', c: '#f28c28',
@@ -4386,7 +4397,7 @@ function renderMyPlan(c, token){
   Promise.all([pl, ckQuestGet(c.union || '')]).then(function(r){
     gMp.plan = r[0]; gMpQuest = r[1];
     mpDraw();
-    ckObAuto();   // 💜 v158
+    ckObAuto();   // 💜 v161
   }).catch(function(){ mpDraw(); });
 }
 function mpDraw(){
@@ -4444,7 +4455,7 @@ function mpToggle(qk){
   Object.keys(days).forEach(function(k){ if(k < cut) delete days[k]; });
   plan.days = days;
   var before = mpStats(gMp.plan, today).streak;
-  if(i < 0 && gUa) gUa.cheer = true;   // 💜 v158: 「今日」のキャラが喜ぶ
+  if(i < 0 && gUa) gUa.cheer = true;   // 💜 v161: 「今日」のキャラが喜ぶ
   return mpSave(plan).then(function(){
     var st = mpStats(plan, today);
     if(i < 0 && st.streak > before && (st.streak === 3 || st.streak === 7 || st.streak === 30)) toast('🔥 ' + st.streak + '日連続！バッジをもらいました');
@@ -4472,14 +4483,14 @@ function mpSetup(courseK){
       if(!pick.length){ toast('クエストを1つ以上選んでください'); return; }
       if(pick.length > 5){ toast('クエストは5つまでです'); return; }
       var plan = { course: sel, goal: $('mypGoal').value.trim().slice(0, 40), qs: pick, start: (gMp.plan && gMp.plan.start) || todayStr(), days: (gMp.plan && gMp.plan.days) || {} };
-      ['why', 'by', 'when', 'lvl', 'ob'].forEach(function(k){ if(gMp.plan && gMp.plan[k] != null) plan[k] = gMp.plan[k]; });   // 💜 v158: 準備で決めたことは残す
+      ['why', 'by', 'when', 'lvl', 'ob'].forEach(function(k){ if(gMp.plan && gMp.plan[k] != null) plan[k] = gMp.plan[k]; });   // 💜 v161: 準備で決めたことは残す
       closeModal();
       mpSave(plan).then(function(){ toast(gMp.plan && gMp.plan.course ? 'プランを保存しました' : 'マイプランを始めました'); });
     };
   };
   draw();
 }
-/* 💜 v158: 相棒のキャラ（NAVIGATOR Beauty のアプリ）。あとで別のキャラに差し替えられるように、名前・絵・ことばはここだけに書く。
+/* 💜 v161: 相棒のキャラ（NAVIGATOR Beauty のアプリ）。あとで別のキャラに差し替えられるように、名前・絵・ことばはここだけに書く。
    差し替える時は CK_PAL だけを書きかえる（絵は svg に SVG の文字列か、img に画像のファイル名。img があれば img を使う）。
    ことばの {name}・{n}・{r}・{d} は、その時の名前・できた数・残りの数・日数に置きかわる。配列は日ごとに順番に使う */
 var CK_PAL = {
@@ -4506,7 +4517,7 @@ function ckPalSay(key, v){
   v = v || {};
   return String(s).replace(/\{(\w+)\}/g, function(m, k){ return k === 'name' ? CK_PAL.name : (v[k] != null ? v[k] : ''); });
 }
-/* 💜 v158: クエストの時間帯（朝・昼・夜・寝る前）。今の時間帯のクエストを上に出す */
+/* 💜 v161: クエストの時間帯（朝・昼・夜・寝る前）。今の時間帯のクエストを上に出す */
 var MP_SLOTS = [['am', '朝', '🌅'], ['noon', '昼', '☀️'], ['pm', '夜', '🌙'], ['bed', '寝る前', '🛏']];
 var MP_SLOT_DEF = { water: 'am', walk: 'noon', dinner: 'pm', stretch: 'bed', care: 'bed', am: 'am', pm: 'bed', moist: 'bed', sleep: 'am', water2: 'noon',
   supp: 'am', veg: 'noon', water3: 'pm', walk2: 'noon', early: 'am' };
@@ -4518,7 +4529,7 @@ function mpQs(plan){
   var qs = co.q.filter(function(q){ return (plan.qs || []).indexOf(q[0]) >= 0; });
   return qs.length ? qs : co.q.slice(0, 3);
 }
-/* 💜 v158: はじめの7日（準備をした人＝plan.ob がある人）。1日ずつ小さな出来事。
+/* 💜 v161: はじめの7日（準備をした人＝plan.ob がある人）。1日ずつ小さな出来事。
    バディはチェックした日が3日・ラウンジは7日で開く（友だちの招待はいつでも） */
 var MP_UNLOCK = { buddy: 3, lounge: 7 };
 function mpDayN(plan){ return plan && plan.ob && plan.start ? ckYmdDays(plan.start, todayStr()) + 1 : 0; }
@@ -4550,7 +4561,7 @@ function ckUaAppBadge(left){
     if(left > 0) navigator.setAppBadge(left).catch(function(){}); else navigator.clearAppBadge().catch(function(){});
   }catch(e){}
 }
-/* 💜 v158: 「今日」のタブ（真ん中）。キャラのひとこと・はじめの7日・次のDAYと目標までの日数・時間帯ごとのクエスト */
+/* 💜 v161: 「今日」のタブ（真ん中）。キャラのひとこと・はじめの7日・次のDAYと目標までの日数・時間帯ごとのクエスト */
 function ckUaToday(){
   var el = $('uaToday');
   if(!el || !gUa) return;
@@ -4606,7 +4617,7 @@ function ckUaToday(){
   if($('td7Push')) $('td7Push').onclick = function(){ $('td7Push').disabled = true; ckPushToggle(gUa.c, gUa.token, true, function(){ renderUserNews(gUa.c, gUa.token); ckUaToday(); }); };
   ckUaAppBadge(left);
 }
-/* 💜 v158: はじめの準備（会場でスタッフと一緒に2分）。なりたい私と期限 → コース → 難しさとクエスト・時間帯 → 約束 → その場で1つ目のチェック → ホーム画面・通知
+/* 💜 v161: はじめの準備（会場でスタッフと一緒に2分）。なりたい私と期限 → コース → 難しさとクエスト・時間帯 → 約束 → その場で1つ目のチェック → ホーム画面・通知
    はじめての来場の日（受付したその日）に、プランが無ければ1回だけ自動で開く。あとは「今日」の「はじめる」から */
 var MP_WHY = ['夏までにきれいになりたい', '自信をもって写真に写りたい', '毎日を気持ちよく過ごしたい', '大事な日までに整えたい', '健康的な体になりたい'];
 var MP_LVL = [['easy', 'ゆるく', 1, 'まずは1つだけ'], ['std', 'ふつう', 3, '3つでバランスよく'], ['hard', '本気', 5, '5つ全部やる']];
@@ -6355,7 +6366,7 @@ function upOnlineBody(c, ev, i, st){
     };
     return '<div class="se-done">✓ 受講が承認されました</div>'
       + (ev.zoomUrl
-        ? '<a href="' + esc(ev.zoomUrl) + '" target="_blank" rel="noopener" style="display:block;background:var(--green);color:#fff;font-weight:700;border-radius:7px;padding:11px;text-decoration:none;margin-top:6px;">Zoomで参加する（この端末で開く）</a>'
+        ? '<a href="' + esc(ev.zoomUrl) + '" target="_blank" rel="noopener" style="display:block;background:var(--green);color:#fff;font-weight:700;border-radius:999px;padding:11px;text-decoration:none;margin-top:6px;">Zoomで参加する（この端末で開く）</a>'
         : '<p style="font-size:12.5px;color:var(--sub);margin:6px 0 0;">Zoomの参加情報は当日までにここに表示されます。開催時間に開き直してください。</p>')
       + ((ev.zoomId || ev.zoomPw || ev.zoomUrl)
         ? '<div style="border-top:1px solid var(--line);margin-top:12px;padding-top:8px;">'
@@ -15393,7 +15404,7 @@ var gUa = gUa || null;   // { c, token, tab, seg, picked }
 function ckUaTabs(){ return [
   ['home', 'ホーム', '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>'],
   ['plan', 'プラン', '<circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/>'],
-  ['today', '今日', '<path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/>'],   // 💜 v158: 真ん中は毎日使う「今日」（受付QRは右上へ）
+  ['today', '今日', '<path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/>'],   // 💜 v161: 真ん中は毎日使う「今日」（受付QRは右上へ）
   ['friends', 'なかま', '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.4-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><circle cx="17" cy="9" r="2.7"/><path d="M16.5 14.6c2.6.2 4.5 1.9 5 5"/>'],
   ['me', 'マイページ', '<circle cx="12" cy="8" r="4"/><path d="M4 21c.8-4.2 4-6.5 8-6.5s7.2 2.3 8 6.5"/>']
 ]; }
@@ -15441,7 +15452,7 @@ function ckUaMount(c, token){
     var s = t.closest('[data-seg]'); if(s && s.tagName === 'BUTTON'){ ckUaSeg(s.getAttribute('data-seg')); return; }
     var g = t.closest('[data-go]'); if(g){ ckUaGo(g.getAttribute('data-go')); if(g.getAttribute('data-gos')) ckUaSeg(g.getAttribute('data-gos')); }
   });
-  $('uaQrTop').onclick = function(){ ckUaGo('qr'); };   // 💜 v158: 受付QRは右上から
+  $('uaQrTop').onclick = function(){ ckUaGo('qr'); };   // 💜 v161: 受付QRは右上から
   $('uaBell').onclick = function(){
     ckUaGo('home'); var n = $('nwArea'); if(n && n.scrollIntoView) n.scrollIntoView({ block: 'start' });
     // v141: ベルを押したら、お知らせを読み直す（1分以内に読んでいれば読まない）
@@ -15453,7 +15464,7 @@ function ckUaMount(c, token){
   try{ t0 = sessionStorage.getItem('bci_ua_tab_' + token) || ''; }catch(e){}
   if(t0) gUa.picked = true;
   ckUaSeg('lounge');
-  ckUaGo(ckUaPages().indexOf(t0) >= 0 ? t0 : 'today', true);   // 💜 v158: 開いたら「今日」
+  ckUaGo(ckUaPages().indexOf(t0) >= 0 ? t0 : 'today', true);   // 💜 v161: 開いたら「今日」
   ckUaInfo(); ckUaHome();
 }
 function ckUaGo(tab, auto){
@@ -15474,7 +15485,7 @@ function ckUaSeg(seg){
   ckUaLockDraw();
   ckUaBadges();
 }
-// 💜 v158: はじめの準備をした人は、チェックした日が3日でバディ・7日でラウンジが開く（友だちの招待はいつでも）
+// 💜 v161: はじめの準備をした人は、チェックした日が3日でバディ・7日でラウンジが開く（友だちの招待はいつでも）
 function ckUaLockDraw(){
   if(!gUa) return;
   var plan = gMp && gMp.token === gUa.token ? gMp.plan : null, p = document.querySelector('#uaApp .ua-pg[data-p="friends"]'), box = $('uaLock');
@@ -15536,7 +15547,7 @@ function ckUaHome(){
     lg = '<div class="ua-cd" data-go="friends" data-gos="lounge"><div class="ua-lb">ラウンジの新着<em>ラウンジへ ›</em></div><div class="ua-post"><div><small>' + esc(p0.n) + ' さん' + (p0.co ? ' ・ ' + esc(p0.co) : '') + '</small><span>' + esc(p0.t) + '</span></div><i>👏 ' + (p0.claps || 0) + '</i></div></div>';
   }
   $('uaHomeLg').innerHTML = lg;
-  ckUaToday();     // 💜 v158
+  ckUaToday();     // 💜 v161
   ckUaLockDraw();
   ckUaBadges();
 }
@@ -15550,7 +15561,7 @@ function ckUaNews(next){
   if(nw && !nw.querySelector('.nw-box')){ var hd = nw.querySelector('.next-head'); if(hd) hd.parentNode.removeChild(hd); }
   // 💜 v136: お知らせの中身（次のDAY・お礼・スタッフから）の印。変わったら赤丸
   gUa.newsSig = ckUaHash([].map.call(document.querySelectorAll('#nwArea .nw-box'), function(b){ var x = b.cloneNode(true), cal = x.querySelector('.nw-cal'); if(cal) cal.parentNode.removeChild(cal); return x.textContent; }).join('|'));
-  gUa.next = next || null;   // 💜 v158: 「今日」の次のDAYまでの日数
+  gUa.next = next || null;   // 💜 v161: 「今日」の次のDAYまでの日数
   if(gUa.obRedraw) gUa.obRedraw();
   if(next && next.date === todayStr() && !gUa.picked) ckUaGo('qr', true);
   ckUaToday();
@@ -15675,7 +15686,7 @@ function ckUserAppHead(token){
     if(!document.querySelector('link[rel="manifest"]')){
       var base = location.href.split('#')[0].replace(/[^\/]*$/, '');
       var mf = { name: 'NAVIGATOR Beauty', short_name: 'NAVIGATOR Beauty', start_url: cardUrl(token), scope: base, display: 'standalone',
-        background_color: '#f2f1ee', theme_color: '#f2f1ee',
+        background_color: '#f2f2f3', theme_color: '#f2f2f3',
         icons: [{ src: base + 'icon-192.png', sizes: '192x192', type: 'image/png' }, { src: base + 'icon-512.png', sizes: '512x512', type: 'image/png' }] };
       var l = document.createElement('link'); l.rel = 'manifest'; l.href = 'data:application/manifest+json,' + encodeURIComponent(JSON.stringify(mf));
       document.head.appendChild(l);
@@ -16220,7 +16231,7 @@ function btDraw(){
   btRqDraw();   // 💜 v146
   btFuDraw();   // 💜 v147
   btPzDraw();   // 💜 v144
-  btMtDraw();   // 💜 v158
+  btMtDraw();   // 💜 v161
   btQeDraw();   // 💜 v140
   Array.prototype.forEach.call(box.querySelectorAll('[data-go]'), function(b){
     b.onclick = function(){ var t = $(b.getAttribute('data-go')); if(t && t.scrollIntoView) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
@@ -16378,7 +16389,7 @@ function btPzLoad(){
     btPzDraw();
   }).catch(function(e){ if(gBt === me){ me.pz = { err: permMsg(e, '今日の来場者を読めませんでした') }; btPzDraw(); } });
 }
-/* 💜 v158: 続いているか（このユニオンのお客さん）。いちばん大事な数は「この7日で4日以上チェックした人」。
+/* 💜 v161: 続いているか（このユニオンのお客さん）。いちばん大事な数は「この7日で4日以上チェックした人」。
    押した時だけ読む（お客さんの名簿＋一人ひとりのマイプラン）。結果は端末に1日覚える */
 function ckRetention(rows, today){
   var r = { n: 0, started: 0, wk4: 0, d7: [0, 0], d30: [0, 0], rev: 0 }, w0 = mpAddDays(today, -6);

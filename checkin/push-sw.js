@@ -16,7 +16,7 @@ try {
   });
   firebase.messaging().onBackgroundMessage(function (p) {
     var d = (p && p.data) || {};
-    // v158: 「今日まだ」の時は、ホーム画面のアイコンに印（数字）を付ける（対応している端末だけ）
+    // v161: 「今日まだ」の時は、ホーム画面のアイコンに印（数字）を付ける（対応している端末だけ）
     try { if (d.badge && self.navigator && self.navigator.setAppBadge) self.navigator.setAppBadge(+d.badge || 1); } catch (eB) {}
     if (p && p.notification && (p.notification.title || p.notification.body)) return;   // 自動で出る（2通にしない）
     return self.registration.showNotification(d.title || 'NAVIGATOR Beauty', {
