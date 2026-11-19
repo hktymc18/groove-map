@@ -223,3 +223,11 @@ exports.beautyDaily = onSchedule(
     try { console.log('beauty cleanup ' + JSON.stringify(await beauty.cleanup(db, now, admin.firestore.FieldValue.delete()))); } catch (e) { console.log('beauty cleanup error ' + e); }
   }
 );
+
+// 📊 v885: Firestore 全体の回数（1日ごと）を appStats/usage にまとめる（NAVIGATOR のアカウント管理「📊 利用状況」で見る）
+//   デプロイ: firebase deploy --only functions:usageStats
+const usage = require('./usage');
+exports.usageStats = onSchedule(
+  { schedule: '15 */3 * * *', region: 'asia-northeast1', timeZone: 'Asia/Tokyo', memory: '256MiB' },
+  async () => { await usage.run(admin); }
+);

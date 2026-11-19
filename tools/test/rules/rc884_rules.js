@@ -1,4 +1,4 @@
-// NAVIGATOR v884・受付 v161（readStats: 読み取りの内訳）の firestore.rules を、エミュレータで試す（架空のデータだけ）
+// NAVIGATOR v884・受付 v161（readStats: 読み取りの内訳）・v885（appStats: Firestore 全体の回数）の firestore.rules を、エミュレータで試す（架空のデータだけ）
 // 準備・実行は ckpf109_rules.js と同じ
 const fs = require('fs'), path = require('path');
 const { initializeTestEnvironment } = require('@firebase/rules-unit-testing');
@@ -26,6 +26,11 @@ const OWNER = 'j2DPDAccCygHmR9i5K3bTvHnH0V2', D = '20261119';
   const big = {}; for (let i = 0; i < 101; i++) big['k' + i] = 1;
   c('内訳は100項目まで', !(await ok(setDoc(doc(as('u1'), 'readStats/' + D + '/u/u1_nav'), R('u1', 'nav', { by: big })))));
   c('オーナーは読める・本人やほかの人は読めない', await ok(getDocs(collection(as(OWNER), 'readStats/' + D + '/u'))) && !(await ok(getDoc(doc(as('u1'), 'readStats/' + D + '/u/u1_nav')))) && !(await ok(getDocs(collection(anon, 'readStats/' + D + '/u')))));
+  // v885: appStats（サーバーが書く Firestore 全体の回数）
+  await env.withSecurityRulesDisabled(async (cx) => { await setDoc(doc(cx.firestore(), 'appStats/usage'), { days: [], at: 't', err: '' }); });
+  c('appStats: オーナーは読める・ほかの人は読めない・だれもアプリからは書けない',
+    await ok(getDoc(doc(as(OWNER), 'appStats/usage'))) && !(await ok(getDoc(doc(as('u1'), 'appStats/usage'))))
+    && !(await ok(setDoc(doc(as(OWNER), 'appStats/usage'), { days: [] }))) && !(await ok(setDoc(doc(as('u1'), 'appStats/usage'), { days: [] }))));
   await env.cleanup();
   console.log(fails ? 'FAIL ' + fails : 'ALL PASS'); process.exit(fails ? 1 : 0);
 })();
