@@ -15,8 +15,10 @@ try {
     appId: "1:565556414915:web:f8c3489260e8d9d6e49576"
   });
   firebase.messaging().onBackgroundMessage(function (p) {
-    if (p && p.notification && (p.notification.title || p.notification.body)) return;   // 自動で出る（2通にしない）
     var d = (p && p.data) || {};
+    // v161: 「今日まだ」の時は、ホーム画面のアイコンに印（数字）を付ける（対応している端末だけ）
+    try { if (d.badge && self.navigator && self.navigator.setAppBadge) self.navigator.setAppBadge(+d.badge || 1); } catch (eB) {}
+    if (p && p.notification && (p.notification.title || p.notification.body)) return;   // 自動で出る（2通にしない）
     return self.registration.showNotification(d.title || 'NAVIGATOR Beauty', {
       body: d.body || '', icon: './icon-192.png', badge: './icon-192.png', tag: d.tag || 'nb', data: { url: d.url || './' }
     });

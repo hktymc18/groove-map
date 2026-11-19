@@ -38,7 +38,7 @@ const card = (x) => Object.assign({ kind: 'user', no: UA, name: '見本 はな�
     c('④ 11分前に覚えたお知らせは読み直す（10分）', /新しいお知らせ/.test(t) && !/古いお知らせ/.test(t), t);
     c('⑤ 受付した当日は「ご来場ありがとうございます。」', /ご来場ありがとうございます。/.test(t) && !/ございました/.test(t), t);
     await o.ctx.close();
-    o = await P.open(b, { hash: '#c=' + TA, data, init: `try{ if(!sessionStorage.getItem('s')){ ${old(5)} sessionStorage.setItem('s','1'); } }catch(e){}`, wait: 2600 });
+    o = await P.open(b, { hash: '#c=' + TA, data, init: `try{ localStorage.setItem('bci_ob_${TA}', '1'); if(!sessionStorage.getItem('s')){ ${old(5)} sessionStorage.setItem('s','1'); } }catch(e){}`, wait: 2600 });
     t = await o.ev(`document.getElementById('nwArea').innerText`);
     c('④ 5分前なら覚えている分を使う（読まない）', /古いお知らせ/.test(t), t);
     await o.page.click('#uaTabs [data-tab="plan"]'); await o.wt(200);
