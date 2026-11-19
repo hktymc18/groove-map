@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v883';
+var APP_JS_VERSION = 'v884';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -44,6 +44,96 @@ if (typeof firebase !== 'undefined' && !firebase.apps.length) {
 
 var db   = typeof firebase !== 'undefined' ? firebase.firestore() : null;
 var auth = typeof firebase !== 'undefined' ? firebase.auth()      : null;
+/* 📊 読み取りを数える（v884）: Firestore から読んだ文書の数を「画面 | 読んだ場所」ごとに端末で数え、
+   10分ごとと画面を閉じた時に、1人1日1件（readStats/{日本時間の日付}/u/{uid}_{アプリ}）へ足し込む。読み取りの内訳を調べるため。
+   数え方（Firestore の料金と同じ考え方の目安）: 1件の読み込み＝1。検索・一覧＝返ってきた数（0件でも1）。
+   見張り（onSnapshot）は、最初にサーバーから届いた時は返ってきた数、そのあとは変わった数（自分の書き込みの分も）。端末の控え（キャッシュ）から出した分は数えない。
+   場所は「maps/months」のように、IDを除いた集まりの名前 */
+var RC = (function(){
+  var st = { app: '', tag: null, uid: null, pend: {}, n: 0, day: '', t: 0 }, MAXK = 90;
+  function ymd(){ return new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10).replace(/-/g, ''); }
+  function kp(p){ var s = String(p || '').split('/'), o = []; for(var i = 0; i < s.length; i += 2) o.push(s[i]); return o.join('/'); }
+  function qk(q){
+    try{ var d = q && q._delegate && q._delegate._query; if(d){ if(d.collectionGroup) return '**/' + d.collectionGroup; return kp(d.path.canonicalString()); } }catch(e){}
+    try{ if(q && q.path) return kp(q.path); }catch(e2){}
+    return '?';
+  }
+  function add(k, n){
+    if(!n || !st.app) return;
+    var t = ''; try{ t = st.tag ? String(st.tag() || '') : ''; }catch(e){}
+    var key = ((t || '-') + '|' + k).replace(/[\s.]/g, '_').slice(0, 80);
+    st.pend[key] = (st.pend[key] || 0) + n; st.n += n;
+  }
+  function wrapCb(args, fn){   // onSnapshot(cb) / (opts, cb) / (observer)
+    for(var i = 0; i < args.length; i++){
+      if(typeof args[i] === 'function'){ var f = args[i]; args[i] = function(s){ try{ fn(s); }catch(e){} return f.apply(this, arguments); }; return args; }
+      if(args[i] && typeof args[i].next === 'function'){ var o = args[i], nx = o.next; args[i] = Object.assign({}, o, { next: function(s){ try{ fn(s); }catch(e){} return nx.apply(o, arguments); } }); return args; }
+    }
+    return args;
+  }
+  function hook(){
+    var F = window.firebase && firebase.firestore;
+    if(!F || !F.DocumentReference || F._rcHooked) return;
+    F._rcHooked = true;
+    var DR = F.DocumentReference.prototype, Q = F.Query.prototype, TX = F.Transaction && F.Transaction.prototype;
+    var dget = DR.get; DR.get = function(){ var p = this.path; return dget.apply(this, arguments).then(function(s){ try{ if(!(s.metadata && s.metadata.fromCache)) add(kp(p), 1); }catch(e){} return s; }); };
+    var qget = Q.get; Q.get = function(){ var k = qk(this); return qget.apply(this, arguments).then(function(s){ try{ if(!(s.metadata && s.metadata.fromCache)) add(k, Math.max(1, s.size || 0)); }catch(e){} return s; }); };
+    var dos = DR.onSnapshot; DR.onSnapshot = function(){
+      var p = this.path;
+      return dos.apply(this, wrapCb([].slice.call(arguments), function(s){
+        if(s.metadata && s.metadata.fromCache) return;   // 自分の書き込みで変わった分も、サーバーから届き直すので数える
+        add(kp(p), 1);
+      }));
+    };
+    var qos = Q.onSnapshot; Q.onSnapshot = function(){
+      var k = qk(this), first = true;
+      return qos.apply(this, wrapCb([].slice.call(arguments), function(s){
+        if(s.metadata && s.metadata.fromCache) return;
+        var n = first ? Math.max(1, s.size || 0) : (s.docChanges ? s.docChanges().length : 0);
+        first = false; add(k, n);
+      }));
+    };
+    if(TX && TX.get){ var tget = TX.get; TX.get = function(ref){ var p = ref && ref.path; return tget.apply(this, arguments).then(function(s){ add(kp(p) + '(tx)', 1); return s; }); }; }
+  }
+  function devId(){
+    var v = ''; try{ v = localStorage.getItem('gm_rcid') || ''; }catch(e){}
+    if(!/^[a-z0-9]{10}$/.test(v)){ v = Math.random().toString(36).slice(2, 12).replace(/[^a-z0-9]/g, '0'); while(v.length < 10) v += '0'; try{ localStorage.setItem('gm_rcid', v); }catch(e2){} }
+    return v;
+  }
+  function flush(){
+    try{
+      var F = window.firebase && firebase.firestore, d = ymd();
+      if(!F || !st.app || !st.n) return;
+      var uid = ''; try{ uid = st.uid ? String(st.uid() || '') : ''; }catch(e){}
+      var id = uid ? uid + '_' + st.app : 'anon_' + devId() + '_' + st.app;
+      var keys = Object.keys(st.pend), by = {}, inc = F.FieldValue.increment, other = 0;
+      keys.sort(function(a, b){ return st.pend[b] - st.pend[a]; }).forEach(function(k, i){ if(i < MAXK) by[k] = inc(st.pend[k]); else other += st.pend[k]; });
+      if(other) by['その他'] = inc(other);
+      var data = { uid: uid, app: st.app, d: d, n: inc(st.n), by: by, at: new Date().toISOString(), ver: 1 };
+      st.pend = {}; st.n = 0;
+      firebase.firestore().collection('readStats').doc(d).collection('u').doc(id).set(data, { merge: true }).catch(function(){});
+    }catch(e3){}
+  }
+  return {
+    // app: 'nav'（NAVIGATOR）／'ck'（受付・会員証）、tag(): 今の画面の名前、uid(): ログインしている人（いなければ端末ごとの番号で記録）
+    start: function(app, tag, uid){
+      st.app = app; st.tag = tag; st.uid = uid; hook();
+      if(st.t) return;
+      st.t = setInterval(flush, 600000);
+      document.addEventListener('visibilitychange', function(){ if(document.hidden) flush(); });
+      window.addEventListener('pagehide', flush);
+    },
+    flush: flush, add: add, _st: st
+  };
+})();
+try { RC.start('nav', function() {
+  var g = function(id) { return document.getElementById(id); };
+  if (typeof currentUser === 'undefined' || !currentUser) return 'login';
+  if (g('cardColOv')) return 'cardcol';
+  if (g('adminPanel') && g('adminPanel').classList.contains('open')) return 'admin';
+  if (g('ppPg')) return 'person';
+  return (typeof currentView !== 'undefined' && currentView) || '';
+}, function() { return (typeof currentUser !== 'undefined' && currentUser && currentUser.uid) || ''; }); } catch (eRc) {}
 // v771: ログイン状態の保持（ATTACK LIST・GOAL SETTING と同じ判定）
 //  PC＝タブ／ブラウザを閉じたらログアウト（SESSION。司会や個別でPCを貸した時に中を見られないように）
 //  スマホ・タブレット＝今までどおり保持（LOCAL。通知を使うため）
@@ -4685,7 +4775,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v883';
+  var DATA_VERSION = 'v884';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6805,6 +6895,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v884', d:'2026-11-19', items:['🛠 細かい修正をしました'] },
   { v:'v883', d:'2026-11-18', items:['📷 メンバーの写真の画質を上げました（これから入れる写真から。今の写真をきれいにしたい時は、選び直してください）'] },
   { v:'v882', d:'2026-11-18', items:['アカウント管理（オーナー）：同じ名前でメールアドレスが違うアカウントを「同じ名前が複数」で見比べて、いらない方を削除できるようにしました（使えなくして一覧から消します。「削除したアカウント」から元に戻せます）'] },
   { v:'v881', d:'2026-11-16', items:['🃏 カードコレクションを、パソコンでは広い画面で見られるようにし、NAVIGATOR のライト／ダークの表示に合わせました'] },

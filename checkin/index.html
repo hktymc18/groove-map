@@ -2063,6 +2063,95 @@ try {
   authPersistReady = auth.setPersistence(authMobileDev() ? firebase.auth.Auth.Persistence.LOCAL : firebase.auth.Auth.Persistence.SESSION).catch(function(){});
 } catch(eAp) {}
 var db = firebase.firestore();
+/* 📊 読み取りを数える（受付 v161・NAVIGATOR v884）: Firestore から読んだ文書の数を「画面 | 読んだ場所」ごとに端末で数え、
+   10分ごとと画面を閉じた時に、1人1日1件（readStats/{日本時間の日付}/u/{uid}_{アプリ}）へ足し込む。読み取りの内訳を調べるため。
+   数え方（Firestore の料金と同じ考え方の目安）: 1件の読み込み＝1。検索・一覧＝返ってきた数（0件でも1）。
+   見張り（onSnapshot）は、最初にサーバーから届いた時は返ってきた数、そのあとは変わった数（自分の書き込みの分も）。端末の控え（キャッシュ）から出した分は数えない。
+   場所は「maps/months」のように、IDを除いた集まりの名前 */
+var RC = (function(){
+  var st = { app: '', tag: null, uid: null, pend: {}, n: 0, day: '', t: 0 }, MAXK = 90;
+  function ymd(){ return new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10).replace(/-/g, ''); }
+  function kp(p){ var s = String(p || '').split('/'), o = []; for(var i = 0; i < s.length; i += 2) o.push(s[i]); return o.join('/'); }
+  function qk(q){
+    try{ var d = q && q._delegate && q._delegate._query; if(d){ if(d.collectionGroup) return '**/' + d.collectionGroup; return kp(d.path.canonicalString()); } }catch(e){}
+    try{ if(q && q.path) return kp(q.path); }catch(e2){}
+    return '?';
+  }
+  function add(k, n){
+    if(!n || !st.app) return;
+    var t = ''; try{ t = st.tag ? String(st.tag() || '') : ''; }catch(e){}
+    var key = ((t || '-') + '|' + k).replace(/[\s.]/g, '_').slice(0, 80);
+    st.pend[key] = (st.pend[key] || 0) + n; st.n += n;
+  }
+  function wrapCb(args, fn){   // onSnapshot(cb) / (opts, cb) / (observer)
+    for(var i = 0; i < args.length; i++){
+      if(typeof args[i] === 'function'){ var f = args[i]; args[i] = function(s){ try{ fn(s); }catch(e){} return f.apply(this, arguments); }; return args; }
+      if(args[i] && typeof args[i].next === 'function'){ var o = args[i], nx = o.next; args[i] = Object.assign({}, o, { next: function(s){ try{ fn(s); }catch(e){} return nx.apply(o, arguments); } }); return args; }
+    }
+    return args;
+  }
+  function hook(){
+    var F = window.firebase && firebase.firestore;
+    if(!F || !F.DocumentReference || F._rcHooked) return;
+    F._rcHooked = true;
+    var DR = F.DocumentReference.prototype, Q = F.Query.prototype, TX = F.Transaction && F.Transaction.prototype;
+    var dget = DR.get; DR.get = function(){ var p = this.path; return dget.apply(this, arguments).then(function(s){ try{ if(!(s.metadata && s.metadata.fromCache)) add(kp(p), 1); }catch(e){} return s; }); };
+    var qget = Q.get; Q.get = function(){ var k = qk(this); return qget.apply(this, arguments).then(function(s){ try{ if(!(s.metadata && s.metadata.fromCache)) add(k, Math.max(1, s.size || 0)); }catch(e){} return s; }); };
+    var dos = DR.onSnapshot; DR.onSnapshot = function(){
+      var p = this.path;
+      return dos.apply(this, wrapCb([].slice.call(arguments), function(s){
+        if(s.metadata && s.metadata.fromCache) return;   // 自分の書き込みで変わった分も、サーバーから届き直すので数える
+        add(kp(p), 1);
+      }));
+    };
+    var qos = Q.onSnapshot; Q.onSnapshot = function(){
+      var k = qk(this), first = true;
+      return qos.apply(this, wrapCb([].slice.call(arguments), function(s){
+        if(s.metadata && s.metadata.fromCache) return;
+        var n = first ? Math.max(1, s.size || 0) : (s.docChanges ? s.docChanges().length : 0);
+        first = false; add(k, n);
+      }));
+    };
+    if(TX && TX.get){ var tget = TX.get; TX.get = function(ref){ var p = ref && ref.path; return tget.apply(this, arguments).then(function(s){ add(kp(p) + '(tx)', 1); return s; }); }; }
+  }
+  function devId(){
+    var v = ''; try{ v = localStorage.getItem('gm_rcid') || ''; }catch(e){}
+    if(!/^[a-z0-9]{10}$/.test(v)){ v = Math.random().toString(36).slice(2, 12).replace(/[^a-z0-9]/g, '0'); while(v.length < 10) v += '0'; try{ localStorage.setItem('gm_rcid', v); }catch(e2){} }
+    return v;
+  }
+  function flush(){
+    try{
+      var F = window.firebase && firebase.firestore, d = ymd();
+      if(!F || !st.app || !st.n) return;
+      var uid = ''; try{ uid = st.uid ? String(st.uid() || '') : ''; }catch(e){}
+      var id = uid ? uid + '_' + st.app : 'anon_' + devId() + '_' + st.app;
+      var keys = Object.keys(st.pend), by = {}, inc = F.FieldValue.increment, other = 0;
+      keys.sort(function(a, b){ return st.pend[b] - st.pend[a]; }).forEach(function(k, i){ if(i < MAXK) by[k] = inc(st.pend[k]); else other += st.pend[k]; });
+      if(other) by['その他'] = inc(other);
+      var data = { uid: uid, app: st.app, d: d, n: inc(st.n), by: by, at: new Date().toISOString(), ver: 1 };
+      st.pend = {}; st.n = 0;
+      firebase.firestore().collection('readStats').doc(d).collection('u').doc(id).set(data, { merge: true }).catch(function(){});
+    }catch(e3){}
+  }
+  return {
+    // app: 'nav'（NAVIGATOR）／'ck'（受付・会員証）、tag(): 今の画面の名前、uid(): ログインしている人（いなければ端末ごとの番号で記録）
+    start: function(app, tag, uid){
+      st.app = app; st.tag = tag; st.uid = uid; hook();
+      if(st.t) return;
+      st.t = setInterval(flush, 600000);
+      document.addEventListener('visibilitychange', function(){ if(document.hidden) flush(); });
+      window.addEventListener('pagehide', flush);
+    },
+    flush: flush, add: add, _st: st
+  };
+})();
+try{ RC.start('ck', function(){
+  var vs = ['vLogin','vProfile','vActivate','vApp','vCard','vReceive','vTrainer','vOl','vCol','vJoin'], v = '';
+  for(var i = 0; i < vs.length; i++){ var el = document.getElementById(vs[i]); if(el && !el.classList.contains('hide')){ v = vs[i]; break; } }
+  if(v === 'vApp'){ var b = document.querySelector('button.on[data-pane]'); return 'vApp:' + (b ? b.getAttribute('data-pane') : ''); }
+  if(v === 'vCard'){ var t = document.querySelector('[data-tab].on'); return 'vCard' + (t ? ':' + t.getAttribute('data-tab') : ''); }
+  return v || 'start';
+}, function(){ return (auth.currentUser && auth.currentUser.uid) || ''; }); }catch(eRc){}
 // v33: 端末内のキャッシュ（enablePersistence・タブ間共有）は使わない。
 // 同じサイトの NAVIGATOR や別の受付タブと「代表タブ」を共有する仕組みのため、代表になったタブが裏に回って
 // ブラウザに止められると、このタブの新しい読み込み（受付管理者・研修担当・管理者一覧など）が最大1分ほど待たされていた。
@@ -2793,10 +2882,11 @@ if(gTrainerMode) document.documentElement.classList.add('trm');   // 🎓 研修
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v160';
+var APP_VER = 'v161';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v161', d: '2026/11/19', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v160', d: '2026/11/18', items: ['🎨 受付の画面全部の色と形を一新（研修生登録と同じ。白・グレーの背景、大事なボタンは青、ほかは丸いボタン。ダークは濃いグレー）'] },
   { v: 'v159', d: '2026/11/18', items: ['🎨 研修生登録の画面の色と形を一新（白・グレーの背景、大事なボタンは青、ほかは丸い枠のボタン。ダークは濃いグレー）'] },
   { v: 'v158', d: '2026/11/18', items: ['🎨 研修生登録の画面の色を、受付の画面と同じ黒・白・グレーに（緑のボタン・✓をやめました）'] },

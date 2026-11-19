@@ -6,6 +6,8 @@
 //     ② Firestore 全体の読み取り・書き込み・削除の回数（Cloud Monitoring）: 直近8日の1日ごと（日本時間）。アプリ別には分かれない
 //     ③ NAVIGATOR を使える（解放済みの）人数: 公開の範囲（appAccess/mode）と先行利用（users.early）から、アプリと同じ決め方で数える
 //     ④ users に入っている「最後に〜」らしい項目の名前と人数（ほかのアプリが記録しているかの手がかり）
+//     ⑤ 読み取りの内訳（v884〜: アプリが画面・場所ごとに数えた readStats）: 直近の日ごとに、アプリ別・画面別・場所別。
+//        日付を指定する時は  node groove-map/tools/ops/usage_report.js 20261120 （readStats の読み取り＝その日に記録した人数分）
 const { execSync } = require('child_process');
 const P = process.env.PROJECT || 'hotlist-21865';
 const OWNERS = ['j2DPDAccCygHmR9i5K3bTvHnH0V2', 'E4WT7EHai5c6WANUgASz42Euu1y1'];   // app.js の OWNER_UIDS と同じ
@@ -67,4 +69,29 @@ async function metric(type) {
   // 1人あたり
   const r1 = R[jstDay(today0)] || 0, n1 = seen.filter(t => t >= today0).length;
   if (n1) console.log('\n■ 今日の1人あたりの読み取り（全体の読み取り ÷ NAVIGATOR を開いた人）: 約 ' + Math.round(r1 / n1) + ' 回（ほかのアプリの分も含む）');
+  // ⑤ 読み取りの内訳（readStats）
+  const days = process.argv[2] ? [process.argv[2]] : [jstDay(today0 - DAY), jstDay(today0)].map(k => k.replace(/-/g, ''));
+  for (const d of days) {
+    const L = []; let pt = '';
+    try {
+      do { const x = await j(FS + '/readStats/' + d + '/u?pageSize=300' + (pt ? '&pageToken=' + encodeURIComponent(pt) : '')); (x.documents || []).forEach(z => L.push(Object.fromEntries(Object.entries(z.fields || {}).map(([k, v]) => [k, val(v)])))); pt = x.nextPageToken || ''; } while (pt);
+    } catch (e) { console.log('\n⑤ ' + d + ': 読めませんでした（' + e.message.slice(0, 80) + '）'); continue; }
+    const dk = d.slice(0, 4) + '-' + d.slice(4, 6) + '-' + d.slice(6);
+    console.log('\n⑤ 読み取りの内訳 ' + dk + '（アプリが数えた分。記録した人・端末: ' + L.length + '）' + (L.length ? '' : '  ← まだ記録がありません（v884 を開いた人から記録されます）'));
+    if (!L.length) continue;
+    const sum = (arr) => arr.reduce((a, x) => a + (x.n || 0), 0), all = sum(L);
+    ['nav', 'ck'].forEach(app => {
+      const A = L.filter(x => x.app === app), n = sum(A), people = A.filter(x => x.uid).length, anonN = A.length - people;
+      console.log('   ' + (app === 'nav' ? 'NAVIGATOR' : '受付・会員証') + ': ' + n + ' 回（ログインした人 ' + people + '人' + (anonN ? '・ログインなしの端末 ' + anonN : '') + (A.length ? '・1人（1端末）あたり 約' + Math.round(n / A.length) + ' 回' : '') + '）');
+    });
+    if (R[dk]) console.log('   Firestore 全体 ' + R[dk] + ' 回のうち、アプリが数えた分は 約' + Math.round(all / R[dk] * 100) + '%（残りは ATTACK LIST・GOAL SETTING・サーバーの処理・v884 より前の版の端末など）');
+    const tags = {}, keys = {};
+    L.forEach(x => Object.entries(x.by || {}).forEach(([k, v]) => { const t = (x.app === 'nav' ? 'NAV ' : '受付 ') + k.split('|')[0], p = (x.app === 'nav' ? 'NAV ' : '受付 ') + k; tags[t] = (tags[t] || 0) + (+v || 0); keys[p] = (keys[p] || 0) + (+v || 0); }));
+    const top = (o, n) => Object.entries(o).sort((a, b) => b[1] - a[1]).slice(0, n);
+    console.log('   画面ごと（多い順）: ' + top(tags, 12).map(([k, v]) => k + ' ' + v).join(' ／ '));
+    console.log('   画面｜読んだ場所（多い順・上位20）:');
+    top(keys, 20).forEach(([k, v]) => console.log('     ' + String(v).padStart(7) + '  ' + k));
+    const heavy = L.slice().sort((a, b) => (b.n || 0) - (a.n || 0)).slice(0, 5);
+    console.log('   いちばん多い人・端末の回数（名前は出さない）: ' + heavy.map(x => (x.app === 'nav' ? 'NAV ' : '受付 ') + (x.n || 0)).join(' ／ '));
+  }
 })().catch(e => { console.error('エラー:', e.message); console.error('Cloud Shell で gcloud config set project ' + P + ' をしてから、もう一度動かしてください'); process.exit(1); });
