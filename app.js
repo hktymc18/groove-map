@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v884';
+var APP_JS_VERSION = 'v885';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3774,14 +3774,109 @@ function _admSetMenuHtml() {
   var FL = _featFlags(), nt = 0, no = 0; FEATURES.forEach(function(F) { var f = FL[F.k]; if (f && f.on) no++; else nt++; });
   var ft = (nt ? 'テスト中' + nt + '件' : '') + (nt && no ? '・' : '') + (no ? '全員に公開' + no + '件' : '');
   var row = function(k, lb, st) { return '<div onclick="admPg(\'' + k + '\')"><b>' + lb + '</b><small>' + st + '</small><span class="ch">›</span></div>'; };
-  return '<div class="adm-mn">' + row('acc', '公開範囲', acc) + row('sh', 'MAPの共有', sh) + row('un', 'ユニオンとUPBD', un) + row('feat', '新機能のテスト', ft || '—') + '</div>'
+  var us = '今日 開いた人 ' + _usSeen(0).length + '人'; // v885
+  return '<div class="adm-mn">' + row('us', '📊 利用状況', us) + row('acc', '公開範囲', acc) + row('sh', 'MAPの共有', sh) + row('un', 'ユニオンとUPBD', un) + row('feat', '新機能のテスト', ft || '—') + '</div>'
     + '<div class="adm-mnt">押すと、その設定の画面が開きます。</div>';
 }
-var ADM_PG = { acc: '公開範囲', sh: 'MAPの共有', un: 'ユニオンとUPBD', feat: '新機能のテスト' };
+var ADM_PG = { us: '📊 利用状況', acc: '公開範囲', sh: 'MAPの共有', un: 'ユニオンとUPBD', feat: '新機能のテスト' };
 function _admPgHtml(k, owner) {
-  var inner = k === 'acc' ? _accPanelHtml() : k === 'sh' ? _shAdmHtml() : k === 'un' ? _unAdmHtml() : k === 'feat' ? _featAdmHtml() : '';
+  var inner = k === 'us' ? _usAdmHtml() : k === 'acc' ? _accPanelHtml() : k === 'sh' ? _shAdmHtml() : k === 'un' ? _unAdmHtml() : k === 'feat' ? _featAdmHtml() : '';
   var back = owner ? '<span onclick="admPg(\'\')">‹ 設定</span>' : '<span onclick="admPg(\'\')">‹ アカウント</span>';
   return '<div class="adm-sph">' + back + '<b>' + (ADM_PG[k] || '') + '</b></div><div class="adm-sp">' + inner + '</div>';
+}
+// ── 📊 v885: 利用状況（オーナー）。Firebase のコンソールを開かずに、人数・Firestore 全体の回数・読み取りの内訳を見る ──
+//   人数＝読み込み済みのアカウント一覧（追加の読み取りなし）／全体の回数＝appStats/usage（サーバーの usageStats が3時間ごとに書く・1件）
+//   内訳＝readStats/{日付}/u（v884〜アプリが数えた分）。「内訳を読む」を押した時だけ読む（記録した人数分の読み取り）
+var _us = { stats: null, loading: false, rd: {}, rdDay: '' };
+function _usDay(off) { return new Date(Date.now() + 9 * 3600000 - (off || 0) * 86400000).toISOString().slice(0, 10); }
+function _usSeen(off) { var d = _usDay(off); return _adminUsers.filter(function(u) { return !u.deleted && u.lastSeenAt && _usDayOf(u.lastSeenAt) === d; }); }
+function _usDayOf(iso) { var t = Date.parse(iso || ''); return t ? new Date(t + 9 * 3600000).toISOString().slice(0, 10) : ''; }
+function _usLoad() {
+  if (_us.loading || !db) return;
+  _us.loading = true;
+  db.doc('appStats/usage').get().then(function(d) { _us.stats = d.exists ? (d.data() || {}) : { none: true }; })
+    .catch(function(e) { _us.stats = { err: (e && e.code) || '読めませんでした' }; })
+    .then(function() { _us.loading = false; if (_admPg === 'us') renderAdminList(); });
+}
+function usRdLoad(off) {
+  var d = _usDay(off).replace(/-/g, ''); _us.rdDay = d;
+  if (_us.rd[d] && _us.rd[d] !== 'loading') { renderAdminList(); return; }
+  _us.rd[d] = 'loading'; renderAdminList();
+  db.collection('readStats').doc(d).collection('u').get().then(function(qs) {
+    var L = []; qs.forEach(function(x) { L.push(x.data() || {}); }); _us.rd[d] = L;
+  }).catch(function(e) { _us.rd[d] = { err: (e && e.code) || 'error' }; }).then(function() { if (_admPg === 'us') renderAdminList(); });
+}
+function _usCss() {
+  if (document.getElementById('usCss')) return;
+  var st = document.createElement('style'); st.id = 'usCss';
+  st.textContent = '.us-b{margin:10px 12px;padding:12px 13px;border-radius:14px;border:1px solid var(--border);background:var(--surface)}'
+    + '.us-b h4{margin:0 0 8px;font-size:14px;font-weight:900}.us-b .nt{font-size:11.5px;color:var(--text-dim);line-height:1.6;margin-top:6px}'
+    + '.us-k{display:flex;gap:8px;flex-wrap:wrap}.us-k>div{flex:1;min-width:90px;padding:8px 10px;border-radius:10px;background:var(--surface2)}.us-k b{display:block;font-size:20px;font-weight:900}.us-k small{font-size:11px;color:var(--text-dim);font-weight:700}'
+    + '.us-r{display:grid;grid-template-columns:44px 1fr 74px;gap:8px;align-items:center;font-size:12px;margin:4px 0}.us-r .bar{position:relative;height:14px;border-radius:7px;background:var(--surface2);overflow:hidden}'
+    + '.us-r .bar i{position:absolute;left:0;top:0;bottom:0;border-radius:7px;background:var(--accent)}.us-r .bar i.ov{background:#FF6B7F}.us-r .bar u{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--text-dim);opacity:.7}'
+    + '.us-r b{text-align:right;font-variant-numeric:tabular-nums}.us-r small{color:var(--text-dim)}'
+    + '.us-t{width:100%;font-size:12px;border-collapse:collapse}.us-t td{padding:4px 2px;border-top:1px solid var(--border)}.us-t td:last-child{text-align:right;font-weight:800;font-variant-numeric:tabular-nums}'
+    + '.us-ch{display:flex;gap:6px;margin:4px 0 8px}.us-ch span{padding:6px 12px;border-radius:999px;border:1px solid var(--border);font-size:12.5px;font-weight:800;cursor:pointer}.us-ch span.on{background:var(--accent);color:var(--go-ink,#06231c);border-color:var(--accent)}';
+  document.head.appendChild(st);
+}
+function _usAdmHtml() {
+  _usCss();
+  if (!_us.stats && !_us.loading) setTimeout(_usLoad, 0);
+  var nf = function(n) { return (n || 0).toLocaleString(); };
+  var live = _adminUsers.filter(function(u) { return !u.deleted; });
+  var t0 = _usSeen(0).length, wk = {}, w7 = 0;
+  for (var i = 0; i < 7; i++) wk[_usDay(i)] = 0;
+  live.forEach(function(u) { var d = _usDayOf(u.lastSeenAt); if (d in wk) { wk[d]++; w7++; } });
+  var C = _accA ? _accCount(_accA) : null, pend = live.filter(function(u) { return u.status === 'pending'; }).length;
+  var h = '<div class="us-b"><h4>NAVIGATOR を開いた人</h4><div class="us-k">'
+    + '<div><b>' + t0 + '</b><small>今日</small></div><div><b>' + w7 + '</b><small>直近7日</small></div><div><b>' + live.length + '</b><small>登録している人</small></div></div>'
+    + '<div style="margin-top:8px">' + Object.keys(wk).sort().map(function(d) { var mx = Math.max(1, Math.max.apply(null, Object.keys(wk).map(function(k) { return wk[k]; })));
+        return '<div class="us-r"><small>' + d.slice(5).replace('-', '/') + '</small><div class="bar"><i style="width:' + Math.round(wk[d] / mx * 100) + '%"></i></div><b>' + wk[d] + '人</b></div>'; }).join('') + '</div>'
+    + '<div class="nt">最後に開いた日で数えます（毎日開いた人も、最後の日に1回だけ）。</div></div>';
+  h += '<div class="us-b"><h4>NAVIGATOR を使える人</h4><div class="us-k">'
+    + '<div><b>' + (C ? C.ok.length : '…') + '</b><small>使える（解放済み）</small></div><div><b>' + (C ? C.ng.length : '…') + '</b><small>承認ずみで、まだ</small></div><div><b>' + pend + '</b><small>承認待ち</small></div></div></div>';
+  // Firestore 全体
+  var S = _us.stats, days = (S && S.days) || [], today = _usDay(0), yd = _usDay(1);
+  h += '<div class="us-b"><h4>Firestore 全体の回数（1日ごと・日本時間）</h4>';
+  if (!S) h += '<div class="nt">読み込み中…</div>';
+  else if (S.none || (!days.length && !S.err)) h += '<div class="nt">まだ記録がありません。Cloud Shell で <b>firebase deploy --only functions:usageStats</b> を1回すると、3時間ごとにここへ届きます。</div>';
+  else {
+    if (S.err) h += '<div class="nt" style="color:#FF6B7F">取れませんでした：' + evEsc(String(S.err)) + '<br>関数の実行用のアカウントに「モニタリング閲覧者」の権限が要るかもしれません。</div>';
+    var mx = Math.max(60000, Math.max.apply(null, days.map(function(x) { return x.r || 0; }).concat([0])));
+    h += days.map(function(x) { var ov = x.r > 50000;
+      return '<div class="us-r"><small>' + x.d.slice(5).replace('-', '/') + '</small><div class="bar"><i class="' + (ov ? 'ov' : '') + '" style="width:' + Math.round(x.r / mx * 100) + '%"></i><u style="left:' + (50000 / mx * 100) + '%"></u></div><b>' + nf(x.r) + '</b></div>'; }).join('');
+    var last = days.filter(function(x) { return x.d === today; })[0], prev = days.filter(function(x) { return x.d === yd; })[0];
+    var per = function(x, n) { return x && n ? '約' + nf(Math.round(x.r / n)) + '回' : '—'; };
+    h += '<table class="us-t" style="margin-top:8px"><tr><td>書き込み（昨日）</td><td>' + nf(prev && prev.w) + '</td></tr><tr><td>削除（昨日）</td><td>' + nf(prev && prev.x) + '</td></tr>'
+      + '<tr><td>1人あたりの読み取り（昨日・目安）</td><td>' + per(prev, wk[yd] + t0) + '</td></tr>'
+      + '<tr><td>1人あたりの読み取り（今日・ここまで）</td><td>' + per(last, t0) + '</td></tr></table>'
+      + '<div class="nt">線＝無料枠（読み取り1日5万回）。赤は無料枠を超えた日。全部のアプリ（ATTACK LIST・GOAL SETTING・受付・サーバーの処理も）の合計です。'
+      + (S.at ? ' 最終更新：' + evEsc(new Date(Date.parse(S.at) + 9 * 3600000).toISOString().slice(5, 16).replace('T', ' ').replace('-', '/')) : '') + '</div>';
+  }
+  h += '</div>';
+  // 内訳
+  var dd = _us.rdDay || '', R = dd ? _us.rd[dd] : null;
+  h += '<div class="us-b"><h4>読み取りの内訳（アプリが数えた分）</h4><div class="us-ch">'
+    + '<span class="' + (dd === today.replace(/-/g, '') ? 'on' : '') + '" onclick="usRdLoad(0)">今日</span><span class="' + (dd === yd.replace(/-/g, '') ? 'on' : '') + '" onclick="usRdLoad(1)">昨日</span><span class="' + (dd === _usDay(2).replace(/-/g, '') ? 'on' : '') + '" onclick="usRdLoad(2)">おととい</span></div>';
+  if (!dd) h += '<div class="nt">日を押すと読み込みます（その日に記録した人数分の読み取りがかかります）。v884 を開いた人から記録されています。</div>';
+  else if (R === 'loading') h += '<div class="nt">読み込み中…</div>';
+  else if (R && R.err) h += '<div class="nt" style="color:#FF6B7F">読めませんでした（' + evEsc(R.err) + '）。ルールの反映をご確認ください。</div>';
+  else if (R && !R.length) h += '<div class="nt">この日の記録はまだありません。</div>';
+  else if (R) {
+    var sum = function(A) { return A.reduce(function(a, x) { return a + (x.n || 0); }, 0); }, all = sum(R);
+    var dk = dd.slice(0, 4) + '-' + dd.slice(4, 6) + '-' + dd.slice(6), tot = (days.filter(function(x) { return x.d === dk; })[0] || {}).r;
+    h += '<div class="us-k">' + [['nav', 'NAVIGATOR'], ['ck', '受付・会員証']].map(function(a) {
+        var A = R.filter(function(x) { return x.app === a[0]; }), n = sum(A);
+        return '<div><b>' + nf(n) + '</b><small>' + a[1] + '（' + A.length + '人・端末' + (A.length ? '・1人 約' + nf(Math.round(n / A.length)) : '') + '）</small></div>'; }).join('') + '</div>';
+    if (tot) h += '<div class="nt">Firestore 全体 ' + nf(tot) + ' 回のうち、アプリが数えた分は 約' + Math.round(all / tot * 100) + '%。残りは ATTACK LIST・GOAL SETTING・サーバーの処理・古い版の端末などです。</div>';
+    var tags = {}, keys = {};
+    R.forEach(function(x) { var ap = x.app === 'nav' ? 'NAV ' : '受付 '; Object.keys(x.by || {}).forEach(function(k) { var v = +x.by[k] || 0, t = ap + k.split('|')[0]; tags[t] = (tags[t] || 0) + v; keys[ap + k] = (keys[ap + k] || 0) + v; }); });
+    var top = function(o, n) { return Object.keys(o).sort(function(a, b) { return o[b] - o[a]; }).slice(0, n); };
+    h += '<div style="font-size:12px;font-weight:900;margin:10px 0 2px">画面ごと</div><table class="us-t">' + top(tags, 10).map(function(k) { return '<tr><td>' + evEsc(k) + '</td><td>' + nf(tags[k]) + '</td></tr>'; }).join('') + '</table>'
+      + '<div style="font-size:12px;font-weight:900;margin:10px 0 2px">画面｜読んだ場所（上位20）</div><table class="us-t">' + top(keys, 20).map(function(k) { return '<tr><td style="word-break:break-all">' + evEsc(k) + '</td><td>' + nf(keys[k]) + '</td></tr>'; }).join('') + '</table>';
+  }
+  h += '</div>';
+  return h;
 }
 // オーナー以外：公開範囲は1行（押すと名簿の貼り付けなど）
 function _admAccLine() {
@@ -4775,7 +4870,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v884';
+  var DATA_VERSION = 'v885';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6895,6 +6990,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v885', d:'2026-11-19', items:['アカウント管理（オーナー）の設定に「📊 利用状況」を追加しました。開いた人の数・使える人の数・Firestore の回数（1日ごと）・読み取りの内訳を、Firebase を開かずに見られます'] },
   { v:'v884', d:'2026-11-19', items:['🛠 細かい修正をしました'] },
   { v:'v883', d:'2026-11-18', items:['📷 メンバーの写真の画質を上げました（これから入れる写真から。今の写真をきれいにしたい時は、選び直してください）'] },
   { v:'v882', d:'2026-11-18', items:['アカウント管理（オーナー）：同じ名前でメールアドレスが違うアカウントを「同じ名前が複数」で見比べて、いらない方を削除できるようにしました（使えなくして一覧から消します。「削除したアカウント」から元に戻せます）'] },
