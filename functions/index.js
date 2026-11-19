@@ -6,6 +6,8 @@
  */
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const admin = require('firebase-admin');
+// 📊 v886: Firestore 全体の回数のまとめ（overdueReminders の最後に動かす。新しい関数を作ると、作る時に呼び出しの権限の設定が要るため）
+const usage = require('./usage');
 
 admin.initializeApp();
 
@@ -110,6 +112,8 @@ exports.overdueReminders = onSchedule(
       try { await pushTo(db, uid, tokens, `⚠️ 期限切れタスク ${od.length}件`, body, 'due-digest', 'gm-overdue'); sent++; } catch (e) { console.log(`overdue send error uid=${uid}: ${e}`); }
     }
     console.log(`overdueReminders: users=${Object.keys(tokByUid).length} sent=${sent} index=${idxOk}/${idxOk + idxNg}`);
+    // 📊 v886: Firestore 全体の回数を appStats/usage にまとめる（1日5回・この関数の最後に。失敗しても通知には影響しない）
+    try { await usage.run(admin); } catch (eU) { console.log('usageStats error: ' + eU); }
   }
 );
 
@@ -224,10 +228,3 @@ exports.beautyDaily = onSchedule(
   }
 );
 
-// 📊 v885: Firestore 全体の回数（1日ごと）を appStats/usage にまとめる（NAVIGATOR のアカウント管理「📊 利用状況」で見る）
-//   デプロイ: firebase deploy --only functions:usageStats
-const usage = require('./usage');
-exports.usageStats = onSchedule(
-  { schedule: '15 */3 * * *', region: 'asia-northeast1', timeZone: 'Asia/Tokyo', memory: '256MiB' },
-  async () => { await usage.run(admin); }
-);

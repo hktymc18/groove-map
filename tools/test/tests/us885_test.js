@@ -42,7 +42,7 @@ T.run(async () => {
   // まだ記録が無い時
   w._us = { stats: { none: true }, loading: false, rd: {}, rdDay: '' };
   w.renderAdminList();
-  c('記録が無い時は、関数のデプロイを案内', /firebase deploy --only functions:usageStats/.test($('#adminBody').textContent));
+  c('記録が無い時は、関数のデプロイを案内', /firebase deploy --only functions:overdueReminders/.test($('#adminBody').textContent));
   w._us = { stats: { days: [], err: 'monitoring 403 denied' }, loading: false, rd: {}, rdDay: '' };
   w.renderAdminList();
   c('取れなかった時は理由と権限の案内', /取れませんでした：monitoring 403/.test($('#adminBody').textContent) && /モニタリング閲覧者/.test($('#adminBody').textContent));

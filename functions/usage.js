@@ -1,7 +1,8 @@
 /**
  * 📊 v885: Firestore 全体の回数（読み取り・書き込み・削除）を、日本時間の1日ごとに Cloud Monitoring から取り、
  *   appStats/usage（オーナーだけが読める）に書く。NAVIGATOR のアカウント管理「📊 利用状況」で見る（ブラウザからは Monitoring を読めないため）
- *   動かす: usageStats（3時間ごと）。関数の実行用のサービスアカウントに「モニタリング閲覧者」の権限が要る（無い時は appStats/usage.err に理由を書く）
+ *   動かす: v886〜 overdueReminders（1日5回: 9・12・15・18・21時）の最後に run() を呼ぶ（v885 の usageStats は、新しい関数を作る時の権限で作れなかったため）。
+ *   関数の実行用のサービスアカウントに「モニタリング閲覧者」の権限が要る（無い時は appStats/usage.err に理由を書く）
  */
 const DAY = 86400000, JST = 9 * 3600000;
 const jstDay = (ms) => new Date(ms + JST).toISOString().slice(0, 10);

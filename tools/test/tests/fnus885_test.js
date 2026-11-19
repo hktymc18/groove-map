@@ -35,5 +35,9 @@ const c = (n, ok, info) => { console.log((ok ? 'PASS' : 'FAIL') + ': ' + n + (ok
   await U.run(admin);
   console.log = log0;
   c('権限が無い時は、前の数を残したまま理由（err）を書く', store['appStats/usage'].days.length === 1 && /403/.test(store['appStats/usage'].err), JSON.stringify(store['appStats/usage']));
+  // v886: 新しい関数（usageStats）は作らず、overdueReminders（1日5回）の最後で動かす
+  const IX = require('fs').readFileSync(path.join(__dirname, '../../../functions/index.js'), 'utf8');
+  const od = IX.slice(IX.indexOf('exports.overdueReminders'), IX.indexOf('exports.sendReminders'));
+  c('v886: overdueReminders の最後で usage.run を呼ぶ（失敗しても通知に影響しない try の中）・usageStats は作らない', /try \{ await usage\.run\(admin\); \} catch/.test(od) && !/exports\.usageStats/.test(IX));
   console.log(fails ? 'FAILED ' + fails : 'ALL PASS'); process.exit(fails ? 1 : 0);
 })();
