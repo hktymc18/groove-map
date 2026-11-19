@@ -260,6 +260,19 @@ service cloud.firestore {
     //   変えられるのはオーナーだけ
     //   v847: appConfig/features = { flags:{ 機能名:{ on, testers:[uid] } }, at, by }（新機能のテスト）。
     //   読みはログインした人（自分に出すかを決めるため）・変えられるのはオーナーだけ
+    // 📊 v884: 読み取りの内訳（アプリ・画面ごとに端末で数えた数。1人1日1件に足し込む）。見るのはオーナーだけ
+    //   ログインしている人は自分の分（{uid}_{アプリ}）、ログインなし（会員証など）は端末ごとの番号（anon_…）
+    match /readStats/{d}/u/{id} {
+      allow read: if isOwnerAdmin();
+      allow create, update: if d.matches('^[0-9]{8}$')
+        && request.resource.data.keys().hasOnly(['uid', 'app', 'd', 'n', 'by', 'at', 'ver'])
+        && request.resource.data.app in ['nav', 'ck']
+        && request.resource.data.d == d
+        && request.resource.data.n is int
+        && request.resource.data.by is map && request.resource.data.by.size() <= 100
+        && ((signedIn() && request.resource.data.uid == request.auth.uid && id == request.auth.uid + '_' + request.resource.data.app)
+            || (request.resource.data.uid == '' && id.matches('^anon_[a-z0-9]{10}_(nav|ck)$')));
+    }
     match /appConfig/{doc} {
       allow read: if doc == 'unions' || (doc == 'features' && signedIn());
       allow write: if doc == 'unions' && isOwnerAdmin()
