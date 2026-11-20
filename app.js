@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v885';
+var APP_JS_VERSION = 'v886';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3785,7 +3785,7 @@ function _admPgHtml(k, owner) {
   return '<div class="adm-sph">' + back + '<b>' + (ADM_PG[k] || '') + '</b></div><div class="adm-sp">' + inner + '</div>';
 }
 // ── 📊 v885: 利用状況（オーナー）。Firebase のコンソールを開かずに、人数・Firestore 全体の回数・読み取りの内訳を見る ──
-//   人数＝読み込み済みのアカウント一覧（追加の読み取りなし）／全体の回数＝appStats/usage（サーバーの usageStats が3時間ごとに書く・1件）
+//   人数＝読み込み済みのアカウント一覧（追加の読み取りなし）／全体の回数＝appStats/usage（v886: サーバーの overdueReminders の最後に1日5回書く・1件）
 //   内訳＝readStats/{日付}/u（v884〜アプリが数えた分）。「内訳を読む」を押した時だけ読む（記録した人数分の読み取り）
 var _us = { stats: null, loading: false, rd: {}, rdDay: '' };
 function _usDay(off) { return new Date(Date.now() + 9 * 3600000 - (off || 0) * 86400000).toISOString().slice(0, 10); }
@@ -3839,7 +3839,7 @@ function _usAdmHtml() {
   var S = _us.stats, days = (S && S.days) || [], today = _usDay(0), yd = _usDay(1);
   h += '<div class="us-b"><h4>Firestore 全体の回数（1日ごと・日本時間）</h4>';
   if (!S) h += '<div class="nt">読み込み中…</div>';
-  else if (S.none || (!days.length && !S.err)) h += '<div class="nt">まだ記録がありません。Cloud Shell で <b>firebase deploy --only functions:usageStats</b> を1回すると、3時間ごとにここへ届きます。</div>';
+  else if (S.none || (!days.length && !S.err)) h += '<div class="nt">まだ記録がありません。Cloud Shell で <b>firebase deploy --only functions:overdueReminders</b> を1回すると、1日5回（9・12・15・18・21時）ここへ届きます。</div>';
   else {
     if (S.err) h += '<div class="nt" style="color:#FF6B7F">取れませんでした：' + evEsc(String(S.err)) + '<br>関数の実行用のアカウントに「モニタリング閲覧者」の権限が要るかもしれません。</div>';
     var mx = Math.max(60000, Math.max.apply(null, days.map(function(x) { return x.r || 0; }).concat([0])));
@@ -4870,7 +4870,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v885';
+  var DATA_VERSION = 'v886';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6990,6 +6990,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v886', d:'2026-11-19', items:['🛠 細かい修正をしました'] },
   { v:'v885', d:'2026-11-19', items:['アカウント管理（オーナー）の設定に「📊 利用状況」を追加しました。開いた人の数・使える人の数・Firestore の回数（1日ごと）・読み取りの内訳を、Firebase を開かずに見られます'] },
   { v:'v884', d:'2026-11-19', items:['🛠 細かい修正をしました'] },
   { v:'v883', d:'2026-11-18', items:['📷 メンバーの写真の画質を上げました（これから入れる写真から。今の写真をきれいにしたい時は、選び直してください）'] },
