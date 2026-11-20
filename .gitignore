@@ -2,3 +2,6 @@ tools/test/node_modules/
 tools/test/out/
 .DS_Store
 .claude/autonomous.flag
+
+# Playwright のコネクタの記録（画面の中身が入る）
+.playwright-mcp/
