@@ -42,7 +42,7 @@ let fails = 0; const c = (n, ok, i) => { console.log((ok ? 'PASS' : 'FAIL') + ':
     RC._st.last = null; tag = 'current'; RC.poll(); RC.poll(); tag = 'events:calendar'; RC.poll(); tag = 'current'; RC.poll();
     RC.flush(); await new Promise(r => setTimeout(r, 1500));
     const sv = (await db.doc('readStats/' + d + '/u/U1_nav').get()).data() || {};
-    out.op = sv.op; out.sec = sv.sec; out.hr = sv.hr; out.hh = ('0' + new Date(Date.now() + 9 * 3600000).getUTCHours()).slice(-2);
+    out.op = sv.op; out.sec = sv.sec; out.hr = sv.hr; out.ts = sv.ts; out.hh = ('0' + new Date(Date.now() + 9 * 3600000).getUTCHours()).slice(-2);
     return out;
   });
   console.log(JSON.stringify(r).slice(0, 900));
@@ -54,6 +54,7 @@ let fails = 0; const c = (n, ok, i) => { console.log((ok ? 'PASS' : 'FAIL') + ':
   c('1人1日1件に足し込む（4＋2＝6）', r.saved && r.saved.n === 6 && r.saved.by['home|maps/months'] === 6 && r.saved.uid === 'U1' && r.saved.app === 'nav' && r.saved.d === r.d, JSON.stringify(r.saved));
   c('v887: 画面を開いた回数（起動1・MAP2・カレンダー1。同じ画面のままなら数えない）', r.op && r.op['起動'] === 1 && r.op.current === 2 && r.op['events:calendar'] === 1, JSON.stringify(r.op));
   c('v888: 画面が出ている時間（秒）と時間帯（日本時間の何時台）も記録する', r.sec >= 8 && r.hr && r.hr[r.hh] === r.sec, JSON.stringify({ sec: r.sec, hr: r.hr, hh: r.hh }));
+  c('v889: 画面ごとの時間（ts）も記録する', r.ts && Object.keys(r.ts).length > 0 && Object.values(r.ts).reduce((a, b) => a + b, 0) === r.sec, JSON.stringify(r.ts));
   await b.close(); console.log(fails ? 'FAIL ' + fails : 'ALL PASS'); process.exit(fails ? 1 : 0);
 })().catch(e => { console.log('ERR', e.message); process.exit(1); });
 
