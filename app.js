@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v890';
+var APP_JS_VERSION = 'v892';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3878,6 +3878,7 @@ function _usrAgg(L) {
     if (!x.uid) return;
     var a = M[x.uid] || (M[x.uid] = { days: {}, n: 0, op: {}, opN: 0, start: 0, sec: 0, hr: {}, ts: {}, rd: {} });
     a.days[x._d] = 1; a.n += x.n || 0; a.sec += +x.sec || 0;
+    if (x.op) a.hasOp = 1; if (x.sec) a.hasSec = 1;   // v891: 回数（v887〜）・時間（v888〜）の記録があるか（無ければ古い版のアプリ）
     Object.keys(x.hr || {}).forEach(function(h) { a.hr[h] = (a.hr[h] || 0) + (+x.hr[h] || 0); });
     Object.keys(x.op || {}).forEach(function(k) { var v = +x.op[k] || 0; if (k === '起動') { a.start += v; return; } var kk = x.app + '|' + k; a.op[kk] = (a.op[kk] || 0) + v; a.opN += v; });
     Object.keys(x.ts || {}).forEach(function(k) { var kk = x.app + '|' + k; a.ts[kk] = (a.ts[kk] || 0) + (+x.ts[k] || 0); });
@@ -3981,8 +3982,8 @@ function _udScr() {
 function _udPpl() {
   var D = _usData(); if (!Array.isArray(D)) return _udWait(D);
   var scr = _ud.screen ? '<div class="usd-b usd-link" onclick="_ud.screen=\'\';_ud.sort=\'days\';usRender()">画面「' + evEsc(_usLabel(_ud.screen.split('|')[0], _ud.screen.split('|').slice(1).join('|'))) + '」をよく使う人の順<span>✕ 外す</span></div>' : '';
-  return scr + '<div class="usd-segs" id="usSegs">' + _udSegs() + '</div><div class="usd-b" id="usList">' + _udPplList() + '</div>'
-    + '<div class="nt" style="margin:0 14px 20px">日数＝その期間に NAVIGATOR か受付を開いた日（v884〜）。開いた回数＝アプリを開いた・戻ってきた回数（v887〜）。使った時間＝画面が出ていた時間（v888〜・開いたまま置いた時間も入る）。よく使う＝期間の半分以上の日に開いた人。</div>';
+  return scr + _udMissNote() + '<div class="usd-segs" id="usSegs">' + _udSegs() + '</div><div class="usd-b" id="usList">' + _udPplList() + '</div>'
+    + '<div class="nt" style="margin:0 14px 20px">日数＝その期間に NAVIGATOR か受付を開いた日（v884〜）。開いた回数＝アプリを開いた・戻ってきた回数（v887〜）。使った時間＝画面が出ていた時間（v888〜・開いたまま置いた時間も入る）。よく使う＝記録のある日の半分以上（2日以上）開いた人。細かい記録が無くても、最後に開いた日が期間の中なら、その日は使った日に数えます。</div>';
 }
 function _udPeople() {
   var D = _usData(); if (!Array.isArray(D)) return null;
@@ -3990,10 +3991,35 @@ function _udPeople() {
   _usOk().forEach(function(u) { base[u.id] = u; });
   Object.keys(M).forEach(function(uid) { if (!base[uid]) { var u = _adminFindUser(uid); if (u) base[uid] = u; } });
   var U = Object.keys(base).map(function(k) { return base[k]; }).filter(function(u) { return !u.deleted && (!_ud.un || u.union === _ud.un); });
-  var a0 = { days: {}, n: 0, op: {}, opN: 0, start: 0, sec: 0, hr: {}, ts: {}, rd: {} };
-  return U.map(function(u) { var a = M[u.id] || a0; return { u: u, a: a, days: Object.keys(a.days).length }; });
+  var a0 = { days: {}, n: 0, op: {}, opN: 0, start: 0, sec: 0, hr: {}, ts: {}, rd: {} }, inP = {};
+  for (var i = 0; i < _ud.per; i++) inP[_usDay(i).replace(/-/g, '')] = 1;
+  // v891: 記録（readStats）が無くても、最後に開いた日（lastSeenAt）が期間の中なら、その日は使った日に入れる
+  //       （古い版のアプリ・ルールが入る前・記録を送る前に閉じた などで記録が抜けても「使っていない」にしない）
+  return U.map(function(u) {
+    var a = M[u.id] || a0, d = {}; Object.keys(a.days).forEach(function(k) { d[k] = 1; });
+    var ls = _usDayOf(u.lastSeenAt).replace(/-/g, ''), seenOnly = false;
+    if (ls && inP[ls] && !d[ls]) { d[ls] = 1; seenOnly = !Object.keys(a.days).length; }
+    return { u: u, a: a, days: Object.keys(d).length, seenOnly: seenOnly, oldVer: !seenOnly && Object.keys(a.days).length > 0 && !a.hasOp };
+  });
 }
-function _udSegOf(p) { var half = Math.ceil(_ud.per / 2); return p.days >= half ? 'often' : p.days > 0 ? 'some' : 'idle'; }
+// v891: 記録のある日数（記録は v884＝11/19 から。期間がそれより長い時は、記録のある日数で判定する）
+function _udAvail() {
+  var D = _usData(); if (!Array.isArray(D)) return _ud.per;
+  var h = {}; D.forEach(function(x) { if (x._d) h[x._d] = 1; });
+  return Math.max(1, Math.min(_ud.per, Object.keys(h).length));
+}
+// よく使う＝記録のある日の半分以上（2日以上ある時は、少なくとも2日）
+function _udSegOf(p) { var n = _udAvail(), half = n > 1 ? Math.max(2, Math.ceil(n / 2)) : 1; return p.days >= half ? 'often' : p.days > 0 ? 'some' : 'idle'; }
+// v891: 開いたのに記録が届いていない人の数（多い時は案内を出す）
+function _udMissNote() {
+  var P = _udPeople(); if (!P) return '';
+  var miss = P.filter(function(p) { return p.seenOnly; }).length, old = P.filter(function(p) { return p.oldVer; }).length, n = _udAvail();
+  var t = [];
+  if (n < _ud.per) t.push('記録は ' + n + '日分だけです（記録を始めたのは 11/19 から）。「よく使う」は、記録のある ' + n + '日のうち ' + (n > 1 ? Math.max(2, Math.ceil(n / 2)) : 1) + '日以上開いた人です。');
+  if (miss) t.push('🟡 最後に開いた日は期間の中なのに、細かい記録が届いていない人が ' + miss + '人います（その人の回数・時間は「—」）。古い版のアプリのまま、またはルールがまだ本番に入っていない時に起きます。');
+  if (old) t.push('🟡 古い版のアプリ（v886 まで）で使っていて、開いた回数・使った時間の記録が無い人が ' + old + '人います（「—」と「古い版」の印）。アプリを一度閉じて開き直すと新しい版になり、次から数えられます。');
+  return t.length ? '<div class="usd-b usd-warn">' + t.join('<br>') + '</div>' : '';
+}
 function _udSegs() {
   var P = _udPeople() || [], n = { all: P.length, often: 0, some: 0, idle: 0 }, lim = Date.now() - 7 * 86400000;
   P.forEach(function(p) { n[_udSegOf(p)]++; });
@@ -4007,7 +4033,7 @@ function _udPplList() {
   if (_ud.seg === 'idle7') P = P.filter(function(p) { return !(Date.parse(p.u.lastSeenAt || '') >= lim); });
   else if (_ud.seg !== 'all') P = P.filter(function(p) { return _udSegOf(p) === _ud.seg; });
   if (q) P = P.filter(function(p) { return String(p.u.name || '').replace(/[\s　]/g, '').indexOf(q) >= 0; });
-  var sk = _ud.sort, dir = _ud.dir, scr = _ud.screen;
+  var sk = _ud.sort, dir = _ud.dir, scr = _ud.screen, av = _udAvail();
   var val = function(p) { return sk === 'days' ? p.days * 1e9 + p.a.opN * 1e3 + p.a.sec / 1e3 : sk === 'last' ? (Date.parse(p.u.lastSeenAt || '') || 0) : sk === 'open' ? p.a.start : sk === 'time' ? p.a.sec : sk === 'scr' ? (p.a.op[scr] || 0) * 1e6 + (p.a.ts[scr] || 0) : 0; };
   P.sort(function(a, b) { return sk === 'name' ? dir * String(a.u.name || '').localeCompare(String(b.u.name || ''), 'ja') : dir * (val(a) - val(b)); });
   if (!P.length) return '<div class="nt">当てはまる人はいません。</div>';
@@ -4018,12 +4044,12 @@ function _udPplList() {
   if (_udWide()) {
     var cols = [['name', '名前'], ['days', '使った日数'], ['last', '最後に開いた'], ['open', '開いた回数'], ['time', '使った時間']].concat(scr ? [['scr', 'この画面の回数']] : []);
     return '<table class="usd-t"><tr>' + cols.map(function(c) { return '<th onclick="usSort(\'' + c[0] + '\')" class="' + (sk === c[0] ? 'on' : '') + '">' + c[1] + (sk === c[0] ? (dir < 0 ? ' ▼' : ' ▲') : '') + '</th>'; }).join('') + '<th>よく使う画面</th></tr>'
-      + P.map(function(p) { var a = p.a; return '<tr onclick="usWho(\'' + p.u.id + '\')"><td><b>' + evEsc(p.u.name || '(名前未設定)') + '</b><small> ' + evEsc(p.u.union || '') + '</small> ' + segTag(p) + '</td><td>' + p.days + '日／' + _ud.per + '日</td><td>' + _usAgo(p.u.lastSeenAt) + '</td><td>' + (a.start || 0) + '回</td><td>' + _usrDur(a.sec) + '</td>'
+      + P.map(function(p) { var a = p.a; return '<tr onclick="usWho(\'' + p.u.id + '\')"><td><b>' + evEsc(p.u.name || '(名前未設定)') + '</b><small> ' + evEsc(p.u.union || '') + '</small> ' + segTag(p) + '</td><td>' + p.days + '日／' + av + '日</td><td>' + _usAgo(p.u.lastSeenAt) + '</td><td>' + (a.hasOp ? (a.start || 0) + '回' : '—') + '</td><td>' + (a.hasSec ? _usrDur(a.sec) : '—') + (p.oldVer ? ' <i class="usd-tag some">古い版</i>' : p.seenOnly ? ' <i class="usd-tag some">記録なし</i>' : '') + '</td>'
         + (scr ? '<td>' + (a.op[scr] || 0) + '回</td>' : '') + '<td><small>' + evEsc(topScr(a) || '—') + '</small></td></tr>'; }).join('') + '</table>' + more;
   }
   return P.map(function(p) { var a = p.a;
-    return '<div class="usr-row" onclick="usWho(\'' + p.u.id + '\')"><div class="usr-h"><b>' + evEsc(p.u.name || '(名前未設定)') + '</b><small>' + evEsc(p.u.union || '') + '</small>' + segTag(p) + '<em>' + p.days + '日／' + _ud.per + '日</em></div>'
-      + '<div class="usr-s">' + _usAgo(p.u.lastSeenAt) + (a.start ? '・開いた ' + a.start + '回' : '') + (a.sec ? '・' + _usrDur(a.sec) : '') + (scr && a.op[scr] ? '・この画面 ' + a.op[scr] + '回' : '') + (topScr(a) ? '・' + evEsc(topScr(a)) : '') + '</div></div>'; }).join('') + more;
+    return '<div class="usr-row" onclick="usWho(\'' + p.u.id + '\')"><div class="usr-h"><b>' + evEsc(p.u.name || '(名前未設定)') + '</b><small>' + evEsc(p.u.union || '') + '</small>' + segTag(p) + '<em>' + p.days + '日／' + av + '日</em></div>'
+      + '<div class="usr-s">' + _usAgo(p.u.lastSeenAt) + (a.start ? '・開いた ' + a.start + '回' : '') + (a.sec ? '・' + _usrDur(a.sec) : '') + (p.seenOnly ? '・細かい記録なし' : p.oldVer ? '・古い版（回数の記録なし）' : '') + (scr && a.op[scr] ? '・この画面 ' + a.op[scr] + '回' : '') + (topScr(a) ? '・' + evEsc(topScr(a)) : '') + '</div></div>'; }).join('') + more;
 }
 // 人の詳しい中身（重ねて出す。一覧の位置は動かない）
 function usWho(uid) {
@@ -4034,8 +4060,8 @@ function usWho(uid) {
   var old = document.getElementById('usDr'); if (old) old.remove();
   var o = document.createElement('div'); o.id = 'usDr'; o.className = 'usd-dr'; o.onclick = function(e) { if (e.target === o) o.remove(); };
   o.innerHTML = '<div class="usd-dp"><div class="usd-top"><b>' + evEsc(u.name || '(名前未設定)') + '<small> ' + evEsc(u.union || '') + '</small></b><span class="x" onclick="document.getElementById(\'usDr\').remove()">✕</span></div>'
-    + '<div class="usd-k4"><div><b>' + p.days + '<small>／' + _ud.per + '日</small></b><small>使った日数</small></div><div><b>' + (a.start || 0) + '</b><small>開いた回数</small></div><div><b>' + _usrDur(a.sec) + '</b><small>使った時間</small></div><div><b>' + _usAgo(u.lastSeenAt) + '</b><small>最後に開いた</small></div></div>'
-    + (_ud.per > 1 ? '<div class="usd-st">日ごと</div><div class="usr-d">' + dl.map(function(d) { return '<i class="' + (a.days[d] ? 'on' : '') + '" title="' + d.slice(4, 6) + '/' + d.slice(6) + '"></i>'; }).join('') + '</div>' : '')
+    + (p.seenOnly ? '<div class="usd-b usd-warn" style="margin:8px 0">最後に開いた日は期間の中ですが、細かい記録（回数・時間・画面）が届いていません。古い版のアプリのままの可能性があります。</div>' : p.oldVer ? '<div class="usd-b usd-warn" style="margin:8px 0">古い版のアプリ（v886 まで）で使っていたため、開いた回数・使った時間の記録がありません（日数と読み取りだけ）。</div>' : '') + '<div class="usd-k4"><div><b>' + p.days + '<small>／' + _udAvail() + '日</small></b><small>使った日数</small></div><div><b>' + (a.hasOp ? (a.start || 0) : '—') + '</b><small>開いた回数</small></div><div><b>' + (a.hasSec ? _usrDur(a.sec) : '—') + '</b><small>使った時間</small></div><div><b>' + _usAgo(u.lastSeenAt) + '</b><small>最後に開いた</small></div></div>'
+    + (_ud.per > 1 ? '<div class="usd-st">日ごと</div><div class="usr-d">' + dl.map(function(d) { return '<i class="' + (a.days[d] || d === _usDayOf(u.lastSeenAt).replace(/-/g, '') ? 'on' : '') + '" title="' + d.slice(4, 6) + '/' + d.slice(6) + '"></i>'; }).join('') + '</div>' : '')
     + (a.sec ? _usrHourBars(a.hr, '使った時間帯') : '')
     + '<div class="usd-st">画面ごと</div>' + (rows.length ? '<table class="usd-t"><tr><th>画面</th><th>開いた</th><th>時間</th><th>読み取り</th></tr>' + rows.map(function(k) { var q = k.split('|'); var tg = q.slice(1).join('|');
         return '<tr><td>' + (q[0] === 'ck' ? '<small>受付</small> ' : '') + evEsc(_usLabel(q[0], tg)) + '</td><td>' + (a.op[k] || 0) + '回</td><td>' + _usrDur(a.ts[k]) + '</td><td>' + _usNf(a.rd[k]) + '</td></tr>'; }).join('') + '</table>' : '<div class="nt">画面の記録はまだありません。</div>')
@@ -4077,7 +4103,7 @@ function _udCss() {
     + '.usd-ch{display:flex;gap:6px}.usd-ch span{padding:6px 12px;border-radius:999px;border:1px solid var(--border);font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap;background:var(--surface)}.usd-ch span.on{background:var(--accent);color:var(--go-ink,#06231c);border-color:var(--accent)}'
     + '.usd-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:4px 12px calc(env(safe-area-inset-bottom,0px) + 24px)}.usd-body>*{max-width:1156px;margin-left:auto!important;margin-right:auto!important}'
     + '.usd-b{margin:10px 12px;padding:12px 13px;border-radius:14px;border:1px solid var(--border);background:var(--surface)}.usd-b .nt,.usd-body .nt{font-size:11.5px;color:var(--text-dim);line-height:1.6;margin-top:6px}'
-    + '.usd-st{font-size:13px;font-weight:900;margin:2px 0 6px}'
+    + '.usd-st{font-size:13px;font-weight:900;margin:2px 0 6px}.usd-warn{font-size:12.5px;line-height:1.7;background:color-mix(in srgb,#F5B800 12%,var(--surface));border-color:color-mix(in srgb,#F5B800 45%,var(--border))}'
     + '.usd-k4{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:10px 12px}.usd-k4>div{padding:10px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--border)}.usd-k4 b{display:block;font-size:22px;font-weight:900;line-height:1.2}.usd-k4 b small{font-size:12px}.usd-k4>div>small{font-size:11.5px;color:var(--text-dim);font-weight:700}'
     + '.usd-dp .usd-k4{margin:8px 0}.usd-dp .usd-k4 b{font-size:17px}'
     + '.usd-g2{display:grid;grid-template-columns:1fr;column-gap:12px}.usd-g2>.usd-b{margin-left:0;margin-right:0}@media(min-width:760px){.usd-g2{grid-template-columns:1fr 1fr}}'
@@ -5095,7 +5121,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v890';
+  var DATA_VERSION = 'v892';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6854,7 +6880,26 @@ function _renderCurrentViewNow() {
 // デバウンス：連続呼び出し（結合リスナー多重発火等）を1フレームにまとめる。
 // 直近150ms実行が無ければ即時（操作の体感を守る）、連打中は120ms後に1回だけ。
 var _rcvTimer = null, _rcvLastRun = 0;
+// v892 #45: 削除した人（deleted）の下に残っている人は、その上の生きている人の下へ付け替える（MAPに出ない人を作らない。削除の時と同じ付け替え）
+//      #46: 流れたのに研修の段階のままの人を OUT に（下）
+function _fixDeadParents() {
+  if (!state.isEditor || (typeof _aggActive !== 'undefined' && _aggActive) || !state.members || !state.members.length) return 0;
+  var byId = {}, n = 0; state.members.forEach(function(x) { if (x && x.id) byId[x.id] = x; });
+  state.members.forEach(function(x) {
+    if (!x || x.deleted || !x.parentId) return;
+    var p = byId[x.parentId]; if (!p || !p.deleted) return;
+    var np = _liveParentId(p.id); if (np && np !== x.id) { x.parentId = np; n++; }
+  });
+  // v892 #46: 研修結果「流れた」なのに研修の段階のまま（前の版で付けた人）は、1回だけ OUT に（ngOut があればもう触らない）
+  state.members.forEach(function(x) {
+    if (!x || x.deleted || x.traineeResult !== '流れた' || x.ngOut || !_ngShouldOut(x)) return;
+    x.ngFrom = (x.title || '').trim(); x.ngOut = evTodayYmd(); x.title = 'OUT'; if ('cat' in x) x.cat = 'OUT'; x.trainee = false; n++;
+  });
+  if (n) { try { autoSave(); } catch (e) {} }
+  return n;
+}
 function renderCurrentView() {
+  try { _fixDeadParents(); } catch (eF) {}
   var now = Date.now();
   // v417: MAP切替中は読込のたびに巨大なSVGを作り直していたため、落ち着くまで1回にまとめる
   if (window._swBusy && typeof isPCMode === 'function' && isPCMode()) {
@@ -7215,6 +7260,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v892', d:'2026-11-20', items:['MAPのフロント追加：削除した人を選んだまま「＋追加」すると、追加先が削除した人になり、足した人がMAPに出なかったのを修正（その上の人の下に入ります。前に足して見えなくなっていた人も、上の人の下に出ます）（#45）','ビジネス（BMなど）からユーザーにして、また戻した人に「元ユーザー」の札が出ていたのを修正。札はもともとユーザーだった人だけ（#47）','研修結果を「流れた」にしても、MAPでは研修の段階（PAなど）のまま出ていたのを修正。OUTになります（進行中に戻すと前のタイトルに戻ります。前に「流れた」にした人もOUTに直ります）（#46）'] },
+  { v:'v891', d:'2026-11-20', items:['📊 利用状況（オーナー）：細かい記録が届いていない人でも、最後に開いた日が期間の中なら「使っていない」にしないように。「よく使う」は記録のある日数（11/19〜）の半分以上で判定。古い版のアプリで回数の記録が無い人は「0回」ではなく「—」と「古い版」の印。記録が抜けている人の数も出します'] },
   { v:'v890', d:'2026-11-21', items:['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v:'v889', d:'2026-11-20', items:['📊 利用状況を作り直しました（オーナー）：上に固定のタブ「概要・画面・人・費用」。画面ごとの比べ方（開いた回数・使った人・時間・読み取り）、よく使う／ときどき／使っていない人の数、人を押すと横（スマホは下）から詳しく。スクロールの位置が動かないように'] },
   { v:'v888', d:'2026-11-20', items:['👥 人ごとの利用：最後に開いた順・開いた回数順・使った時間順で並べられるように。使われている時間帯のグラフも出ます（オーナー）'] },
@@ -16963,7 +17010,7 @@ function openQuickAdd() {
   _p2SheetClose('qaOv');
   _qaAct = '';
   var stage = _qaStageGet();
-  var parent = selectedParentId || roots[0].id;
+  var parent = _liveParentId(selectedParentId) || roots[0].id;   // v892 #45
   var ms = (state.members || []).filter(function(m) { return !m.deleted && (m.title || '').trim() !== 'OUT'; })
     .sort(_treeSortCmp(state.members, 'title'));
   var pOpts = ms.map(function(m) {
@@ -17029,7 +17076,7 @@ function qaSave(cont) {
   var last = ((document.getElementById('qaLast') || {}).value || '').trim();
   var first = ((document.getElementById('qaFirst') || {}).value || '').trim();
   if (!last && !first) { toast('名前を入力してください'); return; }
-  var pid = (document.getElementById('qaParent') || {}).value || '';
+  var pid = _liveParentId((document.getElementById('qaParent') || {}).value || '');   // v892 #45: 削除した人の下には足さない
   if (!pid) { toast('追加先を選んでください'); return; }
   var _pk = _qaPicked(), qcat = _pk.cat, stage = _pk.t; // v570
   var cm = state.currentMonth || currentMonthStr();
@@ -19985,7 +20032,7 @@ function _mxRowHtml(m, mapType, depth, lines, last, fc, nKids, open, kidsShown) 
   var bday = (typeof _bdayIn30 === 'function' && _bdayIn30(m) !== null) ? '<span class="bd2" style="background:#FF5D8F">' + icn('cake', 'width:11px;height:11px;vertical-align:-1px') + _bdayMD(m) + '</span>' : '';
   var rs = restartSuffix(m, true), foreign = !!m._foreign;
   var umS = (mapType === 'current' && !foreign) ? _umStat(m.id) : null; // v843: 紹介したユーザー（押すとその人のユーザー一覧）
-  var l2 = (umS && umS.n ? '<span class="bd2 umb" onclick="event.stopPropagation();umShowRef(\'' + m.id + '\')">ユーザー ' + umS.n + '人・' + umS.pt.toLocaleString() + 'P ›</span>' : '') + (m.fromUser && !isUserM(m) && mapType === 'current' ? '<span class="bd2 umfr">元ユーザー</span>' : '')
+  var l2 = (umS && umS.n ? '<span class="bd2 umb" onclick="event.stopPropagation();umShowRef(\'' + m.id + '\')">ユーザー ' + umS.n + '人・' + umS.pt.toLocaleString() + 'P ›</span>' : '') + (_umFromUser(m) && mapType === 'current' ? '<span class="bd2 umfr">元ユーザー</span>' : '')
     + idle + bday + (mapType === 'current' ? _olCoBadge(m, 'bd2') : '') + (rs ? '<span class="bd2" style="background:#FB923C">' + rs + '</span>' : '')
     + (foreign ? '<span>' + icn('link', 'width:11px;height:11px') + evEsc(m._ownerName || '下位') + '</span>' : '')
     + (m.region ? '<span>📍' + evEsc(String(m.region).substring(0, 5)) + '</span>' : '')
@@ -20493,6 +20540,9 @@ function _ppSave(fn, msg) {
   if (msg) toast('✓ ' + msg);
   _ppRender();
 }
+// v892 #47: 「元ユーザー」の札＝もともとユーザーだった人だけ。ビジネスからユーザーにして（toUser）、そのあと戻した人には出さない
+//   （toUser が fromUser と同じ日か前なら「戻した」。もとはユーザー→研修生→ユーザー→研修生 の人は fromUser が前なので出る）
+function _umFromUser(m) { return !!(m && m.fromUser && !isUserM(m) && !(m.toUser && m.toUser <= m.fromUser)); }
 function _ppCatOf(t) { t = (t || '').trim(); if (t === 'OUT') return 'OUT'; var c = detectCategory(t); return c || (['FT', 'マケ', 'PG', 'DLR', 'EXP', 'PA', '面談', 'BPC', 'CO'].indexOf(t) >= 0 ? '研修生' : ''); }
 function ppTitle(t) {
   _ttlOpen = ''; // v615: 選んだらカードを閉じる
@@ -20516,7 +20566,8 @@ function ppTitle(t) {
     toast('✓ ' + _umNm(u || m0) + 'さんをユーザーにしました（ユーザーの一覧に入ります）');
     _ppRender(); return;
   }
-  setTimeout(function() { if (!wasU || t === 'ユーザー') return; var m2 = _ppM(); if (m2 && !isUserM(m2) && !m2.fromUser) { m2.fromUser = evTodayYmd(); autoSave(); try { renderCurrentView(); } catch (e) {} } }, 0);
+  setTimeout(function() { if (!wasU || t === 'ユーザー') return; var m2 = _ppM(); if (m2 && !isUserM(m2) && !m2.fromUser && !m2.toUser) {   // v892 #47: ビジネス→ユーザー→ビジネスに戻した人（toUser あり）は「元ユーザー」にしない
+ m2.fromUser = evTodayYmd(); autoSave(); try { renderCurrentView(); } catch (e) {} } }, 0);
   _ppSave(function() {
     selCategory(_ppCatOf(t));
     var sel = document.getElementById('fTitle');
@@ -20622,7 +20673,22 @@ function _ppTrHtml(m) {
   }).join('') + '</div>';
   return h;
 }
-function ppTrRes(v) { var m = _ppM(); if (!m || (m.traineeResult || '') === v) return; _ppSave(function() { selTraineeResultChip(v); }, '研修結果を「' + (v || '進行中') + '」にしました'); }
+// v892 #46: 研修結果を「流れた」にしたら、MAPでもOUT（研修の段階のまま出ていた）。流れたから戻したら、前のタイトルに戻す
+function ppTrRes(v) {
+  var m = _ppM(); if (!m || (m.traineeResult || '') === v) return;
+  var t0 = (m.title || '').trim(), drop = v === '流れた' && _ngShouldOut(m), back = m.traineeResult === '流れた' && v !== '流れた' && t0 === 'OUT' && m.ngFrom;
+  var nt = drop ? 'OUT' : back ? m.ngFrom : '';
+  _ppSave(function() {
+    selTraineeResultChip(v);
+    if (nt) { selCategory(_ppCatOf(nt)); var sel = document.getElementById('fTitle'); if (sel) { if (!sel.querySelector('option[value="' + nt + '"]')) { var o = document.createElement('option'); o.value = o.textContent = nt; sel.appendChild(o); } sel.value = nt; } }
+  }, '研修結果を「' + (v || '進行中') + '」にしました' + (drop ? '（MAPではOUT）' : back ? '（タイトルを ' + nt + ' に戻しました）' : ''));
+  var m2 = _ppM(); if (!m2) return;
+  if (drop) { m2.ngFrom = t0; m2.ngOut = evTodayYmd(); m2.trainee = false; }
+  if (back) { delete m2.ngFrom; delete m2.ngOut; }
+  if (drop || back) { autoSave(); try { renderCurrentView(); } catch (e) {} _ppRender(); }
+}
+// 流れたで OUT にする人：タイトルが無いか研修の段階（FT〜CO）の人だけ（LOI 以降は変えない。v472 と同じ決まり）
+function _ngShouldOut(m) { var t = (m.title || '').trim(); return t !== 'OUT' && (!t || _ppCatOf(t) === '研修生'); }
 // 記録を足す・記録の操作（下から出るシート）
 var _ppSh = null;
 function _ppShClose() { var o = document.getElementById('ppSh'); if (o && o.parentNode) o.parentNode.removeChild(o); _ppSh = null; }
@@ -21760,13 +21826,20 @@ function _naCss() {
   document.head.appendChild(st);
 }
 function _naTrCat(t) { return NA_GROUPS[0][2].indexOf(t) >= 0; }
+// v892 #45: 追加先が削除した人（deleted）なら、その上の生きている人へ（選んだままの人を消した後に、消えた人の下へ足して MAP に出なくなっていた）
+function _liveParentId(id) {
+  var ms = state.members || [], byId = {}; ms.forEach(function(x) { if (x && x.id) byId[x.id] = x; });
+  var m = id ? byId[id] : null, seen = {};
+  while (m && m.deleted && !seen[m.id]) { seen[m.id] = 1; m = m.parentId ? byId[m.parentId] : null; }
+  return m && !m.deleted ? m.id : '';
+}
 function naOpen(pid) {
   if (!state.isEditor) return;
   var roots = (state.members || []).filter(function(x) { return !x.parentId && !x.deleted; });
   if (!roots.length) { openAdd(); return; } // 0段目（自分）の登録は今までの画面で
   var t = 'マケ'; try { var v = localStorage.getItem('gm_naTitle'); if (v) t = v; } catch (e) {}
   _ttlOpen = '';
-  _na = { pid: pid || roots[0].id, last: '', first: '', gender: 'male', title: t, act: '', gsv: '', date: '', asan: '', chg: false };
+  _na = { pid: _liveParentId(pid) || roots[0].id, last: '', first: '', gender: 'male', title: t, act: '', gsv: '', date: '', asan: '', chg: false };
   _naRender();
   setTimeout(function() { var i = document.getElementById('naLast'); if (i) try { i.focus(); } catch (e2) {} }, 60);
 }
@@ -21819,7 +21892,7 @@ function naSave(after) {
   var gsv = tr ? 0 : Math.max(0, parseInt(n.gsv, 10) || 0), cm = state.currentMonth || currentMonthStr();
   var m = { id: 'id-' + Date.now(), lastName: last, firstName: first, gender: n.gender, title: n.title, cat: cat,
     activity: tr ? '' : n.act, actRate: '', morale: 1, priority: '', ptCurrent: gsv, ptFixed: 0, ptSelf: gsv,
-    trainee: false, parentId: n.pid, mapType: 'both', memo: '', nextDate: '', aSan: tr ? String(n.asan || '').trim() : '', instaUrl: '', lineId: '',
+    trainee: false, parentId: _liveParentId(n.pid) || n.pid, mapType: 'both', memo: '', nextDate: '', aSan: tr ? String(n.asan || '').trim() : '', instaUrl: '', lineId: '',
     traineeStatus: '', traineeHistory: [], traineeResult: '', traineeResultMonth: '',
     region: normalizeRegionValue((typeof currentUser !== 'undefined' && currentUser && currentUser.area) || ''),
     birthday: '', age: '', startMonth: cm, rollup: '', outHidden: false, badgeMode: '', month: cm };
@@ -23874,7 +23947,7 @@ function _uxIb(k) { return UX_INFO[k] ? '<span class="ux-ib" onclick="uxInfo(\''
 //   ユーザー側は一覧（スマホ）／表（PC）で、ADP・購入・ニーズ・プロフィールを持つ。「研修生にする」でビジネスのMAPへ。
 //   項目：adp {on, next}／buys [{t, d}]（新しい順・20件まで）／needs [タグ]／needMemo／uMemo／fromUser（研修生にした日）
 //   あとで（ユーザー用QR会員証）：ckNo・cardToken・uVisits（イベント来場回数）・uGrade（グレード）を受付から入れる予定（今は画面に出さない）
-var UM_KEYS = ['adp', 'buys', 'needs', 'needMemo', 'uMemo', 'fromUser', 'toUser', 'ckNo', 'cardToken', 'uVisits', 'uGrade', 'uLastAt', 'uPrysm', 'uPrysmD', 'uCkAt', 'ckToMember', 'uDays', 'shopReg', 'fuJ']; // メンバー画面の保存で落とさない（v864: 受付から）
+var UM_KEYS = ['adp', 'buys', 'needs', 'needMemo', 'uMemo', 'fromUser', 'toUser', 'ngOut', 'ngFrom', 'ckNo', 'cardToken', 'uVisits', 'uGrade', 'uLastAt', 'uPrysm', 'uPrysmD', 'uCkAt', 'ckToMember', 'uDays', 'shopReg', 'fuJ']; // メンバー画面の保存で落とさない（v864: 受付から）
 var _umMode = false, _umFlt = 'all', _umRef = '', _umSort = 'ref', _umOpenId = '', _umBuyF = false;
 try { _umMode = localStorage.getItem('gm_umMode') === '1'; } catch (e) {}
 function isUserM(m) { if (!m || m.deleted) return false; var t = String(m.title || '').trim(); return t === 'ユーザー' || /^U$/i.test(t); }

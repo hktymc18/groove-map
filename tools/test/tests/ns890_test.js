@@ -144,7 +144,7 @@ const ymAdd = (ym, d) => { const [y, m] = ym.split('.').map(Number); const i = y
   await pg.evaluate(() => { nsClose(); setTheme('dark'); nsImport({ v: 1, ym: state.currentMonth, rows: [{ n: '架空 一郎', gsv: 650 }, { n: '外部 三郎', gsv: 50 }] }); });
   await pg.waitForTimeout(400); await pg.screenshot({ path: OUT + '/ns890_dark.png' });
   c('先に見られる人でない時は開かない（テスト中）', await pg.evaluate(() => { nsClose(); const o = _featCfg; _featCfg = { nsimp: { on: false, testers: ['someone'] } }; const r = nsImport({ v: 1, ym: state.currentMonth, rows: [{ n: 'x', gsv: 1 }] }); const ov = !!document.getElementById('nsOv'); _featCfg = o; return r === 'not-enabled' && !ov; }));
-  c('お知らせに中身を書かない（全員に出るため）', await pg.evaluate(() => RELEASE_NOTES[0].v === 'v890' && !/Nu Skin/.test(JSON.stringify(RELEASE_NOTES[0]))));
+  c('お知らせに中身を書かない（全員に出るため）', await pg.evaluate(() => RELEASE_NOTES.some(x => x.v === 'v890') && !/Nu Skin/.test(JSON.stringify(RELEASE_NOTES))));
   c('共有MAPを見ている時は開かない', await pg.evaluate(() => { nsClose(); viewingOwnerUid = 'other'; const r = nsImport({ v: 1, ym: state.currentMonth, rows: [{ n: 'x', gsv: 1 }] }); viewingOwnerUid = null; return r === 'not-editable' && !document.getElementById('nsOv'); }));
   c('ページのエラーなし', !errs.length, errs.join(' | '));
   await b.close();
