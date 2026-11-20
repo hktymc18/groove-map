@@ -28,6 +28,8 @@ const OWNER = 'j2DPDAccCygHmR9i5K3bTvHnH0V2', D = '20261119';
   c('v888: 使った時間（sec）と時間帯（hr・24項目まで）も書ける・数でない sec は書けない', await ok(setDoc(doc(as('u1'), 'readStats/' + D + '/u/u1_nav'), R('u1', 'nav', { sec: increment(30), hr: { '09': increment(30) } }), { merge: true }))
     && !(await ok(setDoc(doc(as('u1'), 'readStats/' + D + '/u/u1_nav'), R('u1', 'nav', { sec: 'x' }))))
     && !(await ok(setDoc(doc(as('u1'), 'readStats/' + D + '/u/u1_nav'), R('u1', 'nav', { hr: Object.fromEntries(Array.from({ length: 25 }, (_, i) => ['h' + i, 1])) })))));
+  c('v889: 画面ごとの時間（ts・60項目まで）も書ける', await ok(setDoc(doc(as('u1'), 'readStats/' + D + '/u/u1_nav'), R('u1', 'nav', { ts: { current: increment(30) } }), { merge: true }))
+    && !(await ok(setDoc(doc(as('u1'), 'readStats/' + D + '/u/u1_nav'), R('u1', 'nav', { ts: Object.fromEntries(Array.from({ length: 61 }, (_, i) => ['t' + i, 1])) })))));
   const big = {}; for (let i = 0; i < 101; i++) big['k' + i] = 1;
   c('内訳は100項目まで', !(await ok(setDoc(doc(as('u1'), 'readStats/' + D + '/u/u1_nav'), R('u1', 'nav', { by: big })))));
   c('オーナーは読める・本人やほかの人は読めない', await ok(getDocs(collection(as(OWNER), 'readStats/' + D + '/u'))) && !(await ok(getDoc(doc(as('u1'), 'readStats/' + D + '/u/u1_nav')))) && !(await ok(getDocs(collection(anon, 'readStats/' + D + '/u')))));
