@@ -6,8 +6,9 @@
 //   ・前に重なった画面（プロキシなど）があれば、いちばん上に見えている表を読む
 // 結果は window.__nsRead に入る：{ state:'done', ym:'2026.11', rows:[{lv,n,t,psv,dc,gsv,ltsv,bb}], diag:{…} }
 //   読めない時は state:'fail' と diag（作りだけ。名前は入れない）。
+// 同じタブで2回目からは window.__nsRun() だけで読み直せる（ページを開き直したら、もう一度このファイルを実行する）。
 // 読むだけ。ボタンは押さない。詳細（住所・連絡先）は読まない。
-(function () {
+(window.__nsRun = function () {
   var D = document, W = window;
   W.__nsRead = { state: 'running' };
   var LB = ['レベル', '氏名', 'タイトル', 'PSV', 'DC-SV', 'GSV', 'LTSV', 'BBLK'];
@@ -110,8 +111,9 @@
   // 見ている月（見出しより上で、いちばん近い「2026年 11月」）
   var ym = '', best = 1e9, all = D.getElementsByTagName('*');
   for (var a = 0; a < all.length; a++) {
-    var mt = /^(\d{4})\s*年\s*(\d{1,2})\s*月$/.exec(tx(all[a]));
-    if (!mt || all[a].children.length > 1) continue;
+    var isSel = all[a].tagName === 'SELECT', so = isSel && all[a].selectedIndex >= 0 ? all[a].options[all[a].selectedIndex] : null; // 本物の月はプルダウン（select）。選ばれている月を読む
+    var mt = /^(\d{4})\s*年\s*(\d{1,2})\s*月$/.exec(isSel ? (so ? tx(so) : '') : tx(all[a]));
+    if (!mt || (!isSel && all[a].children.length > 1)) continue;
     var mr = rc(all[a]); if (!seen(mr) || mr.bottom > NR.top + 5) continue;
     var dd = NR.top - mr.bottom + Math.abs(mr.left - NR.left) / 4;
     if (dd < best && onTop(all[a])) { best = dd; ym = mt[1] + '.' + ('0' + parseInt(mt[2], 10)).slice(-2); }

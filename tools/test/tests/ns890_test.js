@@ -40,14 +40,21 @@ const PAGE_C = `<!doctype html><meta charset="utf-8"><style>${CSS}</style><div c
 <div style="margin-left:40px">${hdr}${TEAM.map(r => rowHtml(r)).join('')}</div>
 <div style="position:fixed;left:20px;top:10px;right:20px;bottom:10px;background:#fff;border:1px solid #888;box-shadow:0 0 30px #0005">
 <div class="bar"><span class="mon">2026年 9月</span></div><div style="margin-left:20px">${hdr}${PROXY.map(r => rowHtml(r)).join('')}</div></div>`;
-const PAGES = { a: PAGE_A, b: PAGE_B, c: PAGE_C };
+// D：本物と同じ作り（2026/11 に本物で確かめた）。月とレベルはプルダウン（select）、表は table（見出しは th > span）で箱ごとスクロール、チームの列の並び（BBLK・GSV・LTSV）
+const TEAM_D = NAMES.slice(0, 12).map((n, i) => ({ lv: i % 5, n, t: i % 2 ? 'ラピス' : 'ブランド レプリゼンタティブ', bb: i % 4, gsv: 1000.25 + i * 111.1, ltsv: i ? 2000.5 + i : null }));
+const PAGE_D = `<!doctype html><meta charset="utf-8"><style>body{font:14px sans-serif;margin:0}th,td{height:42px;padding:0 10px;text-align:left;white-space:nowrap}thead th{position:sticky;top:0;background:#eee}.num{text-align:right}</style>
+<div style="padding:20px 40px"><select><option>2026年 11月</option><option selected>2026年 10月</option><option>2026年 9月</option></select> <label>レベル</label> <select><option>1</option><option selected>全部</option></select></div>
+<div class="downlineWrapper" style="margin-left:40px;height:260px;overflow-y:auto"><table style="border-collapse:collapse;width:1100px"><thead><tr><th></th><th><span>レベル</span></th><th><span>氏名</span></th><th><span>フラグ</span></th><th><span>タイトル</span></th><th class="num"><span>BBLK</span></th><th class="num"><span>GSV</span></th><th class="num"><span>LTSV</span></th><th><span>フレックス ブロック</span></th></tr></thead>
+<tbody>${TEAM_D.map(r => `<tr><td></td><td>${r.lv}</td><td><span style="padding-left:${r.lv * 20}px">${r.n}</span></td><td>ADP</td><td>${r.t}</td><td class="num">${r.bb}</td><td class="num">${fmt(r.gsv)}</td><td class="num">${r.ltsv === null ? '-' : fmt(r.ltsv)}</td><td>9</td></tr>`).join('')}
+<tr><td></td><td></td><td>グループ サイズ: ${TEAM_D.length}</td><td></td><td></td><td></td><td class="num">9,999.00</td><td></td><td></td></tr></tbody></table></div>`;
+const PAGES = { a: PAGE_A, b: PAGE_B, c: PAGE_C, d: PAGE_D };
 
 async function newCtx(b, data) {
   const ctx = await b.newContext({ serviceWorkers: 'block', viewport: { width: 1400, height: 800 } });
   await ctx.addInitScript((d) => { if (location.host !== 'hktymc18.github.io') return; window.__FBDATA = d; }, data || {});
   await ctx.route('**/*', async (route) => {
     const u = route.request().url();
-    const m = /^https:\/\/www\.nuskin\.com\/vgclient\/(\w)/.exec(u);
+    const m = /^https:\/\/www\.nuskin\.com\/static\/vgclient\/(\w)/.exec(u);
     if (m) return route.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: PAGES[m[1]] });
     if (/app\.js/.test(u) && u.indexOf('firebase') < 0) return route.fulfill({ status: 200, contentType: 'application/javascript', body: fs.readFileSync(DIR + '/app.js') });
     if (u.startsWith('https://hktymc18.github.io/groove-map/') && !/\.(png|js|webmanifest)/.test(u)) return route.fulfill({ status: 200, contentType: 'text/html; charset=utf-8', body: fs.readFileSync(DIR + '/index.html') });
@@ -59,12 +66,13 @@ async function newCtx(b, data) {
 }
 async function readPage(ctx, k) {
   const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
-  await p.goto('https://www.nuskin.com/vgclient/' + k);
+  await p.goto('https://www.nuskin.com/static/vgclient/' + k);
   if (k === 'a') await p.evaluate(() => { document.getElementById('body').scrollTop = 200; });
   const r = await p.evaluate(src => (0, eval)(src), READER);
   const after = await p.evaluate(() => { const b = document.getElementById('body'); return b ? b.scrollTop : -1; });
+  const again = k === 'd' ? await p.evaluate(() => window.__nsRun()) : null; // 2回目は入れ直さずに読み直せる
   await p.close();
-  return { r, errs, after };
+  return { r, errs, after, again };
 }
 const ymAdd = (ym, d) => { const [y, m] = ym.split('.').map(Number); const i = y * 12 + m - 1 + d; return Math.floor(i / 12) + '.' + String(i % 12 + 1).padStart(2, '0'); };
 
@@ -81,6 +89,11 @@ const ymAdd = (ym, d) => { const [y, m] = ym.split('.').map(Number); const i = y
   c('B：見えている行だけの表でも、スクロールして全行を読む（重なりなし・順番どおり）', B.r.state === 'done' && B.r.rows.length === ROWS.length && B.r.rows.map(x => x.n).join() === NAMES.join() && B.r.ym === '2026.10', B.r.rows && B.r.rows.length);
   const C = await readPage(ctx0, 'c');
   c('C：重なった画面（プロキシ）の表と月を読み、後ろの表は読まない', C.r.state === 'done' && C.r.rows.map(x => x.n).join() === '試験 花子,架空 四郎' && C.r.ym === '2026.09' && C.r.rows[1].dc === 67.95, JSON.stringify(C.r).slice(0, 300));
+  const Dp = await readPage(ctx0, 'd');
+  c('D：本物と同じ作り（table・見出しは th > span）の全行を読む・合計の行は入らない', Dp.r.state === 'done' && Dp.r.rows.map(x => x.n).join() === TEAM_D.map(x => x.n).join() && !Dp.errs.length, JSON.stringify(Dp.r).slice(0, 300));
+  c('D：月はプルダウン（select）で選ばれている月を読む', Dp.r.ym === '2026.10', Dp.r.ym);
+  c('D：チームの列の並び（BBLK・GSV・LTSV）でも数字がずれない・「-」は数字にしない', Dp.r.rows[3].gsv === TEAM_D[3].gsv && Dp.r.rows[3].bb === 3 && Dp.r.rows[3].ltsv === TEAM_D[3].ltsv && Dp.r.rows[0].ltsv === null, JSON.stringify(Dp.r.rows && [Dp.r.rows[0], Dp.r.rows[3]]));
+  c('D：2回目は window.__nsRun() だけで読み直せる', !!Dp.again && Dp.again.state === 'done' && Dp.again.rows.length === TEAM_D.length && Dp.again.ym === '2026.10');
   const p0 = await ctx0.newPage(); await p0.setContent('<p>表のないページ</p>');
   const F = await p0.evaluate(src => (0, eval)(src), READER);
   c('表のないページ：fail と作りだけの診断（名前なし）', F.state === 'fail' && F.diag && F.diag.why === 'no-header' && !F.rows);
