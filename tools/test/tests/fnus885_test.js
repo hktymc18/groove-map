@@ -35,6 +35,14 @@ const c = (n, ok, info) => { console.log((ok ? 'PASS' : 'FAIL') + ': ' + n + (ok
   await U.run(admin);
   console.log = log0;
   c('権限が無い時は、前の数を残したまま理由（err）を書く', store['appStats/usage'].days.length === 1 && /403/.test(store['appStats/usage'].err), JSON.stringify(store['appStats/usage']));
+  // v887: その日に開いた人（readStats の件数）を日ごとに数える
+  const asked = [];
+  const fdb = { collection: (n) => ({ doc: (d) => ({ collection: (m) => ({ where: (f, op, v) => ({ count: () => ({ get: async () => { asked.push([n, d, m, f, v]); return { data: () => ({ count: v === 'nav' ? 120 : 30 }) }; } }) }) }) }) }) };
+  const dd = await U.countDau(fdb, [{ d: '2026-11-19', r: 1 }, { d: '2026-11-20', r: 2 }]);
+  c('v887: その日に開いた人を、NAVIGATOR と受付で別々に数える（readStats/{日付}/u の件数）', dd[0].nav === 120 && dd[0].ck === 30 && dd[1].nav === 120 && asked.length === 4 && asked[0][1] === '20261119' && asked[0][3] === 'app', JSON.stringify(asked[0]));
+  const bad = { collection: () => { throw new Error('x'); } };
+  const bd = await U.countDau(bad, [{ d: '2026-11-19', r: 1 }]);
+  c('数えられなかった日は、人数なしのまま（回数は残す）', bd[0].r === 1 && bd[0].nav === undefined);
   // v886: 新しい関数（usageStats）は作らず、overdueReminders（1日5回）の最後で動かす
   const IX = require('fs').readFileSync(path.join(__dirname, '../../../functions/index.js'), 'utf8');
   const od = IX.slice(IX.indexOf('exports.overdueReminders'), IX.indexOf('exports.sendReminders'));

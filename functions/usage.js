@@ -41,10 +41,22 @@ async function collect(admin, now) {
   const [R, W, X] = await Promise.all([get('read_count'), get('write_count'), get('delete_count')]);
   return merge(R, W, X);
 }
+// v887: その日に開いた人（readStats/{日付}/u の件数＝1人1日1件）を数える。数えるだけの問い合わせなので、読み取りは1回ずつ
+async function countDau(db, days) {
+  for (const x of days) {
+    for (const app of ['nav', 'ck']) {
+      try {
+        const col = db.collection('readStats').doc(x.d.replace(/-/g, '')).collection('u');
+        x[app] = (await col.where('app', '==', app).count().get()).data().count;
+      } catch (e) { console.log('dau count error ' + x.d + ' ' + app + ': ' + e); }
+    }
+  }
+  return days;
+}
 async function run(admin) {
   const db = admin.firestore(), ref = db.collection('appStats').doc('usage'), now = Date.now();
   try {
-    const days = await collect(admin, now);
+    const days = await countDau(db, await collect(admin, now));
     await ref.set({ days, at: new Date(now).toISOString(), err: '' });
     console.log('usageStats: ' + days.map((x) => x.d.slice(5) + ' r=' + x.r).join(' '));
   } catch (e) {
@@ -52,4 +64,4 @@ async function run(admin) {
     await ref.set({ at: new Date(now).toISOString(), err: String(e.message || e).slice(0, 300) }, { merge: true });
   }
 }
-module.exports = { toDays, queryUrl, merge, run, jstDay };
+module.exports = { toDays, queryUrl, merge, run, jstDay, countDau };

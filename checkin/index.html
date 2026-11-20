@@ -2069,7 +2069,10 @@ var db = firebase.firestore();
    見張り（onSnapshot）は、最初にサーバーから届いた時は返ってきた数、そのあとは変わった数（自分の書き込みの分も）。端末の控え（キャッシュ）から出した分は数えない。
    場所は「maps/months」のように、IDを除いた集まりの名前 */
 var RC = (function(){
-  var st = { app: '', tag: null, uid: null, pend: {}, n: 0, day: '', t: 0 }, MAXK = 90;
+  var st = { app: '', tag: null, uid: null, pend: {}, n: 0, day: '', t: 0, op: {}, opn: 0, last: null }, MAXK = 90;
+  // v887: 画面を開いた回数（op）。2秒ごとに今の画面を見て、変わったら1回。アプリを開いた・戻ってきた時は「起動」に1回
+  function opAdd(k){ k = String(k || '').replace(/[\s.]/g, '_').slice(0, 60); if(!k || k === 'login' || k === 'start') return; st.op[k] = (st.op[k] || 0) + 1; st.opn++; }
+  function poll(){ if(document.hidden || !st.tag) return; var t = ''; try{ t = String(st.tag() || ''); }catch(e){} if(t !== st.last){ st.last = t; opAdd(t); } }
   function ymd(){ return new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10).replace(/-/g, ''); }
   function kp(p){ var s = String(p || '').split('/'), o = []; for(var i = 0; i < s.length; i += 2) o.push(s[i]); return o.join('/'); }
   function qk(q){
@@ -2122,14 +2125,15 @@ var RC = (function(){
   function flush(){
     try{
       var F = window.firebase && firebase.firestore, d = ymd();
-      if(!F || !st.app || !st.n) return;
+      if(!F || !st.app || (!st.n && !st.opn)) return;
       var uid = ''; try{ uid = st.uid ? String(st.uid() || '') : ''; }catch(e){}
       var id = uid ? uid + '_' + st.app : 'anon_' + devId() + '_' + st.app;
       var keys = Object.keys(st.pend), by = {}, inc = F.FieldValue.increment, other = 0;
       keys.sort(function(a, b){ return st.pend[b] - st.pend[a]; }).forEach(function(k, i){ if(i < MAXK) by[k] = inc(st.pend[k]); else other += st.pend[k]; });
       if(other) by['その他'] = inc(other);
-      var data = { uid: uid, app: st.app, d: d, n: inc(st.n), by: by, at: new Date().toISOString(), ver: 1 };
-      st.pend = {}; st.n = 0;
+      var data = { uid: uid, app: st.app, d: d, n: inc(st.n), by: by, at: new Date().toISOString(), ver: 2 };
+      if(st.opn){ var op = {}; Object.keys(st.op).slice(0, 50).forEach(function(k){ op[k] = inc(st.op[k]); }); data.op = op; }
+      st.pend = {}; st.n = 0; st.op = {}; st.opn = 0;
       firebase.firestore().collection('readStats').doc(d).collection('u').doc(id).set(data, { merge: true }).catch(function(){});
     }catch(e3){}
   }
@@ -2139,10 +2143,11 @@ var RC = (function(){
       st.app = app; st.tag = tag; st.uid = uid; hook();
       if(st.t) return;
       st.t = setInterval(flush, 600000);
-      document.addEventListener('visibilitychange', function(){ if(document.hidden) flush(); });
+      opAdd('起動'); setInterval(poll, 2000);
+      document.addEventListener('visibilitychange', function(){ if(document.hidden) flush(); else opAdd('起動'); });
       window.addEventListener('pagehide', flush);
     },
-    flush: flush, add: add, _st: st
+    flush: flush, add: add, poll: poll, _st: st
   };
 })();
 try{ RC.start('ck', function(){
@@ -2882,10 +2887,11 @@ if(gTrainerMode) document.documentElement.classList.add('trm');   // 🎓 研修
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v161';
+var APP_VER = 'v162';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v162', d: '2026/11/20', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v161', d: '2026/11/19', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v160', d: '2026/11/18', items: ['🎨 受付の画面全部の色と形を一新（研修生登録と同じ。白・グレーの背景、大事なボタンは青、ほかは丸いボタン。ダークは濃いグレー）'] },
   { v: 'v159', d: '2026/11/18', items: ['🎨 研修生登録の画面の色と形を一新（白・グレーの背景、大事なボタンは青、ほかは丸い枠のボタン。ダークは濃いグレー）'] },
