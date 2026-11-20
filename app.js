@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v889';
+var APP_JS_VERSION = 'v890';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3878,6 +3878,7 @@ function _usrAgg(L) {
     if (!x.uid) return;
     var a = M[x.uid] || (M[x.uid] = { days: {}, n: 0, op: {}, opN: 0, start: 0, sec: 0, hr: {}, ts: {}, rd: {} });
     a.days[x._d] = 1; a.n += x.n || 0; a.sec += +x.sec || 0;
+    if (x.op) a.hasOp = 1; if (x.sec) a.hasSec = 1;   // v890: 回数（v887〜）・時間（v888〜）の記録があるか（無ければ古い版のアプリ）
     Object.keys(x.hr || {}).forEach(function(h) { a.hr[h] = (a.hr[h] || 0) + (+x.hr[h] || 0); });
     Object.keys(x.op || {}).forEach(function(k) { var v = +x.op[k] || 0; if (k === '起動') { a.start += v; return; } var kk = x.app + '|' + k; a.op[kk] = (a.op[kk] || 0) + v; a.opN += v; });
     Object.keys(x.ts || {}).forEach(function(k) { var kk = x.app + '|' + k; a.ts[kk] = (a.ts[kk] || 0) + (+x.ts[k] || 0); });
@@ -3981,8 +3982,8 @@ function _udScr() {
 function _udPpl() {
   var D = _usData(); if (!Array.isArray(D)) return _udWait(D);
   var scr = _ud.screen ? '<div class="usd-b usd-link" onclick="_ud.screen=\'\';_ud.sort=\'days\';usRender()">画面「' + evEsc(_usLabel(_ud.screen.split('|')[0], _ud.screen.split('|').slice(1).join('|'))) + '」をよく使う人の順<span>✕ 外す</span></div>' : '';
-  return scr + '<div class="usd-segs" id="usSegs">' + _udSegs() + '</div><div class="usd-b" id="usList">' + _udPplList() + '</div>'
-    + '<div class="nt" style="margin:0 14px 20px">日数＝その期間に NAVIGATOR か受付を開いた日（v884〜）。開いた回数＝アプリを開いた・戻ってきた回数（v887〜）。使った時間＝画面が出ていた時間（v888〜・開いたまま置いた時間も入る）。よく使う＝期間の半分以上の日に開いた人。</div>';
+  return scr + _udMissNote() + '<div class="usd-segs" id="usSegs">' + _udSegs() + '</div><div class="usd-b" id="usList">' + _udPplList() + '</div>'
+    + '<div class="nt" style="margin:0 14px 20px">日数＝その期間に NAVIGATOR か受付を開いた日（v884〜）。開いた回数＝アプリを開いた・戻ってきた回数（v887〜）。使った時間＝画面が出ていた時間（v888〜・開いたまま置いた時間も入る）。よく使う＝記録のある日の半分以上（2日以上）開いた人。細かい記録が無くても、最後に開いた日が期間の中なら、その日は使った日に数えます。</div>';
 }
 function _udPeople() {
   var D = _usData(); if (!Array.isArray(D)) return null;
@@ -3990,10 +3991,35 @@ function _udPeople() {
   _usOk().forEach(function(u) { base[u.id] = u; });
   Object.keys(M).forEach(function(uid) { if (!base[uid]) { var u = _adminFindUser(uid); if (u) base[uid] = u; } });
   var U = Object.keys(base).map(function(k) { return base[k]; }).filter(function(u) { return !u.deleted && (!_ud.un || u.union === _ud.un); });
-  var a0 = { days: {}, n: 0, op: {}, opN: 0, start: 0, sec: 0, hr: {}, ts: {}, rd: {} };
-  return U.map(function(u) { var a = M[u.id] || a0; return { u: u, a: a, days: Object.keys(a.days).length }; });
+  var a0 = { days: {}, n: 0, op: {}, opN: 0, start: 0, sec: 0, hr: {}, ts: {}, rd: {} }, inP = {};
+  for (var i = 0; i < _ud.per; i++) inP[_usDay(i).replace(/-/g, '')] = 1;
+  // v890: 記録（readStats）が無くても、最後に開いた日（lastSeenAt）が期間の中なら、その日は使った日に入れる
+  //       （古い版のアプリ・ルールが入る前・記録を送る前に閉じた などで記録が抜けても「使っていない」にしない）
+  return U.map(function(u) {
+    var a = M[u.id] || a0, d = {}; Object.keys(a.days).forEach(function(k) { d[k] = 1; });
+    var ls = _usDayOf(u.lastSeenAt).replace(/-/g, ''), seenOnly = false;
+    if (ls && inP[ls] && !d[ls]) { d[ls] = 1; seenOnly = !Object.keys(a.days).length; }
+    return { u: u, a: a, days: Object.keys(d).length, seenOnly: seenOnly, oldVer: !seenOnly && Object.keys(a.days).length > 0 && !a.hasOp };
+  });
 }
-function _udSegOf(p) { var half = Math.ceil(_ud.per / 2); return p.days >= half ? 'often' : p.days > 0 ? 'some' : 'idle'; }
+// v890: 記録のある日数（記録は v884＝11/19 から。期間がそれより長い時は、記録のある日数で判定する）
+function _udAvail() {
+  var D = _usData(); if (!Array.isArray(D)) return _ud.per;
+  var h = {}; D.forEach(function(x) { if (x._d) h[x._d] = 1; });
+  return Math.max(1, Math.min(_ud.per, Object.keys(h).length));
+}
+// よく使う＝記録のある日の半分以上（2日以上ある時は、少なくとも2日）
+function _udSegOf(p) { var n = _udAvail(), half = n > 1 ? Math.max(2, Math.ceil(n / 2)) : 1; return p.days >= half ? 'often' : p.days > 0 ? 'some' : 'idle'; }
+// v890: 開いたのに記録が届いていない人の数（多い時は案内を出す）
+function _udMissNote() {
+  var P = _udPeople(); if (!P) return '';
+  var miss = P.filter(function(p) { return p.seenOnly; }).length, old = P.filter(function(p) { return p.oldVer; }).length, n = _udAvail();
+  var t = [];
+  if (n < _ud.per) t.push('記録は ' + n + '日分だけです（記録を始めたのは 11/19 から）。「よく使う」は、記録のある ' + n + '日のうち ' + (n > 1 ? Math.max(2, Math.ceil(n / 2)) : 1) + '日以上開いた人です。');
+  if (miss) t.push('🟡 最後に開いた日は期間の中なのに、細かい記録が届いていない人が ' + miss + '人います（その人の回数・時間は「—」）。古い版のアプリのまま、またはルールがまだ本番に入っていない時に起きます。');
+  if (old) t.push('🟡 古い版のアプリ（v886 まで）で使っていて、開いた回数・使った時間の記録が無い人が ' + old + '人います（「—」と「古い版」の印）。アプリを一度閉じて開き直すと新しい版になり、次から数えられます。');
+  return t.length ? '<div class="usd-b usd-warn">' + t.join('<br>') + '</div>' : '';
+}
 function _udSegs() {
   var P = _udPeople() || [], n = { all: P.length, often: 0, some: 0, idle: 0 }, lim = Date.now() - 7 * 86400000;
   P.forEach(function(p) { n[_udSegOf(p)]++; });
@@ -4007,7 +4033,7 @@ function _udPplList() {
   if (_ud.seg === 'idle7') P = P.filter(function(p) { return !(Date.parse(p.u.lastSeenAt || '') >= lim); });
   else if (_ud.seg !== 'all') P = P.filter(function(p) { return _udSegOf(p) === _ud.seg; });
   if (q) P = P.filter(function(p) { return String(p.u.name || '').replace(/[\s　]/g, '').indexOf(q) >= 0; });
-  var sk = _ud.sort, dir = _ud.dir, scr = _ud.screen;
+  var sk = _ud.sort, dir = _ud.dir, scr = _ud.screen, av = _udAvail();
   var val = function(p) { return sk === 'days' ? p.days * 1e9 + p.a.opN * 1e3 + p.a.sec / 1e3 : sk === 'last' ? (Date.parse(p.u.lastSeenAt || '') || 0) : sk === 'open' ? p.a.start : sk === 'time' ? p.a.sec : sk === 'scr' ? (p.a.op[scr] || 0) * 1e6 + (p.a.ts[scr] || 0) : 0; };
   P.sort(function(a, b) { return sk === 'name' ? dir * String(a.u.name || '').localeCompare(String(b.u.name || ''), 'ja') : dir * (val(a) - val(b)); });
   if (!P.length) return '<div class="nt">当てはまる人はいません。</div>';
@@ -4018,12 +4044,12 @@ function _udPplList() {
   if (_udWide()) {
     var cols = [['name', '名前'], ['days', '使った日数'], ['last', '最後に開いた'], ['open', '開いた回数'], ['time', '使った時間']].concat(scr ? [['scr', 'この画面の回数']] : []);
     return '<table class="usd-t"><tr>' + cols.map(function(c) { return '<th onclick="usSort(\'' + c[0] + '\')" class="' + (sk === c[0] ? 'on' : '') + '">' + c[1] + (sk === c[0] ? (dir < 0 ? ' ▼' : ' ▲') : '') + '</th>'; }).join('') + '<th>よく使う画面</th></tr>'
-      + P.map(function(p) { var a = p.a; return '<tr onclick="usWho(\'' + p.u.id + '\')"><td><b>' + evEsc(p.u.name || '(名前未設定)') + '</b><small> ' + evEsc(p.u.union || '') + '</small> ' + segTag(p) + '</td><td>' + p.days + '日／' + _ud.per + '日</td><td>' + _usAgo(p.u.lastSeenAt) + '</td><td>' + (a.start || 0) + '回</td><td>' + _usrDur(a.sec) + '</td>'
+      + P.map(function(p) { var a = p.a; return '<tr onclick="usWho(\'' + p.u.id + '\')"><td><b>' + evEsc(p.u.name || '(名前未設定)') + '</b><small> ' + evEsc(p.u.union || '') + '</small> ' + segTag(p) + '</td><td>' + p.days + '日／' + av + '日</td><td>' + _usAgo(p.u.lastSeenAt) + '</td><td>' + (a.hasOp ? (a.start || 0) + '回' : '—') + '</td><td>' + (a.hasSec ? _usrDur(a.sec) : '—') + (p.oldVer ? ' <i class="usd-tag some">古い版</i>' : p.seenOnly ? ' <i class="usd-tag some">記録なし</i>' : '') + '</td>'
         + (scr ? '<td>' + (a.op[scr] || 0) + '回</td>' : '') + '<td><small>' + evEsc(topScr(a) || '—') + '</small></td></tr>'; }).join('') + '</table>' + more;
   }
   return P.map(function(p) { var a = p.a;
-    return '<div class="usr-row" onclick="usWho(\'' + p.u.id + '\')"><div class="usr-h"><b>' + evEsc(p.u.name || '(名前未設定)') + '</b><small>' + evEsc(p.u.union || '') + '</small>' + segTag(p) + '<em>' + p.days + '日／' + _ud.per + '日</em></div>'
-      + '<div class="usr-s">' + _usAgo(p.u.lastSeenAt) + (a.start ? '・開いた ' + a.start + '回' : '') + (a.sec ? '・' + _usrDur(a.sec) : '') + (scr && a.op[scr] ? '・この画面 ' + a.op[scr] + '回' : '') + (topScr(a) ? '・' + evEsc(topScr(a)) : '') + '</div></div>'; }).join('') + more;
+    return '<div class="usr-row" onclick="usWho(\'' + p.u.id + '\')"><div class="usr-h"><b>' + evEsc(p.u.name || '(名前未設定)') + '</b><small>' + evEsc(p.u.union || '') + '</small>' + segTag(p) + '<em>' + p.days + '日／' + av + '日</em></div>'
+      + '<div class="usr-s">' + _usAgo(p.u.lastSeenAt) + (a.start ? '・開いた ' + a.start + '回' : '') + (a.sec ? '・' + _usrDur(a.sec) : '') + (p.seenOnly ? '・細かい記録なし' : p.oldVer ? '・古い版（回数の記録なし）' : '') + (scr && a.op[scr] ? '・この画面 ' + a.op[scr] + '回' : '') + (topScr(a) ? '・' + evEsc(topScr(a)) : '') + '</div></div>'; }).join('') + more;
 }
 // 人の詳しい中身（重ねて出す。一覧の位置は動かない）
 function usWho(uid) {
@@ -4034,8 +4060,8 @@ function usWho(uid) {
   var old = document.getElementById('usDr'); if (old) old.remove();
   var o = document.createElement('div'); o.id = 'usDr'; o.className = 'usd-dr'; o.onclick = function(e) { if (e.target === o) o.remove(); };
   o.innerHTML = '<div class="usd-dp"><div class="usd-top"><b>' + evEsc(u.name || '(名前未設定)') + '<small> ' + evEsc(u.union || '') + '</small></b><span class="x" onclick="document.getElementById(\'usDr\').remove()">✕</span></div>'
-    + '<div class="usd-k4"><div><b>' + p.days + '<small>／' + _ud.per + '日</small></b><small>使った日数</small></div><div><b>' + (a.start || 0) + '</b><small>開いた回数</small></div><div><b>' + _usrDur(a.sec) + '</b><small>使った時間</small></div><div><b>' + _usAgo(u.lastSeenAt) + '</b><small>最後に開いた</small></div></div>'
-    + (_ud.per > 1 ? '<div class="usd-st">日ごと</div><div class="usr-d">' + dl.map(function(d) { return '<i class="' + (a.days[d] ? 'on' : '') + '" title="' + d.slice(4, 6) + '/' + d.slice(6) + '"></i>'; }).join('') + '</div>' : '')
+    + (p.seenOnly ? '<div class="usd-b usd-warn" style="margin:8px 0">最後に開いた日は期間の中ですが、細かい記録（回数・時間・画面）が届いていません。古い版のアプリのままの可能性があります。</div>' : p.oldVer ? '<div class="usd-b usd-warn" style="margin:8px 0">古い版のアプリ（v886 まで）で使っていたため、開いた回数・使った時間の記録がありません（日数と読み取りだけ）。</div>' : '') + '<div class="usd-k4"><div><b>' + p.days + '<small>／' + _udAvail() + '日</small></b><small>使った日数</small></div><div><b>' + (a.hasOp ? (a.start || 0) : '—') + '</b><small>開いた回数</small></div><div><b>' + (a.hasSec ? _usrDur(a.sec) : '—') + '</b><small>使った時間</small></div><div><b>' + _usAgo(u.lastSeenAt) + '</b><small>最後に開いた</small></div></div>'
+    + (_ud.per > 1 ? '<div class="usd-st">日ごと</div><div class="usr-d">' + dl.map(function(d) { return '<i class="' + (a.days[d] || d === _usDayOf(u.lastSeenAt).replace(/-/g, '') ? 'on' : '') + '" title="' + d.slice(4, 6) + '/' + d.slice(6) + '"></i>'; }).join('') + '</div>' : '')
     + (a.sec ? _usrHourBars(a.hr, '使った時間帯') : '')
     + '<div class="usd-st">画面ごと</div>' + (rows.length ? '<table class="usd-t"><tr><th>画面</th><th>開いた</th><th>時間</th><th>読み取り</th></tr>' + rows.map(function(k) { var q = k.split('|'); var tg = q.slice(1).join('|');
         return '<tr><td>' + (q[0] === 'ck' ? '<small>受付</small> ' : '') + evEsc(_usLabel(q[0], tg)) + '</td><td>' + (a.op[k] || 0) + '回</td><td>' + _usrDur(a.ts[k]) + '</td><td>' + _usNf(a.rd[k]) + '</td></tr>'; }).join('') + '</table>' : '<div class="nt">画面の記録はまだありません。</div>')
@@ -4077,7 +4103,7 @@ function _udCss() {
     + '.usd-ch{display:flex;gap:6px}.usd-ch span{padding:6px 12px;border-radius:999px;border:1px solid var(--border);font-size:13px;font-weight:800;cursor:pointer;white-space:nowrap;background:var(--surface)}.usd-ch span.on{background:var(--accent);color:var(--go-ink,#06231c);border-color:var(--accent)}'
     + '.usd-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:4px 12px calc(env(safe-area-inset-bottom,0px) + 24px)}.usd-body>*{max-width:1156px;margin-left:auto!important;margin-right:auto!important}'
     + '.usd-b{margin:10px 12px;padding:12px 13px;border-radius:14px;border:1px solid var(--border);background:var(--surface)}.usd-b .nt,.usd-body .nt{font-size:11.5px;color:var(--text-dim);line-height:1.6;margin-top:6px}'
-    + '.usd-st{font-size:13px;font-weight:900;margin:2px 0 6px}'
+    + '.usd-st{font-size:13px;font-weight:900;margin:2px 0 6px}.usd-warn{font-size:12.5px;line-height:1.7;background:color-mix(in srgb,#F5B800 12%,var(--surface));border-color:color-mix(in srgb,#F5B800 45%,var(--border))}'
     + '.usd-k4{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:10px 12px}.usd-k4>div{padding:10px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--border)}.usd-k4 b{display:block;font-size:22px;font-weight:900;line-height:1.2}.usd-k4 b small{font-size:12px}.usd-k4>div>small{font-size:11.5px;color:var(--text-dim);font-weight:700}'
     + '.usd-dp .usd-k4{margin:8px 0}.usd-dp .usd-k4 b{font-size:17px}'
     + '.usd-g2{display:grid;grid-template-columns:1fr;column-gap:12px}.usd-g2>.usd-b{margin-left:0;margin-right:0}@media(min-width:760px){.usd-g2{grid-template-columns:1fr 1fr}}'
@@ -5094,7 +5120,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v889';
+  var DATA_VERSION = 'v890';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -7214,6 +7240,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v890', d:'2026-11-20', items:['📊 利用状況（オーナー）：細かい記録が届いていない人でも、最後に開いた日が期間の中なら「使っていない」にしないように。「よく使う」は記録のある日数（11/19〜）の半分以上で判定。古い版のアプリで回数の記録が無い人は「0回」ではなく「—」と「古い版」の印。記録が抜けている人の数も出します'] },
   { v:'v889', d:'2026-11-20', items:['📊 利用状況を作り直しました（オーナー）：上に固定のタブ「概要・画面・人・費用」。画面ごとの比べ方（開いた回数・使った人・時間・読み取り）、よく使う／ときどき／使っていない人の数、人を押すと横（スマホは下）から詳しく。スクロールの位置が動かないように'] },
   { v:'v888', d:'2026-11-20', items:['👥 人ごとの利用：最後に開いた順・開いた回数順・使った時間順で並べられるように。使われている時間帯のグラフも出ます（オーナー）'] },
   { v:'v887', d:'2026-11-20', items:['アカウント管理（オーナー）の「📊 利用状況」に、その日に開いた人の数と「👥 人ごとの利用」（だれがよく使っていて、だれが使っていないか・よく使う画面）を追加しました'] },

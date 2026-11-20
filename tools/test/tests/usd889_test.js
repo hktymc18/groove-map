@@ -69,7 +69,7 @@ T.run(async () => {
   // 人の詳しい中身
   w.usWho('a'); await sleep(5);
   const dr = ($('#usDr') || {}).textContent || '';
-  c('人を押すと重ねて詳しく（日数5／7・開いた10回・時間・画面ごと）', /5／7日使った日数/.test(dr) && /10開いた回数/.test(dr) && /1時間使った時間/.test(dr) && /MAP15回50分4,000/.test(dr) && !!$('#mk'), dr.slice(0, 300));
+  c('人を押すと重ねて詳しく（日数5／5（記録のある日数）・開いた10回・時間・画面ごと）', /5／5日使った日数/.test(dr) && /10開いた回数/.test(dr) && /1時間使った時間/.test(dr) && /MAP15回50分4,000/.test(dr) && !!$('#mk'), dr.slice(0, 300));
   $('#usDr').remove();
   // 30日は読み直す
   w.usPer(30); await sleep(50);
@@ -83,6 +83,33 @@ T.run(async () => {
   // ユニオンで絞る
   w.usTab('ppl'); w.usUn('LIEN'); await sleep(5);
   c('ユニオンで絞る（LIEN だけ）', [...w.document.querySelectorAll('#usBody .usr-h b')].map((x) => x.textContent).join() === '見本 つかわない');
+  // v890: 記録が届いていなくても、最後に開いた日が期間の中なら「使っていない」にしない
+  w.usUn('');
+  w._adminUsers.push({ id: 'e', name: '見本 古い版', union: 'REVE', status: 'active', early: true, lastSeenAt: at(5) });
+  w.usRender(); await sleep(5);
+  const segs = ($('#usSegs') || {}).textContent;
+  c('v890: 記録が無くても今日開いた人は「ときどき」（使っていないにしない）', /1よく使う/.test(segs) && /2ときどき/.test(segs) && /1使っていない/.test(segs), segs);
+  c('v890: 「記録は5日分」「細かい記録が届いていない人が1人」の案内', /記録は 5日分だけ/.test(bt()) && /3日以上開いた人/.test(bt()) && /届いていない人が 1人/.test(bt()), bt().slice(0, 300));
+  const rowE = [...w.document.querySelectorAll('#usBody .usr-row')].filter((x) => /見本 古い版/.test(x.textContent))[0];
+  c('v890: その人の行は「1日／5日」「細かい記録なし」', rowE && /1日／5日/.test(rowE.textContent) && /細かい記録なし/.test(rowE.textContent), rowE && rowE.textContent);
+  w.usWho('e'); await sleep(5);
+  c('v890: 詳しくにも「細かい記録が届いていません」と、日ごとの印', /細かい記録（回数・時間・画面）が届いていません/.test(($('#usDr') || {}).textContent) && $('#usDr').querySelectorAll('.usr-d i.on').length === 1);
+  $('#usDr').remove();
+  // 古い版（v886 まで）の記録：回数・時間の項目が無い → 0回ではなく「—」と「古い版」
+  R[ymd(0)].push({ uid: 'e', app: 'nav', n: 40, by: { 'current|maps/months': 40 } });
+  w._ud.data = {}; w.usRender(); await sleep(50);
+  const rowE2 = [...w.document.querySelectorAll('#usBody .usr-row')].filter((x) => /見本 古い版/.test(x.textContent))[0];
+  c('v890: 古い版の記録の人は「古い版（回数の記録なし）」・0回と出さない', rowE2 && /古い版（回数の記録なし）/.test(rowE2.textContent) && !/開いた 0回/.test(rowE2.textContent), rowE2 && rowE2.textContent);
+  c('v890: 古い版の人の数の案内', /記録が無い人が 1人/.test(bt()) && !/届いていない人/.test(bt()), bt().slice(0, 400));
+  w.usWho('e'); await sleep(5);
+  c('v890: 詳しくでも回数・時間は「—」', /—開いた回数—使った時間/.test(($('#usDr') || {}).textContent) && /古い版のアプリ（v886 まで）/.test($('#usDr').textContent), ($('#usDr') || {}).textContent.slice(0, 200));
+  $('#usDr').remove();
+  R[ymd(0)].pop();
+  // 1日分しか記録が無い時（今日だけ）でも「よく使う」は2日以上
+  const R0 = Object.assign({}, R); Object.keys(R).forEach((k) => { if (k !== ymd(0)) delete R[k]; });
+  w._ud.data = {}; w.usRender(); await sleep(50);
+  c('v890: 記録が1日分だけなら、その日に開いた人は「よく使う」（1日のうち1日）', /記録は 1日分だけ/.test(bt()) && /1日以上開いた人/.test(bt()), bt().slice(0, 200));
+  Object.assign(R, R0);
   w.usClose();
   c('閉じると消える', !$('#usOv'));
   w.db = db0;
