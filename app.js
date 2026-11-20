@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v890';
+var APP_JS_VERSION = 'v891';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -5120,7 +5120,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v890';
+  var DATA_VERSION = 'v891';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6879,7 +6879,26 @@ function _renderCurrentViewNow() {
 // デバウンス：連続呼び出し（結合リスナー多重発火等）を1フレームにまとめる。
 // 直近150ms実行が無ければ即時（操作の体感を守る）、連打中は120ms後に1回だけ。
 var _rcvTimer = null, _rcvLastRun = 0;
+// v891 #45: 削除した人（deleted）の下に残っている人は、その上の生きている人の下へ付け替える（MAPに出ない人を作らない。削除の時と同じ付け替え）
+//      #46: 流れたのに研修の段階のままの人を OUT に（下）
+function _fixDeadParents() {
+  if (!state.isEditor || (typeof _aggActive !== 'undefined' && _aggActive) || !state.members || !state.members.length) return 0;
+  var byId = {}, n = 0; state.members.forEach(function(x) { if (x && x.id) byId[x.id] = x; });
+  state.members.forEach(function(x) {
+    if (!x || x.deleted || !x.parentId) return;
+    var p = byId[x.parentId]; if (!p || !p.deleted) return;
+    var np = _liveParentId(p.id); if (np && np !== x.id) { x.parentId = np; n++; }
+  });
+  // v891 #46: 研修結果「流れた」なのに研修の段階のまま（前の版で付けた人）は、1回だけ OUT に（ngOut があればもう触らない）
+  state.members.forEach(function(x) {
+    if (!x || x.deleted || x.traineeResult !== '流れた' || x.ngOut || !_ngShouldOut(x)) return;
+    x.ngFrom = (x.title || '').trim(); x.ngOut = evTodayYmd(); x.title = 'OUT'; if ('cat' in x) x.cat = 'OUT'; x.trainee = false; n++;
+  });
+  if (n) { try { autoSave(); } catch (e) {} }
+  return n;
+}
 function renderCurrentView() {
+  try { _fixDeadParents(); } catch (eF) {}
   var now = Date.now();
   // v417: MAP切替中は読込のたびに巨大なSVGを作り直していたため、落ち着くまで1回にまとめる
   if (window._swBusy && typeof isPCMode === 'function' && isPCMode()) {
@@ -7240,6 +7259,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v891', d:'2026-11-20', items:['MAPのフロント追加：削除した人を選んだまま「＋追加」すると、追加先が削除した人になり、足した人がMAPに出なかったのを修正（その上の人の下に入ります。前に足して見えなくなっていた人も、上の人の下に出ます）（#45）','ビジネス（BMなど）からユーザーにして、また戻した人に「元ユーザー」の札が出ていたのを修正。札はもともとユーザーだった人だけ（#47）','研修結果を「流れた」にしても、MAPでは研修の段階（PAなど）のまま出ていたのを修正。OUTになります（進行中に戻すと前のタイトルに戻ります。前に「流れた」にした人もOUTに直ります）（#46）'] },
   { v:'v890', d:'2026-11-20', items:['📊 利用状況（オーナー）：細かい記録が届いていない人でも、最後に開いた日が期間の中なら「使っていない」にしないように。「よく使う」は記録のある日数（11/19〜）の半分以上で判定。古い版のアプリで回数の記録が無い人は「0回」ではなく「—」と「古い版」の印。記録が抜けている人の数も出します'] },
   { v:'v889', d:'2026-11-20', items:['📊 利用状況を作り直しました（オーナー）：上に固定のタブ「概要・画面・人・費用」。画面ごとの比べ方（開いた回数・使った人・時間・読み取り）、よく使う／ときどき／使っていない人の数、人を押すと横（スマホは下）から詳しく。スクロールの位置が動かないように'] },
   { v:'v888', d:'2026-11-20', items:['👥 人ごとの利用：最後に開いた順・開いた回数順・使った時間順で並べられるように。使われている時間帯のグラフも出ます（オーナー）'] },
@@ -16988,7 +17008,7 @@ function openQuickAdd() {
   _p2SheetClose('qaOv');
   _qaAct = '';
   var stage = _qaStageGet();
-  var parent = selectedParentId || roots[0].id;
+  var parent = _liveParentId(selectedParentId) || roots[0].id;   // v891 #45
   var ms = (state.members || []).filter(function(m) { return !m.deleted && (m.title || '').trim() !== 'OUT'; })
     .sort(_treeSortCmp(state.members, 'title'));
   var pOpts = ms.map(function(m) {
@@ -17054,7 +17074,7 @@ function qaSave(cont) {
   var last = ((document.getElementById('qaLast') || {}).value || '').trim();
   var first = ((document.getElementById('qaFirst') || {}).value || '').trim();
   if (!last && !first) { toast('名前を入力してください'); return; }
-  var pid = (document.getElementById('qaParent') || {}).value || '';
+  var pid = _liveParentId((document.getElementById('qaParent') || {}).value || '');   // v891 #45: 削除した人の下には足さない
   if (!pid) { toast('追加先を選んでください'); return; }
   var _pk = _qaPicked(), qcat = _pk.cat, stage = _pk.t; // v570
   var cm = state.currentMonth || currentMonthStr();
@@ -20010,7 +20030,7 @@ function _mxRowHtml(m, mapType, depth, lines, last, fc, nKids, open, kidsShown) 
   var bday = (typeof _bdayIn30 === 'function' && _bdayIn30(m) !== null) ? '<span class="bd2" style="background:#FF5D8F">' + icn('cake', 'width:11px;height:11px;vertical-align:-1px') + _bdayMD(m) + '</span>' : '';
   var rs = restartSuffix(m, true), foreign = !!m._foreign;
   var umS = (mapType === 'current' && !foreign) ? _umStat(m.id) : null; // v843: 紹介したユーザー（押すとその人のユーザー一覧）
-  var l2 = (umS && umS.n ? '<span class="bd2 umb" onclick="event.stopPropagation();umShowRef(\'' + m.id + '\')">ユーザー ' + umS.n + '人・' + umS.pt.toLocaleString() + 'P ›</span>' : '') + (m.fromUser && !isUserM(m) && mapType === 'current' ? '<span class="bd2 umfr">元ユーザー</span>' : '')
+  var l2 = (umS && umS.n ? '<span class="bd2 umb" onclick="event.stopPropagation();umShowRef(\'' + m.id + '\')">ユーザー ' + umS.n + '人・' + umS.pt.toLocaleString() + 'P ›</span>' : '') + (_umFromUser(m) && mapType === 'current' ? '<span class="bd2 umfr">元ユーザー</span>' : '')
     + idle + bday + (mapType === 'current' ? _olCoBadge(m, 'bd2') : '') + (rs ? '<span class="bd2" style="background:#FB923C">' + rs + '</span>' : '')
     + (foreign ? '<span>' + icn('link', 'width:11px;height:11px') + evEsc(m._ownerName || '下位') + '</span>' : '')
     + (m.region ? '<span>📍' + evEsc(String(m.region).substring(0, 5)) + '</span>' : '')
@@ -20518,6 +20538,9 @@ function _ppSave(fn, msg) {
   if (msg) toast('✓ ' + msg);
   _ppRender();
 }
+// v891 #47: 「元ユーザー」の札＝もともとユーザーだった人だけ。ビジネスからユーザーにして（toUser）、そのあと戻した人には出さない
+//   （toUser が fromUser と同じ日か前なら「戻した」。もとはユーザー→研修生→ユーザー→研修生 の人は fromUser が前なので出る）
+function _umFromUser(m) { return !!(m && m.fromUser && !isUserM(m) && !(m.toUser && m.toUser <= m.fromUser)); }
 function _ppCatOf(t) { t = (t || '').trim(); if (t === 'OUT') return 'OUT'; var c = detectCategory(t); return c || (['FT', 'マケ', 'PG', 'DLR', 'EXP', 'PA', '面談', 'BPC', 'CO'].indexOf(t) >= 0 ? '研修生' : ''); }
 function ppTitle(t) {
   _ttlOpen = ''; // v615: 選んだらカードを閉じる
@@ -20541,7 +20564,8 @@ function ppTitle(t) {
     toast('✓ ' + _umNm(u || m0) + 'さんをユーザーにしました（ユーザーの一覧に入ります）');
     _ppRender(); return;
   }
-  setTimeout(function() { if (!wasU || t === 'ユーザー') return; var m2 = _ppM(); if (m2 && !isUserM(m2) && !m2.fromUser) { m2.fromUser = evTodayYmd(); autoSave(); try { renderCurrentView(); } catch (e) {} } }, 0);
+  setTimeout(function() { if (!wasU || t === 'ユーザー') return; var m2 = _ppM(); if (m2 && !isUserM(m2) && !m2.fromUser && !m2.toUser) {   // v891 #47: ビジネス→ユーザー→ビジネスに戻した人（toUser あり）は「元ユーザー」にしない
+ m2.fromUser = evTodayYmd(); autoSave(); try { renderCurrentView(); } catch (e) {} } }, 0);
   _ppSave(function() {
     selCategory(_ppCatOf(t));
     var sel = document.getElementById('fTitle');
@@ -20647,7 +20671,22 @@ function _ppTrHtml(m) {
   }).join('') + '</div>';
   return h;
 }
-function ppTrRes(v) { var m = _ppM(); if (!m || (m.traineeResult || '') === v) return; _ppSave(function() { selTraineeResultChip(v); }, '研修結果を「' + (v || '進行中') + '」にしました'); }
+// v891 #46: 研修結果を「流れた」にしたら、MAPでもOUT（研修の段階のまま出ていた）。流れたから戻したら、前のタイトルに戻す
+function ppTrRes(v) {
+  var m = _ppM(); if (!m || (m.traineeResult || '') === v) return;
+  var t0 = (m.title || '').trim(), drop = v === '流れた' && _ngShouldOut(m), back = m.traineeResult === '流れた' && v !== '流れた' && t0 === 'OUT' && m.ngFrom;
+  var nt = drop ? 'OUT' : back ? m.ngFrom : '';
+  _ppSave(function() {
+    selTraineeResultChip(v);
+    if (nt) { selCategory(_ppCatOf(nt)); var sel = document.getElementById('fTitle'); if (sel) { if (!sel.querySelector('option[value="' + nt + '"]')) { var o = document.createElement('option'); o.value = o.textContent = nt; sel.appendChild(o); } sel.value = nt; } }
+  }, '研修結果を「' + (v || '進行中') + '」にしました' + (drop ? '（MAPではOUT）' : back ? '（タイトルを ' + nt + ' に戻しました）' : ''));
+  var m2 = _ppM(); if (!m2) return;
+  if (drop) { m2.ngFrom = t0; m2.ngOut = evTodayYmd(); m2.trainee = false; }
+  if (back) { delete m2.ngFrom; delete m2.ngOut; }
+  if (drop || back) { autoSave(); try { renderCurrentView(); } catch (e) {} _ppRender(); }
+}
+// 流れたで OUT にする人：タイトルが無いか研修の段階（FT〜CO）の人だけ（LOI 以降は変えない。v472 と同じ決まり）
+function _ngShouldOut(m) { var t = (m.title || '').trim(); return t !== 'OUT' && (!t || _ppCatOf(t) === '研修生'); }
 // 記録を足す・記録の操作（下から出るシート）
 var _ppSh = null;
 function _ppShClose() { var o = document.getElementById('ppSh'); if (o && o.parentNode) o.parentNode.removeChild(o); _ppSh = null; }
@@ -21785,13 +21824,20 @@ function _naCss() {
   document.head.appendChild(st);
 }
 function _naTrCat(t) { return NA_GROUPS[0][2].indexOf(t) >= 0; }
+// v891 #45: 追加先が削除した人（deleted）なら、その上の生きている人へ（選んだままの人を消した後に、消えた人の下へ足して MAP に出なくなっていた）
+function _liveParentId(id) {
+  var ms = state.members || [], byId = {}; ms.forEach(function(x) { if (x && x.id) byId[x.id] = x; });
+  var m = id ? byId[id] : null, seen = {};
+  while (m && m.deleted && !seen[m.id]) { seen[m.id] = 1; m = m.parentId ? byId[m.parentId] : null; }
+  return m && !m.deleted ? m.id : '';
+}
 function naOpen(pid) {
   if (!state.isEditor) return;
   var roots = (state.members || []).filter(function(x) { return !x.parentId && !x.deleted; });
   if (!roots.length) { openAdd(); return; } // 0段目（自分）の登録は今までの画面で
   var t = 'マケ'; try { var v = localStorage.getItem('gm_naTitle'); if (v) t = v; } catch (e) {}
   _ttlOpen = '';
-  _na = { pid: pid || roots[0].id, last: '', first: '', gender: 'male', title: t, act: '', gsv: '', date: '', asan: '', chg: false };
+  _na = { pid: _liveParentId(pid) || roots[0].id, last: '', first: '', gender: 'male', title: t, act: '', gsv: '', date: '', asan: '', chg: false };
   _naRender();
   setTimeout(function() { var i = document.getElementById('naLast'); if (i) try { i.focus(); } catch (e2) {} }, 60);
 }
@@ -21844,7 +21890,7 @@ function naSave(after) {
   var gsv = tr ? 0 : Math.max(0, parseInt(n.gsv, 10) || 0), cm = state.currentMonth || currentMonthStr();
   var m = { id: 'id-' + Date.now(), lastName: last, firstName: first, gender: n.gender, title: n.title, cat: cat,
     activity: tr ? '' : n.act, actRate: '', morale: 1, priority: '', ptCurrent: gsv, ptFixed: 0, ptSelf: gsv,
-    trainee: false, parentId: n.pid, mapType: 'both', memo: '', nextDate: '', aSan: tr ? String(n.asan || '').trim() : '', instaUrl: '', lineId: '',
+    trainee: false, parentId: _liveParentId(n.pid) || n.pid, mapType: 'both', memo: '', nextDate: '', aSan: tr ? String(n.asan || '').trim() : '', instaUrl: '', lineId: '',
     traineeStatus: '', traineeHistory: [], traineeResult: '', traineeResultMonth: '',
     region: normalizeRegionValue((typeof currentUser !== 'undefined' && currentUser && currentUser.area) || ''),
     birthday: '', age: '', startMonth: cm, rollup: '', outHidden: false, badgeMode: '', month: cm };
@@ -23899,7 +23945,7 @@ function _uxIb(k) { return UX_INFO[k] ? '<span class="ux-ib" onclick="uxInfo(\''
 //   ユーザー側は一覧（スマホ）／表（PC）で、ADP・購入・ニーズ・プロフィールを持つ。「研修生にする」でビジネスのMAPへ。
 //   項目：adp {on, next}／buys [{t, d}]（新しい順・20件まで）／needs [タグ]／needMemo／uMemo／fromUser（研修生にした日）
 //   あとで（ユーザー用QR会員証）：ckNo・cardToken・uVisits（イベント来場回数）・uGrade（グレード）を受付から入れる予定（今は画面に出さない）
-var UM_KEYS = ['adp', 'buys', 'needs', 'needMemo', 'uMemo', 'fromUser', 'toUser', 'ckNo', 'cardToken', 'uVisits', 'uGrade', 'uLastAt', 'uPrysm', 'uPrysmD', 'uCkAt', 'ckToMember', 'uDays', 'shopReg', 'fuJ']; // メンバー画面の保存で落とさない（v864: 受付から）
+var UM_KEYS = ['adp', 'buys', 'needs', 'needMemo', 'uMemo', 'fromUser', 'toUser', 'ngOut', 'ngFrom', 'ckNo', 'cardToken', 'uVisits', 'uGrade', 'uLastAt', 'uPrysm', 'uPrysmD', 'uCkAt', 'ckToMember', 'uDays', 'shopReg', 'fuJ']; // メンバー画面の保存で落とさない（v864: 受付から）
 var _umMode = false, _umFlt = 'all', _umRef = '', _umSort = 'ref', _umOpenId = '', _umBuyF = false;
 try { _umMode = localStorage.getItem('gm_umMode') === '1'; } catch (e) {}
 function isUserM(m) { if (!m || m.deleted) return false; var t = String(m.title || '').trim(); return t === 'ユーザー' || /^U$/i.test(t); }
