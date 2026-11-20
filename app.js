@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v889';
+var APP_JS_VERSION = 'v890';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4595,6 +4595,7 @@ function unAdmSave() {
 //   テスト中 … 「先に見られる人」にだけ出る。全員に公開 … 全員に出る（アプリの更新なしで、開いている画面にもすぐ）
 var FEATURES = [
   { k: 'sheet2', t: '計画シートにまとめる', d: '「○月の目標」をなくし、目標の数字を計画シートの「数字と改善点」に移す' },
+  { k: 'nsimp', t: 'Nu Skin のポイントを取り込む', d: 'Claude のスキル（nuskin-points）が読んだ Nu Skin の GSV を、確認の一覧から MAP のその月に書き込む（v890）' },
   { k: 'hwimp', t: '日程表から追加', d: 'ハウディの日程表（improveonline.jp など）を、ブックマーク・貼り付けでまとめてカレンダーに入れる（v874）' },
   { k: 'bxall', t: 'NAVIGATOR Beauty のユーザー台帳', d: '受付のユーザー・DAYの体感をユーザー台帳に取り込み、その後（会員登録・購入・定期）の記録を受付の集計に送る（v876）。オフの時はオーナーと受付の確認メンバーだけ' }
 ];
@@ -5094,7 +5095,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v889';
+  var DATA_VERSION = 'v890';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -7214,6 +7215,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v890', d:'2026-11-21', items:['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v:'v889', d:'2026-11-20', items:['📊 利用状況を作り直しました（オーナー）：上に固定のタブ「概要・画面・人・費用」。画面ごとの比べ方（開いた回数・使った人・時間・読み取り）、よく使う／ときどき／使っていない人の数、人を押すと横（スマホは下）から詳しく。スクロールの位置が動かないように'] },
   { v:'v888', d:'2026-11-20', items:['👥 人ごとの利用：最後に開いた順・開いた回数順・使った時間順で並べられるように。使われている時間帯のグラフも出ます（オーナー）'] },
   { v:'v887', d:'2026-11-20', items:['アカウント管理（オーナー）の「📊 利用状況」に、その日に開いた人の数と「👥 人ごとの利用」（だれがよく使っていて、だれが使っていないか・よく使う画面）を追加しました'] },
@@ -41700,6 +41702,7 @@ function fsLoadFromFirestore(uid) {
     if (!viewingOwnerUid) { window._fdLoadedMonth = month; setTimeout(function() { try { _olEvMigrate(); } catch (eMg) {} try { _tsEvMigrate(); } catch (eMt) {} }, 800); } // v567・v571
     renderCurrentView();
     updateLTSV('current', state.members);
+    if (!viewingOwnerUid && !fromCache) setTimeout(function() { try { _nsPending(); } catch (eNs) {} }, 600); // v890: Nu Skin のポイントを、切り替えた月で開く
     // v511: 変更検知の基準＝読込直後（描画時の再計算で付く集計値も含めた状態）
     try {
       if (typeof recalcAllGSV === 'function') recalcAllGSV();
@@ -45125,6 +45128,143 @@ function _hwPending() {
   if (!_hwOn()) return;
   var P = null; try { P = JSON.parse(s); } catch (e2) {}
   if (P && (P.rows || []).length) hwOpen(P);
+}
+
+// ════ v890: Nu Skin のポイント（GSV）を MAP に取り込む（スキル nuskin-points から使う）
+//  スキルが Nu Skin の表を読んで nsImport(P) を呼ぶ → その月の MAP に切り替え → 名前で突き合わせた「今 → 新」の一覧
+//  → 本人が確かめて「書き込む」。P = { v:1, ym:'2026.11', rows:[{ lv, n, t, psv, gsv, ltsv }] }（名前と数字だけ）
+//  書き終わったら window._nsLast = { ym, n, at }（スキルが次の月へ進む目印）
+var _ns = null;
+// 名前の突き合わせ用：空白をなくし、全角・半角と よくある字の違い（髙→高・﨑→崎）をそろえる
+function _nsNorm(s) {
+  s = String(s || ''); try { s = s.normalize('NFKC'); } catch (e) {}
+  return s.replace(/[\s　・･]/g, '').replace(/髙/g, '高').replace(/﨑/g, '崎').toLowerCase();
+}
+function _nsMs() { return (state.members || []).filter(function(m) { return m && !m.deleted && !/^(MG_|AG\d+_)/.test(m.id || ''); }); }
+function _nsMName(m) { return ((m.lastName || '') + ' ' + (m.firstName || '')).trim() || (m.nickname || '') || '（名前なし）'; }
+function _nsM(id) { var ms = state.members || []; for (var i = 0; i < ms.length; i++) { if (ms[i] && ms[i].id === id) return ms[i]; } return null; }
+function _nsYmLb(ym) { return ym ? (+String(ym).slice(0, 4)) + '年' + (+String(ym).slice(5)) + '月' : ''; }
+// まだテスト中。新機能のテスト（nsimp）の「先に見られる人」だけが使える
+function _nsOn() { return typeof featOn === 'function' && featOn('nsimp'); }
+function _nsCanEdit() { return !viewingOwnerUid && !!state.isEditor && !_fsLoadErr && !_fsCacheOnly; }
+// 読み取った行 → 突き合わせた一覧。Nu Skin・MAP のどちらかに同じ名前が2人以上いる時は自動では合わせない
+function _nsItems(P) {
+  var ms = _nsMs(), byName = {}, byNs = {}, cnt = {}, out = [];
+  ms.forEach(function(m) {
+    var k = _nsNorm((m.lastName || '') + (m.firstName || '')); if (k) (byName[k] = byName[k] || []).push(m);
+    if (m.nsName) (byNs[m.nsName] = byNs[m.nsName] || []).push(m);
+  });
+  (P.rows || []).forEach(function(r) { var k = _nsNorm(r && r.n); cnt[k] = (cnt[k] || 0) + 1; });
+  (P.rows || []).forEach(function(r) {
+    if (!r || typeof r.gsv !== 'number' || !r.n) return;
+    var k = _nsNorm(r.n), L = byNs[k] && byNs[k].length ? byNs[k] : (byName[k] || []);
+    var m = cnt[k] === 1 && L.length === 1 ? L[0] : null, g = Math.max(0, Math.round(r.gsv));
+    out.push({ i: out.length, n: String(r.n), k: k, lv: r.lv, t: r.t || '', g: g, mid: m ? m.id : '', dupe: cnt[k] > 1 || L.length > 1, man: false, on: !!m && (m.ptCurrent || 0) !== g });
+  });
+  return out;
+}
+// スキルの入口。違う月の MAP を開いている時は、その月に切り替えてから一覧を出す
+function nsImport(P) {
+  if (typeof P === 'string') { try { P = JSON.parse(P); } catch (e) { P = null; } }
+  if (!P || !(P.rows || []).length) return 'no-rows';
+  if (!_nsOn()) { toast('この機能はまだテスト中です（新機能のテストで「先に見られる人」に入ると使えます）'); return 'not-enabled'; }
+  if (!_nsCanEdit()) { toast('自分のMAPを開いている時に使えます'); return 'not-editable'; }
+  if (P.ym && P.ym !== state.currentMonth) {
+    var p = String(P.ym).split('.'), ys = document.getElementById('selYear'), mo = document.getElementById('selMonth');
+    if (!ys || !mo || !/^\d{4}$/.test(p[0]) || !(+p[1] >= 1 && +p[1] <= 12)) return 'bad-month';
+    try { sessionStorage.setItem('gm_ns', JSON.stringify(P)); } catch (e2) { return 'no-storage'; }
+    nsClose();
+    ys.value = String(+p[0]); mo.value = String(+p[1]); onYearMonthChange();
+    return 'switching';
+  }
+  _ns = { P: P, items: _nsItems(P), more: false };
+  _nsRender();
+  return 'open';
+}
+// 月を切り替えて読み込みが終わった時（fsLoadFromFirestore から）
+function _nsPending() {
+  var s = null; try { s = sessionStorage.getItem('gm_ns'); } catch (e) {}
+  if (!s || viewingOwnerUid || !_nsOn()) return;
+  try { sessionStorage.removeItem('gm_ns'); } catch (e1) {}
+  var P = null; try { P = JSON.parse(s); } catch (e2) {}
+  if (P && P.ym === state.currentMonth) nsImport(P);
+}
+function nsClose() { var o = document.getElementById('nsOv'); if (o && o.parentNode) o.parentNode.removeChild(o); _ns = null; }
+function _nsRender() {
+  if (!_ns) return;
+  _hwCss();
+  if (!document.getElementById('nsCss')) {
+    var st = document.createElement('style'); st.id = 'nsCss';
+    st.textContent = '.ns-v{font:900 14px Inter,"Noto Sans JP",sans-serif;white-space:nowrap;text-align:right;padding-top:2px}.ns-v s{color:var(--text-dim);font-weight:700;text-decoration:none}.ns-v .up{color:var(--accent)}.ns-v .dn{color:var(--gold)}'
+      + '.ns-sel{margin-top:6px;width:100%;box-sizing:border-box;border-radius:9px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-size:16px;font-weight:700;font-family:inherit;padding:7px 8px}'
+      + '.ns-sec{font-size:14px;font-weight:900;margin:16px 0 2px}';
+    document.head.appendChild(st);
+  }
+  var ov = document.getElementById('nsOv'), fresh = !ov;
+  if (!ov) { ov = document.createElement('div'); ov.id = 'nsOv'; ov.className = 'ms-overlay'; ov.onclick = function(e) { if (e.target === ov) nsClose(); }; document.body.appendChild(ov); }
+  var sc = ov.firstChild ? ov.firstChild.scrollTop : 0;
+  ov.innerHTML = '<div class="ms-sheet hw-sh"><div class="ms-grip"></div>' + _nsListHtml() + '</div>';
+  if (ov.firstChild) ov.firstChild.scrollTop = sc;
+  if (fresh) requestAnimationFrame(function() { ov.classList.add('show'); }); else ov.classList.add('show');
+}
+function _nsRowHtml(x, kind) {
+  var m = x.mid ? _nsM(x.mid) : null, old = m ? (m.ptCurrent || 0) : 0;
+  var v = m && old !== x.g ? '<s>' + old.toLocaleString() + ' →</s> <span class="' + (x.g > old ? 'up' : 'dn') + '">' + x.g.toLocaleString() + '</span>' : '<span>' + x.g.toLocaleString() + '</span>';
+  var sub = [];
+  if (m && _nsNorm(_nsMName(m)) !== x.k) sub.push('Nu Skin：' + evEsc(x.n));
+  if (x.t) sub.push(evEsc(x.t));
+  if (typeof x.lv === 'number' && !isNaN(x.lv)) sub.push('レベル' + x.lv);
+  var r = '<div class="hw-r' + (x.on ? ' on' : '') + '">' + (kind === 'chg' ? '<span class="ck" onclick="nsTg(' + x.i + ')">' + (x.on ? '✓' : '') + '</span>' : '')
+    + '<div class="bd"><div class="t">' + evEsc(m ? _nsMName(m) : x.n) + '</div><div class="p">' + sub.join('・') + '</div>';
+  if (kind === 'none') {
+    var used = {}; _ns.items.forEach(function(y) { if (y.mid) used[y.mid] = 1; });
+    var opts = _nsMs().filter(function(mm) { return !used[mm.id]; }).sort(function(a, b) { return _nsMName(a).localeCompare(_nsMName(b), 'ja'); });
+    r += '<select class="ns-sel" onchange="nsPick(' + x.i + ',this.value)"><option value="">' + (x.dupe ? '同じ名前が2人以上：MAP の人を選ぶ' : 'MAP の人を選ぶ（次から自動で合わせます）') + '</option>'
+      + opts.map(function(mm) { return '<option value="' + evEsc(mm.id) + '">' + evEsc(_nsMName(mm)) + '</option>'; }).join('') + '</select>';
+  }
+  return r + '</div><div class="ns-v">' + v + '</div></div>';
+}
+function _nsGroups() {
+  var L = _ns.items, G = { chg: [], same: [], none: [] };
+  L.forEach(function(x) { var m = x.mid && _nsM(x.mid); if (!m) G.none.push(x); else if ((m.ptCurrent || 0) !== x.g || x.man) G.chg.push(x); else G.same.push(x); });
+  return G;
+}
+function _nsListHtml() {
+  var P = _ns.P, G = _nsGroups(), n = G.chg.filter(function(x) { return x.on; }).length;
+  var noneP = G.none.filter(function(x) { return x.g > 0; }), none0 = G.none.filter(function(x) { return x.g <= 0; });
+  var h = '<div class="hw-h"><b>💠 ' + evEsc(_nsYmLb(P.ym || state.currentMonth)) + 'の Nu Skin のポイント</b><span class="ms-x" onclick="nsClose()">✕</span></div>'
+    + '<div class="hw-nt">' + _ns.items.length + '人を読み取りました：変わる ' + G.chg.length + '人・同じ ' + G.same.length + '人・MAP で見つからない ' + G.none.length + '人</div>';
+  if (G.chg.length) h += '<div class="ns-sec">GSV が変わる人</div><div class="hw-nt" style="text-align:right"><span style="cursor:pointer;color:var(--accent)" onclick="nsAll(1)">すべて選ぶ</span>　<span style="cursor:pointer;color:var(--accent)" onclick="nsAll(0)">すべて外す</span></div>'
+    + G.chg.map(function(x) { return _nsRowHtml(x, 'chg'); }).join('');
+  if (noneP.length) h += '<div class="ns-sec">MAP で見つからない人（ポイントあり）</div><div class="hw-nt">MAP の人を選ぶと「変わる人」に入ります。MAP にいない人は書き込みません</div>' + noneP.map(function(x) { return _nsRowHtml(x, 'none'); }).join('');
+  if (none0.length) {
+    h += '<div class="ns-sec" style="cursor:pointer" onclick="_ns.more=!_ns.more;_nsRender()">' + (_ns.more ? '▼' : '▶') + ' MAP で見つからない人（0ポイント） ' + none0.length + '人</div>';
+    if (_ns.more) h += none0.map(function(x) { return _nsRowHtml(x, 'none'); }).join('');
+  }
+  if (G.same.length) h += '<div class="ns-sec">変わらない人 ' + G.same.length + '人</div><div class="hw-nt">' + G.same.map(function(x) { return evEsc(_nsMName(_nsM(x.mid))); }).join('・') + '</div>';
+  h += '<div class="hw-ft"><div class="hw-bt"><button onclick="nsClose()">閉じる</button><button class="p" id="nsGoBtn" onclick="nsSave()"' + (n ? '' : ' disabled') + '>' + n + '人の GSV を書き込む</button></div></div>';
+  return h;
+}
+function nsTg(i) { var x = _ns && _ns.items[i]; if (!x) return; x.on = !x.on; _nsRender(); }
+function nsAll(on) { if (!_ns) return; _ns.items.forEach(function(x) { if (x.mid) x.on = !!on; }); _nsRender(); }
+function nsPick(i, id) { var x = _ns && _ns.items[i]; if (!x || !id || !_nsM(id)) return; x.mid = id; x.man = true; x.on = true; _nsRender(); }
+// 書き込む：下の段の人から順に（上の人の「自分の分」は、配下を書きかえた後の合計から出す）
+function nsSave() {
+  if (!_ns || !_nsOn()) return;
+  if (!_nsCanEdit()) { toast('いまはMAPを書きかえられません（通信を確かめて読み込み直してください）'); return; }
+  if (_ns.P.ym && _ns.P.ym !== state.currentMonth) { toast('先に ' + _nsYmLb(_ns.P.ym) + 'の MAP を開いてください'); return; }
+  var arr = state.members, sel = [];
+  _ns.items.forEach(function(x) { var m = x.on && x.mid && _nsM(x.mid); if (m) sel.push({ x: x, m: m, d: _gsvDepth(m, arr) }); });
+  if (!sel.length) return;
+  sel.sort(function(a, b) { return b.d - a.d; });
+  sel.forEach(function(s) { setMemberGSV(s.m, s.x.g, arr); if (s.x.man) s.m.nsName = s.x.k; });
+  recalcAllGSV();
+  var off = sel.filter(function(s) { return (s.m.ptCurrent || 0) !== s.x.g; }).length;
+  window._nsLast = { ym: state.currentMonth, n: sel.length, off: off, at: new Date().toISOString() };
+  autoSave();
+  nsClose();
+  renderCurrentView();
+  toast('✓ ' + sel.length + '人の GSV を書き込みました' + (off ? '（' + off + '人は MAP の配下の合計の方が大きく、Nu Skin と合っていません。つながりを確かめてください）' : ''), off ? 6000 : undefined);
 }
 
 try {
