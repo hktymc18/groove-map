@@ -1,4 +1,4 @@
-// v891：#45 削除した人の下にフロント追加しない（選んだままの人を消した後）・#47 ビジネス→ユーザー→ビジネスに戻した人に「元ユーザー」を出さない・#46 研修結果「流れた」で MAP も OUT に。名前はすべて架空
+// v892：#45 削除した人の下にフロント追加しない（選んだままの人を消した後）・#47 ビジネス→ユーザー→ビジネスに戻した人に「元ユーザー」を出さない・#46 研修結果「流れた」で MAP も OUT に。名前はすべて架空
 const T = require('../lib/head.js')({ timeout: 120000 });
 const { w, c, sleep, setWH, $ } = T;
 const M = id => w.state.members.find(m => m.id === id);
@@ -81,5 +81,5 @@ T.run(async () => {
   c('#46: LOI 以降の人は変えない（v472 と同じ決まり）', M('q').title === 'LOI');
   M('o').title = 'マケ'; w.renderCurrentView(); await sleep(400);
   c('#46: 1回直した後に自分でタイトルを変えたら、もう触らない', M('o').title === 'マケ');
-  c('APP_JS_VERSION v891 以上', +(/APP_JS_VERSION = 'v(\d+)'/.exec(require('fs').readFileSync(require('path').join(__dirname, '../../../app.js'), 'utf8')) || [0, 0])[1] >= 891);
+  c('APP_JS_VERSION v892 以上', +(/APP_JS_VERSION = 'v(\d+)'/.exec(require('fs').readFileSync(require('path').join(__dirname, '../../../app.js'), 'utf8')) || [0, 0])[1] >= 892);
 });

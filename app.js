@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v891';
+var APP_JS_VERSION = 'v892';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3878,7 +3878,7 @@ function _usrAgg(L) {
     if (!x.uid) return;
     var a = M[x.uid] || (M[x.uid] = { days: {}, n: 0, op: {}, opN: 0, start: 0, sec: 0, hr: {}, ts: {}, rd: {} });
     a.days[x._d] = 1; a.n += x.n || 0; a.sec += +x.sec || 0;
-    if (x.op) a.hasOp = 1; if (x.sec) a.hasSec = 1;   // v890: 回数（v887〜）・時間（v888〜）の記録があるか（無ければ古い版のアプリ）
+    if (x.op) a.hasOp = 1; if (x.sec) a.hasSec = 1;   // v891: 回数（v887〜）・時間（v888〜）の記録があるか（無ければ古い版のアプリ）
     Object.keys(x.hr || {}).forEach(function(h) { a.hr[h] = (a.hr[h] || 0) + (+x.hr[h] || 0); });
     Object.keys(x.op || {}).forEach(function(k) { var v = +x.op[k] || 0; if (k === '起動') { a.start += v; return; } var kk = x.app + '|' + k; a.op[kk] = (a.op[kk] || 0) + v; a.opN += v; });
     Object.keys(x.ts || {}).forEach(function(k) { var kk = x.app + '|' + k; a.ts[kk] = (a.ts[kk] || 0) + (+x.ts[k] || 0); });
@@ -3993,7 +3993,7 @@ function _udPeople() {
   var U = Object.keys(base).map(function(k) { return base[k]; }).filter(function(u) { return !u.deleted && (!_ud.un || u.union === _ud.un); });
   var a0 = { days: {}, n: 0, op: {}, opN: 0, start: 0, sec: 0, hr: {}, ts: {}, rd: {} }, inP = {};
   for (var i = 0; i < _ud.per; i++) inP[_usDay(i).replace(/-/g, '')] = 1;
-  // v890: 記録（readStats）が無くても、最後に開いた日（lastSeenAt）が期間の中なら、その日は使った日に入れる
+  // v891: 記録（readStats）が無くても、最後に開いた日（lastSeenAt）が期間の中なら、その日は使った日に入れる
   //       （古い版のアプリ・ルールが入る前・記録を送る前に閉じた などで記録が抜けても「使っていない」にしない）
   return U.map(function(u) {
     var a = M[u.id] || a0, d = {}; Object.keys(a.days).forEach(function(k) { d[k] = 1; });
@@ -4002,7 +4002,7 @@ function _udPeople() {
     return { u: u, a: a, days: Object.keys(d).length, seenOnly: seenOnly, oldVer: !seenOnly && Object.keys(a.days).length > 0 && !a.hasOp };
   });
 }
-// v890: 記録のある日数（記録は v884＝11/19 から。期間がそれより長い時は、記録のある日数で判定する）
+// v891: 記録のある日数（記録は v884＝11/19 から。期間がそれより長い時は、記録のある日数で判定する）
 function _udAvail() {
   var D = _usData(); if (!Array.isArray(D)) return _ud.per;
   var h = {}; D.forEach(function(x) { if (x._d) h[x._d] = 1; });
@@ -4010,7 +4010,7 @@ function _udAvail() {
 }
 // よく使う＝記録のある日の半分以上（2日以上ある時は、少なくとも2日）
 function _udSegOf(p) { var n = _udAvail(), half = n > 1 ? Math.max(2, Math.ceil(n / 2)) : 1; return p.days >= half ? 'often' : p.days > 0 ? 'some' : 'idle'; }
-// v890: 開いたのに記録が届いていない人の数（多い時は案内を出す）
+// v891: 開いたのに記録が届いていない人の数（多い時は案内を出す）
 function _udMissNote() {
   var P = _udPeople(); if (!P) return '';
   var miss = P.filter(function(p) { return p.seenOnly; }).length, old = P.filter(function(p) { return p.oldVer; }).length, n = _udAvail();
@@ -4621,6 +4621,7 @@ function unAdmSave() {
 //   テスト中 … 「先に見られる人」にだけ出る。全員に公開 … 全員に出る（アプリの更新なしで、開いている画面にもすぐ）
 var FEATURES = [
   { k: 'sheet2', t: '計画シートにまとめる', d: '「○月の目標」をなくし、目標の数字を計画シートの「数字と改善点」に移す' },
+  { k: 'nsimp', t: 'Nu Skin のポイントを取り込む', d: 'Claude のスキル（nuskin-points）が読んだ Nu Skin の GSV を、確認の一覧から MAP のその月に書き込む（v890）' },
   { k: 'hwimp', t: '日程表から追加', d: 'ハウディの日程表（improveonline.jp など）を、ブックマーク・貼り付けでまとめてカレンダーに入れる（v874）' },
   { k: 'bxall', t: 'NAVIGATOR Beauty のユーザー台帳', d: '受付のユーザー・DAYの体感をユーザー台帳に取り込み、その後（会員登録・購入・定期）の記録を受付の集計に送る（v876）。オフの時はオーナーと受付の確認メンバーだけ' }
 ];
@@ -5120,7 +5121,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v891';
+  var DATA_VERSION = 'v892';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6879,7 +6880,7 @@ function _renderCurrentViewNow() {
 // デバウンス：連続呼び出し（結合リスナー多重発火等）を1フレームにまとめる。
 // 直近150ms実行が無ければ即時（操作の体感を守る）、連打中は120ms後に1回だけ。
 var _rcvTimer = null, _rcvLastRun = 0;
-// v891 #45: 削除した人（deleted）の下に残っている人は、その上の生きている人の下へ付け替える（MAPに出ない人を作らない。削除の時と同じ付け替え）
+// v892 #45: 削除した人（deleted）の下に残っている人は、その上の生きている人の下へ付け替える（MAPに出ない人を作らない。削除の時と同じ付け替え）
 //      #46: 流れたのに研修の段階のままの人を OUT に（下）
 function _fixDeadParents() {
   if (!state.isEditor || (typeof _aggActive !== 'undefined' && _aggActive) || !state.members || !state.members.length) return 0;
@@ -6889,7 +6890,7 @@ function _fixDeadParents() {
     var p = byId[x.parentId]; if (!p || !p.deleted) return;
     var np = _liveParentId(p.id); if (np && np !== x.id) { x.parentId = np; n++; }
   });
-  // v891 #46: 研修結果「流れた」なのに研修の段階のまま（前の版で付けた人）は、1回だけ OUT に（ngOut があればもう触らない）
+  // v892 #46: 研修結果「流れた」なのに研修の段階のまま（前の版で付けた人）は、1回だけ OUT に（ngOut があればもう触らない）
   state.members.forEach(function(x) {
     if (!x || x.deleted || x.traineeResult !== '流れた' || x.ngOut || !_ngShouldOut(x)) return;
     x.ngFrom = (x.title || '').trim(); x.ngOut = evTodayYmd(); x.title = 'OUT'; if ('cat' in x) x.cat = 'OUT'; x.trainee = false; n++;
@@ -7259,8 +7260,9 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
-  { v:'v891', d:'2026-11-20', items:['MAPのフロント追加：削除した人を選んだまま「＋追加」すると、追加先が削除した人になり、足した人がMAPに出なかったのを修正（その上の人の下に入ります。前に足して見えなくなっていた人も、上の人の下に出ます）（#45）','ビジネス（BMなど）からユーザーにして、また戻した人に「元ユーザー」の札が出ていたのを修正。札はもともとユーザーだった人だけ（#47）','研修結果を「流れた」にしても、MAPでは研修の段階（PAなど）のまま出ていたのを修正。OUTになります（進行中に戻すと前のタイトルに戻ります。前に「流れた」にした人もOUTに直ります）（#46）'] },
-  { v:'v890', d:'2026-11-20', items:['📊 利用状況（オーナー）：細かい記録が届いていない人でも、最後に開いた日が期間の中なら「使っていない」にしないように。「よく使う」は記録のある日数（11/19〜）の半分以上で判定。古い版のアプリで回数の記録が無い人は「0回」ではなく「—」と「古い版」の印。記録が抜けている人の数も出します'] },
+  { v:'v892', d:'2026-11-20', items:['MAPのフロント追加：削除した人を選んだまま「＋追加」すると、追加先が削除した人になり、足した人がMAPに出なかったのを修正（その上の人の下に入ります。前に足して見えなくなっていた人も、上の人の下に出ます）（#45）','ビジネス（BMなど）からユーザーにして、また戻した人に「元ユーザー」の札が出ていたのを修正。札はもともとユーザーだった人だけ（#47）','研修結果を「流れた」にしても、MAPでは研修の段階（PAなど）のまま出ていたのを修正。OUTになります（進行中に戻すと前のタイトルに戻ります。前に「流れた」にした人もOUTに直ります）（#46）'] },
+  { v:'v891', d:'2026-11-20', items:['📊 利用状況（オーナー）：細かい記録が届いていない人でも、最後に開いた日が期間の中なら「使っていない」にしないように。「よく使う」は記録のある日数（11/19〜）の半分以上で判定。古い版のアプリで回数の記録が無い人は「0回」ではなく「—」と「古い版」の印。記録が抜けている人の数も出します'] },
+  { v:'v890', d:'2026-11-21', items:['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v:'v889', d:'2026-11-20', items:['📊 利用状況を作り直しました（オーナー）：上に固定のタブ「概要・画面・人・費用」。画面ごとの比べ方（開いた回数・使った人・時間・読み取り）、よく使う／ときどき／使っていない人の数、人を押すと横（スマホは下）から詳しく。スクロールの位置が動かないように'] },
   { v:'v888', d:'2026-11-20', items:['👥 人ごとの利用：最後に開いた順・開いた回数順・使った時間順で並べられるように。使われている時間帯のグラフも出ます（オーナー）'] },
   { v:'v887', d:'2026-11-20', items:['アカウント管理（オーナー）の「📊 利用状況」に、その日に開いた人の数と「👥 人ごとの利用」（だれがよく使っていて、だれが使っていないか・よく使う画面）を追加しました'] },
@@ -17008,7 +17010,7 @@ function openQuickAdd() {
   _p2SheetClose('qaOv');
   _qaAct = '';
   var stage = _qaStageGet();
-  var parent = _liveParentId(selectedParentId) || roots[0].id;   // v891 #45
+  var parent = _liveParentId(selectedParentId) || roots[0].id;   // v892 #45
   var ms = (state.members || []).filter(function(m) { return !m.deleted && (m.title || '').trim() !== 'OUT'; })
     .sort(_treeSortCmp(state.members, 'title'));
   var pOpts = ms.map(function(m) {
@@ -17074,7 +17076,7 @@ function qaSave(cont) {
   var last = ((document.getElementById('qaLast') || {}).value || '').trim();
   var first = ((document.getElementById('qaFirst') || {}).value || '').trim();
   if (!last && !first) { toast('名前を入力してください'); return; }
-  var pid = _liveParentId((document.getElementById('qaParent') || {}).value || '');   // v891 #45: 削除した人の下には足さない
+  var pid = _liveParentId((document.getElementById('qaParent') || {}).value || '');   // v892 #45: 削除した人の下には足さない
   if (!pid) { toast('追加先を選んでください'); return; }
   var _pk = _qaPicked(), qcat = _pk.cat, stage = _pk.t; // v570
   var cm = state.currentMonth || currentMonthStr();
@@ -20538,7 +20540,7 @@ function _ppSave(fn, msg) {
   if (msg) toast('✓ ' + msg);
   _ppRender();
 }
-// v891 #47: 「元ユーザー」の札＝もともとユーザーだった人だけ。ビジネスからユーザーにして（toUser）、そのあと戻した人には出さない
+// v892 #47: 「元ユーザー」の札＝もともとユーザーだった人だけ。ビジネスからユーザーにして（toUser）、そのあと戻した人には出さない
 //   （toUser が fromUser と同じ日か前なら「戻した」。もとはユーザー→研修生→ユーザー→研修生 の人は fromUser が前なので出る）
 function _umFromUser(m) { return !!(m && m.fromUser && !isUserM(m) && !(m.toUser && m.toUser <= m.fromUser)); }
 function _ppCatOf(t) { t = (t || '').trim(); if (t === 'OUT') return 'OUT'; var c = detectCategory(t); return c || (['FT', 'マケ', 'PG', 'DLR', 'EXP', 'PA', '面談', 'BPC', 'CO'].indexOf(t) >= 0 ? '研修生' : ''); }
@@ -20564,7 +20566,7 @@ function ppTitle(t) {
     toast('✓ ' + _umNm(u || m0) + 'さんをユーザーにしました（ユーザーの一覧に入ります）');
     _ppRender(); return;
   }
-  setTimeout(function() { if (!wasU || t === 'ユーザー') return; var m2 = _ppM(); if (m2 && !isUserM(m2) && !m2.fromUser && !m2.toUser) {   // v891 #47: ビジネス→ユーザー→ビジネスに戻した人（toUser あり）は「元ユーザー」にしない
+  setTimeout(function() { if (!wasU || t === 'ユーザー') return; var m2 = _ppM(); if (m2 && !isUserM(m2) && !m2.fromUser && !m2.toUser) {   // v892 #47: ビジネス→ユーザー→ビジネスに戻した人（toUser あり）は「元ユーザー」にしない
  m2.fromUser = evTodayYmd(); autoSave(); try { renderCurrentView(); } catch (e) {} } }, 0);
   _ppSave(function() {
     selCategory(_ppCatOf(t));
@@ -20671,7 +20673,7 @@ function _ppTrHtml(m) {
   }).join('') + '</div>';
   return h;
 }
-// v891 #46: 研修結果を「流れた」にしたら、MAPでもOUT（研修の段階のまま出ていた）。流れたから戻したら、前のタイトルに戻す
+// v892 #46: 研修結果を「流れた」にしたら、MAPでもOUT（研修の段階のまま出ていた）。流れたから戻したら、前のタイトルに戻す
 function ppTrRes(v) {
   var m = _ppM(); if (!m || (m.traineeResult || '') === v) return;
   var t0 = (m.title || '').trim(), drop = v === '流れた' && _ngShouldOut(m), back = m.traineeResult === '流れた' && v !== '流れた' && t0 === 'OUT' && m.ngFrom;
@@ -21824,7 +21826,7 @@ function _naCss() {
   document.head.appendChild(st);
 }
 function _naTrCat(t) { return NA_GROUPS[0][2].indexOf(t) >= 0; }
-// v891 #45: 追加先が削除した人（deleted）なら、その上の生きている人へ（選んだままの人を消した後に、消えた人の下へ足して MAP に出なくなっていた）
+// v892 #45: 追加先が削除した人（deleted）なら、その上の生きている人へ（選んだままの人を消した後に、消えた人の下へ足して MAP に出なくなっていた）
 function _liveParentId(id) {
   var ms = state.members || [], byId = {}; ms.forEach(function(x) { if (x && x.id) byId[x.id] = x; });
   var m = id ? byId[id] : null, seen = {};
@@ -41773,6 +41775,7 @@ function fsLoadFromFirestore(uid) {
     if (!viewingOwnerUid) { window._fdLoadedMonth = month; setTimeout(function() { try { _olEvMigrate(); } catch (eMg) {} try { _tsEvMigrate(); } catch (eMt) {} }, 800); } // v567・v571
     renderCurrentView();
     updateLTSV('current', state.members);
+    if (!viewingOwnerUid && !fromCache) setTimeout(function() { try { _nsPending(); } catch (eNs) {} }, 600); // v890: Nu Skin のポイントを、切り替えた月で開く
     // v511: 変更検知の基準＝読込直後（描画時の再計算で付く集計値も含めた状態）
     try {
       if (typeof recalcAllGSV === 'function') recalcAllGSV();
@@ -45198,6 +45201,143 @@ function _hwPending() {
   if (!_hwOn()) return;
   var P = null; try { P = JSON.parse(s); } catch (e2) {}
   if (P && (P.rows || []).length) hwOpen(P);
+}
+
+// ════ v890: Nu Skin のポイント（GSV）を MAP に取り込む（スキル nuskin-points から使う）
+//  スキルが Nu Skin の表を読んで nsImport(P) を呼ぶ → その月の MAP に切り替え → 名前で突き合わせた「今 → 新」の一覧
+//  → 本人が確かめて「書き込む」。P = { v:1, ym:'2026.11', rows:[{ lv, n, t, psv, gsv, ltsv }] }（名前と数字だけ）
+//  書き終わったら window._nsLast = { ym, n, at }（スキルが次の月へ進む目印）
+var _ns = null;
+// 名前の突き合わせ用：空白をなくし、全角・半角と よくある字の違い（髙→高・﨑→崎）をそろえる
+function _nsNorm(s) {
+  s = String(s || ''); try { s = s.normalize('NFKC'); } catch (e) {}
+  return s.replace(/[\s　・･]/g, '').replace(/髙/g, '高').replace(/﨑/g, '崎').toLowerCase();
+}
+function _nsMs() { return (state.members || []).filter(function(m) { return m && !m.deleted && !/^(MG_|AG\d+_)/.test(m.id || ''); }); }
+function _nsMName(m) { return ((m.lastName || '') + ' ' + (m.firstName || '')).trim() || (m.nickname || '') || '（名前なし）'; }
+function _nsM(id) { var ms = state.members || []; for (var i = 0; i < ms.length; i++) { if (ms[i] && ms[i].id === id) return ms[i]; } return null; }
+function _nsYmLb(ym) { return ym ? (+String(ym).slice(0, 4)) + '年' + (+String(ym).slice(5)) + '月' : ''; }
+// まだテスト中。新機能のテスト（nsimp）の「先に見られる人」だけが使える
+function _nsOn() { return typeof featOn === 'function' && featOn('nsimp'); }
+function _nsCanEdit() { return !viewingOwnerUid && !!state.isEditor && !_fsLoadErr && !_fsCacheOnly; }
+// 読み取った行 → 突き合わせた一覧。Nu Skin・MAP のどちらかに同じ名前が2人以上いる時は自動では合わせない
+function _nsItems(P) {
+  var ms = _nsMs(), byName = {}, byNs = {}, cnt = {}, out = [];
+  ms.forEach(function(m) {
+    var k = _nsNorm((m.lastName || '') + (m.firstName || '')); if (k) (byName[k] = byName[k] || []).push(m);
+    if (m.nsName) (byNs[m.nsName] = byNs[m.nsName] || []).push(m);
+  });
+  (P.rows || []).forEach(function(r) { var k = _nsNorm(r && r.n); cnt[k] = (cnt[k] || 0) + 1; });
+  (P.rows || []).forEach(function(r) {
+    if (!r || typeof r.gsv !== 'number' || !r.n) return;
+    var k = _nsNorm(r.n), L = byNs[k] && byNs[k].length ? byNs[k] : (byName[k] || []);
+    var m = cnt[k] === 1 && L.length === 1 ? L[0] : null, g = Math.max(0, Math.round(r.gsv));
+    out.push({ i: out.length, n: String(r.n), k: k, lv: r.lv, t: r.t || '', g: g, mid: m ? m.id : '', dupe: cnt[k] > 1 || L.length > 1, man: false, on: !!m && (m.ptCurrent || 0) !== g });
+  });
+  return out;
+}
+// スキルの入口。違う月の MAP を開いている時は、その月に切り替えてから一覧を出す
+function nsImport(P) {
+  if (typeof P === 'string') { try { P = JSON.parse(P); } catch (e) { P = null; } }
+  if (!P || !(P.rows || []).length) return 'no-rows';
+  if (!_nsOn()) { toast('この機能はまだテスト中です（新機能のテストで「先に見られる人」に入ると使えます）'); return 'not-enabled'; }
+  if (!_nsCanEdit()) { toast('自分のMAPを開いている時に使えます'); return 'not-editable'; }
+  if (P.ym && P.ym !== state.currentMonth) {
+    var p = String(P.ym).split('.'), ys = document.getElementById('selYear'), mo = document.getElementById('selMonth');
+    if (!ys || !mo || !/^\d{4}$/.test(p[0]) || !(+p[1] >= 1 && +p[1] <= 12)) return 'bad-month';
+    try { sessionStorage.setItem('gm_ns', JSON.stringify(P)); } catch (e2) { return 'no-storage'; }
+    nsClose();
+    ys.value = String(+p[0]); mo.value = String(+p[1]); onYearMonthChange();
+    return 'switching';
+  }
+  _ns = { P: P, items: _nsItems(P), more: false };
+  _nsRender();
+  return 'open';
+}
+// 月を切り替えて読み込みが終わった時（fsLoadFromFirestore から）
+function _nsPending() {
+  var s = null; try { s = sessionStorage.getItem('gm_ns'); } catch (e) {}
+  if (!s || viewingOwnerUid || !_nsOn()) return;
+  try { sessionStorage.removeItem('gm_ns'); } catch (e1) {}
+  var P = null; try { P = JSON.parse(s); } catch (e2) {}
+  if (P && P.ym === state.currentMonth) nsImport(P);
+}
+function nsClose() { var o = document.getElementById('nsOv'); if (o && o.parentNode) o.parentNode.removeChild(o); _ns = null; }
+function _nsRender() {
+  if (!_ns) return;
+  _hwCss();
+  if (!document.getElementById('nsCss')) {
+    var st = document.createElement('style'); st.id = 'nsCss';
+    st.textContent = '.ns-v{font:900 14px Inter,"Noto Sans JP",sans-serif;white-space:nowrap;text-align:right;padding-top:2px}.ns-v s{color:var(--text-dim);font-weight:700;text-decoration:none}.ns-v .up{color:var(--accent)}.ns-v .dn{color:var(--gold)}'
+      + '.ns-sel{margin-top:6px;width:100%;box-sizing:border-box;border-radius:9px;border:1px solid var(--border2);background:var(--surface2);color:var(--text);font-size:16px;font-weight:700;font-family:inherit;padding:7px 8px}'
+      + '.ns-sec{font-size:14px;font-weight:900;margin:16px 0 2px}';
+    document.head.appendChild(st);
+  }
+  var ov = document.getElementById('nsOv'), fresh = !ov;
+  if (!ov) { ov = document.createElement('div'); ov.id = 'nsOv'; ov.className = 'ms-overlay'; ov.onclick = function(e) { if (e.target === ov) nsClose(); }; document.body.appendChild(ov); }
+  var sc = ov.firstChild ? ov.firstChild.scrollTop : 0;
+  ov.innerHTML = '<div class="ms-sheet hw-sh"><div class="ms-grip"></div>' + _nsListHtml() + '</div>';
+  if (ov.firstChild) ov.firstChild.scrollTop = sc;
+  if (fresh) requestAnimationFrame(function() { ov.classList.add('show'); }); else ov.classList.add('show');
+}
+function _nsRowHtml(x, kind) {
+  var m = x.mid ? _nsM(x.mid) : null, old = m ? (m.ptCurrent || 0) : 0;
+  var v = m && old !== x.g ? '<s>' + old.toLocaleString() + ' →</s> <span class="' + (x.g > old ? 'up' : 'dn') + '">' + x.g.toLocaleString() + '</span>' : '<span>' + x.g.toLocaleString() + '</span>';
+  var sub = [];
+  if (m && _nsNorm(_nsMName(m)) !== x.k) sub.push('Nu Skin：' + evEsc(x.n));
+  if (x.t) sub.push(evEsc(x.t));
+  if (typeof x.lv === 'number' && !isNaN(x.lv)) sub.push('レベル' + x.lv);
+  var r = '<div class="hw-r' + (x.on ? ' on' : '') + '">' + (kind === 'chg' ? '<span class="ck" onclick="nsTg(' + x.i + ')">' + (x.on ? '✓' : '') + '</span>' : '')
+    + '<div class="bd"><div class="t">' + evEsc(m ? _nsMName(m) : x.n) + '</div><div class="p">' + sub.join('・') + '</div>';
+  if (kind === 'none') {
+    var used = {}; _ns.items.forEach(function(y) { if (y.mid) used[y.mid] = 1; });
+    var opts = _nsMs().filter(function(mm) { return !used[mm.id]; }).sort(function(a, b) { return _nsMName(a).localeCompare(_nsMName(b), 'ja'); });
+    r += '<select class="ns-sel" onchange="nsPick(' + x.i + ',this.value)"><option value="">' + (x.dupe ? '同じ名前が2人以上：MAP の人を選ぶ' : 'MAP の人を選ぶ（次から自動で合わせます）') + '</option>'
+      + opts.map(function(mm) { return '<option value="' + evEsc(mm.id) + '">' + evEsc(_nsMName(mm)) + '</option>'; }).join('') + '</select>';
+  }
+  return r + '</div><div class="ns-v">' + v + '</div></div>';
+}
+function _nsGroups() {
+  var L = _ns.items, G = { chg: [], same: [], none: [] };
+  L.forEach(function(x) { var m = x.mid && _nsM(x.mid); if (!m) G.none.push(x); else if ((m.ptCurrent || 0) !== x.g || x.man) G.chg.push(x); else G.same.push(x); });
+  return G;
+}
+function _nsListHtml() {
+  var P = _ns.P, G = _nsGroups(), n = G.chg.filter(function(x) { return x.on; }).length;
+  var noneP = G.none.filter(function(x) { return x.g > 0; }), none0 = G.none.filter(function(x) { return x.g <= 0; });
+  var h = '<div class="hw-h"><b>💠 ' + evEsc(_nsYmLb(P.ym || state.currentMonth)) + 'の Nu Skin のポイント</b><span class="ms-x" onclick="nsClose()">✕</span></div>'
+    + '<div class="hw-nt">' + _ns.items.length + '人を読み取りました：変わる ' + G.chg.length + '人・同じ ' + G.same.length + '人・MAP で見つからない ' + G.none.length + '人</div>';
+  if (G.chg.length) h += '<div class="ns-sec">GSV が変わる人</div><div class="hw-nt" style="text-align:right"><span style="cursor:pointer;color:var(--accent)" onclick="nsAll(1)">すべて選ぶ</span>　<span style="cursor:pointer;color:var(--accent)" onclick="nsAll(0)">すべて外す</span></div>'
+    + G.chg.map(function(x) { return _nsRowHtml(x, 'chg'); }).join('');
+  if (noneP.length) h += '<div class="ns-sec">MAP で見つからない人（ポイントあり）</div><div class="hw-nt">MAP の人を選ぶと「変わる人」に入ります。MAP にいない人は書き込みません</div>' + noneP.map(function(x) { return _nsRowHtml(x, 'none'); }).join('');
+  if (none0.length) {
+    h += '<div class="ns-sec" style="cursor:pointer" onclick="_ns.more=!_ns.more;_nsRender()">' + (_ns.more ? '▼' : '▶') + ' MAP で見つからない人（0ポイント） ' + none0.length + '人</div>';
+    if (_ns.more) h += none0.map(function(x) { return _nsRowHtml(x, 'none'); }).join('');
+  }
+  if (G.same.length) h += '<div class="ns-sec">変わらない人 ' + G.same.length + '人</div><div class="hw-nt">' + G.same.map(function(x) { return evEsc(_nsMName(_nsM(x.mid))); }).join('・') + '</div>';
+  h += '<div class="hw-ft"><div class="hw-bt"><button onclick="nsClose()">閉じる</button><button class="p" id="nsGoBtn" onclick="nsSave()"' + (n ? '' : ' disabled') + '>' + n + '人の GSV を書き込む</button></div></div>';
+  return h;
+}
+function nsTg(i) { var x = _ns && _ns.items[i]; if (!x) return; x.on = !x.on; _nsRender(); }
+function nsAll(on) { if (!_ns) return; _ns.items.forEach(function(x) { if (x.mid) x.on = !!on; }); _nsRender(); }
+function nsPick(i, id) { var x = _ns && _ns.items[i]; if (!x || !id || !_nsM(id)) return; x.mid = id; x.man = true; x.on = true; _nsRender(); }
+// 書き込む：下の段の人から順に（上の人の「自分の分」は、配下を書きかえた後の合計から出す）
+function nsSave() {
+  if (!_ns || !_nsOn()) return;
+  if (!_nsCanEdit()) { toast('いまはMAPを書きかえられません（通信を確かめて読み込み直してください）'); return; }
+  if (_ns.P.ym && _ns.P.ym !== state.currentMonth) { toast('先に ' + _nsYmLb(_ns.P.ym) + 'の MAP を開いてください'); return; }
+  var arr = state.members, sel = [];
+  _ns.items.forEach(function(x) { var m = x.on && x.mid && _nsM(x.mid); if (m) sel.push({ x: x, m: m, d: _gsvDepth(m, arr) }); });
+  if (!sel.length) return;
+  sel.sort(function(a, b) { return b.d - a.d; });
+  sel.forEach(function(s) { setMemberGSV(s.m, s.x.g, arr); if (s.x.man) s.m.nsName = s.x.k; });
+  recalcAllGSV();
+  var off = sel.filter(function(s) { return (s.m.ptCurrent || 0) !== s.x.g; }).length;
+  window._nsLast = { ym: state.currentMonth, n: sel.length, off: off, at: new Date().toISOString() };
+  autoSave();
+  nsClose();
+  renderCurrentView();
+  toast('✓ ' + sel.length + '人の GSV を書き込みました' + (off ? '（' + off + '人は MAP の配下の合計の方が大きく、Nu Skin と合っていません。つながりを確かめてください）' : ''), off ? 6000 : undefined);
 }
 
 try {
