@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v887';
+var APP_JS_VERSION = 'v888';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -50,10 +50,18 @@ var auth = typeof firebase !== 'undefined' ? firebase.auth()      : null;
    見張り（onSnapshot）は、最初にサーバーから届いた時は返ってきた数、そのあとは変わった数（自分の書き込みの分も）。端末の控え（キャッシュ）から出した分は数えない。
    場所は「maps/months」のように、IDを除いた集まりの名前 */
 var RC = (function(){
-  var st = { app: '', tag: null, uid: null, pend: {}, n: 0, day: '', t: 0, op: {}, opn: 0, last: null }, MAXK = 90;
+  var st = { app: '', tag: null, uid: null, pend: {}, n: 0, day: '', t: 0, op: {}, opn: 0, last: null, sec: 0, hr: {} }, MAXK = 90;
   // v887: 画面を開いた回数（op）。2秒ごとに今の画面を見て、変わったら1回。アプリを開いた・戻ってきた時は「起動」に1回
   function opAdd(k){ k = String(k || '').replace(/[\s.]/g, '_').slice(0, 60); if(!k || k === 'login' || k === 'start') return; st.op[k] = (st.op[k] || 0) + 1; st.opn++; }
-  function poll(){ if(document.hidden || !st.tag) return; var t = ''; try{ t = String(st.tag() || ''); }catch(e){} if(t !== st.last){ st.last = t; opAdd(t); } }
+  // v888: 画面が出ている時間（sec・秒）と、その時間帯（hr・日本時間の何時台に何秒）も、2秒ごとに足す（ログイン前の画面は数えない）
+  function poll(){
+    if(document.hidden || !st.tag) return;
+    var t = ''; try{ t = String(st.tag() || ''); }catch(e){}
+    if(t !== st.last){ st.last = t; opAdd(t); }
+    if(!t || t === 'login' || t === 'start') return;
+    var h = ('0' + new Date(Date.now() + 9 * 3600000).getUTCHours()).slice(-2);
+    st.sec += 2; st.hr[h] = (st.hr[h] || 0) + 2;
+  }
   function ymd(){ return new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10).replace(/-/g, ''); }
   function kp(p){ var s = String(p || '').split('/'), o = []; for(var i = 0; i < s.length; i += 2) o.push(s[i]); return o.join('/'); }
   function qk(q){
@@ -106,7 +114,7 @@ var RC = (function(){
   function flush(){
     try{
       var F = window.firebase && firebase.firestore, d = ymd();
-      if(!F || !st.app || (!st.n && !st.opn)) return;
+      if(!F || !st.app || (!st.n && !st.opn && !st.sec)) return;
       var uid = ''; try{ uid = st.uid ? String(st.uid() || '') : ''; }catch(e){}
       var id = uid ? uid + '_' + st.app : 'anon_' + devId() + '_' + st.app;
       var keys = Object.keys(st.pend), by = {}, inc = F.FieldValue.increment, other = 0;
@@ -114,7 +122,8 @@ var RC = (function(){
       if(other) by['その他'] = inc(other);
       var data = { uid: uid, app: st.app, d: d, n: inc(st.n), by: by, at: new Date().toISOString(), ver: 2 };
       if(st.opn){ var op = {}; Object.keys(st.op).slice(0, 50).forEach(function(k){ op[k] = inc(st.op[k]); }); data.op = op; }
-      st.pend = {}; st.n = 0; st.op = {}; st.opn = 0;
+      if(st.sec){ var hr = {}; Object.keys(st.hr).forEach(function(k){ hr[k] = inc(st.hr[k]); }); data.sec = inc(st.sec); data.hr = hr; }
+      st.pend = {}; st.n = 0; st.op = {}; st.opn = 0; st.sec = 0; st.hr = {};
       firebase.firestore().collection('readStats').doc(d).collection('u').doc(id).set(data, { merge: true }).catch(function(){});
     }catch(e3){}
   }
@@ -3839,12 +3848,32 @@ function _usrAgg(L) { // uid → { days:{d:1}, n, op:{app|k:回数}, opN }
   var M = {};
   (L || []).forEach(function(x) {
     if (!x.uid) return;
-    var a = M[x.uid] || (M[x.uid] = { days: {}, n: 0, op: {}, opN: 0, apps: {} });
+    var a = M[x.uid] || (M[x.uid] = { days: {}, n: 0, op: {}, opN: 0, apps: {}, sec: 0, hr: {} });
     a.days[x._d] = 1; a.n += x.n || 0; a.apps[x.app] = 1;
+    a.sec += +x.sec || 0; Object.keys(x.hr || {}).forEach(function(h) { a.hr[h] = (a.hr[h] || 0) + (+x.hr[h] || 0); }); // v888
     Object.keys(x.op || {}).forEach(function(k) { var v = +x.op[k] || 0; if (k === '起動') return; var kk = x.app + '|' + k; a.op[kk] = (a.op[kk] || 0) + v; a.opN += v; });
     var st = +((x.op || {})['起動']) || 0; a.start = (a.start || 0) + st;
   });
   return M;
+}
+// v888: 使った時間（秒）を「1時間12分」に
+function _usrDur(sec) { var m = Math.floor((sec || 0) / 60); if (m < 1) return '1分未満'; var h = Math.floor(m / 60); return (h ? h + '時間' : '') + (m % 60 ? (m % 60) + '分' : ''); }
+// v888: 時間帯ごとの棒（0〜23時）。hr＝{ '09': 秒 }
+function _usrHourBars(hr, title, ppl) {
+  var H = []; for (var i = 0; i < 24; i++) H.push(('0' + i).slice(-2));
+  var mx = Math.max.apply(null, [1].concat(H.map(function(h) { return +((hr || {})[h]) || 0; })));
+  return '<div style="font-size:12px;font-weight:900;margin:6px 0 4px">' + title + '</div><div class="usr-hr">'
+    + H.map(function(h) { var v = +((hr || {})[h]) || 0; return '<div title="' + (+h) + '時台 ' + _usrDur(v) + (ppl ? '・' + (ppl[h] || 0) + '人' : '') + '"><i style="height:' + Math.round(v / mx * 100) + '%"></i></div>'; }).join('')
+    + '</div><div class="usr-hl"><span>0時</span><span>6時</span><span>12時</span><span>18時</span><span>23時</span></div>';
+}
+// v888: みんなの時間帯（その期間に使った時間の合計と、その時間帯に使った人数）
+function _usrHourHtml(U, ag, per) {
+  var hr = {}, ppl = {}, any = false;
+  U.forEach(function(u) { var a = ag(u); Object.keys(a.hr || {}).forEach(function(h) { var v = +a.hr[h] || 0; if (!v) return; any = true; hr[h] = (hr[h] || 0) + v; ppl[h] = (ppl[h] || 0) + 1; }); });
+  if (!any) return '<div class="us-b"><div class="nt">時間帯のグラフは、v888 より新しい版を開いた人からたまります。</div></div>';
+  var top = Object.keys(hr).sort(function(a, b) { return hr[b] - hr[a]; }).slice(0, 3);
+  return '<div class="us-b">' + _usrHourBars(hr, '使われている時間帯（' + (per === 1 ? '今日' : '直近' + per + '日') + '・みんなの合計）', ppl)
+    + '<div class="nt">多い時間帯：' + top.map(function(h) { return (+h) + '時台（' + _usrDur(hr[h]) + '・' + ppl[h] + '人）'; }).join('、') + '。PCは棒にマウスを乗せると、その時間帯の時間と人数が出ます。</div></div>';
 }
 function _usrAdmHtml() {
   _usCss();
@@ -3862,16 +3891,21 @@ function _usrAdmHtml() {
   var U = Object.keys(base).map(function(uid) { return base[uid]; }).filter(function(u) { return !u.deleted; });
   var unions = {}; U.forEach(function(u) { if (u.union) unions[u.union] = 1; });
   if (_usr.un) U = U.filter(function(u) { return u.union === _usr.un; });
-  var a0 = { days: {}, n: 0, op: {}, opN: 0 }, ag = function(u) { return M[u.id] || a0; };
+  var a0 = { days: {}, n: 0, op: {}, opN: 0, sec: 0, hr: {} }, ag = function(u) { return M[u.id] || a0; };
   var dn = function(u) { return Object.keys(ag(u).days).length; };
-  if (_usr.sort === 'use') U.sort(function(a, b) { return dn(b) - dn(a) || ag(b).opN - ag(a).opN || ag(b).n - ag(a).n; });
-  else if (_usr.sort === 'idle') U.sort(function(a, b) { return dn(a) - dn(b) || String(a.lastSeenAt || '').localeCompare(String(b.lastSeenAt || '')); });
+  var ls = function(u) { return String(u.lastSeenAt || ''); };
+  // v888: 並べ方。よく使う＝日数→画面を開いた回数→使った時間／最後に開いた順／開いた回数（アプリを開いた回数）／使った時間（画面が出ていた時間）
+  if (_usr.sort === 'use') U.sort(function(a, b) { return dn(b) - dn(a) || ag(b).opN - ag(a).opN || ag(b).sec - ag(a).sec || ag(b).n - ag(a).n; });
+  else if (_usr.sort === 'last') U.sort(function(a, b) { return ls(b).localeCompare(ls(a)); });
+  else if (_usr.sort === 'open') U.sort(function(a, b) { return (ag(b).start || 0) - (ag(a).start || 0) || ag(b).opN - ag(a).opN; });
+  else if (_usr.sort === 'time') U.sort(function(a, b) { return ag(b).sec - ag(a).sec || dn(b) - dn(a); });
+  else if (_usr.sort === 'idle') U.sort(function(a, b) { return dn(a) - dn(b) || ls(a).localeCompare(ls(b)); });
   else U.sort(function(a, b) { return String(a.name || '').localeCompare(String(b.name || ''), 'ja'); });
   var used = U.filter(function(u) { return dn(u) > 0; }).length;
   h += '<div class="us-k"><div><b>' + used + '</b><small>この期間に開いた人</small></div><div><b>' + (U.length - used) + '</b><small>開いていない人（使える人のうち）</small></div><div><b>' + U.length + '</b><small>対象</small></div></div>'
-    + '<div class="us-ch" style="margin-top:10px">' + [['use', 'よく使う順'], ['idle', '使っていない順'], ['name', '名前順']].map(function(x) { return '<span class="' + (_usr.sort === x[0] ? 'on' : '') + '" onclick="usrSort(\'' + x[0] + '\')">' + x[1] + '</span>'; }).join('') + '</div>'
+    + '<div class="us-ch" style="margin-top:10px;flex-wrap:wrap">' + [['use', 'よく使う順'], ['last', '最後に開いた順'], ['open', '開いた回数順'], ['time', '使った時間順'], ['idle', '使っていない順'], ['name', '名前順']].map(function(x) { return '<span class="' + (_usr.sort === x[0] ? 'on' : '') + '" onclick="usrSort(\'' + x[0] + '\')">' + x[1] + '</span>'; }).join('') + '</div>'
     + '<select class="fi" style="width:100%;padding:8px;margin-bottom:6px" onchange="usrUn(this.value)"><option value="">すべてのユニオン</option>' + Object.keys(unions).sort().map(function(un) { return '<option value="' + evEsc(un) + '"' + (_usr.un === un ? ' selected' : '') + '>' + evEsc(un) + '</option>'; }).join('') + '</select>'
-    + '</div><div class="us-b">';
+    + '</div>' + _usrHourHtml(U, ag, per) + '<div class="us-b">';
   var dl = []; for (var i = per - 1; i >= 0; i--) dl.push(_usDay(i).replace(/-/g, ''));
   h += U.slice(0, 400).map(function(u) {
     var a = ag(u), n = dn(u), top = Object.keys(a.op).sort(function(x, y) { return a.op[y] - a.op[x]; });
@@ -3879,12 +3913,13 @@ function _usrAdmHtml() {
     var stx = on ? '<span class="usr-on">🟢 開いている</span>' : (t ? String(fmtLastSeen(u.lastSeenAt) || '').replace(/<[^>]+>/g, '').replace('最終ログイン ', '最後 ') : '<span class="usr-no">開いた記録なし</span>');
     var r = '<div class="usr-row" onclick="usrOpen(\'' + u.id + '\')"><div class="usr-h"><b>' + evEsc(u.name || '(名前未設定)') + '</b><small>' + evEsc(u.union || '') + '</small><em>' + (n ? n + '日／' + per + '日' : '<span class="usr-no">0日</span>') + '</em></div>'
       + (per > 1 ? '<div class="usr-d">' + dl.map(function(d) { return '<i class="' + (a.days[d] ? 'on' : '') + '" title="' + d.slice(4, 6) + '/' + d.slice(6) + '"></i>'; }).join('') + '</div>' : '')
-      + '<div class="usr-s">' + stx + (a.start ? '・開いた ' + a.start + '回' : '') + (top.length ? '・よく使う画面：' + top.slice(0, 3).map(function(k) { var p = k.split('|'); return evEsc(_usLabel(p[0], p.slice(1).join('|'))) + ' ' + a.op[k]; }).join('、') : '') + '</div>';
-    if (_usr.open === u.id) r += '<div class="usr-x"><table>' + top.map(function(k) { var p = k.split('|'); return '<tr><td>' + (p[0] === 'ck' ? '受付・会員証：' : '') + evEsc(_usLabel(p[0], p.slice(1).join('|'))) + '</td><td>' + a.op[k] + '回</td></tr>'; }).join('')
+      + '<div class="usr-s">' + stx + (a.start ? '・開いた ' + a.start + '回' : '') + (a.sec ? '・使った時間 ' + _usrDur(a.sec) : '') + (top.length ? '・よく使う画面：' + top.slice(0, 3).map(function(k) { var p = k.split('|'); return evEsc(_usLabel(p[0], p.slice(1).join('|'))) + ' ' + a.op[k]; }).join('、') : '') + '</div>';
+    if (_usr.open === u.id) r += '<div class="usr-x">' + (a.sec ? _usrHourBars(a.hr, '使った時間帯') : '') + '<table>' + top.map(function(k) { var p = k.split('|'); return '<tr><td>' + (p[0] === 'ck' ? '受付・会員証：' : '') + evEsc(_usLabel(p[0], p.slice(1).join('|'))) + '</td><td>' + a.op[k] + '回</td></tr>'; }).join('')
       + '<tr><td>読み取り</td><td>' + nf(a.n) + '回</td></tr></table></div>';
     return r + '</div>';
   }).join('') + (U.length > 400 ? '<div class="nt">ほか ' + (U.length - 400) + '人（ユニオンで絞ってください）</div>' : '') + '</div>'
-    + '<div class="us-b"><div class="nt">日数＝その期間に1回でも NAVIGATOR か受付を開いた日（v884 より新しい版）。開いた回数・画面＝アプリを開いた回数と、画面に移った回数（v887 より新しい版）。状態＝最後に NAVIGATOR を開いた時刻（10分以内なら「開いている」）。</div></div>';
+    + '<div class="us-b"><div class="nt">日数＝その期間に1回でも NAVIGATOR か受付を開いた日（v884 より新しい版）。開いた回数・画面＝アプリを開いた回数と、画面に移った回数（v887 より新しい版）。'
+    + '使った時間・時間帯＝アプリの画面が出ていた時間（v888 より新しい版。開いたまま置いてある時間も入ります）。状態＝最後に NAVIGATOR を開いた時刻（10分以内なら「開いている」）。<br>よく使う順＝使った日数 → 画面を開いた回数 → 使った時間 の順。</div></div>';
   return h;
 }
 function _usCss() {
@@ -3903,6 +3938,8 @@ function _usCss() {
     + '.usr-d{display:flex;gap:3px;margin:5px 0 3px}.usr-d i{flex:1;height:8px;border-radius:3px;background:var(--surface2)}.usr-d i.on{background:var(--accent)}'
     + '.usr-s{font-size:11.5px;color:var(--text-dim);line-height:1.5}.usr-x{margin-top:6px;font-size:12px}.usr-x table{width:100%;border-collapse:collapse}.usr-x td{padding:3px 2px;border-top:1px solid var(--border)}.usr-x td:last-child{text-align:right;font-weight:800}'
     + '.usr-on{color:var(--accent);font-weight:900}.usr-no{color:#FF6B7F;font-weight:800}'
+    + '.usr-hr{display:flex;align-items:flex-end;gap:2px;height:64px;padding:0 1px}.usr-hr>div{flex:1;height:100%;display:flex;align-items:flex-end;background:var(--surface2);border-radius:3px}.usr-hr i{display:block;width:100%;background:var(--accent);border-radius:3px;min-height:1px}'
+    + '.usr-hl{display:flex;justify-content:space-between;font-size:10px;color:var(--text-dim);margin-top:2px}'
     + '.us-ch{display:flex;gap:6px;margin:4px 0 8px}.us-ch span{padding:6px 12px;border-radius:999px;border:1px solid var(--border);font-size:12.5px;font-weight:800;cursor:pointer}.us-ch span.on{background:var(--accent);color:var(--go-ink,#06231c);border-color:var(--accent)}';
   document.head.appendChild(st);
 }
@@ -4963,7 +5000,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v887';
+  var DATA_VERSION = 'v888';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -7083,6 +7120,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v888', d:'2026-11-20', items:['👥 人ごとの利用：最後に開いた順・開いた回数順・使った時間順で並べられるように。使われている時間帯のグラフも出ます（オーナー）'] },
   { v:'v887', d:'2026-11-20', items:['アカウント管理（オーナー）の「📊 利用状況」に、その日に開いた人の数と「👥 人ごとの利用」（だれがよく使っていて、だれが使っていないか・よく使う画面）を追加しました'] },
   { v:'v886', d:'2026-11-19', items:['🛠 細かい修正をしました'] },
   { v:'v885', d:'2026-11-19', items:['アカウント管理（オーナー）の設定に「📊 利用状況」を追加しました。開いた人の数・使える人の数・Firestore の回数（1日ごと）・読み取りの内訳を、Firebase を開かずに見られます'] },
