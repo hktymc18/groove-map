@@ -270,7 +270,8 @@ service cloud.firestore {
     match /readStats/{d}/u/{id} {
       allow read: if isOwnerAdmin();
       allow create, update: if d.matches('^[0-9]{8}$')
-        && request.resource.data.keys().hasOnly(['uid', 'app', 'd', 'n', 'by', 'at', 'ver'])
+        && request.resource.data.keys().hasOnly(['uid', 'app', 'd', 'n', 'by', 'op', 'at', 'ver'])
+        && (!('op' in request.resource.data) || (request.resource.data.op is map && request.resource.data.op.size() <= 60))   // v887: 画面を開いた回数
         && request.resource.data.app in ['nav', 'ck']
         && request.resource.data.d == d
         && request.resource.data.n is int

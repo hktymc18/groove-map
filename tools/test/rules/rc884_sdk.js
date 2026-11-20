@@ -11,7 +11,7 @@ let fails = 0; const c = (n, ok, i) => { console.log((ok ? 'PASS' : 'FAIL') + ':
   await page.route('http://x.test/**', r => { const u = r.request().url();
     if (/app-compat/.test(u)) return r.fulfill({ body: fs.readFileSync(P + 'firebase-app-compat.js'), contentType: 'application/javascript' });
     if (/firestore-compat/.test(u)) return r.fulfill({ body: fs.readFileSync(P + 'firebase-firestore-compat.js'), contentType: 'application/javascript' });
-    if (/rc\.js/.test(u)) return r.fulfill({ body: MOD, contentType: 'application/javascript' });
+    if (/rc\.js/.test(u)) return r.fulfill({ body: MOD, contentType: 'application/javascript; charset=utf-8' });
     return r.fulfill({ body: '<html><body><script src="/app-compat.js"></script><script src="/firestore-compat.js"></script><script src="/rc.js"></script></body></html>', contentType: 'text/html' }); });
   await page.goto('http://x.test/');
   const r = await page.evaluate(async () => {
@@ -38,6 +38,10 @@ let fails = 0; const c = (n, ok, i) => { console.log((ok ? 'PASS' : 'FAIL') + ':
     const d = new Date(Date.now() + 9 * 3600000).toISOString().slice(0, 10).replace(/-/g, '');
     const saved = (await db.doc('readStats/' + d + '/u/U1_nav').get()).data();
     out.saved = saved; out.d = d;
+    // v887: 画面を開いた回数（起動・画面が変わった時だけ1回）
+    RC._st.last = null; tag = 'current'; RC.poll(); RC.poll(); tag = 'events:calendar'; RC.poll(); tag = 'current'; RC.poll();
+    RC.flush(); await new Promise(r => setTimeout(r, 1500));
+    out.op = ((await db.doc('readStats/' + d + '/u/U1_nav').get()).data() || {}).op;
     return out;
   });
   console.log(JSON.stringify(r).slice(0, 900));
@@ -47,6 +51,7 @@ let fails = 0; const c = (n, ok, i) => { console.log((ok ? 'PASS' : 'FAIL') + ':
   c('見張り: 最初に届いた数（3）＋そのあと変わった数（1）', r.listen['live|maps/events'] === 4, JSON.stringify(r.listen));
   c('全員分の検索（collectionGroup）も数える', r.cg['live|**/events'] === 4, JSON.stringify(r.cg));
   c('1人1日1件に足し込む（4＋2＝6）', r.saved && r.saved.n === 6 && r.saved.by['home|maps/months'] === 6 && r.saved.uid === 'U1' && r.saved.app === 'nav' && r.saved.d === r.d, JSON.stringify(r.saved));
+  c('v887: 画面を開いた回数（起動1・MAP2・カレンダー1。同じ画面のままなら数えない）', r.op && r.op['起動'] === 1 && r.op.current === 2 && r.op['events:calendar'] === 1, JSON.stringify(r.op));
   await b.close(); console.log(fails ? 'FAIL ' + fails : 'ALL PASS'); process.exit(fails ? 1 : 0);
 })().catch(e => { console.log('ERR', e.message); process.exit(1); });
 
