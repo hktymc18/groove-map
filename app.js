@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v892';
+var APP_JS_VERSION = 'v893';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4231,7 +4231,8 @@ function _admDupLine(u) {
   return '<div class="adm-sub" style="color:#FFB454">👥 同じ名前のアカウントが' + n + '件 ・ ' + fmtLastSeen(u.lastSeenAt) + '</div>';
 }
 function _admDelBtn(u) {
-  if (_admOwner() && u && u.deleted === true) return '<button class="adm-btn on" onclick="admUndelUser(\'' + u.id + '\')">元に戻す</button>';
+  if (_admOwner() && u && u.deleted === true) return (_admPurging(u) ? '<button class="adm-btn" onclick="admPurgeCancel(\'' + u.id + '\')">消すのをやめる</button>'
+      : '<button class="adm-btn on" onclick="admUndelUser(\'' + u.id + '\')">元に戻す</button>' + (_admPurgeOk(u) ? '<button class="adm-btn" style="border-color:#FF5D73;color:#FF5D73" onclick="admPurge(\'' + u.id + '\')">完全に消す</button>' : ''));
   return _admDelOk(u) ? '<button class="adm-btn" style="border-color:#FF5D73;color:#FF5D73" onclick="admDelUser(\'' + u.id + '\')">削除</button>' : '';
 }
 function admDelUser(uid) {
@@ -4252,8 +4253,44 @@ function admDelUser(uid) {
     .catch(function(e) { Object.assign(u, old); toast('削除できませんでした' + (e && e.code === 'permission-denied' ? '（権限がありません）' : '')); renderAdminList(); });
   renderAdminList();
 }
+// ── v893: 削除したアカウントを「完全に消す」（ログインのアカウント・アカウントの情報・MAPなどのデータ）。元に戻せない ──
+//   アプリは予約（users/{uid}.purge.req = true・オーナーだけ）を付けるだけ。消すのはサーバー（overdueReminders・9/12/15/18/21時）
+//   オーナー・管理者・受付のアカウントもある人は、サーバーが消さずに理由（purge.err）を書く
+function _admPurging(u) { return !!(u && u.purge && u.purge.req === true); }
+function _admPurgeOk(u) { return _admOwner() && u && u.deleted === true && !isOwnerUid(u.id) && u.role !== 'admin' && !(currentUser && u.id === currentUser.uid); }
+function _admPurgeNext() {   // 次にサーバーが動く時刻（日本時間 9・12・15・18・21時）
+  var j = new Date(Date.now() + 9 * 3600000), h = j.getUTCHours() + j.getUTCMinutes() / 60, H = [9, 12, 15, 18, 21];
+  for (var i = 0; i < H.length; i++) if (H[i] > h) return '今日の' + H[i] + '時ごろ';
+  return '明日の9時ごろ';
+}
+function _admPurgeLine(u) {
+  if (!_admOwner() || !u || u.deleted !== true || !u.purge) return '';
+  if (_admPurging(u)) return '<div class="adm-sub" style="color:#FF5D73">🗑 完全に消す予定（' + _admPurgeNext() + '）。それまでは「消すのをやめる」で取り消せます</div>';
+  if (u.purge.err) return '<div class="adm-sub" style="color:#FFB454">⚠ 完全には消していません：' + evEsc(u.purge.err) + '</div>';
+  return '';
+}
+function admPurge(uid) {
+  var u = _adminFindUser(uid); if (!_admPurgeOk(u)) return;
+  if (!confirm('このアカウントを完全に消しますか？\n\n' + (u.name || '') + '\n' + (u.email || '(メールなし)')
+    + '\n\n消えるもの：ログインのアカウント・アカウントの情報・このアカウントのMAP・予定などのデータ全部'
+    + '\n\n⚠ 消したあとは元に戻せません（同じメールアドレスで登録し直すことはできます）。'
+    + '\n実際に消すのは ' + _admPurgeNext() + ' です。それまでは取り消せます。')) return;
+  var d = { purge: { req: true, by: currentUser.uid, at: new Date().toISOString() } }, old = u.purge;
+  u.purge = d.purge;
+  fsSet('users/' + uid, d).then(function() { toast('完全に消す予約をしました（' + _admPurgeNext() + '）'); })
+    .catch(function(e) { u.purge = old; toast('予約できませんでした' + (e && e.code === 'permission-denied' ? '（権限がありません。ルールを入れてください）' : '')); renderAdminList(); });
+  renderAdminList();
+}
+function admPurgeCancel(uid) {
+  var u = _adminFindUser(uid); if (!u || !_admOwner() || !_admPurging(u)) return;
+  var d = { purge: { req: false, by: currentUser.uid, at: new Date().toISOString(), cancel: true } }, old = u.purge;
+  u.purge = d.purge;
+  fsSet('users/' + uid, d).then(function() { toast('完全に消すのをやめました'); }).catch(function() { u.purge = old; toast('取り消せませんでした'); renderAdminList(); });
+  renderAdminList();
+}
 function admUndelUser(uid) {
   var u = _adminFindUser(uid); if (!u || !_admOwner() || u.deleted !== true) return;
+  if (_admPurging(u)) { toast('先に「消すのをやめる」を押してください'); return; }
   if (!confirm((u.name || '') + '（' + (u.email || '') + '）を元に戻しますか？')) return;
   var st = u.deletedFrom || 'active', d = { deleted: false, status: st, restoredBy: currentUser.uid, restoredAt: new Date().toISOString() };
   Object.assign(u, d);
@@ -4271,7 +4308,7 @@ function adminPendingRowHtml(u){
     + (sub  ? '<div class="adm-sub">' + sub  + '</div>' : '')
     + (sub2 ? '<div class="adm-sub">' + sub2 + '</div>' : '')
     + (email? '<div class="adm-sub" style="opacity:.7">' + email + '</div>' : '')
-    + _admUnxLine(u) + _admDupLine(u) + _admCkLine(u) + _accRowChip(u)
+    + _admUnxLine(u) + _admDupLine(u) + _admPurgeLine(u) + _admCkLine(u) + _accRowChip(u)
     + '</div><div class="adm-actions">' + _admDelBtn(u)
     + '<button class="adm-btn on" onclick="adminApprove(\'' + uid + '\')">承認</button>'
     + '<button class="adm-btn" style="border-color:#FF5D73;color:#FF5D73" onclick="adminReject(\'' + uid + '\')">却下</button>'
@@ -4315,7 +4352,7 @@ function adminRowHtml(u) {
     + (sub  ? '<div class="adm-sub">' + sub  + '</div>' : '')
     + (sub2 ? '<div class="adm-sub">' + sub2 + '</div>' : '')
     + (email? '<div class="adm-sub" style="opacity:.7">' + email + '</div>' : '')
-    + _admUnxLine(u) + _admDupLine(u) + _admCkLine(u) + _accRowChip(u) + _admCoreChip(u)
+    + _admUnxLine(u) + _admDupLine(u) + _admPurgeLine(u) + _admCkLine(u) + _accRowChip(u) + _admCoreChip(u)
     + '</div><div class="adm-actions">' + actions + _admDelBtn(u) + '</div></div>';
 }
 // ── v770: 受付（BASE CHECK-IN）の名簿とアカウントの紐付け ──
@@ -5121,7 +5158,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v892';
+  var DATA_VERSION = 'v893';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -7260,6 +7297,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v893', d:'2026-11-21', items:['アカウント管理（オーナー）：「削除したアカウント」に「完全に消す」ボタン。ログインのアカウント・アカウントの情報・MAPなどのデータを消します（元に戻せません。実際に消すのは 9・12・15・18・21時ごろで、それまでは「消すのをやめる」で取り消せます）'] },
   { v:'v892', d:'2026-11-20', items:['MAPのフロント追加：削除した人を選んだまま「＋追加」すると、追加先が削除した人になり、足した人がMAPに出なかったのを修正（その上の人の下に入ります。前に足して見えなくなっていた人も、上の人の下に出ます）（#45）','ビジネス（BMなど）からユーザーにして、また戻した人に「元ユーザー」の札が出ていたのを修正。札はもともとユーザーだった人だけ（#47）','研修結果を「流れた」にしても、MAPでは研修の段階（PAなど）のまま出ていたのを修正。OUTになります（進行中に戻すと前のタイトルに戻ります。前に「流れた」にした人もOUTに直ります）（#46）'] },
   { v:'v891', d:'2026-11-20', items:['📊 利用状況（オーナー）：細かい記録が届いていない人でも、最後に開いた日が期間の中なら「使っていない」にしないように。「よく使う」は記録のある日数（11/19〜）の半分以上で判定。古い版のアプリで回数の記録が無い人は「0回」ではなく「—」と「古い版」の印。記録が抜けている人の数も出します'] },
   { v:'v890', d:'2026-11-21', items:['新しい機能の準備をしました（今は画面の変化はありません）'] },

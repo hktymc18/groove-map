@@ -8,6 +8,8 @@ const { onSchedule } = require('firebase-functions/v2/scheduler');
 const admin = require('firebase-admin');
 // 📊 v886: Firestore 全体の回数のまとめ（overdueReminders の最後に動かす。新しい関数を作ると、作る時に呼び出しの権限の設定が要るため）
 const usage = require('./usage');
+// 🗑 v893: 削除したアカウントを完全に消す（オーナーの予約があるものだけ。overdueReminders の最後に動かす）
+const purge = require('./purge');
 
 admin.initializeApp();
 
@@ -114,6 +116,8 @@ exports.overdueReminders = onSchedule(
     console.log(`overdueReminders: users=${Object.keys(tokByUid).length} sent=${sent} index=${idxOk}/${idxOk + idxNg}`);
     // 📊 v886: Firestore 全体の回数を appStats/usage にまとめる（1日5回・この関数の最後に。失敗しても通知には影響しない）
     try { await usage.run(admin); } catch (eU) { console.log('usageStats error: ' + eU); }
+    // 🗑 v893: 「完全に消す」の予約があるアカウントを消す（1日5回）
+    try { await purge.run(admin); } catch (eP) { console.log('purge error: ' + eP); }
   }
 );
 
