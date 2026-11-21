@@ -1559,7 +1559,7 @@ body.practice .topbar{top:var(--pxh,36px);}
   #pRoster thead th:last-child{display:none;}
   #pRoster.umode thead{display:none;}   /* ユーザーの名簿は並べ替えが無い（来場が新しい順） */
   #pRoster tbody{display:grid;gap:8px;}
-  #pRoster tbody tr{display:grid;grid-template-columns:auto 1fr auto;grid-template-areas:"sel nm st" "sel no gr" "sel ti ti" "op op op";
+  #pRoster tbody tr{display:grid;grid-template-columns:auto 1fr auto;grid-template-areas:"sel nm st" "sel no gr" "sel ti ti" "sel la la" "op op op";
     column-gap:10px;row-gap:2px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;}
   #pRoster tbody td{border:none;padding:0;white-space:normal;min-width:0;}
   #pRoster td.rc-sel{grid-area:sel;align-self:start;padding-top:3px;}
@@ -1567,6 +1567,8 @@ body.practice .topbar{top:var(--pxh,36px);}
   #pRoster td.rc-nm{grid-area:nm;font-size:15px;}
   #pRoster td.rc-no{grid-area:no;font-size:12.5px;color:var(--sub);}
   #pRoster td.rc-ti{grid-area:ti;}
+  #pRoster td.rc-la{grid-area:la;font-size:12.5px;}
+  #pRoster td.rc-la:empty{display:none;}
   #pRoster td.rc-ti:empty{display:none;}
   #pRoster td.rc-gr{grid-area:gr;font-size:12.5px;color:var(--sub);text-align:right;}
   #pRoster td.rc-st{grid-area:st;text-align:right;white-space:nowrap;}
@@ -1785,6 +1787,7 @@ body.practice .topbar{top:var(--pxh,36px);}
       <button id="btnCsvOut" class="rmore">CSV出力</button>
       <button id="btnNameCopy" class="rmore" title="タイトルで絞って名前の一覧をコピー（NAVIGATORの先行利用に貼り付け）">📋 名前をコピー</button>
       <button id="btnGroupRen" class="hide rmore">系列名変更</button>
+      <button id="btnInv" class="rmore" title="しばらく動きがない人（研修・出席・面談シート）を確かめて、続けている／様子見／無効化を選ぶ">🧹 棚卸し</button>
     </div>
     <div class="toolrow hide rmore" id="bulkRow">
       <span style="font-size:13px;font-weight:700;" id="selCount">選択中: 0名</span>
@@ -2895,10 +2898,11 @@ if(gTrainerMode) document.documentElement.classList.add('trm');   // 🎓 研修
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v166';
+var APP_VER = 'v167';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v167', d: '2026/11/21', items: ['🧹 名簿に「棚卸し」を追加：研修・出席・面談シートなどの動きが14日以上ない人を一覧にして、「続けている／様子見（2週間）／無効化」を選べます（研修生も正規メンバーも）', '📅 棚卸しを開くと、名簿に「最後の動き」の列が出て、古い順に並べられます'] },
   { v: 'v166', d: '2026/11/21', items: ['📗 リーダー向けガイドを追加（🔰 使い方 から開けます）：受付管理・研修生登録・ATTACK LIST の使い方と、NAVIGATOR とのつながりを1ページに', '🛠 研修生登録の「＋登録／研修後入力」のタブが黒に戻っていたのを、グレーの丸に直しました'] },
   { v: 'v165', d: '2026/11/21', items: ['🐞 特別カード：工房のカードと本人の設定が食い違っていると、外しても本人の会員証から外れなかったのを直しました（会員証の画面に「外す」ボタンも追加）'] },
   { v: 'v164', d: '2026/11/20', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
@@ -8436,7 +8440,8 @@ function renderRoster(){
       + label + (cur ? (gRosterSort.asc ? ' ▲' : ' ▼') : '') + '</th>';
   }
   $('rosterHead').innerHTML = (edit ? '<th style="width:2em;"><input type="checkbox" id="selAllChk" title="表示中を全選択"></th>' : '')
-    + sth('no', '番号') + sth('name', '氏名') + sth('ti', 'タイトル') + sth('group', '系列') + sth('st', '状態') + '<th>操作</th>';
+    + sth('no', '番号') + sth('name', '氏名') + sth('ti', 'タイトル') + sth('group', '系列') + sth('st', '状態')
+    + (gLastAct[gRosterUnion] ? sth('la', '最後の動き') : '') + '<th>操作</th>';
   var qt = $('qTitle');
   if(qt){ qt.innerHTML = ckTitleMinOpts(gRosterTi, 'タイトル: すべて'); }
   $('roBadge').classList.toggle('hide', edit);
@@ -8478,6 +8483,9 @@ function renderRoster(){
       r = (ckMemberOff(a) ? 1 : 0) - (ckMemberOff(b) ? 1 : 0);
     } else if(k === 'ti'){
       r = ckTitleRank(a) - ckTitleRank(b);
+    } else if(k === 'la'){
+      var la = ckLastActOf(a), lb = ckLastActOf(b);
+      r = (la ? la.d : '') < (lb ? lb.d : '') ? -1 : (la ? la.d : '') > (lb ? lb.d : '') ? 1 : 0;
     }
     return gRosterSort.asc ? r : -r;
   }
@@ -8498,6 +8506,7 @@ function renderRoster(){
       + '<td class="rc-gr">' + esc(m.group || '') + '</td>'
       + '<td class="rc-st">' + (ckMemberOff(m) ? '<span class="pill n">無効</span>' : '<span class="pill g">有効</span>')
       + (m.cardToken ? ' <span class="pill a" title="スマホ会員証 発行済み">証</span>' : '') + '</td>'
+      + (gLastAct[gRosterUnion] ? '<td class="rc-la">' + ckLastActHtml(m) + '</td>' : '')
       + '<td class="rc-op"><div class="rowbtns">'
       + '<button data-a="card" data-no="' + esc(m.no) + '">会員証</button>'
       + (edit
@@ -8511,7 +8520,7 @@ function renderRoster(){
       + '</div></td>'
       + '</tr>';
   });
-  var cols = edit ? 7 : 6;
+  var cols = (edit ? 7 : 6) + (gLastAct[gRosterUnion] ? 1 : 0);
   tb.innerHTML = html || '<tr><td colspan="' + cols + '" style="color:var(--sub)">メンバーがいません。'
     + (edit ? '「＋ メンバー追加」または「CSV取込」で登録してください。' : '') + '</td></tr>';
   $('rosterCount').textContent = gRosterUnion + '：' + gMembers.length + '名（表示 ' + shown + '名'
@@ -10129,6 +10138,111 @@ $('btnCsvOut').onclick = function(){
   });
   csvDownload('members_' + gRosterUnion + '.csv', rows);
 };
+/* ── 🧹 v167: 棚卸し（しばらく動きがない人を確かめて、続けている／様子見／無効化）──
+   最後の動き＝ 受付での出席（直近1ヶ月）・研修の受講・面談シート・名簿に登録した日・前の棚卸しで「続けている」にした日 のいちばん新しい日。
+   14日以上 → 1回目、28日以上 → 2回目（研修生も正規メンバーも同じ）。「様子見」は14日のあいだ候補に出さない。
+   出席は集計と同じ「直近1ヶ月」の読み方（10分使い回す）を使う。名簿の「最後の動き」の列は、棚卸しを開いた後に出る */
+var CK_INV_D1 = 14, CK_INV_D2 = 28;
+var gLastAct = {};   // ユニオン → { 番号: { d:'YYYY-MM-DD', why:'出席' } }（直近1ヶ月の出席）
+function ckDaysAgo(d){ if(!d) return 9999; var t = new Date(d + 'T00:00:00'); return Math.floor((new Date(todayStr() + 'T00:00:00') - t) / 86400000); }
+function ckYmdMs(ms){ var d = new Date(ms); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+// その人の最後の動き { d, why }（無ければ null＝1か月以上なし）
+function ckLastActOf(m){
+  var c = [], att = (gLastAct[m.union || gRosterUnion] || {})[m.no];
+  if(att) c.push(att);
+  var tr = m.trainings || {};
+  Object.keys(tr).forEach(function(k){ if(tr[k] && tr[k].at) c.push({ d: String(tr[k].at).slice(0, 10), why: k + ' 受講' }); });
+  if(m.coSheet && m.coSheet.atMs) c.push({ d: ckYmdMs(m.coSheet.atMs), why: '面談シート' });
+  var since = ckSinceOf(m); if(since) c.push({ d: since, why: '名簿に登録' });
+  if(m.invAt) c.push({ d: String(m.invAt).slice(0, 10), why: '棚卸しで続けている' });
+  var best = null; c.forEach(function(x){ if(x.d && (!best || x.d > best.d)) best = x; });
+  return best;
+}
+// 棚卸しの段階: 0＝まだ、1＝14日以上、2＝28日以上（様子見の間は 0）
+function ckInvStage(m){
+  if(ckMemberOff(m)) return 0;
+  if(m.invSnooze && String(m.invSnooze) >= todayStr()) return 0;
+  var la = ckLastActOf(m), n = la ? ckDaysAgo(la.d) : 9999;
+  return n >= CK_INV_D2 ? 2 : n >= CK_INV_D1 ? 1 : 0;
+}
+function ckLastActHtml(m){
+  var la = ckLastActOf(m), st = ckInvStage(m);
+  var tx = la ? (trDateShort(la.d) + ' ' + la.why) : '1か月以上なし';
+  return '<span style="color:' + (st === 2 ? 'var(--accent)' : st === 1 ? 'var(--amber)' : 'var(--sub)') + ';">' + (st ? '🧹 ' : '') + esc(tx) + '</span>';
+}
+// 直近1ヶ月の出席から、最後に出席した日を作る（集計と同じ読み方・10分使い回す）
+function ckLoadLastAct(union){
+  return ckRecentSnapCached(union).then(function(){
+    var rg = ckRecentRange(), keys = [rg.from.slice(0, 7)];
+    if(keys.indexOf(rg.to.slice(0, 7)) < 0) keys.push(rg.to.slice(0, 7));
+    return Promise.all(keys.map(function(k){ return ckMonthEvents(k); })).then(function(qss){
+      var evs = [];
+      qss.forEach(function(qs){ qs.forEach(function(d){ var ev = d.data(); ev.id = d.id;
+        if((ev.unions || []).indexOf(union) >= 0 && (ev.date || '') >= rg.from && (ev.date || '') <= rg.to) evs.push(ev); }); });
+      return Promise.all(evs.map(function(ev){ var pa = ckAttOf(ev.id, union); return pa.then(function(aqs){ return { ev: ev, aqs: aqs }; }); }));
+    }).then(function(list){
+      var by = {};
+      list.forEach(function(x){ x.aqs.forEach(function(d){ var a = d.data(); if(a.status === 'pending' || a.status === 'rejected') return;
+        var dd = x.ev.date || ''; if(!by[d.id] || dd > by[d.id].d) by[d.id] = { d: dd, why: '出席（' + (x.ev.name || '') + '）' }; }); });
+      gLastAct[union] = by;
+      return by;
+    });
+  });
+}
+$('btnInv').onclick = function(){ ckInvOpen(); };
+function ckInvOpen(){
+  var un = gRosterUnion, edit = canEditRoster();
+  modal('<h2>🧹 棚卸し — ' + esc(un) + '</h2><p style="font-size:13px;color:var(--sub);">読み込み中…（直近1ヶ月の出席を確かめています）</p>', true);
+  ckLoadLastAct(un).then(function(){
+    renderRoster();
+    var L = gMembers.filter(function(m){ return ckInvStage(m) > 0; });
+    L.sort(function(a, b){ var x = ckLastActOf(a), y = ckLastActOf(b); return (x ? x.d : '') < (y ? y.d : '') ? -1 : (x ? x.d : '') > (y ? y.d : '') ? 1 : 0; });
+    var row = function(m){
+      var st = ckInvStage(m);
+      return '<div class="inv-r" data-no="' + esc(m.no) + '" style="border-bottom:1px solid var(--line);padding:10px 0;">'
+        + '<div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;"><b style="font-size:15px;">' + esc(m.name || '') + '</b>'
+        + '<small style="color:var(--sub);">' + esc(m.no) + (m.group ? '・' + esc(m.group) : '') + '</small>'
+        + (m.trainee ? ' <span class="pill n">研修生</span>' : '')
+        + ' <span class="pill ' + (st === 2 ? 'n" style="color:var(--accent);border-color:var(--accent);' : 'a') + '">' + (st === 2 ? '2回目（28日以上）' : '1回目（14日以上）') + '</span></div>'
+        + '<div style="font-size:13px;margin:2px 0 6px;">最後の動き：' + ckLastActHtml(m) + '</div>'
+        + (edit ? '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
+          + '<button data-inv="ok" style="padding:6px 12px;font-size:13px;">✓ 続けている</button>'
+          + '<button data-inv="wait" style="padding:6px 12px;font-size:13px;">⏳ 様子見（2週間）</button>'
+          + '<button data-inv="off" class="danger ghost" style="padding:6px 12px;font-size:13px;">無効化</button></div>' : '')
+        + '</div>';
+    };
+    var two = L.filter(function(m){ return ckInvStage(m) === 2; }), one = L.filter(function(m){ return ckInvStage(m) === 1; });
+    modal('<h2>🧹 棚卸し — ' + esc(un) + hq('最後の動き＝受付での出席（直近1ヶ月）・研修の受講・面談シート・名簿に登録した日のいちばん新しい日。\n14日以上で1回目、28日以上で2回目に出ます（研修生も正規メンバーも同じ）。\n「続けている」は今日から数え直し、「様子見」は2週間出しません。「無効化」は名簿の無効化と同じです（いつでも有効に戻せます）。') + '</h2>'
+      + (L.length ? '' : '<p style="font-size:14px;">✓ 今は、14日以上動きがない人はいません。</p>')
+      + (two.length ? '<h3 style="font-size:15px;margin:10px 0 0;color:var(--accent);">28日以上 動きなし（' + two.length + '人）</h3>' + two.map(row).join('') : '')
+      + (one.length ? '<h3 style="font-size:15px;margin:14px 0 0;color:var(--amber);">14日以上 動きなし（' + one.length + '人）</h3>' + one.map(row).join('') : '')
+      + (edit ? '' : '<p style="font-size:12.5px;color:var(--sub);margin-top:10px;">続けている・様子見・無効化を選べるのは、ユニオン管理者・受付管理者です。</p>')
+      + '<div class="btns"><button id="invClose">閉じる</button></div>', true);
+    $('invClose').onclick = closeModal;
+    Array.prototype.forEach.call(document.querySelectorAll('.inv-r button[data-inv]'), function(b){
+      b.onclick = function(){
+        var el = b.closest('.inv-r'), no = el.getAttribute('data-no'), m = gMembers.filter(function(x){ return x.no === no; })[0];
+        if(!m) return;
+        var a = b.getAttribute('data-inv');
+        var done = function(t){ el.innerHTML = '<div style="font-size:13.5px;color:var(--sub);padding:4px 0;">' + esc(m.name || '') + '：' + t + '</div>'; renderRoster(); };
+        if(a === 'off'){
+          // 名簿の「無効化」と同じ（NAVIGATOR のアカウントも止まるかを確かめる画面）。閉じたら棚卸しを開き直す
+          ckOffConfirm(m, function(linkTo){ ckTogNow(m, linkTo); setTimeout(ckInvOpen, 1200); });
+          return;
+        }
+        var upd = a === 'ok' ? { invAt: todayStr(), invSnooze: FV.delete() } : { invSnooze: ckYmdMs(Date.now() + 14 * 86400000) };
+        b.disabled = true;
+        db.collection('checkinMembers').doc(no).set(upd, { merge: true }).then(function(){
+          if(a === 'ok'){ m.invAt = upd.invAt; delete m.invSnooze; } else m.invSnooze = upd.invSnooze;
+          done(a === 'ok' ? '✓ 続けている（今日から数え直し）' : '⏳ 様子見（' + trDateShort(m.invSnooze) + ' まで出しません）');
+        }).catch(function(e){ b.disabled = false; toast(permMsg(e, '保存できませんでした（ユニオン管理者・受付管理者のみ）')); });
+      };
+    });
+  }).catch(function(e){
+    modal('<h2>🧹 棚卸し</h2><p class="mc-err">' + esc(permMsg(e, '読み込めませんでした')) + '</p><div class="btns"><button id="invClose">閉じる</button></div>');
+    $('invClose').onclick = closeModal;
+  });
+}
 /* ── 📋 v153: タイトルで絞って名前の一覧をコピー（NAVIGATORの「名簿を貼り付けて先行利用に」へ）──
    有効な人だけ（研修生・無効は入れない）。範囲は表示中のユニオンか、見られる全ユニオン */
 $('btnNameCopy').onclick = function(){
