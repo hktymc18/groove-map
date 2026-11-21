@@ -117,7 +117,8 @@ service cloud.firestore {
       // 更新：オーナーは全員／ユニオンリーダーは同ユニオンのみ（承認・無効化・役割付与）。
       //       本人は role/status/ckNo（受付の名簿との紐付け）/early（先行利用）を変えない範囲のみ可。
       // v831: ユニオンの管理者は、管理しているユニオン（所属・兼務）の人だけ。管理していないユニオンへは移せない
-      allow update: if isOwnerAdmin()
+      // 🗑 v893: 完全に消す（purge）の予約を付ける・外すのはオーナーだけ（消すのはサーバー＝overdueReminders）
+      allow update: if purgeKeep() && (isOwnerAdmin()
         || (admOf(resource.data.get('union', '')) && admOf(request.resource.data.get('union', '')))
         || (isSelf(uid)
             && request.resource.data.get('role','member')   == resource.data.get('role','member')
@@ -132,7 +133,10 @@ service cloud.firestore {
                 || resource.data.get('unionSelectedV2', false) != true
                 || request.resource.data.get('union', '') == resource.data.get('union', '')))
         || alLeaderOut()
-        || ckLinkByCk();
+        || ckLinkByCk());
+      function purgeKeep() {
+        return isOwnerAdmin() || request.resource.data.get('purge', null) == resource.data.get('purge', null);
+      }
 
       // 🎫 v33: 受付で無効にする時、受付の管理者（ユニオン管理者・受付管理者）がその場でNAVIGATORのアカウントを名簿と紐付けられる
       //   ・まだ紐付いていないアカウントだけ（付け替え・解除はNAVIGATORのアカウント管理で）
