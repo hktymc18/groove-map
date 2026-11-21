@@ -644,6 +644,24 @@ service cloud.firestore {
 
     // 📊 稼働率の集計結果（受付システムが計算して保存 → GROOVE MAPの受付連携は読むだけ）
     //   docId = {ユニオン}__{YYYY-MM}。書けるのはそのユニオンの有効メンバー・受付管理者・オーナー
+    // 🧹 v36（受付 v168）: 棚卸し。checkinInventory/{ユニオン} はサーバー（functions/inventory.js）だけが書く。
+    //   読めるのは そのユニオンの人・名簿を見られる人（管理者・リーダー）。
+    //   回答 ans/{会員番号} は、お知らせを受けた人（who に入っている人）かユニオンの管理者だけが、自分の名前で書ける。
+    //   中身は a（ok=続けている・wait=様子見・quit=やめた）・by・at だけ。名簿への反映はサーバーが行う
+    match /checkinInventory/{un} {
+      allow read: if signedIn() && notDisabled(request.auth.uid) && (ckMyUnion() == un || ckCanSee(un));
+      allow write: if false;
+      match /ans/{no} {
+        allow create, update: if signedIn() && notDisabled(request.auth.uid)
+          && request.resource.data.keys().hasOnly(['a', 'by', 'at'])
+          && request.resource.data.by == request.auth.uid
+          && request.resource.data.a in ['ok', 'wait', 'quit']
+          && (get(/databases/$(database)/documents/checkinInventory/$(un)).data.get('who', {}).get(no, []).hasAny([request.auth.uid])
+              || isCkAdmin(un));
+        allow read: if signedIn() && (resource.data.by == request.auth.uid || isCkAdmin(un));
+        allow delete: if false;
+      }
+    }
     match /checkinStats/{sid} {
       allow read: if resource == null || ckCanSee(resource.data.get('union', ''))
         // 🔗 v82: 連携先ユニオン向けの集計（{ユニオン}__{key}__to__{連携先}・「MAPで連携するユニオン」の人の分だけ）は連携先ユニオンの人も読める

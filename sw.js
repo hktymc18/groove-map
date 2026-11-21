@@ -49,6 +49,15 @@ self.addEventListener('notificationclick', function (e) {
   // v351: 期限まとめ通知→ToDoの今日一覧へ / v358: dataが落ちる環境向けにタグ(gm-due〜)でも判定
   var tg = (e.notification && e.notification.tag) || '';
   var isTodo = !evId && (!!d.todo || tg.indexOf('gm-due') === 0);
+  // v894: 受付の棚卸しのお知らせ（tag=gm-inv）は、受付の棚卸しの回答ページを開く
+  if (tg.indexOf('gm-inv') === 0) {
+    var invUrl = './checkin/index.html#inv';
+    e.waitUntil(clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (list) {
+      for (var j = 0; j < list.length; j++) { if (/\/checkin\/[^#]*#inv/.test(list[j].url || '') && 'focus' in list[j]) return list[j].focus(); }
+      if (clients.openWindow) return clients.openWindow(invUrl);
+    }));
+    return;
+  }
   e.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (list) {
       for (var i = 0; i < list.length; i++) {
@@ -62,8 +71,8 @@ self.addEventListener('notificationclick', function (e) {
   );
 });
 
-var CACHE = 'groove-map-v893';
-var APP_JS = './app.js?v=v893'; // v512: アプリ本体（index.htmlの<script src>と同じURL）
+var CACHE = 'groove-map-v894';
+var APP_JS = './app.js?v=v894'; // v512: アプリ本体（index.htmlの<script src>と同じURL）
 var ASSETS = [
   './',
   './index.html',
