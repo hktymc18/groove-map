@@ -55,8 +55,11 @@ T.run(async () => {
   c('「‹ メニュー」でメニューへ', w.currentView === 'menu');
   w.switchView('current'); await sleep(30);
   c('MAPは下の帯の中に「‹ メニュー」', !!$('#mxBtm .bk.mn'));
+  const nv0 = w.NV_TONE; w.NV_TONE = false; // v895: 新しいトーンを切った時（今までの見た目）の確認
   c('v635: BR以上はタイトルの色（R=赤・E=緑・G=金は黒い字）', w._mxK({ title: 'ルビー' }, 'br') === '#FF5D73' && w._mxK({ title: 'エメラルド' }, 'br') === '#34D399' && w._mxK({ title: 'BR' }, 'br') === 'var(--mxbr)' && w._mxInk(w._mxK({ title: 'ゴールド' }, 'br')).indexOf('#1B1F2A') >= 0 && w._mxK({ title: 'Q2' }, 'ex') === 'var(--mxex)');
   c('v636: TEはグレーに近い黒', ['#3A3F4A', '#2A2E36'].indexOf(w._mxK({ title: 'チームエリート' }, 'br')) >= 0);
+  w.NV_TONE = nv0;
+  c('v895: 新しいトーンでは BR以上はバイオレット1色', w._mxK({ title: 'ルビー' }, 'br') === 'var(--mxbr)' && w._mxK({ title: 'チームエリート' }, 'br') === 'var(--mxbr)');
   w.switchView('events'); w.setEventsMode('calendar'); await sleep(30); w.cvBack(); await sleep(20);
   c('v633: カレンダーの「‹ 戻る」はメニューへ', w.currentView === 'menu');
   w.switchView('events'); w.setEventsMode('agenda'); await sleep(30); w.cvBack(); await sleep(20);
