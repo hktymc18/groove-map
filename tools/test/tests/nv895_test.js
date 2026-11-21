@@ -1,4 +1,4 @@
-// v894：MAP（現状・理想）を開いている間だけ新しいトーン（NAVIGATOR トーン表）。PC はカードの色・角・札、スマホは札の色。名前はすべて架空
+// v895：MAP（現状・理想）を開いている間だけ新しいトーン（NAVIGATOR トーン表）。PC はカードの色・角・札、スマホは札の色。名前はすべて架空
 const T = require('../lib/head.js')();
 const { w, c, sleep, setWH, $, $$ } = T;
 const fs = require('fs'), path = require('path');
@@ -30,5 +30,5 @@ T.run(async () => {
   const row = w._mxRowHtml({ id: 'a', lastName: '見本', firstName: '二', title: 'Q2', activity: 'A' }, 'current', 1, [], true, '#26C7B3', 0, false, false);
   c('スマホ：タイトルの札は区分の色（var(--nvt-ex)）', /background:var\(--nvt-ex\);color:var\(--nvt-ex-ink\)/.test(row), row.slice(0, 200));
   c('スマホ：系列の線も4色', w.MX_FAM === w.NV_LINE);
-  c('APP_JS_VERSION v894 以上', +(/APP_JS_VERSION = 'v(\d+)'/.exec(fs.readFileSync(path.join(__dirname, '../../../app.js'), 'utf8')) || [0, 0])[1] >= 894);
+  c('APP_JS_VERSION v895 以上', +(/APP_JS_VERSION = 'v(\d+)'/.exec(fs.readFileSync(path.join(__dirname, '../../../app.js'), 'utf8')) || [0, 0])[1] >= 895);
 });

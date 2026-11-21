@@ -1979,6 +1979,14 @@ body.practice .topbar{top:var(--pxh,36px);}
 </div>
 
 <!-- 🎓 研修生登録ページ（#trainer・ガイダンス担当のスマホ向け） -->
+<!-- 🧹 v168: 棚卸しの回答ページ（#inv・スマホの通知から開く） -->
+<div id="vInv" class="hide">
+  <div style="max-width:560px;margin:0 auto;padding:18px 14px 40px;">
+    <h2 style="margin:0 0 4px;font-size:20px;">🧹 棚卸しのお願い</h2>
+    <p style="margin:0 0 12px;font-size:13.5px;color:var(--sub);">研修・出席がしばらくない人です。続けているか、教えてください。</p>
+    <div id="invBox"><p style="font-size:13px;color:var(--sub);">読み込み中…</p></div>
+  </div>
+</div>
 <div id="vTrainer" class="hide">
   <div style="max-width:560px;margin:0 auto;padding:14px 14px 40px;">
     <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
@@ -2296,7 +2304,7 @@ function beep(kind){
   }catch(e){}
 }
 function showView(id){
-  ['vLogin','vProfile','vActivate','vApp','vCard','vReceive','vTrainer','vOl','vCol','vJoin'].forEach(function(v){
+  ['vLogin','vProfile','vActivate','vApp','vCard','vReceive','vTrainer','vOl','vCol','vJoin','vInv'].forEach(function(v){
     $(v).classList.toggle('hide', v !== id);
   });
   if(id === 'vApp') setTimeout(setTbh, 0);   // 固定ヘッダー位置の計測（表示後でないと高さが取れない）
@@ -2871,6 +2879,7 @@ var gJoinKey = gCardToken ? null : (function(){ var m = /[#&]uj=([A-Za-z0-9_-]+)
 var gApplyId = (gCardToken || gJoinKey) ? null : (function(){ var m = /[#&]ua=([a-z0-9]{24})/.exec(location.hash); return m ? m[1] : null; })();
 if(gJoinKey || gApplyId){ gReceiveMode = false; gColMode = false; }
 var gTrainerMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && /#trainer/.test(location.hash);   // 🎓 研修生登録ページ
+var gInvMode = !gCardToken && !gReceiveMode && !gOlKey && !gColMode && !gTrainerMode && /[#&]inv\b/.test(location.hash);   // 🧹 v168: 棚卸しの回答ページ
 if(gTrainerMode) document.documentElement.classList.add('trm');   // 🎓 研修生登録ページの印（v160 から色は全部の画面で同じ）
 // 用途ごとに「ホーム画面に追加」用のアイコンと名前を差し替える
 // （同じHTMLを共有しているため、会員証（BASE CHECK-IN）と同じアイコン・名前が並んで
@@ -2898,10 +2907,11 @@ if(gTrainerMode) document.documentElement.classList.add('trm');   // 🎓 研修
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v167';
+var APP_VER = 'v168';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v168', d: '2026/11/21', items: ['🔔 棚卸しの自動のお知らせ：毎週月曜の朝、14日・28日動きがない人を、研修の担当とUPルビーにスマホの通知でお知らせ。通知から「続けている／様子見／やめた」を選ぶと、名簿に反映されます（やめた＝無効化）', '🧹 名簿の「棚卸し」に、お知らせへの回答の記録を表示'] },
   { v: 'v167', d: '2026/11/21', items: ['🧹 名簿に「棚卸し」を追加：研修・出席・面談シートなどの動きが14日以上ない人を一覧にして、「続けている／様子見（2週間）／無効化」を選べます（研修生も正規メンバーも）', '📅 棚卸しを開くと、名簿に「最後の動き」の列が出て、古い順に並べられます'] },
   { v: 'v166', d: '2026/11/21', items: ['📗 リーダー向けガイドを追加（🔰 使い方 から開けます）：受付管理・研修生登録・ATTACK LIST の使い方と、NAVIGATOR とのつながりを1ページに', '🛠 研修生登録の「＋登録／研修後入力」のタブが黒に戻っていたのを、グレーの丸に直しました'] },
   { v: 'v165', d: '2026/11/21', items: ['🐞 特別カード：工房のカードと本人の設定が食い違っていると、外しても本人の会員証から外れなかったのを直しました（会員証の画面に「外す」ボタンも追加）'] },
@@ -6777,7 +6787,7 @@ if(gReceiveMode){
 auth.onAuthStateChanged(function(u){
   if(gCardToken || gReceiveMode || gOlKey || gColMode || gJoinKey || gApplyId) return;   // 会員証・受け取り・OLチェックアウト・申し込み中は通常画面に切り替えない
   gUser = u;
-  if(!gTrainerMode && !ckAutoOutCheck(u)) return;   // ⏱ #24 受付は4時間で自動ログアウト
+  if(!gTrainerMode && !gInvMode && !ckAutoOutCheck(u)) return;   // ⏱ #24 受付は4時間で自動ログアウト
   if(!u){ gProf = null; showView('vLogin'); return; }
   db.collection('users').doc(u.uid).get().then(function(snap){
     if(!snap.exists || !(snap.data().union)){
@@ -6792,6 +6802,7 @@ auth.onAuthStateChanged(function(u){
     }
     gUnion = gProf.union;
     if(gTrainerMode){ trainerEnter(); return; }
+    if(gInvMode){ invEnter(); return; }
     afterLogin();
   }).catch(function(e){ toast('プロフィール読込エラー: ' + e.message); showView('vLogin'); });
 });
@@ -10217,7 +10228,21 @@ function ckInvOpen(){
       + (two.length ? '<h3 style="font-size:15px;margin:10px 0 0;color:var(--accent);">28日以上 動きなし（' + two.length + '人）</h3>' + two.map(row).join('') : '')
       + (one.length ? '<h3 style="font-size:15px;margin:14px 0 0;color:var(--amber);">14日以上 動きなし（' + one.length + '人）</h3>' + one.map(row).join('') : '')
       + (edit ? '' : '<p style="font-size:12.5px;color:var(--sub);margin-top:10px;">続けている・様子見・無効化を選べるのは、ユニオン管理者・受付管理者です。</p>')
+      + '<div id="invLog"></div>'
       + '<div class="btns"><button id="invClose">閉じる</button></div>', true);
+    // 🧹 v168: 週1の自動のお知らせ（担当・UPルビー）への回答の記録
+    db.collection('checkinInventory').doc(un).get().then(function(s){
+      var inv = s.exists ? s.data() : null, lg = $('invLog');
+      if(!inv || !lg) return;
+      var log = (inv.log || []).slice(-15).reverse();
+      lg.innerHTML = '<h3 style="font-size:14.5px;margin:16px 0 4px;">🔔 自動のお知らせ' + hq('毎週月曜の朝、14日・28日動きがない人を、研修の担当とUPルビーにスマホの通知で聞いています（同じ人に同じ段階は1回だけ）。回答は数時間以内に名簿に反映されます。') + '</h3>'
+        + '<p style="font-size:12.5px;color:var(--sub);margin:0 0 6px;">最後の計算：' + esc(trDateShort(inv.day || '')) + '・お知らせ中 ' + (inv.list || []).length + '人</p>'
+        + (log.length ? log.map(function(x){
+            return '<div style="font-size:13px;border-bottom:1px solid var(--line);padding:4px 0;">' + esc(trDateShort(x.day)) + '　<b>' + esc(x.name || x.no) + '</b>：'
+              + (x.a === 'quit' ? '<span style="color:var(--accent);">やめた → 無効化</span>' : x.a === 'wait' ? '様子見（2週間）' : '続けている')
+              + (x.byName ? '<small style="color:var(--sub);">（' + esc(x.byName) + '）</small>' : '') + '</div>';
+          }).join('') : '<p style="font-size:12.5px;color:var(--sub);margin:0;">まだ回答はありません。</p>');
+    }).catch(function(){});
     $('invClose').onclick = closeModal;
     Array.prototype.forEach.call(document.querySelectorAll('.inv-r button[data-inv]'), function(b){
       b.onclick = function(){
@@ -10242,6 +10267,52 @@ function ckInvOpen(){
     modal('<h2>🧹 棚卸し</h2><p class="mc-err">' + esc(permMsg(e, '読み込めませんでした')) + '</p><div class="btns"><button id="invClose">閉じる</button></div>');
     $('invClose').onclick = closeModal;
   });
+}
+/* ── 🧹 v168: 棚卸しの回答ページ（#inv）。サーバーが週1で作る checkinInventory/{ユニオン} を読み、
+   お知らせを受けた人（who に自分が入っている人。管理者は全員）に、続けている／様子見／やめた を選んでもらう。
+   回答は ans/{番号} に書くだけ。名簿への反映（やめた＝無効化 など）はサーバーが数時間以内に行う */
+var INV_A = { ok: '✓ 続けている', wait: '⏳ 様子見（2週間）', quit: 'やめた（無効にする）' };
+function invEnter(){
+  showView('vInv');
+  var un = gUnion, uid = gUser.uid;
+  Promise.all([db.collection('checkinInventory').doc(un).get(), db.collection('checkinUnions').doc(un).get()]).then(function(r){
+    var inv = r[0].exists ? r[0].data() : {}, ud = r[1].exists ? r[1].data() : {};
+    var adm = isOwner() || (ud.unionAdmins || []).indexOf(uid) >= 0 || (ud.admins || []).indexOf(uid) >= 0;
+    var who = inv.who || {};
+    var L = (inv.list || []).filter(function(x){ return adm || (who[x.no] || []).indexOf(uid) >= 0; });
+    var box = $('invBox');
+    if(!L.length){
+      box.innerHTML = '<div style="background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;font-size:14.5px;">✓ 今、あなたにお願いしている棚卸しはありません。</div>';
+      return;
+    }
+    box.innerHTML = '<p style="font-size:12.5px;color:var(--sub);margin:0 0 6px;">' + esc(un) + '・' + esc(trDateShort(inv.day || '')) + ' 時点（' + L.length + '人）' + (adm ? '・管理者なので全員が出ています' : '') + '</p>'
+      + L.map(function(x){
+        var la = x.last ? (trDateShort(x.last.d) + ' ' + x.last.why) : '1か月以上なし';
+        return '<div class="inv-r" data-no="' + esc(x.no) + '" style="background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin:0 0 10px;">'
+          + '<div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;"><b style="font-size:16px;">' + esc(x.name || x.no) + '</b>'
+          + '<small style="color:var(--sub);">' + esc(x.no) + (x.group ? '・' + esc(x.group) : '') + '</small>' + (x.trainee ? ' <span class="pill n">研修生</span>' : '') + '</div>'
+          + '<div style="font-size:13px;color:' + (x.stage === 2 ? 'var(--accent)' : 'var(--amber)') + ';margin:2px 0 8px;">最後の動き：' + esc(la) + '（' + (x.stage === 2 ? '28' : '14') + '日以上）</div>'
+          + '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
+          + '<button data-ia="ok" style="padding:8px 14px;">' + INV_A.ok + '</button>'
+          + '<button data-ia="wait" style="padding:8px 14px;">' + INV_A.wait + '</button>'
+          + '<button data-ia="quit" class="danger ghost" style="padding:8px 14px;">' + INV_A.quit + '</button></div></div>';
+      }).join('')
+      + '<p style="font-size:12.5px;color:var(--sub);">「やめた」は名簿と会員証を無効にします（NAVIGATOR も止まります）。間違えた時は、ユニオンの管理者に「有効に戻して」と伝えてください。</p>';
+    Array.prototype.forEach.call(box.querySelectorAll('button[data-ia]'), function(b){
+      b.onclick = function(){
+        var el = b.closest('.inv-r'), no = el.getAttribute('data-no'), a = b.getAttribute('data-ia');
+        var nm = (L.filter(function(x){ return x.no === no; })[0] || {}).name || no;
+        if(a === 'quit' && !window.confirm(nm + ' さんは「やめた」でいいですか？\n名簿と会員証が無効になります（NAVIGATOR も止まります）。')) return;
+        Array.prototype.forEach.call(el.querySelectorAll('button'), function(x){ x.disabled = true; });
+        db.collection('checkinInventory').doc(un).collection('ans').doc(no).set({ a: a, by: uid, at: Date.now() }).then(function(){
+          el.innerHTML = '<div style="font-size:14px;"><b>' + esc(nm) + '</b>：' + INV_A[a] + '<br><small style="color:var(--sub);">受け付けました。数時間以内に名簿に反映されます。</small></div>';
+        }).catch(function(e){
+          Array.prototype.forEach.call(el.querySelectorAll('button'), function(x){ x.disabled = false; });
+          toast(permMsg(e, '送れませんでした（お知らせを受けた人・ユニオンの管理者だけが回答できます）'));
+        });
+      };
+    });
+  }).catch(function(e){ $('invBox').innerHTML = '<p class="mc-err">' + esc(permMsg(e, '読み込めませんでした')) + '</p>'; });
 }
 /* ── 📋 v153: タイトルで絞って名前の一覧をコピー（NAVIGATORの「名簿を貼り付けて先行利用に」へ）──
    有効な人だけ（研修生・無効は入れない）。範囲は表示中のユニオンか、見られる全ユニオン */

@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v894';
+var APP_JS_VERSION = 'v895';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -822,7 +822,7 @@ function isPCMode() {
 // v561: 同じMAP・同じ月・同じ持ち主の描き直し（編集・OUT・研修の「流れた」・追加・共同編集の取り込みなど）は、
 //        今見ている位置と倍率を保つ（中央・左上に戻さない）。月やMAPを切り替えた時だけ初期表示にする
 function _mapViewCtx(mapType) { return mapType + '|' + (state.currentMonth || '') + '|' + (viewingOwnerUid || ''); }
-// ═══ v894: 新しいトーン（NAVIGATOR トーン表）を MAP に使う。false にすると今までの見た目に戻る ═══
+// ═══ v895: 新しいトーン（NAVIGATOR トーン表）を MAP に使う。false にすると今までの見た目に戻る ═══
 var NV_TONE = true;
 var NV_LINE = ['#26C7B3', '#B095FE', '#B3BF30', '#9B999A'];   // 系列の線：ターコイズ・バイオレット・イエロー・灰色
 var NV_FONT_H = "'Zen Kaku Gothic New','Noto Sans JP',sans-serif", NV_FONT_N = "Outfit,Inter,sans-serif";
@@ -869,7 +869,7 @@ function renderPCMap(mapType) {
   if (roots.length === 0) return;
   var root = roots[0];
 
-  var COLORS = NV_TONE ? NV_LINE : ['#2CE5B8','#8B7CFF','#FFB454','#FF5D73','#5AD7FF','#4ADE80','#FF9F6E','#C583FF','#3ED5C4','#FF87B3','#FFD166','#67B7FF']; // v894: 新しいトーンは系列の線も4色
+  var COLORS = NV_TONE ? NV_LINE : ['#2CE5B8','#8B7CFF','#FFB454','#FF5D73','#5AD7FF','#4ADE80','#FF9F6E','#C583FF','#3ED5C4','#FF87B3','#FFD166','#67B7FF']; // v895: 新しいトーンは系列の線も4色
   var _kidsCmp = _treeSortCmp(members); // v420: タイトル高い順→フロント多い順
   // v484: 子探索・深さ計算をインデックス化（旧実装は全員×全員の走査で、大規模MAPの入力・保存・切替が重い元凶だった）
   var _byId = {}, _kidIdx = {};
@@ -920,7 +920,7 @@ function renderPCMap(mapType) {
   function visKids(id) { return window._pcCollapsed[id] ? [] : kids(id); }
 
   // ── レイアウト（横レイヤード：左→右） ──
-  var NODE_W = 220, NODE_H = 72, NODE_RX = NV_TONE ? 20 : 12; // v894: 新しいトーンはカードの角を20px
+  var NODE_W = 220, NODE_H = 72, NODE_RX = NV_TONE ? 20 : 12; // v895: 新しいトーンはカードの角を20px
   var COL_GAP = NV_TONE ? 54 : 70, ROW_GAP = (mapType === 'current' && typeof _umList === 'function' && _umList().length) ? 28 : 15; // v843: ユーザーの札（カードの下のふち）と下のカードの札が重ならないように
   var colStep = NODE_W + COL_GAP;
   var rowStep = NODE_H + ROW_GAP;
@@ -1178,7 +1178,7 @@ function renderPCMap(mapType) {
     pt.setAttribute('d',elbow(px,py,cx,cy));
     pt.setAttribute('fill','none');
     pt.setAttribute('stroke',cmap[m.id]||'#444');
-    pt.setAttribute('stroke-width', NV_TONE ? '2.5' : '4.5'); pt.setAttribute('stroke-opacity','0.9'); // v423: さらに太く・濃く（v894: 新しいトーンは細く）
+    pt.setAttribute('stroke-width', NV_TONE ? '2.5' : '4.5'); pt.setAttribute('stroke-opacity','0.9'); // v423: さらに太く・濃く（v895: 新しいトーンは細く）
     pt.setAttribute('class','pc-link');
     pt.setAttribute('data-lineage', lineageRoot[m.id]||'');
     lg.appendChild(pt);
@@ -1200,7 +1200,7 @@ function renderPCMap(mapType) {
     var _isFr9 = mapType === 'current' && !_isBrUp && !_isBM && !isPcLOI && !isT && (m.title || '').trim() !== 'OUT'
       && (m.badgeMode || '') !== 'off' && typeof ckIsFreshByStart === 'function' && ckIsFreshByStart(m);
     var cc=_rankCol?_rankCol:(isPcLOI?'#FB923C':isT?'#5AD7FF':(_isFr9?'#FFD166':col)), cf=isPcLOI?'rgba(251,146,60,0.13)':isT?'rgba(90,215,255,0.22)':(_isFr9?'rgba(255,209,102,0.13)':nodeBaseFill);
-    var NVc = NV_TONE ? _nvCardCol(_isBrUp ? 'br' : isPcLOI ? 'ex' : isT ? 'tr' : _isFr9 ? 'fr' : 'ba', isLightTheme) : null; // v894: 新しいトーンの色
+    var NVc = NV_TONE ? _nvCardCol(_isBrUp ? 'br' : isPcLOI ? 'ex' : isT ? 'tr' : _isFr9 ? 'fr' : 'ba', isLightTheme) : null; // v895: 新しいトーンの色
     if (NVc) { cc = NVc.tag; cf = NVc.fill; } // v423: QBR=オレンジ／v491: フレッシュ=金
     var rx=posX[m.id], ry2=posY[m.id];
 
@@ -1304,7 +1304,7 @@ function renderPCMap(mapType) {
       else if (typeof ckIsFreshByStart === 'function' && ckIsFreshByStart(m) && !isBROrAbove(m.title)) _auto9 = 'fresh';
       var _bm9 = m.badgeMode || '';
       var _cb9 = (_bm9 === 'off') ? '' : ((_bm9 === 'on') ? (_auto9 || (_isTr9 ? 'trainee' : 'fresh')) : _auto9);
-      if (NVc && isPcLOI && _cb9 !== 'trainee' && _bm9 !== 'off') _cb9 = 'exam'; // v894: 審査中の札も上に（研修生が先）
+      if (NVc && isPcLOI && _cb9 !== 'trainee' && _bm9 !== 'off') _cb9 = 'exam'; // v895: 審査中の札も上に（研修生が先）
       if (_cb9) {
         var _bw9 = _cb9 === 'fresh' ? 68 : 52;
         var _bg9 = _cb9 === 'fresh' ? '#FFD166' : '#5AD7FF';
@@ -1333,7 +1333,7 @@ function renderPCMap(mapType) {
         pr9.setAttribute('stroke-width', '3.5');
         pr9.setAttribute('class', 'pc-pulse-ring');
         pr9.setAttribute('pointer-events', 'none');
-        if (!NVc) g.insertBefore(pr9, g.firstChild); // v894: 新しいトーンは光らせない（札だけ）
+        if (!NVc) g.insertBefore(pr9, g.firstChild); // v895: 新しいトーンは光らせない（札だけ）
       }
     }
     // v468: 長期未活動バッジ（薄く消していく表現の代替。30日=💤グレー / 60日=🚨赤）
@@ -5192,7 +5192,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v894';
+  var DATA_VERSION = 'v895';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -7331,7 +7331,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
-  { v:'v894', d:'2026-11-21', items:['MAP の見た目を新しくしました（PC のツリー・スマホの一覧、ライト・ダーク両方）：イエロー・バイオレット・ターコイズ・チャコールの4色、丸みのあるボタンとカード、読みやすい書体に。カードの上の札に「審査中」も出します。ほかの画面は今まで通りです'] },
+  { v:'v895', d:'2026-11-21', items:['MAP の見た目を新しくしました（PC のツリー・スマホの一覧、ライト・ダーク両方）：イエロー・バイオレット・ターコイズ・チャコールの4色、丸みのあるボタンとカード、読みやすい書体に。カードの上の札に「審査中」も出します。ほかの画面は今まで通りです'] },
+  { v:'v894', d:'2026-11-21', items:['🔔 受付の棚卸しのお知らせをタップすると、受付の回答ページが開くようにしました'] },
   { v:'v893', d:'2026-11-21', items:['アカウント管理（オーナー）：「削除したアカウント」に「完全に消す」ボタン。ログインのアカウント・アカウントの情報・MAPなどのデータを消します（元に戻せません。実際に消すのは 9・12・15・18・21時ごろで、それまでは「消すのをやめる」で取り消せます）'] },
   { v:'v892', d:'2026-11-20', items:['MAPのフロント追加：削除した人を選んだまま「＋追加」すると、追加先が削除した人になり、足した人がMAPに出なかったのを修正（その上の人の下に入ります。前に足して見えなくなっていた人も、上の人の下に出ます）（#45）','ビジネス（BMなど）からユーザーにして、また戻した人に「元ユーザー」の札が出ていたのを修正。札はもともとユーザーだった人だけ（#47）','研修結果を「流れた」にしても、MAPでは研修の段階（PAなど）のまま出ていたのを修正。OUTになります（進行中に戻すと前のタイトルに戻ります。前に「流れた」にした人もOUTに直ります）（#46）'] },
   { v:'v891', d:'2026-11-20', items:['📊 利用状況（オーナー）：細かい記録が届いていない人でも、最後に開いた日が期間の中なら「使っていない」にしないように。「よく使う」は記録のある日数（11/19〜）の半分以上で判定。古い版のアプリで回数の記録が無い人は「0回」ではなく「—」と「古い版」の印。記録が抜けている人の数も出します'] },
@@ -20017,7 +20018,7 @@ function _mxCat(m, mapType) {
 var MX_CATS = [['br', 'BR以上'], ['ex', '審査中'], ['tr', '研修生'], ['fr', 'フレッシュ'], ['ot', 'そのほか']];
 // v635: BR以上はタイトルの色（BR=紫・G=金・L=青・R=赤・E=緑・D=白銀・BD=青ダイヤ…PCのツリーと同じ宝石色）
 function _mxK(m, cat) {
-  if (cat !== 'br' || NV_TONE) return 'var(--mx' + cat + ')'; // v894: 新しいトーンは BR以上をバイオレット1色に
+  if (cat !== 'br' || NV_TONE) return 'var(--mx' + cat + ')'; // v895: 新しいトーンは BR以上をバイオレット1色に
   var t = (m.title || '').trim();
   if (t === 'BR' || t === 'ブランドレプリゼンタティブ') return 'var(--mxbr)';
   if (t === 'TE' || t === 'チームエリート') return document.body.classList.contains('light') ? '#2A2E36' : '#3A3F4A'; // v636: TE＝グレーに近い黒
@@ -20122,7 +20123,7 @@ function _mxRowHtml(m, mapType, depth, lines, last, fc, nKids, open, kidsShown) 
     + '<div class="mgv"><b>' + pt + '</b><small>' + (m.ptFixed > 0 ? '固定 ' + m.ptFixed.toLocaleString() : 'GSV') + '</small></div></div></div>';
 }
 var MX_FAM = ['#2CE5B8', '#8B7CFF', '#FFB454', '#FF5D73', '#5AD7FF', '#4ADE80', '#FF9F6E', '#C583FF'];
-if (NV_TONE) MX_FAM = NV_LINE; // v894: 新しいトーンは系列の線も4色
+if (NV_TONE) MX_FAM = NV_LINE; // v895: 新しいトーンは系列の線も4色
 // 段の初期値（端末ごとに記憶）を一度だけ当てる
 // v659: 段の選び方はアプリを開いている間だけ覚える（開いた時は2段。前回の「全段」が光ったまま2段で出るのを直す）
 var _mxLv = ''; try { localStorage.removeItem('gm_mapLevel'); } catch (eLv) {}
