@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>リーダー向けガイド — BASE CHECK-IN</title>
+<meta name="description" content="EMERALD以上のリーダー向け。受付管理システム・研修生登録・ATTACK LIST の使い方と、NAVIGATOR とのつながり">
+<meta name="robots" content="noindex">
+<link rel="icon" href="icon-32.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@700;900&family=Noto+Sans+JP:wght@400;500;700&family=Manrope:wght@500;700;800&display=swap">
+<style>
+/* 色は受付（checkin/index.html v160〜）と同じ */
+:root{
+  --paper:#f2f2f3; --card:#ffffff; --ink:#111214; --sub:#6e6e73; --line:#e3e3e6;
+  --blue:#3b82f6; --blue-soft:#e8f0fe; --red:#e5484d; --red-soft:#fdecec;
+  --amber:#8a6d1f; --amber-soft:#f5edd3; --chip:#ececee;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --paper:#1f2023; --card:#2a2b2f; --ink:#f2f2f4; --sub:#9b9ca1; --line:#3a3b40;
+    --blue:#5b9cf6; --blue-soft:#22324a; --red:#ff6b6b; --red-soft:#3a2426;
+    --amber:#d6b75e; --amber-soft:#3a3320; --chip:#3a3b40;
+    color-scheme:dark;
+  }
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:"Noto Sans JP",-apple-system,"Hiragino Sans",sans-serif;font-size:16px;line-height:1.8;}
+a{color:var(--blue);}
+h1,h2,h3{font-family:"Zen Kaku Gothic New","Noto Sans JP",sans-serif;line-height:1.35;}
+.wrap{max-width:640px;margin:0 auto;padding:0 16px calc(env(safe-area-inset-bottom) + 60px);}
+/* 表紙 */
+.hero{padding:30px 0 10px;}
+.hero .brand{font-family:"Manrope",sans-serif;font-size:12px;letter-spacing:.14em;color:var(--sub);font-weight:700;}
+.hero .brand i{color:var(--red);font-style:normal;}
+.hero h1{font-size:30px;font-weight:900;margin:6px 0 8px;}
+.hero p{margin:0;color:var(--sub);font-size:15px;}
+.for{display:inline-block;margin-top:12px;background:var(--blue-soft);color:var(--blue);font-weight:700;font-size:13px;border-radius:999px;padding:4px 12px;}
+/* 目次 */
+.toc{position:sticky;top:0;z-index:5;background:color-mix(in srgb, var(--paper) 92%, transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);margin:14px -16px 0;padding:10px 16px;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--line);}
+.toc::-webkit-scrollbar{display:none;}
+.toc a{flex:0 0 auto;padding:7px 14px;border-radius:999px;background:var(--card);border:1px solid var(--line);color:var(--ink);text-decoration:none;font-size:14px;font-weight:700;white-space:nowrap;}
+.menu{display:grid;gap:10px;margin:18px 0 0;}
+.menu a{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px 16px;color:var(--ink);text-decoration:none;}
+.menu a .n{width:34px;height:34px;flex:0 0 auto;border-radius:50%;background:var(--chip);display:flex;align-items:center;justify-content:center;font-family:"Manrope",sans-serif;font-weight:800;}
+.menu a b{display:block;font-size:16px;}
+.menu a small{display:block;color:var(--sub);font-size:13px;line-height:1.5;}
+.menu a::after{content:"›";margin-left:auto;color:var(--sub);font-size:22px;}
+/* 章 */
+section{scroll-margin-top:64px;}
+h2{font-size:24px;font-weight:900;margin:48px 0 4px;display:flex;align-items:center;gap:10px;}
+h2 .no{font-family:"Manrope",sans-serif;font-size:13px;font-weight:800;color:#fff;background:var(--ink);border-radius:999px;padding:2px 10px;}
+@media (prefers-color-scheme: dark){ h2 .no{color:var(--paper);} }
+.lead{color:var(--sub);margin:0 0 14px;font-size:15px;}
+h3{font-size:19px;font-weight:900;margin:28px 0 6px;}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px 18px;margin:12px 0;}
+.card > :first-child{margin-top:0;} .card > :last-child{margin-bottom:0;}
+/* 手順 */
+.steps{counter-reset:s;list-style:none;padding:0;margin:8px 0;}
+.steps > li{counter-increment:s;position:relative;padding:0 0 0 42px;margin:0 0 14px;}
+.steps > li::before{content:counter(s);position:absolute;left:0;top:1px;width:30px;height:30px;border-radius:50%;background:var(--blue);color:#fff;font-family:"Manrope",sans-serif;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;}
+.steps > li b.t{display:block;font-size:16.5px;}
+.ui{display:inline-block;font-weight:700;background:var(--chip);border-radius:999px;padding:0 9px;font-size:.92em;white-space:nowrap;}
+/* 画面写真 */
+figure{margin:14px auto;max-width:330px;}
+figure img{display:block;width:100%;height:auto;border-radius:22px;border:1px solid var(--line);box-shadow:0 6px 24px rgba(0,0,0,.08);background:var(--card);}
+figcaption{font-size:13px;color:var(--sub);text-align:center;margin-top:6px;line-height:1.5;}
+.shots{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 2px 10px;margin:0 -16px;padding-left:16px;scrollbar-width:none;}
+.shots::-webkit-scrollbar{display:none;}
+.shots figure{flex:0 0 72%;max-width:none;margin:0;scroll-snap-align:center;}
+.swipe{font-size:12.5px;color:var(--sub);text-align:right;margin:-4px 0 0;}
+/* 会員証 */
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0;}
+.cards figure{margin:0;max-width:none;}
+.cards img{border-radius:16px;box-shadow:none;}
+/* お知らせ */
+.note{border-radius:16px;padding:12px 16px;margin:12px 0;font-size:15px;}
+.note.info{background:var(--blue-soft);color:var(--ink);} .note.info b{color:var(--blue);}
+.note.warn{background:var(--amber-soft);color:var(--ink);} .note.warn b{color:var(--amber);}
+.note.ng{background:var(--red-soft);color:var(--ink);} .note.ng b{color:var(--red);}
+/* 役割 */
+.role{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;padding:12px 0;border-bottom:1px solid var(--line);}
+.role:last-child{border-bottom:0;}
+.role .ic{font-size:24px;line-height:1.2;}
+.role b{font-size:16px;}
+.role p{margin:0;font-size:14.5px;color:var(--sub);grid-column:2;}
+.role.me{background:var(--blue-soft);margin:0 -18px;padding:12px 18px;border-radius:14px;border:0;}
+.role.me p{color:var(--ink);}
+table{border-collapse:collapse;width:100%;font-size:14.5px;}
+th,td{border-bottom:1px solid var(--line);padding:9px 6px;text-align:left;vertical-align:top;}
+th{font-size:12.5px;color:var(--sub);font-weight:700;}
+td.y{color:var(--blue);font-weight:700;white-space:nowrap;} td.n{color:var(--sub);white-space:nowrap;}
+/* つながり図 */
+.map{display:grid;gap:10px;margin:12px 0;}
+.node{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px 16px;}
+.node b{font-size:16px;} .node small{display:block;color:var(--sub);font-size:13.5px;line-height:1.55;}
+.arrow{text-align:center;color:var(--blue);font-weight:700;font-size:14px;line-height:1.4;}
+.link{display:grid;grid-template-columns:1fr;gap:2px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px 16px;margin:10px 0;}
+.link .from{font-weight:900;}
+.link .to{color:var(--blue);font-weight:700;}
+.link .who{font-size:12.5px;color:var(--sub);}
+.link p{margin:2px 0 0;font-size:14.5px;}
+/* よくある質問 */
+details{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 16px;margin:10px 0;}
+details summary{cursor:pointer;font-weight:700;list-style:none;}
+details summary::-webkit-details-marker{display:none;}
+details summary::before{content:"Q. ";color:var(--blue);font-family:"Manrope",sans-serif;font-weight:800;}
+details p{margin:8px 0 0;font-size:15px;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:12px 18px;border-radius:999px;background:var(--blue);color:#fff;text-decoration:none;font-weight:700;font-size:15px;}
+.btn.sub{background:var(--card);color:var(--ink);border:1px solid var(--line);}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0;}
+.foot{color:var(--sub);font-size:12.5px;margin-top:48px;border-top:1px solid var(--line);padding-top:14px;}
+.top{display:block;text-align:right;font-size:13px;margin-top:6px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <div class="brand">BASE CHECK-IN<i>●</i> LEADER GUIDE</div>
+  <h1>リーダー向けガイド</h1>
+  <p>受付管理システム・研修生登録・ATTACK LIST の使い方と、NAVIGATOR とのつながりを、1ページにまとめました。</p>
+  <span class="for">EMERALD 以上のリーダーの方へ</span>
+</header>
+
+<nav class="toc" aria-label="目次">
+  <a href="#apps">全体</a><a href="#role">役割</a><a href="#ck">受付管理</a><a href="#card">会員証</a><a href="#tr">研修生登録</a><a href="#link">つながり</a><a href="#navi">NAVIGATOR</a><a href="#al">ATTACK LIST</a><a href="#faq">困ったとき</a>
+</nav>
+
+<div class="menu">
+  <a href="#apps"><span class="n">1</span><span><b>4つのアプリの関係</b><small>何がどこにつながっているか</small></span></a>
+  <a href="#role"><span class="n">2</span><span><b>リーダーの役割</b><small>できること・管理者に頼むこと</small></span></a>
+  <a href="#ck"><span class="n">3</span><span><b>受付管理システム</b><small>名簿・集計・イベント・受付</small></span></a>
+  <a href="#card"><span class="n">4</span><span><b>会員証のしくみ</b><small>グレードとタイトルで見た目が変わる</small></span></a>
+  <a href="#tr"><span class="n">5</span><span><b>研修生登録</b><small>登録から昇格まで</small></span></a>
+  <a href="#link"><span class="n">6</span><span><b>つながりマップ</b><small>この設定が、どこに効くか</small></span></a>
+  <a href="#navi"><span class="n">7</span><span><b>NAVIGATOR との連携</b><small>受付連携で MAP に取り込む</small></span></a>
+  <a href="#al"><span class="n">8</span><span><b>ATTACK LIST</b><small>使い方</small></span></a>
+  <a href="#faq"><span class="n">9</span><span><b>困ったとき</b><small>よくある質問と連絡先</small></span></a>
+</div>
+
+<!-- ───────── 1 ───────── -->
+<section id="apps">
+<h2><span class="no">1</span>4つのアプリの関係</h2>
+<p class="lead">アカウントは1つだけ。どのアプリも、同じメールアドレスとパスワードでログインします。</p>
+<div class="map">
+  <div class="node"><b>🎫 受付管理システム（BASE CHECK-IN）</b><small>名簿・会員証・イベントの受付・出席の集計。<b>すべての元データ</b>がここにあります。</small></div>
+  <div class="arrow">↓ 名簿・受講の記録</div>
+  <div class="node"><b>🎓 研修生登録</b><small>受付管理システムの中のページ。研修生の登録と、研修（PG・DLR・PA など）の受講記録。</small></div>
+  <div class="arrow">↓ 稼働率・研修の進み具合</div>
+  <div class="node"><b>🧭 NAVIGATOR</b><small>自分の組織の MAP・予定・目標。受付の名簿や稼働率を「受付連携」で取り込めます。</small></div>
+  <div class="arrow">↕ 同じアカウント</div>
+  <div class="node"><b>🎯 ATTACK LIST</b><small>声をかける人のリスト。NAVIGATOR と同じアカウント・同じユニオンで使います。</small></div>
+</div>
+<div class="note info"><b>ポイント：</b>受付で名簿や出席をきちんと付けておくと、NAVIGATOR の稼働率や研修の進み具合が自動でそろいます。</div>
+</section>
+
+<!-- ───────── 2 ───────── -->
+<section id="role">
+<h2><span class="no">2</span>リーダーの役割</h2>
+<p class="lead">受付管理システムでは、人によって見える画面とできることが変わります。リーダーはオーナーがユニオンごとに指定します。</p>
+<div class="card">
+  <div class="role"><span class="ic">👑</span><b>オーナー</b><p>全部の設定。ユニオン管理者・リーダーの指定、特別カード、ユニオン名の変更。</p></div>
+  <div class="role"><span class="ic">🛡</span><b>ユニオン管理者</b><p>そのユニオンの責任者。名簿の編集・会計・受付管理者の任命・研修生の昇格。</p></div>
+  <div class="role"><span class="ic">🎫</span><b>受付管理者</b><p>名簿の編集・イベント作成・会計・受付。</p></div>
+  <div class="role me"><span class="ic">⭐</span><b>リーダー（あなた）</b><p>名簿と集計を<b>見る</b>・研修生登録の担当を<b>任命する</b>・研修生を<b>登録する</b>。</p></div>
+  <div class="role"><span class="ic">🎓</span><b>研修生登録の担当</b><p>研修生登録のページで、研修生の登録と受講の記録。</p></div>
+  <div class="role"><span class="ic">🙂</span><b>メンバー</b><p>受付とイベントのタブだけ。自分の会員証。</p></div>
+</div>
+<h3>リーダーができること・頼むこと</h3>
+<div class="card" style="padding:6px 14px;">
+<table>
+  <tr><th>やりたいこと</th><th>リーダー</th></tr>
+  <tr><td>名簿を見る・タイトルで絞る</td><td class="y">できる</td></tr>
+  <tr><td>集計（稼働率・出席）を見る</td><td class="y">できる</td></tr>
+  <tr><td>研修生登録の担当を任命</td><td class="y">できる</td></tr>
+  <tr><td>研修生の登録・受講の記録</td><td class="y">できる</td></tr>
+  <tr><td>会員証の URL・QR を本人に渡す</td><td class="y">できる</td></tr>
+  <tr><td>イベントの受付（QR を読む）</td><td class="y">できる</td></tr>
+  <tr><td>名簿の編集・会員証の再発行・無効化</td><td class="n">管理者へ</td></tr>
+  <tr><td>タイトル・バッジの変更</td><td class="n">管理者へ</td></tr>
+  <tr><td>イベントを作る・会計</td><td class="n">管理者へ</td></tr>
+  <tr><td>研修生を正規メンバーに昇格</td><td class="n">管理者へ</td></tr>
+</table>
+</div>
+<figure><img src="leader/member.webp" alt="メンバーの画面（受付とイベントだけ）" loading="lazy"><figcaption>メンバーの画面。タブは「受付」「イベント」だけ</figcaption></figure>
+</section>
+
+<!-- ───────── 3 ───────── -->
+<section id="ck">
+<h2><span class="no">3</span>受付管理システム</h2>
+<p class="lead">開くのはこのURL。iPhone は Safari で開いて「共有 → ホーム画面に追加」すると、アプリのように使えます。</p>
+<div class="btns"><a class="btn" href="./" target="_blank" rel="noopener">受付管理を開く ›</a></div>
+
+<h3>📋 名簿を見る</h3>
+<ol class="steps">
+  <li><b class="t">上の「名簿」タブ</b>自分のユニオンのメンバーが並びます。リーダーは「閲覧のみ」です。</li>
+  <li><b class="t">タイトルで並べ替え・絞り込み</b><span class="ui">タイトル</span>を押すと高い順。<span class="ui">タイトル: すべて</span>で「RUBY 以上」などに絞れます。</li>
+  <li><b class="t">会員証を渡す</b>各行の<span class="ui">会員証</span>→<span class="ui">QRで渡す</span>を本人のスマホで読んでもらうか、URL を LINE で送ります。</li>
+</ol>
+<div class="shots">
+  <figure><img src="leader/roster.webp" alt="名簿の画面" loading="lazy"><figcaption>名簿。名前の横がグレード、下がタイトル</figcaption></figure>
+  <figure><img src="leader/cardmodal.webp" alt="会員証の画面" loading="lazy"><figcaption>会員証。QR で渡す・URL をコピー</figcaption></figure>
+</div>
+<p class="swipe">横にスワイプ →</p>
+
+<h3>📊 集計を見る</h3>
+<ol class="steps">
+  <li><b class="t">上の「集計」タブ</b>月ごとの開催数・平均の稼働数。</li>
+  <li><b class="t">系列別の平均稼働数</b>どの系列がどれだけ来ているか。</li>
+  <li><b class="t">メンバー別の出席</b>●が出席。当月と「直近1ヶ月」の稼働率。NAVIGATOR の稼働率はこの数字を取り込みます。</li>
+</ol>
+<div class="shots">
+  <figure><img src="leader/stats1.webp" alt="集計の上の部分" loading="lazy"><figcaption>開催数・平均稼働数・系列別</figcaption></figure>
+  <figure><img src="leader/stats2.webp" alt="メンバー別の出席" loading="lazy"><figcaption>メンバー別の出席と稼働率</figcaption></figure>
+</div>
+<p class="swipe">横にスワイプ →</p>
+
+<h3>📅 イベントと受付</h3>
+<ol class="steps">
+  <li><b class="t">「イベント」タブ</b>今月の予定。イベントを作るのは管理者です。</li>
+  <li><b class="t">当日の受付</b>「受付」タブでイベントを選んで<span class="ui">受付を開始</span>。来た人の会員証の QR を読むだけで出席になります。</li>
+</ol>
+<div class="shots">
+  <figure><img src="leader/events.webp" alt="イベントの画面" loading="lazy"><figcaption>イベント一覧</figcaption></figure>
+  <figure><img src="leader/kiosk.webp" alt="受付の画面" loading="lazy"><figcaption>受付。イベントを選んで開始</figcaption></figure>
+</div>
+<p class="swipe">横にスワイプ →</p>
+
+<h3>🎓 研修生登録の担当を任命する</h3>
+<ol class="steps">
+  <li><b class="t">「名簿」タブ → <span class="ui">⚙ 管理メニュー</span> → <span class="ui">🎓 研修生登録の担当</span></b></li>
+  <li><b class="t">担当にする人にチェック → <span class="ui">保存</span></b>出てくるのは、同じユニオンでアカウントを持っている人です。</li>
+  <li><b class="t"><span class="ui">URLをコピー</span>して担当に送る</b>研修生登録ページの URL です。</li>
+</ol>
+<figure><img src="leader/trainers.webp" alt="研修生登録の担当の任命" loading="lazy"><figcaption>担当の任命。「未誓約」は秘密保持の誓約がまだの人</figcaption></figure>
+<div class="note info"><b>使い方ガイド：</b>右上の<span class="ui">🔰 使い方</span>から、このガイドと、受付の練習モード（本番に記録されない）が開けます。</div>
+</section>
+
+<!-- ───────── 4 ───────── -->
+<section id="card">
+<h2><span class="no">4</span>会員証のしくみ</h2>
+<p class="lead">会員証は一人ひとり専用の URL。グレードとタイトルで、カードの見た目が変わります。</p>
+<h3>グレード（カードの色）</h3>
+<div class="cards">
+  <figure><img src="leader/card_white.webp" alt="一般の会員証（白）" loading="lazy"><figcaption>一般（白）</figcaption></figure>
+  <figure><img src="leader/card_br.webp" alt="BRの会員証（ゴールド）" loading="lazy"><figcaption>BR（ゴールド）</figcaption></figure>
+  <figure><img src="leader/card_jet.webp" alt="JETCLUBの会員証（ブラック）" loading="lazy"><figcaption>JETCLUB（ブラック）</figcaption></figure>
+  <figure><img src="leader/card_trainee.webp" alt="研修生の会員証" loading="lazy"><figcaption>研修生（研修受講カード）</figcaption></figure>
+</div>
+<h3>タイトル（RUBY・DIAMOND は専用デザイン）</h3>
+<div class="cards">
+  <figure><img src="leader/card_ruby.webp" alt="RUBYの会員証" loading="lazy"><figcaption>RUBY</figcaption></figure>
+  <figure><img src="leader/card_diamond.webp" alt="DIAMONDの会員証" loading="lazy"><figcaption>DIAMOND</figcaption></figure>
+</div>
+<div class="card">
+  <ul style="margin:0;padding-left:1.2em;">
+    <li>タイトルの順番：BR → GOLD → LAPIS → <b>RUBY</b> → EMERALD → <b>DIAMOND</b> → BLUE DIAMOND → TEAM ELITE</li>
+    <li>BLUE DIAMOND・TEAM ELITE は、さらに特別なデザイン（オーナーが設定）。</li>
+    <li>役職のバッジ（EXPERT・DIRECTOR など）も、カードに付けられます。</li>
+    <li>グレード・タイトル・バッジを変えるのは<b>管理者</b>。変えると本人の会員証にもそのまま反映されます（URL・QR は変わりません）。</li>
+  </ul>
+</div>
+<div class="note warn"><b>会員証をなくした・スマホを変えた：</b>同じ URL を開けばそのまま使えます。URL が分からない時は管理者に「会員証URL」を聞いてください。</div>
+</section>
+
+<!-- ───────── 5 ───────── -->
+<section id="tr">
+<h2><span class="no">5</span>研修生登録</h2>
+<p class="lead">研修生の登録と、研修の受講記録をするページです。担当に任命された人とリーダーが使えます。</p>
+<div class="btns"><a class="btn" href="./#trainer" target="_blank" rel="noopener">研修生登録を開く ›</a></div>
+
+<h3>はじめの1回：秘密保持の誓約</h3>
+<p>最初に開いた時だけ、秘密保持契約の内容を最後まで読んで、名前と住所を入れて同意します。</p>
+<figure><img src="leader/nda.webp" alt="秘密保持の誓約" loading="lazy"><figcaption>最後まで読むと同意できます</figcaption></figure>
+
+<h3>研修生を登録する</h3>
+<ol class="steps">
+  <li><b class="t"><span class="ui">＋ 登録</span>で名前・紹介者・UP ルビーを入れる</b>番号は自動で決まります。</li>
+  <li><b class="t"><span class="ui">登録して会員証QRを表示</span></b></li>
+  <li><b class="t">本人のスマホで QR を読んでもらう</b>本人の「研修受講カード」が開きます。ホーム画面に追加してもらえば完了。</li>
+</ol>
+<div class="shots">
+  <figure><img src="leader/reg.webp" alt="研修生の登録" loading="lazy"><figcaption>名前・紹介者・UP ルビー</figcaption></figure>
+  <figure><img src="leader/qr.webp" alt="会員証のQR" loading="lazy"><figcaption>本人のスマホで読む</figcaption></figure>
+</div>
+<p class="swipe">横にスワイプ →</p>
+
+<h3>研修のあと：受講を記録する</h3>
+<ol class="steps">
+  <li><b class="t"><span class="ui">研修後入力</span>で研修生を開く</b>一覧から選ぶか、番号を入れて<span class="ui">開く</span>。<span class="ui">📷 QR</span>で本人の会員証を読んでも開けます。</li>
+  <li><b class="t"><span class="ui">✓ 受講済みにする</span></b>受講した日とあなたの名前で記録されます。</li>
+  <li><b class="t">必要に応じて</b><span class="ui">📝 宿題</span>（PG のあとの目標設定）・<span class="ui">📝 面談シート</span>（CO）・<span class="ui">📅 会場受講を予約</span>（DLR）。</li>
+</ol>
+<div class="shots">
+  <figure><img src="leader/list.webp" alt="研修後入力の一覧" loading="lazy"><figcaption>研修後入力。番号・QR で開く</figcaption></figure>
+  <figure><img src="leader/check.webp" alt="研修生のチェックリスト" loading="lazy"><figcaption>チェックリスト</figcaption></figure>
+  <figure><img src="leader/dlr.webp" alt="DLR会場受講の予約" loading="lazy"><figcaption>DLR の予約。本人に招待チケット</figcaption></figure>
+  <figure><img src="leader/cosheet.webp" alt="面談シート" loading="lazy"><figcaption>面談シート（本人のスマホでも入力できる）</figcaption></figure>
+</div>
+<p class="swipe">横にスワイプ →</p>
+
+<h3>次の担当にバトンを渡す</h3>
+<div class="card">
+  <p style="margin:0 0 6px;">研修生のページの下の<span class="ui">🔗 次の担当に送る</span>で、LINE にリンクを送れます。受け取った担当はタップするだけで開けるので、番号を聞く必要はありません。</p>
+  <p style="margin:0;font-size:14px;color:var(--sub);">開けるのは研修生登録の担当だけ。リンクには番号しか入っていません。</p>
+</div>
+
+<h3>昇格（正規メンバーへ）</h3>
+<div class="card">
+  <p style="margin:0;">PG・PA・CO・BPC済み（DLR・EXP 以外）が受講済みで、面談シートを出したら「昇格待ち」になります。昇格は<b>管理者</b>が名簿から行います。会員証はそのまま、正規メンバーのカードに変わります。</p>
+</div>
+</section>
+
+<!-- ───────── 6 ───────── -->
+<section id="link">
+<h2><span class="no">6</span>つながりマップ</h2>
+<p class="lead">「この設定をすると、どこに効くか」。組織を見るリーダー目線でまとめました。</p>
+
+<div class="link"><span class="from">🎫 名簿に人がいる・出席を付ける</span><span class="to">→ 集計の稼働率 → NAVIGATOR の MAP の稼働率</span><span class="who">付ける人：受付する人</span><p>QR で受付するだけ。NAVIGATOR では計算せず、受付の数字をそのまま取り込みます。</p></div>
+<div class="link"><span class="from">🎓 研修の受講済み（PG・DLR・PA・CO など）</span><span class="to">→ NAVIGATOR の研修生のステップ</span><span class="who">付ける人：研修生登録の担当・リーダー</span><p>MAP を開くと1日1回、受付の受講記録が研修生のステップに「進んだ」として入ります。</p></div>
+<div class="link"><span class="from">👥 名簿の紹介者</span><span class="to">→ NAVIGATOR の「名簿から追加」で MAP の置き場所</span><span class="who">入れる人：研修生を登録する人</span><p>紹介者が MAP にいれば、その人の下に置かれます。紹介者は正しく入れてください。</p></div>
+<div class="link"><span class="from">🔗 NAVIGATOR のアカウントと名簿の紐付け</span><span class="to">→ 受付で「無効」にすると NAVIGATOR も止まる・カードコレクション</span><span class="who">する人：ユニオン管理者（NAVIGATOR のアカウント管理）</span><p>やめた人のデータを守るため。紐付けると、受けた OL のカードも NAVIGATOR で見られます。</p></div>
+<div class="link"><span class="from">🎓 OL チェックアウト（会員証から）</span><span class="to">→ 本人の NAVIGATOR の ToDo・予定</span><span class="who">する人：OL を受けた本人</span><p>アウトラインのあと、A さんの QR を読んで感想・気づき・タスクを送ります。タスクが本人の NAVIGATOR に入ります。</p></div>
+<div class="link"><span class="from">📝 目標設定の宿題（会員証）</span><span class="to">→ NAVIGATOR の目標</span><span class="who">する人：研修生本人</span><p>会員証の「NAVIGATOR に引き継ぐ」で、答えた内容が目標に入ります。</p></div>
+<div class="link"><span class="from">👑 タイトル（名簿）</span><span class="to">→ 会員証のデザイン・NAVIGATOR の先行利用</span><span class="who">変える人：管理者／先行利用はオーナー</span><p>NAVIGATOR は RUBY 以上 → BR 以上の順に公開予定。名簿の<span class="ui">📋 名前をコピー</span>で対象の人を出します。</p></div>
+<div class="link"><span class="from">🎯 ATTACK LIST の進み具合</span><span class="to">→ NAVIGATOR のホームの人数</span><span class="who">付ける人：本人</span><p>「未着手・連絡中」と「CT予定」の人数が、NAVIGATOR に自動で出ます。「ATTACK LISTを見る」からすぐ開けます。</p></div>
+<div class="link"><span class="from">🙍 プロフィール（名前・ユニオン・UP ルビー）</span><span class="to">→ NAVIGATOR・ATTACK LIST・GOAL SETTING で共通</span><span class="who">変える人：本人</span><p>どれか1つで変えると全部に反映されます。個人情報の同意も1回で全部に。</p></div>
+<div class="link"><span class="from">🏷 ユニオン名</span><span class="to">→ 受付・NAVIGATOR・ATTACK LIST の全部</span><span class="who">変える人：オーナー</span><p>名前が変わる時はオーナーに。全部のアプリにまとめて反映されます。</p></div>
+</section>
+
+<!-- ───────── 7 ───────── -->
+<section id="navi">
+<h2><span class="no">7</span>NAVIGATOR との連携</h2>
+<p class="lead">自分の MAP に、受付の名簿と稼働率を取り込みます。MAP の<span class="ui">⟲ 受付連携</span>から。</p>
+<ol class="steps">
+  <li><b class="t">① 稼働を取り込む</b>MAP の人と受付の名簿をつないで、直近1ヶ月の稼働率を入れます。名前が同じ人は自動でつながります。</li>
+  <li><b class="t">② 名簿から追加</b>受付の名簿にいて MAP にまだいない人を、紹介者の下に追加。受講済みの研修もステップに入ります。</li>
+  <li><b class="t">③ 名前をそろえる</b>MAP と名簿で字が違う人（高橋⇔髙橋 など）を、名簿の名前にそろえます。</li>
+</ol>
+<figure><img src="leader/navi_link.webp" alt="NAVIGATORの受付連携" loading="lazy"><figcaption>NAVIGATOR の受付連携（① 稼働を取り込む）</figcaption></figure>
+<div class="note info"><b>ほかの地域のユニオンの人：</b>その人のユニオンの受付管理者に、名簿で「MAP で連携するユニオン」にあなたのユニオンを選んでもらうと、つなげられます。</div>
+<div class="note warn"><b>MAP で OUT にした人</b>は、取り込みの対象外です（稼働率・研修・OL チェックアウト）。</div>
+</section>
+
+<!-- ───────── 8 ───────── -->
+<section id="al">
+<h2><span class="no">8</span>ATTACK LIST</h2>
+<p class="lead">これから声をかけたい人を、1人ずつカードにして管理するアプリです。メンバーに共有してもらうと、リーダーも見て一緒に作戦を立てられます。</p>
+<div class="btns"><a class="btn" href="https://hktymc18.github.io/hotlist/" target="_blank" rel="noopener">ATTACK LIST を開く ›</a></div>
+
+<h3>📝 リストを作る</h3>
+<ol class="steps">
+  <li><b class="t">右下の<span class="ui">＋</span>で人を追加</b>名前だけで保存できます。年齢・関係性・仕事・信用度（S〜D）・ニーズなど、分かるところから。</li>
+  <li><b class="t">カードを開いて進み具合を付ける</b>未着手 → 連絡中 → CT予定 → CT済み → つながった → 体感済み → BPC済み／ユーザー。合わない人は NG。</li>
+  <li><b class="t">「最有力」「有力」の目印</b>一人暮らし・友だちが多そう・信用度などから、アプリが自動で付けます。</li>
+</ol>
+<div class="shots">
+  <figure><img src="leader/al_main_list.webp" alt="ATTACK LISTの一覧" loading="lazy"><figcaption>一覧。1人が1枚のカード</figcaption></figure>
+  <figure><img src="leader/al_card_detail.webp" alt="カードの詳細" loading="lazy"><figcaption>カードを開くと詳しい情報</figcaption></figure>
+  <figure><img src="leader/al_add_entry.webp" alt="人を追加する" loading="lazy"><figcaption>＋で追加</figcaption></figure>
+  <figure><img src="leader/al_filters.webp" alt="しぼり込み" loading="lazy"><figcaption>検索・お気に入り・条件でしぼり込み</figcaption></figure>
+</div>
+<p class="swipe">横にスワイプ →</p>
+
+<h3>📄 CDATA（個別の前に共有するデータ）</h3>
+<ol class="steps">
+  <li><b class="t">カードの<span class="ui">シート</span> → <span class="ui">CDATA</span></b>リストに入っている内容は自動で入ります。入力は自動で保存。</li>
+  <li><b class="t"><span class="ui">プレビュー</span> → <span class="ui">📋 コピー</span></b>文面のまま LINE に貼って送れます。</li>
+</ol>
+<div class="shots">
+  <figure><img src="leader/al_cdata_sheet.webp" alt="CDATAの入力" loading="lazy"><figcaption>CDATA を書く</figcaption></figure>
+  <figure><img src="leader/al_cdata_preview.webp" alt="CDATAのプレビュー" loading="lazy"><figcaption>プレビューしてコピー</figcaption></figure>
+</div>
+<p class="swipe">横にスワイプ →</p>
+
+<h3>👥 メンバーのリストを見る（リーダー）</h3>
+<ol class="steps">
+  <li><b class="t">メンバーが共有コードを出す</b>メンバーの<span class="ui">⚙ 設定・共有</span> → <span class="ui">共有コードを発行</span>（24時間有効）→ <span class="ui">送る文面をコピー</span>であなたに送ってもらいます。</li>
+  <li><b class="t">あなたがコードを入れる</b>あなたの<span class="ui">⚙ 設定・共有</span> → 「共有コードを受け取った」に入れて<span class="ui">受け取る</span>。</li>
+  <li><b class="t">右上の人のマーク → メンバーを選ぶ</b>「閲覧中」の間は見るだけ（編集はできません）。<span class="ui">← 自分のリストに戻る</span>で戻ります。</li>
+</ol>
+<div class="shots">
+  <figure><img src="leader/al_settings_share.webp" alt="共有コード" loading="lazy"><figcaption>設定・共有。共有コード</figcaption></figure>
+  <figure><img src="leader/al_members.webp" alt="メンバーのリスト" loading="lazy"><figcaption>共有してくれているメンバー</figcaption></figure>
+  <figure><img src="leader/al_member_list_view.webp" alt="メンバーのリストを閲覧中" loading="lazy"><figcaption>メンバーのリストを閲覧中</figcaption></figure>
+</div>
+<p class="swipe">横にスワイプ →</p>
+
+<h3>🏠 Family DATA</h3>
+<p>右上の家のマークから。家族の図・影響力の順番・キーパーソン・アプローチ作戦をまとめます。見せてもらったリーダーは、家族ごとに「U ラインからのアドバイス」を書けます。</p>
+<figure><img src="leader/al_family_data.webp" alt="Family DATA" loading="lazy"><figcaption>Family DATA（家族の図）</figcaption></figure>
+
+<div class="note warn"><b>OUT にする：</b>メンバーのリストの<span class="ui">OUTにする</span>は、ユニオン管理者と、管理者が指定したリーダーだけに出ます。OUT にした人は ATTACK LIST・NAVIGATOR・GOAL SETTING にログインできなくなります（「元に戻す」で戻せます）。</div>
+</section>
+
+<!-- ───────── 9 ───────── -->
+<section id="faq">
+<h2><span class="no">9</span>困ったとき</h2>
+<details><summary>名簿に名前がない・名前が間違っている</summary><p>名簿を直すのはユニオン管理者・受付管理者です。正しい名前と番号を伝えてください。</p></details>
+<details><summary>研修生が「研修後入力」の一覧に出ない</summary><p>一覧に出るのは、自分が登録・受講済みにした人と、番号・リンク・QR で開いた人です。番号を入れて「開く」か、本人の会員証の QR を「📷 QR」で読んでください。前の担当に「🔗 次の担当に送る」で送ってもらうのが早いです。</p></details>
+<details><summary>研修生登録のページが「任命されていません」になる</summary><p>リーダーか、ユニオン管理者に「研修生登録の担当」に任命してもらってください。</p></details>
+<details><summary>会員証のオンライン申請が「申請できません」になる</summary><p>受付で記録済みの可能性があります。会員番号を受付担当に伝えて確認してもらってください。</p></details>
+<details><summary>稼働率が NAVIGATOR と合わない</summary><p>NAVIGATOR は受付の「直近1ヶ月」の数字を取り込みます。受付連携で、その人が名簿とつながっているか確認してください。</p></details>
+<details><summary>パスワードを忘れた・ログインできない</summary><p>NAVIGATOR のログイン画面でメールアドレスを入れて「パスワードを忘れた」を押すと、再設定のメールが届きます（アカウントは全部のアプリで同じなので、受付・研修生登録・ATTACK LIST もそのパスワードで入れます）。解決しない時は管理者へ。</p></details>
+<div class="card" style="margin-top:16px;">
+  <b style="font-size:17px;">📮 連絡先</b>
+  <p style="margin:6px 0 0;">困った時は、<b>各ユニオンの管理者</b>に連絡してください。管理者は受付管理の<span class="ui">名簿</span>→<span class="ui">👥 管理者一覧</span>で確認できます。</p>
+</div>
+</section>
+
+<div class="foot">BASE CHECK-IN リーダー向けガイド ／ 画面の写真はすべて見本（架空）のデータです。<a class="top" href="#">▲ いちばん上へ</a></div>
+</div>
+</body>
+</html>
