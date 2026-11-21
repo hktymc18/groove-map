@@ -686,11 +686,6 @@ service cloud.firestore {
       allow update: if isCkAdmin(resource.data.get('union',''))
                     && isCkAdmin(request.resource.data.get('union', resource.data.get('union','')))
                     && ckDecoUpdOk();   // 🃏 v30: 特別カード・BD/TEのタイトル（・古いバッジ）はオーナーだけ
-      // ⭐ v35: リーダーは会員証のタイトル・役職のバッジを変えられる（名簿のほかの項目は変えられない）。
-      //   BLUE DIAMOND・TEAM ELITE と特別カードは今まで通りオーナーだけ（ckDecoUpdOk）
-      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['cardTitle','badges','badge'])
-                    && ckDecoUpdOk()
-                    && isCkLeader(resource.data.get('union',''));
       // 会員証の発行・再発行・無効化はログイン済みなら誰でも可
       // （変更できるのはカード関連フィールドのみ。名簿本体の編集は管理者のみ）
       allow update: if ckCanSee(resource.data.get('union',''))
