@@ -7,6 +7,8 @@ T.run(async () => {
   c('色は MAP を開いている時だけ（body[data-v=current/ideal]）・ライトとダーク', /body\[data-v="current"\]:not\(\.light\),body\[data-v="ideal"\]:not\(\.light\)\{[^}]*--accent:#EFFF40/.test(html) && /body\.light\[data-v="current"\],body\.light\[data-v="ideal"\]\{[^}]*--bg:#F6F6F1/.test(html));
   c('書体 Outfit・Zen Kaku Gothic New を読み込む', /family=Outfit/.test(html) && /Zen\+Kaku\+Gothic\+New/.test(html));
   c('選択中はチャコール（イエローは大事な操作だけ）', /\.pt-ms\.active[^{]*\{background:var\(--nv-ink\)/.test(html) && /\.pcs-item\.active\{background:var\(--nv-ink\)/.test(html));
+  c('v896: ライトのユーザーの一覧はイエローの文字をやめる（選んだ絞り込み・ADP・足すボタン）', /body\.light\[data-v="current"\] \.umc\.on[^{]*\{background:var\(--nv-ink\)/.test(html) && /\.umadd[^{]*\{border-color:#9B999A!important;color:#373334/.test(html) && /\.umt\.adp[^{]*\{background:#EFFF40!important;color:#373334/.test(html));
+  c('v896: 下のボタンは1行', /#mxBtm \.nx\{white-space:nowrap/.test(html));
   T.login(); setWH(1440, 1000); w._uxSync && w._uxSync();
   w.state.members = [{ id: 'r', lastName: '見本', firstName: '一', title: 'ゴールド', parentId: '', mapType: 'both', activity: 'S', actRate: 90, ptCurrent: 1000 },
     { id: 'a', lastName: '見本', firstName: '二', title: 'Q2', parentId: 'r', mapType: 'both', activity: 'A', ptCurrent: 300 },
