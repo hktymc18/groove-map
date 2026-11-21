@@ -166,7 +166,7 @@ details p{margin:8px 0 0;font-size:15px;}
   <div class="role"><span class="ic">👑</span><b>オーナー</b><p>全部の設定。ユニオン管理者・リーダーの指定、特別カード、ユニオン名の変更。</p></div>
   <div class="role"><span class="ic">🛡</span><b>ユニオン管理者</b><p>そのユニオンの責任者。名簿の編集・会計・受付管理者の任命・研修生の昇格。</p></div>
   <div class="role"><span class="ic">🎫</span><b>受付管理者</b><p>名簿の編集・イベント作成・会計・受付。</p></div>
-  <div class="role me"><span class="ic">⭐</span><b>リーダー（あなた）</b><p>名簿と集計を<b>見る</b>・会員証の<b>タイトル・バッジ・再発行・無効化</b>・研修生登録の担当を<b>任命する</b>・研修生を<b>登録する</b>。</p></div>
+  <div class="role me"><span class="ic">⭐</span><b>リーダー（あなた）</b><p>名簿と集計を<b>見る</b>・研修生登録の担当を<b>任命する</b>・研修生を<b>登録する</b>。</p></div>
   <div class="role"><span class="ic">🎓</span><b>研修生登録の担当</b><p>研修生登録のページで、研修生の登録と受講の記録。</p></div>
   <div class="role"><span class="ic">🙂</span><b>メンバー</b><p>受付とイベントのタブだけ。自分の会員証。</p></div>
 </div>
@@ -180,9 +180,8 @@ details p{margin:8px 0 0;font-size:15px;}
   <tr><td>研修生の登録・受講の記録</td><td class="y">できる</td></tr>
   <tr><td>会員証の URL・QR を本人に渡す</td><td class="y">できる</td></tr>
   <tr><td>イベントの受付（QR を読む）</td><td class="y">できる</td></tr>
-  <tr><td>会員証のタイトル・バッジの変更</td><td class="y">できる</td></tr>
-  <tr><td>会員証の再発行・無効化</td><td class="y">できる</td></tr>
-  <tr><td>名簿の編集（名前・系列・グレードなど）</td><td class="n">管理者へ</td></tr>
+  <tr><td>名簿の編集・会員証の再発行・無効化</td><td class="n">管理者へ</td></tr>
+  <tr><td>タイトル・バッジの変更</td><td class="n">管理者へ</td></tr>
   <tr><td>イベントを作る・会計</td><td class="n">管理者へ</td></tr>
   <tr><td>研修生を正規メンバーに昇格</td><td class="n">管理者へ</td></tr>
 </table>
@@ -201,13 +200,10 @@ details p{margin:8px 0 0;font-size:15px;}
   <li><b class="t">上の「名簿」タブ</b>自分のユニオンのメンバーが並びます。リーダーは「閲覧のみ」です。</li>
   <li><b class="t">タイトルで並べ替え・絞り込み</b><span class="ui">タイトル</span>を押すと高い順。<span class="ui">タイトル: すべて</span>で「RUBY 以上」などに絞れます。</li>
   <li><b class="t">会員証を渡す</b>各行の<span class="ui">会員証</span>→<span class="ui">QRで渡す</span>を本人のスマホで読んでもらうか、URL を LINE で送ります。</li>
-  <li><b class="t">タイトル・バッジを付ける</b>同じ<span class="ui">会員証</span>の画面の下で、<span class="ui">👑 タイトル</span>を選ぶ・<span class="ui">🏅 バッジ</span>にチェック。すぐ本人の会員証に反映されます（BLUE DIAMOND・TEAM ELITE はオーナーだけ）。</li>
-  <li><b class="t">スマホを変えた・URL が漏れた時</b><span class="ui">再発行</span>で新しい URL に（古い URL は使えなくなります）。やめた人は<span class="ui">無効化</span>。</li>
 </ol>
 <div class="shots">
   <figure><img src="leader/roster.webp" alt="名簿の画面" loading="lazy"><figcaption>名簿。名前の横がグレード、下がタイトル</figcaption></figure>
   <figure><img src="leader/cardmodal.webp" alt="会員証の画面" loading="lazy"><figcaption>会員証。QR で渡す・URL をコピー</figcaption></figure>
-  <figure><img src="leader/cardtitle.webp" alt="タイトルとバッジ" loading="lazy"><figcaption>同じ画面の下。タイトルとバッジ</figcaption></figure>
 </div>
 <p class="swipe">横にスワイプ →</p>
 
@@ -265,10 +261,10 @@ details p{margin:8px 0 0;font-size:15px;}
     <li>タイトルの順番：BR → GOLD → LAPIS → <b>RUBY</b> → EMERALD → <b>DIAMOND</b> → BLUE DIAMOND → TEAM ELITE</li>
     <li>BLUE DIAMOND・TEAM ELITE は、さらに特別なデザイン（オーナーが設定）。</li>
     <li>役職のバッジ（EXPERT・DIRECTOR など）も、カードに付けられます。</li>
-    <li>タイトル・バッジは<b>リーダーも</b>名簿の<span class="ui">会員証</span>から変えられます。グレードを変えるのは<b>管理者</b>。変えると本人の会員証にもそのまま反映されます（URL・QR は変わりません）。</li>
+    <li>グレード・タイトル・バッジを変えるのは<b>管理者</b>。変えると本人の会員証にもそのまま反映されます（URL・QR は変わりません）。</li>
   </ul>
 </div>
-<div class="note warn"><b>会員証をなくした・スマホを変えた：</b>同じ URL を開けばそのまま使えます。URL が分からない時は、名簿の<span class="ui">会員証</span>→<span class="ui">URLをコピー</span>で送ってあげてください。</div>
+<div class="note warn"><b>会員証をなくした・スマホを変えた：</b>同じ URL を開けばそのまま使えます。URL が分からない時は管理者に「会員証URL」を聞いてください。</div>
 </section>
 
 <!-- ───────── 5 ───────── -->
@@ -330,7 +326,7 @@ details p{margin:8px 0 0;font-size:15px;}
 <div class="link"><span class="from">🔗 NAVIGATOR のアカウントと名簿の紐付け</span><span class="to">→ 受付で「無効」にすると NAVIGATOR も止まる・カードコレクション</span><span class="who">する人：ユニオン管理者（NAVIGATOR のアカウント管理）</span><p>やめた人のデータを守るため。紐付けると、受けた OL のカードも NAVIGATOR で見られます。</p></div>
 <div class="link"><span class="from">🎓 OL チェックアウト（会員証から）</span><span class="to">→ 本人の NAVIGATOR の ToDo・予定</span><span class="who">する人：OL を受けた本人</span><p>アウトラインのあと、A さんの QR を読んで感想・気づき・タスクを送ります。タスクが本人の NAVIGATOR に入ります。</p></div>
 <div class="link"><span class="from">📝 目標設定の宿題（会員証）</span><span class="to">→ NAVIGATOR の目標</span><span class="who">する人：研修生本人</span><p>会員証の「NAVIGATOR に引き継ぐ」で、答えた内容が目標に入ります。</p></div>
-<div class="link"><span class="from">👑 タイトル（名簿）</span><span class="to">→ 会員証のデザイン・NAVIGATOR の先行利用</span><span class="who">変える人：リーダー・管理者／先行利用はオーナー</span><p>NAVIGATOR は RUBY 以上 → BR 以上の順に公開予定。名簿の<span class="ui">📋 名前をコピー</span>で対象の人を出します。</p></div>
+<div class="link"><span class="from">👑 タイトル（名簿）</span><span class="to">→ 会員証のデザイン・NAVIGATOR の先行利用</span><span class="who">変える人：管理者／先行利用はオーナー</span><p>NAVIGATOR は RUBY 以上 → BR 以上の順に公開予定。名簿の<span class="ui">📋 名前をコピー</span>で対象の人を出します。</p></div>
 <div class="link"><span class="from">🎯 ATTACK LIST の進み具合</span><span class="to">→ NAVIGATOR のホームの人数</span><span class="who">付ける人：本人</span><p>「未着手・連絡中」と「CT予定」の人数が、NAVIGATOR に自動で出ます。「ATTACK LISTを見る」からすぐ開けます。</p></div>
 <div class="link"><span class="from">🙍 プロフィール（名前・ユニオン・UP ルビー）</span><span class="to">→ NAVIGATOR・ATTACK LIST・GOAL SETTING で共通</span><span class="who">変える人：本人</span><p>どれか1つで変えると全部に反映されます。個人情報の同意も1回で全部に。</p></div>
 <div class="link"><span class="from">🏷 ユニオン名</span><span class="to">→ 受付・NAVIGATOR・ATTACK LIST の全部</span><span class="who">変える人：オーナー</span><p>名前が変わる時はオーナーに。全部のアプリにまとめて反映されます。</p></div>
