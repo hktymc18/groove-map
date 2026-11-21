@@ -4,10 +4,11 @@ const { w, c, sleep, setWH, $, $$ } = T;
 const fs = require('fs'), path = require('path');
 T.run(async () => {
   const html = fs.readFileSync(path.join(__dirname, '../../../index.html'), 'utf8');
-  c('色は MAP を開いている時だけ（body[data-v=current/ideal]）・ライトとダーク', /body\[data-v="current"\]:not\(\.light\),body\[data-v="ideal"\]:not\(\.light\)\{[^}]*--accent:#EFFF40/.test(html) && /body\.light\[data-v="current"\],body\.light\[data-v="ideal"\]\{[^}]*--bg:#F6F6F1/.test(html));
+  c('v897: 新しいトーンは全部の画面（ダークの目立つ色はイエロー・ライトは文字でも読めるターコイズ）', /body:not\(\.light\)\{[^}]*--accent:#EFFF40/.test(html) && /body\.light\{[^}]*--bg:#F6F6F1[^}]*--accent:#1C9586/.test(html));
+  c('v897: ライトでも大事なボタン（保存・追加・受付連携）はイエローの地にチャコールの文字', /body\.light \.btn-p,[^{]*body\.light #mxBtm \.nx[^{]*\{background:#EFFF40!important;color:#373334/.test(html));
   c('書体 Outfit・Zen Kaku Gothic New を読み込む', /family=Outfit/.test(html) && /Zen\+Kaku\+Gothic\+New/.test(html));
-  c('選択中はチャコール（イエローは大事な操作だけ）', /\.pt-ms\.active[^{]*\{background:var\(--nv-ink\)/.test(html) && /\.pcs-item\.active\{background:var\(--nv-ink\)/.test(html));
-  c('v896: ライトのユーザーの一覧はイエローの文字をやめる（選んだ絞り込み・ADP・足すボタン）', /body\.light\[data-v="current"\] \.umc\.on[^{]*\{background:var\(--nv-ink\)/.test(html) && /\.umadd[^{]*\{border-color:#9B999A!important;color:#373334/.test(html) && /\.umt\.adp[^{]*\{background:#EFFF40!important;color:#373334/.test(html));
+  c('選択中はチャコール（イエローは大事な操作だけ）', /\.pt-ms\.active[^{]*\{background:var\(--nv-ink\)/.test(html) && /body \.pcs-item\.active\{background:var\(--nv-ink\)/.test(html));
+  c('v896: ライトのユーザーの一覧はイエローの文字をやめる（選んだ絞り込み・ADP・足すボタン）', /body\.light \.umc\.on[^{]*\{background:var\(--nv-ink\)/.test(html) && /\.umadd[^{]*\{border-color:#9B999A!important;color:#373334/.test(html) && /\.umt\.adp[^{]*\{background:#EFFF40!important;color:#373334/.test(html));
   c('v896: 下のボタンは1行', /#mxBtm \.nx\{white-space:nowrap/.test(html));
   T.login(); setWH(1440, 1000); w._uxSync && w._uxSync();
   w.state.members = [{ id: 'r', lastName: '見本', firstName: '一', title: 'ゴールド', parentId: '', mapType: 'both', activity: 'S', actRate: 90, ptCurrent: 1000 },
@@ -16,6 +17,7 @@ T.run(async () => {
     { id: 'd', lastName: '見本', firstName: '四', title: 'B2', parentId: 'r', mapType: 'both', activity: 'B', ptCurrent: 100 }];
   w.switchView('current'); await sleep(250);
   c('MAP を開くと body の data-v が current', w.document.body.getAttribute('data-v') === 'current');
+  c('v897: MAP だけに限る書き方（data-v）が残っていない', !/data-v="(current|ideal)"/.test(html));
   c('新しいトーンが入っている', w.NV_TONE === true && w.NV_LINE.length === 4);
   const g = $('[data-mid="a"]'), tr = $('[data-mid="b"]'), rt = $('[data-mid="r"]');
   const rect = g && g.querySelector('rect');
@@ -32,5 +34,5 @@ T.run(async () => {
   const row = w._mxRowHtml({ id: 'a', lastName: '見本', firstName: '二', title: 'Q2', activity: 'A' }, 'current', 1, [], true, '#26C7B3', 0, false, false);
   c('スマホ：タイトルの札は区分の色（var(--nvt-ex)）', /background:var\(--nvt-ex\);color:var\(--nvt-ex-ink\)/.test(row), row.slice(0, 200));
   c('スマホ：系列の線も4色', w.MX_FAM === w.NV_LINE);
-  c('APP_JS_VERSION v895 以上', +(/APP_JS_VERSION = 'v(\d+)'/.exec(fs.readFileSync(path.join(__dirname, '../../../app.js'), 'utf8')) || [0, 0])[1] >= 895);
+  c('APP_JS_VERSION v897 以上', +(/APP_JS_VERSION = 'v(\d+)'/.exec(fs.readFileSync(path.join(__dirname, '../../../app.js'), 'utf8')) || [0, 0])[1] >= 897);
 });
