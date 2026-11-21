@@ -2897,10 +2897,11 @@ if(gTrainerMode) document.documentElement.classList.add('trm');   // 🎓 研修
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v164';
+var APP_VER = 'v165';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v165', d: '2026/11/21', items: ['🐞 特別カード：工房のカードと本人の設定が食い違っていると、外しても本人の会員証から外れなかったのを直しました（会員証の画面に「外す」ボタンも追加）'] },
   { v: 'v164', d: '2026/11/20', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v163', d: '2026/11/20', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v162', d: '2026/11/20', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
@@ -9375,6 +9376,7 @@ function cardModal(m){
     body += '<div style="border-top:1px solid var(--line);margin-top:14px;padding-top:6px;">'
       + '<label>✨ 特別カード（オーナーだけが設定できます）</label>'
       + '<div style="display:flex;align-items:center;gap:8px;font-size:13.5px;"><span style="flex:1;" id="cmSkinNow">' + (m.skin ? '設定あり（' + esc(m.skinName || m.skin) + '）' : 'なし') + '</span>'
+      + (m.skin ? '<button id="cmSkinOff" class="danger ghost">外す</button>' : '')
       + '<button id="cmKobo">🃏 特別カード工房で' + (m.skin ? '開く' : '作る') + '</button></div></div>';
   }
   if(isOwner() || canEditUnion(m.union)){
@@ -9415,11 +9417,43 @@ function cardModal(m){
   if($('cmKobo')) $('cmKobo').onclick = function(){
     // この人に付いているカードを開く（なければ新規で、付ける人をこの人にして）
     db.collection('cardSkins').where('no', '==', m.no).get().then(function(qs){
-      var d = null; qs.forEach(function(x){ if(!d){ d = x.data(); d.id = x.id; } });
-      if(d) koboEdit(d);
-      else if(m.skin === 'reaperTcg') koboList();
+      var d = null; qs.forEach(function(x){ if(!d && x.data().no === m.no){ d = x.data(); d.id = x.id; } });
+      if(d){ koboEdit(d); return; }
+      // 🐞 v165: 本人には特別カードが付いているのに、工房のカードの側に「付ける人」が入っていない（食い違い）時は、
+      //   本人に付いているカード（m.skin）を「この人に付いている」として開く（前は新しいカードが開き、外しても本人から外れなかった）
+      if(m.skin && m.skin !== 'reaperTcg'){
+        return db.collection('cardSkins').doc(m.skin).get().then(function(s){
+          if(s.exists && !s.data().no){
+            var d2 = s.data(); d2.id = s.id; d2.no = m.no; d2.memberName = m.name || ''; d2.union = m.union || '';
+            koboEdit(d2);
+          } else if(s.exists){
+            toast('このカードは ' + (s.data().memberName || s.data().no) + ' さんに付いています。この人から外す時は「外す」を押してください');
+          } else {
+            toast('付いていた特別カードは工房にありません。この人から外す時は「外す」を押してください');
+          }
+        });
+      }
+      if(m.skin === 'reaperTcg') koboList();
       else koboEdit(null, { no: m.no, name: m.name || '', union: m.union || '', badge: m.badge || '', cardTitle: m.cardTitle || '', badges: ckBadgesOf(m) });
     }).catch(function(e){ toast(permMsg(e, '開けませんでした')); });
+  };
+  // 🐞 v165: この人から特別カードを直接外す（会員証は普通のカードに戻る。工房のカードは消さない）
+  if($('cmSkinOff')) $('cmSkinOff').onclick = function(){
+    if(!confirm((m.name || m.no) + ' さんから特別カードを外しますか？（会員証は普通のカードに戻ります。工房のカードは消えません）')) return;
+    var btn = $('cmSkinOff'), sid = m.skin;
+    btn.disabled = true;
+    kbAssign(sid, { text: {} }, m.no, null).then(function(){
+      // 工房のカードの「付ける人」がこの人なら、そこも空に
+      return db.collection('cardSkins').doc(sid).get().then(function(s){
+        if(s.exists && s.data().no === m.no) return s.ref.set({ no: '', memberName: '', union: '' }, { merge: true });
+      }).catch(function(){});
+    }).then(function(){
+      ['skin'].concat(KB_TEXT_KEYS).forEach(function(k){ delete m[k]; });
+      if($('cmSkinNow')) $('cmSkinNow').textContent = 'なし';
+      btn.remove();
+      if($('cmKobo')) $('cmKobo').textContent = '🃏 特別カード工房で作る';
+      toast('特別カードを外しました（本人が会員証を開き直すと反映）');
+    }).catch(function(e){ btn.disabled = false; toast(permMsg(e, '外せませんでした（オーナーのみ）')); });
   };
   bd.onchange = function(){
     var v = bd.value;
