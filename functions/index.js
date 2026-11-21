@@ -10,6 +10,8 @@ const admin = require('firebase-admin');
 const usage = require('./usage');
 // 🗑 v893: 削除したアカウントを完全に消す（オーナーの予約があるものだけ。overdueReminders の最後に動かす）
 const purge = require('./purge');
+// 🧹 受付 v168: 棚卸し（回答の反映は毎回・計算とお知らせは週1の月曜9時。overdueReminders の最後に動かす）
+const inventory = require('./inventory');
 
 admin.initializeApp();
 
@@ -118,6 +120,8 @@ exports.overdueReminders = onSchedule(
     try { await usage.run(admin); } catch (eU) { console.log('usageStats error: ' + eU); }
     // 🗑 v893: 「完全に消す」の予約があるアカウントを消す（1日5回）
     try { await purge.run(admin); } catch (eP) { console.log('purge error: ' + eP); }
+    // 🧹 受付 v168: 棚卸し（研修・出席が14日・28日ない人を担当・UPルビーに聞く／回答を名簿に反映）
+    try { await inventory.run(admin); } catch (eI) { console.log('inventory error: ' + eI); }
   }
 );
 
