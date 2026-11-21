@@ -293,10 +293,8 @@ body.easy-rec .tile.tap:hover{border-color:var(--line);}
 #vTrainer textarea{resize:none;overflow:hidden;line-height:1.4;font-family:inherit;}
 .trtabs{display:flex;gap:8px;margin:10px 0 14px;}
 .trtabs button{flex:1;padding:11px;font-size:14px;}
-.trtabs button.on{background:var(--ink);color:var(--card);border-color:var(--ink);}
 .trsex{display:flex;gap:8px;margin:4px 0 10px;}
 .trsex button{flex:1;padding:11px;font-size:14px;}
-.trsex button.on{background:var(--ink);color:var(--card);border-color:var(--ink);}
 .sugitem .su{color:var(--sub);font-size:12px;margin-left:6px;}
 .side{display:flex;flex-direction:column;gap:12px;min-width:0;}
 .tile{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px;}
@@ -2897,10 +2895,11 @@ if(gTrainerMode) document.documentElement.classList.add('trm');   // 🎓 研修
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v165';
+var APP_VER = 'v166';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v166', d: '2026/11/21', items: ['📗 リーダー向けガイドを追加（🔰 使い方 から開けます）：受付管理・研修生登録・ATTACK LIST の使い方と、NAVIGATOR とのつながりを1ページに', '🛠 研修生登録の「＋登録／研修後入力」のタブが黒に戻っていたのを、グレーの丸に直しました'] },
   { v: 'v165', d: '2026/11/21', items: ['🐞 特別カード：工房のカードと本人の設定が食い違っていると、外しても本人の会員証から外れなかったのを直しました（会員証の画面に「外す」ボタンも追加）'] },
   { v: 'v164', d: '2026/11/20', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v163', d: '2026/11/20', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
@@ -3431,6 +3430,13 @@ function gxOpenMenu(){
         + '<div class="gx-stamp" style="background:#fff;font-size:20px;">🧪</div><div class="tx"><b style="color:#3a2a00;">練習モードで受付を体験</b>'
         + '<small style="color:#6b5600;">ダミーの名簿・イベントで、QRでピッ〜受付終了まで何回でも。本番には記録されません</small></div>'
         + '<button class="gx-btn" id="gxPractice" style="font-size:12.5px;padding:7px 13px;">' + (gPractice ? '練習中' : 'はじめる') + '</button></div>'
+      : '')
+    // 📗 v166: リーダー向けガイド（受付管理・研修生登録・ATTACK LIST・NAVIGATOR のつながり）。受付管理と研修生登録の画面から
+    + (gxView() === 'vApp' || gxView() === 'vTrainer'
+      ? '<a class="gx-mis" href="leader.html" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;">'
+        + '<div class="gx-stamp" style="background:#fff;font-size:20px;">📗</div><div class="tx"><b>リーダー向けガイド</b>'
+        + '<small>受付管理・研修生登録・ATTACK LIST の使い方と、NAVIGATOR とのつながり</small></div>'
+        + '<span class="gx-btn" style="font-size:12.5px;padding:7px 13px;">ひらく ›</span></a>'
       : '')
     + (gxView() === 'vApp'
       ? '<a class="gx-mis" href="manual.html" target="_blank" rel="noopener" style="text-decoration:none;color:inherit;">'
