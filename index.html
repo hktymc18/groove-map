@@ -3026,6 +3026,15 @@ body[data-v="current"] #mxBtm .nx,body[data-v="ideal"] #mxBtm .nx{border-radius:
 body[data-v="current"] #mxBtm,body[data-v="ideal"] #mxBtm{border-top-color:transparent}
 body[data-v="current"] .mx2 i,body[data-v="ideal"] .mx2 i{color:var(--nv-s-text)!important}
 body[data-v="current"] .mxlg span:first-child i,body[data-v="ideal"] .mxlg span:first-child i{background:var(--mxbr)!important}
+/* v896: ライトの MAP（ユーザーの一覧）でイエローの文字・線が見えないので、チャコール（文字）・バイオレット（リンク）に */
+body.light[data-v="current"] .umc.on,body.light[data-v="ideal"] .umc.on{background:var(--nv-ink)!important;color:var(--nv-sel-ink)!important;border-color:transparent!important}
+body.light[data-v="current"] .umn em.adp,body.light[data-v="ideal"] .umn em.adp,body.light[data-v="current"] .umt.adp,body.light[data-v="ideal"] .umt.adp{background:#EFFF40!important;color:#373334!important}
+body.light[data-v="current"] .umadd,body.light[data-v="ideal"] .umadd{border-color:#9B999A!important;color:#373334!important}
+body.light[data-v="current"] .umadd-pc,body.light[data-v="ideal"] .umadd-pc,body.light[data-v="current"] .umlk,body.light[data-v="ideal"] .umlk{color:#602BFC!important}
+body.light[data-v="current"] .umlk.p,body.light[data-v="ideal"] .umlk.p{border-color:#602BFC!important}
+body.light[data-v="current"] .umfr,body.light[data-v="ideal"] .umfr{color:#602BFC!important;border-color:rgba(96,43,252,.45)!important}
+body.light[data-v="current"] .umq:hover,body.light[data-v="ideal"] .umq:hover,body.light[data-v="current"] .umin:focus,body.light[data-v="ideal"] .umin:focus{border-color:#373334!important;color:#373334!important}
+body[data-v="current"] #mxBtm .bk,body[data-v="ideal"] #mxBtm .bk,body[data-v="current"] #mxBtm .nx,body[data-v="ideal"] #mxBtm .nx{white-space:nowrap;letter-spacing:.02em}
 </style>
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -3111,7 +3120,7 @@ body[data-v="current"] .mxlg span:first-child i,body[data-v="ideal"] .mxlg span:
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v895</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v896</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4065,7 +4074,7 @@ body[data-v="current"] .mxlg span:first-child i,body[data-v="ideal"] .mxlg span:
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v895';</script>
-<script src="app.js?v=v895"></script>
+<script>window.GM_EXPECT_JS='v896';</script>
+<script src="app.js?v=v896"></script>
 </body>
 </html>
