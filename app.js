@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v893';
+var APP_JS_VERSION = 'v894';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -822,6 +822,32 @@ function isPCMode() {
 // v561: 同じMAP・同じ月・同じ持ち主の描き直し（編集・OUT・研修の「流れた」・追加・共同編集の取り込みなど）は、
 //        今見ている位置と倍率を保つ（中央・左上に戻さない）。月やMAPを切り替えた時だけ初期表示にする
 function _mapViewCtx(mapType) { return mapType + '|' + (state.currentMonth || '') + '|' + (viewingOwnerUid || ''); }
+// ═══ v894: 新しいトーン（NAVIGATOR トーン表）を MAP に使う。false にすると今までの見た目に戻る ═══
+var NV_TONE = true;
+var NV_LINE = ['#26C7B3', '#B095FE', '#B3BF30', '#9B999A'];   // 系列の線：ターコイズ・バイオレット・イエロー・灰色
+var NV_FONT_H = "'Zen Kaku Gothic New','Noto Sans JP',sans-serif", NV_FONT_N = "Outfit,Inter,sans-serif";
+// カードの色（区分：br=BR以上・ex=審査中・tr=研修生・fr=フレッシュ・ba=そのほか）
+function _nvCardCol(k, light) {
+  var L = light;
+  var tag = { br: L ? '#602BFC' : '#B095FE', ex: '#EFFF40', tr: L ? '#DEF7F4' : '#115A51', fr: L ? '#EDEDE7' : '#3E3A3B', ba: L ? '#EDEDE7' : '#3E3A3B' }[k];
+  var tagInk = { br: L ? '#FFFFFF' : '#191717', ex: '#373334', tr: L ? '#115A51' : '#DEF7F4', fr: L ? '#373334' : '#F3F2EE', ba: L ? '#373334' : '#F3F2EE' }[k];
+  var ring = { br: L ? '#602BFC' : '#B095FE', ex: '#B3BF30', tr: '#26C7B3', fr: '#B095FE', ba: L ? '#C9C7C1' : '#6E696B' }[k];
+  return { tag: tag, tagInk: tagInk, ring: ring, fill: L ? '#FFFFFF' : '#262425', edge: L ? '#E1E0E1' : '#3E3A3B', avBg: L ? '#F6F6F1' : '#312E2F', ink: L ? '#373334' : '#F3F2EE' };
+}
+// カードの上の札（フレッシュ・審査中・研修生）
+function _nvLabelCol(k, light) {
+  if (k === 'exam') return { bg: '#EFFF40', ink: '#373334' };
+  if (k === 'trainee') return light ? { bg: '#DEF7F4', ink: '#115A51' } : { bg: '#115A51', ink: '#DEF7F4' };
+  return light ? { bg: '#E7DFFF', ink: '#4820BD' } : { bg: '#2B1371', ink: '#E7DFFF' };
+}
+// 稼働の札（S・A・B・C）
+function _nvActCol(a, light) {
+  if (a === 'S') return { bg: '#26C7B3', ink: '#191717' };
+  if (a === 'A') return light ? { bg: '#DEF7F4', ink: '#115A51' } : { bg: '#115A51', ink: '#DEF7F4' };
+  if (a === 'B') return light ? { bg: '#EDEDE7', ink: '#373334' } : { bg: '#3E3A3B', ink: '#F3F2EE' };
+  if (a === 'C') return { bg: 'none', ink: light ? '#6E696B' : '#A8A3A4', line: light ? '#6E696B' : '#A8A3A4' };
+  return { bg: light ? '#F6F6F1' : '#312E2F', ink: light ? '#6E696B' : '#A8A3A4' };
+}
 function renderPCMap(mapType) {
   var containerId = mapType === 'current' ? 'pcMapCurrent' : 'pcMapIdeal';
   var wrap = document.getElementById(containerId);
@@ -843,7 +869,7 @@ function renderPCMap(mapType) {
   if (roots.length === 0) return;
   var root = roots[0];
 
-  var COLORS = ['#2CE5B8','#8B7CFF','#FFB454','#FF5D73','#5AD7FF','#4ADE80','#FF9F6E','#C583FF','#3ED5C4','#FF87B3','#FFD166','#67B7FF'];
+  var COLORS = NV_TONE ? NV_LINE : ['#2CE5B8','#8B7CFF','#FFB454','#FF5D73','#5AD7FF','#4ADE80','#FF9F6E','#C583FF','#3ED5C4','#FF87B3','#FFD166','#67B7FF']; // v894: 新しいトーンは系列の線も4色
   var _kidsCmp = _treeSortCmp(members); // v420: タイトル高い順→フロント多い順
   // v484: 子探索・深さ計算をインデックス化（旧実装は全員×全員の走査で、大規模MAPの入力・保存・切替が重い元凶だった）
   var _byId = {}, _kidIdx = {};
@@ -894,8 +920,8 @@ function renderPCMap(mapType) {
   function visKids(id) { return window._pcCollapsed[id] ? [] : kids(id); }
 
   // ── レイアウト（横レイヤード：左→右） ──
-  var NODE_W = 220, NODE_H = 72, NODE_RX = 12;
-  var COL_GAP = 70, ROW_GAP = (mapType === 'current' && typeof _umList === 'function' && _umList().length) ? 28 : 15; // v843: ユーザーの札（カードの下のふち）と下のカードの札が重ならないように
+  var NODE_W = 220, NODE_H = 72, NODE_RX = NV_TONE ? 20 : 12; // v894: 新しいトーンはカードの角を20px
+  var COL_GAP = NV_TONE ? 54 : 70, ROW_GAP = (mapType === 'current' && typeof _umList === 'function' && _umList().length) ? 28 : 15; // v843: ユーザーの札（カードの下のふち）と下のカードの札が重ならないように
   var colStep = NODE_W + COL_GAP;
   var rowStep = NODE_H + ROW_GAP;
   var PAD_L = 50, PAD_T = 56;
@@ -1152,7 +1178,7 @@ function renderPCMap(mapType) {
     pt.setAttribute('d',elbow(px,py,cx,cy));
     pt.setAttribute('fill','none');
     pt.setAttribute('stroke',cmap[m.id]||'#444');
-    pt.setAttribute('stroke-width','4.5'); pt.setAttribute('stroke-opacity','0.9'); // v423: さらに太く・濃く
+    pt.setAttribute('stroke-width', NV_TONE ? '2.5' : '4.5'); pt.setAttribute('stroke-opacity','0.9'); // v423: さらに太く・濃く（v894: 新しいトーンは細く）
     pt.setAttribute('class','pc-link');
     pt.setAttribute('data-lineage', lineageRoot[m.id]||'');
     lg.appendChild(pt);
@@ -1173,7 +1199,9 @@ function renderPCMap(mapType) {
     // v491: フレッシュ（6ヶ月以内・BR未満）はゴールド。ケアバッジ非表示の人は通常色
     var _isFr9 = mapType === 'current' && !_isBrUp && !_isBM && !isPcLOI && !isT && (m.title || '').trim() !== 'OUT'
       && (m.badgeMode || '') !== 'off' && typeof ckIsFreshByStart === 'function' && ckIsFreshByStart(m);
-    var cc=_rankCol?_rankCol:(isPcLOI?'#FB923C':isT?'#5AD7FF':(_isFr9?'#FFD166':col)), cf=isPcLOI?'rgba(251,146,60,0.13)':isT?'rgba(90,215,255,0.22)':(_isFr9?'rgba(255,209,102,0.13)':nodeBaseFill); // v423: QBR=オレンジ／v491: フレッシュ=金
+    var cc=_rankCol?_rankCol:(isPcLOI?'#FB923C':isT?'#5AD7FF':(_isFr9?'#FFD166':col)), cf=isPcLOI?'rgba(251,146,60,0.13)':isT?'rgba(90,215,255,0.22)':(_isFr9?'rgba(255,209,102,0.13)':nodeBaseFill);
+    var NVc = NV_TONE ? _nvCardCol(_isBrUp ? 'br' : isPcLOI ? 'ex' : isT ? 'tr' : _isFr9 ? 'fr' : 'ba', isLightTheme) : null; // v894: 新しいトーンの色
+    if (NVc) { cc = NVc.tag; cf = NVc.fill; } // v423: QBR=オレンジ／v491: フレッシュ=金
     var rx=posX[m.id], ry2=posY[m.id];
 
     var g=document.createElementNS('http://www.w3.org/2000/svg','g');
@@ -1194,9 +1222,9 @@ function renderPCMap(mapType) {
     rect.setAttribute('x',rx); rect.setAttribute('y',ry2);
     rect.setAttribute('width',NODE_W); rect.setAttribute('height',NODE_H);
     rect.setAttribute('rx',NODE_RX); rect.setAttribute('ry',NODE_RX);
-    rect.setAttribute('fill',cf); rect.setAttribute('stroke',cc);
-    rect.setAttribute('stroke-width',_isBrUp?'3':(_isBM?'2.5':(isT||isPcLOI||_isFr9?'2':'1'))); // v420: BR以上=太枠／v491: フレッシュも太枠
-    if (_isBrUp) g.style.filter = 'drop-shadow(0 0 7px ' + (_rankCol || '#38BDF8') + '99)'; // v439: BR以上＝宝石色の常時オーラ（安定・上位の静かな光）
+    rect.setAttribute('fill',cf); rect.setAttribute('stroke', NVc ? NVc.edge : cc);
+    rect.setAttribute('stroke-width', NVc ? '1' : (_isBrUp?'3':(_isBM?'2.5':(isT||isPcLOI||_isFr9?'2':'1')))); // v420: BR以上=太枠／v491: フレッシュも太枠
+    if (_isBrUp && !NVc) g.style.filter = 'drop-shadow(0 0 7px ' + (_rankCol || '#38BDF8') + '99)'; // v439: BR以上＝宝石色の常時オーラ（安定・上位の静かな光）
     if ((m.title || '').trim() === 'OUT') { g.classList.add('is-out'); g.style.filter = 'grayscale(1)'; g.style.opacity = '0.5'; } // v440: OUTは当月ゴースト表示（v539: Safariは<g>のCSSフィルタが効かないため不透明度で薄く）
     if (m._foreign) { rect.setAttribute('stroke-dasharray','5,3'); } // v423: 結合は点線のみ。色はタイトル/系列色で塗り分け（全員同じ紫をやめる）
     g.appendChild(rect);
@@ -1227,6 +1255,7 @@ function renderPCMap(mapType) {
     while (nameStr.length > 2 && _estW9(nameStr + '…', nameFs) > _nameMax9 && _estW9(nameStr, nameFs) > _nameMax9) { nameStr = nameStr.slice(0, -1); if (_estW9(nameStr + '…', nameFs) <= _nameMax9) { nameStr += '…'; break; } }
     var nameColor = isF ? (isLightTheme?'#db2777':'#f9a8d4') : (isLightTheme?'#1a1f2b':'#f2f4f8');
     var gsvColor = isLightTheme ? '#3a4560' : '#e2e8f0';
+    if (NVc) { nameColor = NVc.ink; gsvColor = NVc.ink; }
     if(m.morale>0){
       // v501: やる気＝色分き線画アイコン（絵文字廃止）
       var _ml9 = moraleLv(m.morale);
@@ -1275,22 +1304,24 @@ function renderPCMap(mapType) {
       else if (typeof ckIsFreshByStart === 'function' && ckIsFreshByStart(m) && !isBROrAbove(m.title)) _auto9 = 'fresh';
       var _bm9 = m.badgeMode || '';
       var _cb9 = (_bm9 === 'off') ? '' : ((_bm9 === 'on') ? (_auto9 || (_isTr9 ? 'trainee' : 'fresh')) : _auto9);
+      if (NVc && isPcLOI && _cb9 !== 'trainee' && _bm9 !== 'off') _cb9 = 'exam'; // v894: 審査中の札も上に（研修生が先）
       if (_cb9) {
         var _bw9 = _cb9 === 'fresh' ? 68 : 52;
         var _bg9 = _cb9 === 'fresh' ? '#FFD166' : '#5AD7FF';
-        var _bt9 = _cb9 === 'fresh' ? 'フレッシュ' : '研修生';
+        var _bt9 = _cb9 === 'fresh' ? 'フレッシュ' : _cb9 === 'exam' ? '審査中' : '研修生';
         var _bc9 = _cb9 === 'fresh' ? '#5b3d00' : '#00344d';
+        if (NVc) { var _lb9 = _nvLabelCol(_cb9, isLightTheme); _bg9 = _lb9.bg; _bc9 = _lb9.ink; }
         var fb9 = document.createElementNS('http://www.w3.org/2000/svg','rect');
         fb9.setAttribute('x', rx + NODE_W/2 - _bw9/2); fb9.setAttribute('y', ry2 - 10);
         fb9.setAttribute('width', _bw9); fb9.setAttribute('height', 18);
         fb9.setAttribute('rx', 9);
         fb9.setAttribute('fill', _bg9);
-        fb9.setAttribute('stroke', 'rgba(0,0,0,.25)');
+        fb9.setAttribute('stroke', NVc ? 'none' : 'rgba(0,0,0,.25)');
         fb9.setAttribute('stroke-width', '0.5');
         fb9.setAttribute('pointer-events', 'none');
         g.appendChild(fb9);
-        g.appendChild(txt(rx + NODE_W/2, ry2 + 3, _bt9, _bc9, 11, '800', 'Noto Sans JP,Inter,sans-serif', 'middle'));
-        g.setAttribute('class', g.getAttribute('class') + (_cb9 === 'fresh' ? ' pc-fresh' : ' pc-care-tr'));
+        g.appendChild(txt(rx + NODE_W/2, ry2 + 3, _bt9, _bc9, 11, '800', NVc ? NV_FONT_H : 'Noto Sans JP,Inter,sans-serif', 'middle'));
+        if (!NVc) g.setAttribute('class', g.getAttribute('class') + (_cb9 === 'fresh' ? ' pc-fresh' : ' pc-care-tr'));
         // v466: SafariはSVG要素へのCSSフィルタ発光（drop-shadowアニメ）を描画しないため、
         // どの環境でも確実に見える「脈動する色付きリング」を追加（opacityアニメはSafariでも動く）
         var pr9 = document.createElementNS('http://www.w3.org/2000/svg','rect');
@@ -1302,7 +1333,7 @@ function renderPCMap(mapType) {
         pr9.setAttribute('stroke-width', '3.5');
         pr9.setAttribute('class', 'pc-pulse-ring');
         pr9.setAttribute('pointer-events', 'none');
-        g.insertBefore(pr9, g.firstChild);
+        if (!NVc) g.insertBefore(pr9, g.firstChild); // v894: 新しいトーンは光らせない（札だけ）
       }
     }
     // v468: 長期未活動バッジ（薄く消していく表現の代替。30日=💤グレー / 60日=🚨赤）
@@ -1355,28 +1386,29 @@ function renderPCMap(mapType) {
       // v468: 写真なし＝イニシャル○（塗り円＋姓の頭文字）
       var abg9 = document.createElementNS('http://www.w3.org/2000/svg','circle');
       abg9.setAttribute('cx', _avCx); abg9.setAttribute('cy', _avCy); abg9.setAttribute('r', _avR);
-      abg9.setAttribute('fill', isLightTheme ? '#e8edf4' : '#1e2430');
+      abg9.setAttribute('fill', NVc ? NVc.avBg : (isLightTheme ? '#e8edf4' : '#1e2430'));
       abg9.setAttribute('pointer-events', 'none');
       g.appendChild(abg9);
       var _ini9 = ((m.lastName || m.firstName || '？').charAt(0));
-      g.appendChild(txt(_avCx, _avCy + 6, _ini9, isLightTheme ? '#334155' : '#cbd5e1', 16, '800', 'Noto Sans JP,Inter,sans-serif', 'middle'));
+      g.appendChild(txt(_avCx, _avCy + 6, _ini9, NVc ? NVc.ink : (isLightTheme ? '#334155' : '#cbd5e1'), 16, '800', NVc ? NV_FONT_H : 'Noto Sans JP,Inter,sans-serif', 'middle'));
     }
     var ring = document.createElementNS('http://www.w3.org/2000/svg','circle');
     ring.setAttribute('cx',_avCx); ring.setAttribute('cy',_avCy); ring.setAttribute('r',_avR);
-    ring.setAttribute('fill','none'); ring.setAttribute('stroke', titleRingColor(m.title)); ring.setAttribute('stroke-width','2.5');
+    ring.setAttribute('fill','none'); ring.setAttribute('stroke', NVc ? NVc.ring : titleRingColor(m.title)); ring.setAttribute('stroke-width', NVc ? '2' : '2.5');
     ring.setAttribute('pointer-events','none');
     g.appendChild(ring);
     // v638: 1行目＝タイトルの札＋名前（スマホと同じ）
     var tb9 = document.createElementNS('http://www.w3.org/2000/svg','rect');
     tb9.setAttribute('x', _pcTx); tb9.setAttribute('y', ry2 + 12);
-    tb9.setAttribute('width', _pw9); tb9.setAttribute('height', 19); tb9.setAttribute('rx', 6);
+    tb9.setAttribute('width', _pw9); tb9.setAttribute('height', 19); tb9.setAttribute('rx', NVc ? 9.5 : 6);
     tb9.setAttribute('fill', cc); tb9.setAttribute('pointer-events', 'none');
     if (cc === '#3A3F4A') { tb9.setAttribute('stroke', 'rgba(255,255,255,.35)'); tb9.setAttribute('stroke-width', '1'); }
     g.appendChild(tb9);
     var _tInk9 = (isLightTheme || cc === '#3A3F4A' || cc === '#2A2E36') ? '#ffffff' : '#0a1017';
     if (/^#[0-9a-fA-F]{6}$/.test(cc) && typeof catTextColor === 'function' && isLightTheme) _tInk9 = catTextColor(cc) === '#111' ? '#1B1F2A' : '#ffffff';
-    g.appendChild(txt(_pcTx + _pw9 / 2, ry2 + 26, _tAb9, _tInk9, 12, '900', 'Inter,Noto Sans JP,sans-serif', 'middle'));
-    g.appendChild(txt(_pcTx + _pw9 + 6, ry2 + 28, nameStr, nameColor, nameFs, '800', 'Noto Sans JP,Inter,sans-serif'));
+    if (NVc) _tInk9 = NVc.tagInk;
+    g.appendChild(txt(_pcTx + _pw9 / 2, ry2 + 26, _tAb9, _tInk9, 12, NVc ? '700' : '900', NVc ? NV_FONT_N : 'Inter,Noto Sans JP,sans-serif', 'middle'));
+    var _nmT9 = txt(_pcTx + _pw9 + 6, ry2 + 28, nameStr, nameColor, nameFs, NVc ? '700' : '800', NVc ? NV_FONT_H : 'Noto Sans JP,Inter,sans-serif'); if (NVc) _nmT9.setAttribute('letter-spacing', '0.04em'); g.appendChild(_nmT9);
     // 2行目＝稼働の札（色）＋何ヶ月目 ／ 右にGSV（ラベルつき）
     var _act9 = m.activity || '', _rate9 = m.actRate ? m.actRate : (_act9 === 'S' ? 120 : '');
     var ac = _act9 === 'S' ? '#2CE5B8' : _act9 === 'A' ? '#8B7CFF' : _act9 === 'B' ? '#5AD7FF' : _act9 === 'C' ? '#FFB454' : (isLightTheme ? '#94A3B8' : '#8D9AB8');
@@ -1384,10 +1416,12 @@ function renderPCMap(mapType) {
     var _aw9 = Math.max(30, actStr.length * 7.6 + 14);
     var ab9 = document.createElementNS('http://www.w3.org/2000/svg','rect');
     ab9.setAttribute('x', _pcTx); ab9.setAttribute('y', ry2 + 41);
-    ab9.setAttribute('width', _aw9); ab9.setAttribute('height', 20); ab9.setAttribute('rx', 7);
-    ab9.setAttribute('fill', ac); ab9.setAttribute('pointer-events', 'none');
+    var NVa = NVc ? _nvActCol(_act9, isLightTheme) : null;
+    ab9.setAttribute('width', _aw9); ab9.setAttribute('height', 20); ab9.setAttribute('rx', NVa ? 10 : 7);
+    ab9.setAttribute('fill', NVa ? NVa.bg : ac); ab9.setAttribute('pointer-events', 'none');
+    if (NVa && NVa.line) { ab9.setAttribute('stroke', NVa.line); ab9.setAttribute('stroke-width', '1.5'); }
     g.appendChild(ab9);
-    g.appendChild(txt(_pcTx + _aw9 / 2, ry2 + 55, actStr, _act9 && _act9 !== 'A' ? '#062019' : '#ffffff', 12, '900', 'Inter,sans-serif', 'middle'));
+    g.appendChild(txt(_pcTx + _aw9 / 2, ry2 + 55, actStr, NVa ? NVa.ink : (_act9 && _act9 !== 'A' ? '#062019' : '#ffffff'), 12, NVa ? '700' : '900', NVa ? NV_FONT_N : 'Inter,sans-serif', 'middle'));
     var _sfx9 = titleMonthsSuffix(m) + restartSuffix(m, true);
     var gsvStr = m.ptCurrent>0?m.ptCurrent.toLocaleString():'0';
     var fixStr = m.ptFixed>0 ? '('+m.ptFixed.toLocaleString()+')' : '';
@@ -1416,7 +1450,7 @@ function renderPCMap(mapType) {
       if (_s9) g.appendChild(txt(_sfxX9, ry2 + 55, _s9, gsvColor, 11, '600', 'Noto Sans JP,Inter,sans-serif'));
     }
     var _fw9 = _fix9 ? _pW9(fixStr, _fFs9) + 4 : 0; // 並びは今まで通り「GSV (固定)」。固定は小さく右に
-    var _gt9 = txt(_gx9 - _fw9, ry2 + 56, gsvStr, gsvColor, _gFs9, '800', 'Inter,sans-serif', 'end'); _gt9.setAttribute('class', 'tc-gsv'); g.appendChild(_gt9);
+    var _gt9 = txt(_gx9 - _fw9, ry2 + 56, gsvStr, gsvColor, _gFs9, NVc ? '700' : '800', NVc ? NV_FONT_N : 'Inter,sans-serif', 'end'); _gt9.setAttribute('class', 'tc-gsv'); g.appendChild(_gt9);
     if (_fix9) { var _ft9 = txt(_gx9, ry2 + 55.5, fixStr, gsvColor, _fFs9, '800', 'Inter,sans-serif', 'end'); _ft9.setAttribute('opacity', '0.75'); _ft9.setAttribute('class', 'tc-fix'); g.appendChild(_ft9); }
     // 地域（カードの外・右上に小さく）
     if(m.region){
@@ -3505,7 +3539,7 @@ function buildMapCatChips(members) {
   var defs = [['','すべて',cAll,'#2CE5B8'],['trainee','研修生',cTr,'#FFB454'],['fresh','フレッシュ',cFr,'#4ADE80'],['br','BR',cBr,'#5AD7FF']];
   var html = defs.map(function(d){
     var active = (mapCatFilter === d[0]);
-    return '<span class="mc-chip" onclick="setMapCatFilter(\'' + d[0] + '\')" style="border-color:' + (active?d[3]:'var(--border)') + ';background:' + (active?d[3]:'transparent') + ';color:' + (active?'#000':'var(--text-dim)') + '">' + d[1] + ' ' + d[2] + '</span>';
+    return '<span class="mc-chip" onclick="setMapCatFilter(\'' + d[0] + '\')" style="border-color:' + (active?(NV_TONE?'var(--text)':d[3]):'var(--border)') + ';background:' + (active?(NV_TONE?'var(--text)':d[3]):'transparent') + ';color:' + (active?(NV_TONE?'var(--bg)':'#000'):'var(--text-dim)') + '">' + d[1] + ' ' + d[2] + '</span>';
   }).join('');
   // v508: 「誕生日」チップは常時表示（0人はグレー）。タップで一覧シート（該当者がいれば強調も）
   var cBd = 0;
@@ -5158,7 +5192,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v893';
+  var DATA_VERSION = 'v894';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -7297,6 +7331,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v894', d:'2026-11-21', items:['MAP の見た目を新しくしました（PC のツリー・スマホの一覧、ライト・ダーク両方）：イエロー・バイオレット・ターコイズ・チャコールの4色、丸みのあるボタンとカード、読みやすい書体に。カードの上の札に「審査中」も出します。ほかの画面は今まで通りです'] },
   { v:'v893', d:'2026-11-21', items:['アカウント管理（オーナー）：「削除したアカウント」に「完全に消す」ボタン。ログインのアカウント・アカウントの情報・MAPなどのデータを消します（元に戻せません。実際に消すのは 9・12・15・18・21時ごろで、それまでは「消すのをやめる」で取り消せます）'] },
   { v:'v892', d:'2026-11-20', items:['MAPのフロント追加：削除した人を選んだまま「＋追加」すると、追加先が削除した人になり、足した人がMAPに出なかったのを修正（その上の人の下に入ります。前に足して見えなくなっていた人も、上の人の下に出ます）（#45）','ビジネス（BMなど）からユーザーにして、また戻した人に「元ユーザー」の札が出ていたのを修正。札はもともとユーザーだった人だけ（#47）','研修結果を「流れた」にしても、MAPでは研修の段階（PAなど）のまま出ていたのを修正。OUTになります（進行中に戻すと前のタイトルに戻ります。前に「流れた」にした人もOUTに直ります）（#46）'] },
   { v:'v891', d:'2026-11-20', items:['📊 利用状況（オーナー）：細かい記録が届いていない人でも、最後に開いた日が期間の中なら「使っていない」にしないように。「よく使う」は記録のある日数（11/19〜）の半分以上で判定。古い版のアプリで回数の記録が無い人は「0回」ではなく「—」と「古い版」の印。記録が抜けている人の数も出します'] },
@@ -19982,7 +20017,7 @@ function _mxCat(m, mapType) {
 var MX_CATS = [['br', 'BR以上'], ['ex', '審査中'], ['tr', '研修生'], ['fr', 'フレッシュ'], ['ot', 'そのほか']];
 // v635: BR以上はタイトルの色（BR=紫・G=金・L=青・R=赤・E=緑・D=白銀・BD=青ダイヤ…PCのツリーと同じ宝石色）
 function _mxK(m, cat) {
-  if (cat !== 'br') return 'var(--mx' + cat + ')';
+  if (cat !== 'br' || NV_TONE) return 'var(--mx' + cat + ')'; // v894: 新しいトーンは BR以上をバイオレット1色に
   var t = (m.title || '').trim();
   if (t === 'BR' || t === 'ブランドレプリゼンタティブ') return 'var(--mxbr)';
   if (t === 'TE' || t === 'チームエリート') return document.body.classList.contains('light') ? '#2A2E36' : '#3A3F4A'; // v636: TE＝グレーに近い黒
@@ -20081,12 +20116,13 @@ function _mxRowHtml(m, mapType, depth, lines, last, fc, nKids, open, kidsShown) 
     + '<div class="mg" style="width:' + gw + 'px">' + g + '</div>'
     + (nKids ? '<span class="mt on" onclick="event.stopPropagation();mxTgl(\'' + m.id + '\')">' + (kidsShown ? '▼' : '▶') + '</span>' : '<span class="mt"></span>')
     + '<div class="mav' + (mapType === 'current' && t !== 'OUT' && m.badgeMode !== 'off' && (cat === 'tr' || cat === 'ex') ? ' glw' : '') + '" style="--k:' + k + '">' + av + '</div>' // v751: 研修生・審査中はPCのように光る
-    + '<div class="mn"><div class="l1">' + (t ? '<span class="tp" style="--k:' + k + _mxInk(k) + '">' + evEsc(titleAbbr(t)) + '</span>' : '') + '<span class="n ' + (m.gender === 'female' ? 'female' : '') + '">' + evEsc(nm) + '</span>' + moraleIcon(m.morale || 1) + '</div>'
+    + '<div class="mn"><div class="l1">' + (t ? '<span class="tp" style="' + (NV_TONE ? 'background:var(--nvt-' + cat + ');color:var(--nvt-' + cat + '-ink)' : '--k:' + k + _mxInk(k)) + '">' + evEsc(titleAbbr(t)) + '</span>' : '') + '<span class="n ' + (m.gender === 'female' ? 'female' : '') + '">' + evEsc(nm) + '</span>' + moraleIcon(m.morale || 1) + '</div>'
     + (l2 ? '<div class="l2">' + l2 + '</div>' : '') + '</div>'
     + '<div class="mc"><div class="ma" style="--ac:' + ac + '"><b>' + (act || '—') + '</b><small>' + (rate ? rate + '%' : '') + '</small></div>'
     + '<div class="mgv"><b>' + pt + '</b><small>' + (m.ptFixed > 0 ? '固定 ' + m.ptFixed.toLocaleString() : 'GSV') + '</small></div></div></div>';
 }
 var MX_FAM = ['#2CE5B8', '#8B7CFF', '#FFB454', '#FF5D73', '#5AD7FF', '#4ADE80', '#FF9F6E', '#C583FF'];
+if (NV_TONE) MX_FAM = NV_LINE; // v894: 新しいトーンは系列の線も4色
 // 段の初期値（端末ごとに記憶）を一度だけ当てる
 // v659: 段の選び方はアプリを開いている間だけ覚える（開いた時は2段。前回の「全段」が光ったまま2段で出るのを直す）
 var _mxLv = ''; try { localStorage.removeItem('gm_mapLevel'); } catch (eLv) {}

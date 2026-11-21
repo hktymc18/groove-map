@@ -16,7 +16,7 @@
 <link rel="apple-touch-icon" href="icon-180.png?v=735">
 <link rel="icon" type="image/png" href="icon-192.png?v=735">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Oswald:wght@600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Oswald:wght@600;700&family=Outfit:wght@600;700&family=Zen+Kaku+Gothic+New:wght@700&display=swap');
 /* ═══ SUMMIT デザインシステム（Phase 0）：夜の遠征ネイビー×行動ミント×報酬アンバー ═══ */
 :root{
   --bg:#0B0E15;
@@ -2960,6 +2960,72 @@ body:not(.light) .iq-seg .idq-s.sel{background:var(--surface3)}
 .merge-pick-item .mp-title{font-family:'Inter','IBM Plex Mono',monospace;font-size:11px;color:var(--accent);min-width:42px}
 .merge-pick-item .mp-name{font-weight:600}
 .merge-pick-cancel{margin-top:12px;padding:11px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text-dim);font-size:14px;cursor:pointer}
+
+/* ═══ v894: 新しいトーン（NAVIGATOR トーン表）— MAP（現状・理想）を開いている間だけ。ほかの画面は今まで通り ═══
+   4色：イエロー #EFFF40（いちばん大事な操作）・バイオレット #602BFC（2番目・選んだ印）・ターコイズ #26C7B3（良い知らせ）・チャコール #373334（文字・選択中）
+   書体：英字 Outfit／Inter、日本語の見出し Zen Kaku Gothic New、本文 Noto Sans JP。形：ボタン・チップは端が半円、カード20px、影は薄く大きく */
+body[data-v="current"]:not(.light),body[data-v="ideal"]:not(.light){
+  --bg:#1C1A1B;--placeholder:#6E696B;--surface:#262425;--surface2:#312E2F;--surface3:#3E3A3B;--border:#3E3A3B;--border2:#4A4546;
+  --text:#F3F2EE;--text-dim:#A8A3A4;--text-mid:#C9C6C4;
+  --accent:#EFFF40;--accent-dim:rgba(239,255,64,.14);--purple:#B095FE;--purple-dim:rgba(176,149,254,.16);
+  --trainee:#26C7B3;--loi:#EFFF40;--gold:#B3BF30;--gold-dim:rgba(239,255,64,.12);--red:#FF7A80;--green:#26C7B3;
+  --s:#26C7B3;--a:#B095FE;--b:#92E3D9;--c:#A8A3A4;--go-sky:#26C7B3;--go-ink:#191717;--go-rose:#FF7A80;
+  --mxbr:#B095FE;--mxex:#EFFF40;--mxtr:#26C7B3;--mxfr:#B095FE;--mxot:#6E696B;--mxout:#3E3A3B;
+  --shadow:0 24px 64px rgba(0,0,0,.45);--header-bg:rgba(28,26,27,.97);
+  --nv-ink:#F3F2EE;--nv-sel-ink:#1C1A1B;--nv-link:#B095FE;--nv-card-sh:0 8px 28px rgba(0,0,0,.35);
+  --nv-s-text:#26C7B3;--nvt-br:#B095FE;--nvt-br-ink:#191717;--nvt-ex:#EFFF40;--nvt-ex-ink:#373334;--nvt-tr:#115A51;--nvt-tr-ink:#DEF7F4;--nvt-fr:#3E3A3B;--nvt-fr-ink:#F3F2EE;--nvt-ot:#3E3A3B;--nvt-ot-ink:#F3F2EE;--nvt-out:#312E2F;--nvt-out-ink:#A8A3A4;
+}
+body.light[data-v="current"],body.light[data-v="ideal"]{
+  --bg:#F6F6F1;--placeholder:#9B999A;--surface:#FFFFFF;--surface2:#EDEDE7;--surface3:#E1E0E1;--border:#DCDBD5;--border2:#C9C7C1;
+  --text:#373334;--text-dim:#6E696B;--text-mid:#555052;
+  --accent:#EFFF40;--accent-dim:rgba(239,255,64,.32);--purple:#602BFC;--purple-dim:rgba(96,43,252,.10);
+  --trainee:#1C9586;--loi:#B3BF30;--gold:#6C731D;--gold-dim:rgba(239,255,64,.30);--red:#C8333D;--green:#1C9586;
+  --s:#26C7B3;--a:#B095FE;--b:#92E3D9;--c:#C9C7C1;--go-sky:#1C9586;--go-ink:#191717;--go-rose:#C8333D;
+  --mxbr:#602BFC;--mxex:#B3BF30;--mxtr:#26C7B3;--mxfr:#B095FE;--mxot:#9B999A;--mxout:#C9C7C1;
+  --shadow:0 24px 64px rgba(55,51,52,.10);--header-bg:rgba(246,246,241,.97);
+  --nv-ink:#373334;--nv-sel-ink:#F6F6F1;--nv-link:#602BFC;--nv-card-sh:0 8px 28px rgba(55,51,52,.07);
+  --nv-s-text:#115A51;--nvt-br:#602BFC;--nvt-br-ink:#FFFFFF;--nvt-ex:#EFFF40;--nvt-ex-ink:#373334;--nvt-tr:#DEF7F4;--nvt-tr-ink:#115A51;--nvt-fr:#EDEDE7;--nvt-fr-ink:#373334;--nvt-ot:#EDEDE7;--nvt-ot-ink:#373334;--nvt-out:#EDEDE7;--nvt-out-ink:#6E696B;
+}
+body[data-v="current"],body[data-v="ideal"]{font-family:'Noto Sans JP','Inter',sans-serif}
+body[data-v="current"] .pcs-item,body[data-v="ideal"] .pcs-item{border-radius:9999px}
+body[data-v="current"] .pcs-item.active,body[data-v="ideal"] .pcs-item.active{background:var(--nv-ink)!important;box-shadow:none!important}
+body[data-v="current"] .pcs-item.active,body[data-v="ideal"] .pcs-item.active,body[data-v="current"] .pcs-item.active *,body[data-v="ideal"] .pcs-item.active *{color:var(--nv-sel-ink)!important}
+body[data-v="current"] .pcs-item.active svg,body[data-v="ideal"] .pcs-item.active svg{stroke:var(--nv-sel-ink)}
+body[data-v="current"] .pt-mapseg,body[data-v="ideal"] .pt-mapseg,body[data-v="current"] .bhb-toggle,body[data-v="ideal"] .bhb-toggle{border-radius:9999px;background:var(--surface);border-color:transparent;box-shadow:var(--nv-card-sh)}
+body[data-v="current"] .pt-ms,body[data-v="ideal"] .pt-ms,body[data-v="current"] .pv-btn,body[data-v="ideal"] .pv-btn,body[data-v="current"] .pc-toolbar .pt-action,body[data-v="ideal"] .pc-toolbar .pt-action{border-radius:9999px;font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;letter-spacing:.06em}
+body[data-v="current"] .pt-ms.cur.active,body[data-v="ideal"] .pt-ms.cur.active,body[data-v="current"] .pt-ms.active,body[data-v="ideal"] .pt-ms.active,body[data-v="current"] .pv-btn.active,body[data-v="ideal"] .pv-btn.active{background:var(--nv-ink)!important;color:var(--nv-sel-ink)!important;border-color:transparent!important;box-shadow:none!important}
+body[data-v="current"] .pt-ms.idl.active,body[data-v="ideal"] .pt-ms.idl.active{background:var(--purple)!important;color:#FFFFFF!important}
+body[data-v="current"] .pt-ltsv-val,body[data-v="ideal"] .pt-ltsv-val,body[data-v="current"] .pt-main,body[data-v="ideal"] .pt-main{font-family:Outfit,Inter,sans-serif!important;color:var(--text)!important}
+body[data-v="current"] .pc-toolbar .pt-search,body[data-v="ideal"] .pc-toolbar .pt-search{border-radius:9999px;background:var(--surface);border-color:transparent;box-shadow:var(--nv-card-sh)}
+body[data-v="current"] .mc-chip,body[data-v="ideal"] .mc-chip{border-radius:9999px;font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;letter-spacing:.06em;padding:6px 14px}
+body[data-v="current"] .depth-ruler-label,body[data-v="ideal"] .depth-ruler-label{font-family:Inter,sans-serif;letter-spacing:.06em}
+body[data-v="current"] .minimap,body[data-v="ideal"] .minimap{border-radius:20px;box-shadow:var(--nv-card-sh);border-color:transparent}
+body[data-v="current"] .oval-node,body[data-v="ideal"] .oval-node{animation:none!important}
+body[data-v="current"] .rb.sel,body[data-v="ideal"] .rb.sel{color:var(--text)!important;border-color:var(--text-dim)!important}
+body[data-v="current"] .me-back,body[data-v="ideal"] .me-back,body[data-v="current"] .cat-add,body[data-v="ideal"] .cat-add{color:var(--nv-link)!important}
+body[data-v="current"] .mxseg,body[data-v="ideal"] .mxseg{border-radius:9999px;border-color:transparent;box-shadow:var(--nv-card-sh)}
+body[data-v="current"] .mxseg span,body[data-v="ideal"] .mxseg span{border-radius:9999px;font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;font-weight:700;letter-spacing:.06em}
+body[data-v="current"] .mxseg .on,body[data-v="ideal"] .mxseg .on,body[data-v="current"] .mxseg .on.pu,body[data-v="ideal"] .mxseg .on.pu{background:var(--nv-ink)!important;color:var(--nv-sel-ink)!important}
+body[data-v="current"] .mxc,body[data-v="ideal"] .mxc{border-radius:9999px;border:1px solid var(--border);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;font-weight:700;letter-spacing:.06em}
+body[data-v="current"] .mxc.on,body[data-v="ideal"] .mxc.on{background:var(--nv-ink)!important;color:var(--nv-sel-ink)!important;border-color:transparent!important}
+body[data-v="current"] .mxc.on *,body[data-v="ideal"] .mxc.on *{color:var(--nv-sel-ink)!important}
+body[data-v="current"] .mx2 b,body[data-v="ideal"] .mx2 b{color:var(--text)!important;font-family:Outfit,Inter,sans-serif!important;font-weight:700!important;letter-spacing:-.02em}
+body[data-v="current"] .mx2 i,body[data-v="ideal"] .mx2 i,body[data-v="current"] .mx2 em,body[data-v="ideal"] .mx2 em{font-family:Outfit,Inter,sans-serif}
+body[data-v="current"] .mxh .a em,body[data-v="ideal"] .mxh .a em{color:var(--nv-link)!important}
+body[data-v="current"] .mxlg i,body[data-v="ideal"] .mxlg i{border-radius:50%!important}
+body[data-v="current"] .mav,body[data-v="ideal"] .mav{border-width:2px}
+body[data-v="current"] .mav.glw,body[data-v="ideal"] .mav.glw{animation:none!important}
+body[data-v="current"] .tp,body[data-v="ideal"] .tp{border-radius:9999px;font-family:Outfit,'Zen Kaku Gothic New',sans-serif;font-weight:700;padding:1px 8px}
+body[data-v="current"] .mn .n,body[data-v="ideal"] .mn .n{font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;font-weight:700;letter-spacing:.04em}
+body[data-v="current"] .mn .n.female,body[data-v="ideal"] .mn .n.female{color:var(--text)}
+body[data-v="current"] .ma b,body[data-v="ideal"] .ma b{border-radius:9999px;color:#191717!important;font-family:Outfit,Inter,sans-serif;font-weight:700}
+body[data-v="current"] .ma small,body[data-v="ideal"] .ma small{color:var(--text-dim)!important}
+body[data-v="current"] .mgv b,body[data-v="ideal"] .mgv b{font-family:Outfit,Inter,sans-serif;font-weight:700}
+body[data-v="current"] #mxBtm .bk,body[data-v="ideal"] #mxBtm .bk{border-radius:9999px;border:0;box-shadow:var(--nv-card-sh);font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;font-weight:700;letter-spacing:.06em}
+body[data-v="current"] #mxBtm .nx,body[data-v="ideal"] #mxBtm .nx{border-radius:9999px;font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;font-weight:700;letter-spacing:.08em}
+body[data-v="current"] #mxBtm,body[data-v="ideal"] #mxBtm{border-top-color:transparent}
+body[data-v="current"] .mx2 i,body[data-v="ideal"] .mx2 i{color:var(--nv-s-text)!important}
+body[data-v="current"] .mxlg span:first-child i,body[data-v="ideal"] .mxlg span:first-child i{background:var(--mxbr)!important}
 </style>
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -3045,7 +3111,7 @@ body:not(.light) .iq-seg .idq-s.sel{background:var(--surface3)}
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v893</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v894</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -3999,7 +4065,7 @@ body:not(.light) .iq-seg .idq-s.sel{background:var(--surface3)}
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v893';</script>
-<script src="app.js?v=v893"></script>
+<script>window.GM_EXPECT_JS='v894';</script>
+<script src="app.js?v=v894"></script>
 </body>
 </html>
