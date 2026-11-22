@@ -1,4 +1,4 @@
-// v884：NAVIGATOR Beauty 第1弾。ユーザー台帳（MAPの「ユーザー」）に、アプリの活動（マイプラン：連続日数・この7日・最後のチェック）を受付から取り込む。
+// v903：NAVIGATOR Beauty 第1弾。ユーザー台帳（MAPの「ユーザー」）に、アプリの活動（マイプラン：連続日数・この7日・最後のチェック）を受付から取り込む。
 //   「⏸ アプリが止まっている」（3日以上チェックなし）の絞り込み・表の「アプリ」の列（架空データ）
 const T = require('../lib/head.js')();
 const { w, c, sleep, setWH } = T;
@@ -48,5 +48,5 @@ T.run(async () => {
   setWH(1400, 900); w._uxSync && w._uxSync(); w.umFlt('all'); w.switchView('current'); await sleep(80);
   const html = (w.document.getElementById('umPane') || {}).innerHTML || '';
   c('PCの表に「アプリ」の列と、その人の活動', /<th>アプリ<\/th>/.test(html) && /5日連続・この7日 5日/.test(html), html.slice(0, 300));
-  c('APP_JS_VERSION v884 以上', +(/APP_JS_VERSION = 'v(\d+)'/.exec(require('fs').readFileSync(require('path').join(__dirname, '../../../app.js'), 'utf8')) || [0, 0])[1] >= 884);
+  c('APP_JS_VERSION v903 以上', +(/APP_JS_VERSION = 'v(\d+)'/.exec(require('fs').readFileSync(require('path').join(__dirname, '../../../app.js'), 'utf8')) || [0, 0])[1] >= 903);
 });

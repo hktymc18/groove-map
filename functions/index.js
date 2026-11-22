@@ -6,6 +6,12 @@
  */
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const admin = require('firebase-admin');
+// 📊 v886: Firestore 全体の回数のまとめ（overdueReminders の最後に動かす。新しい関数を作ると、作る時に呼び出しの権限の設定が要るため）
+const usage = require('./usage');
+// 🗑 v893: 削除したアカウントを完全に消す（オーナーの予約があるものだけ。overdueReminders の最後に動かす）
+const purge = require('./purge');
+// 🧹 受付 v168: 棚卸し（回答の反映は overdueReminders の最後・計算とお知らせは v170 から sendReminders の日曜11時台）
+const inventory = require('./inventory');
 
 admin.initializeApp();
 
@@ -110,6 +116,12 @@ exports.overdueReminders = onSchedule(
       try { await pushTo(db, uid, tokens, `⚠️ 期限切れタスク ${od.length}件`, body, 'due-digest', 'gm-overdue'); sent++; } catch (e) { console.log(`overdue send error uid=${uid}: ${e}`); }
     }
     console.log(`overdueReminders: users=${Object.keys(tokByUid).length} sent=${sent} index=${idxOk}/${idxOk + idxNg}`);
+    // 📊 v886: Firestore 全体の回数を appStats/usage にまとめる（1日5回・この関数の最後に。失敗しても通知には影響しない）
+    try { await usage.run(admin); } catch (eU) { console.log('usageStats error: ' + eU); }
+    // 🗑 v893: 「完全に消す」の予約があるアカウントを消す（1日5回）
+    try { await purge.run(admin); } catch (eP) { console.log('purge error: ' + eP); }
+    // 🧹 受付 v168: 棚卸し（研修・出席が14日・28日ない人を担当・UPルビーに聞く／回答を名簿に反映）
+    try { await inventory.run(admin); } catch (eI) { console.log('inventory error: ' + eI); }
   }
 );
 
@@ -117,6 +129,8 @@ exports.sendReminders = onSchedule(
   // v307: 通知遅延を最大1分程度に短縮していたが、v807で5分ごとに戻した（空でも1回ごとに読み取りが1回かかるため。1日1,440回→288回）
   { schedule: 'every 5 minutes', region: 'asia-northeast1', timeZone: 'Asia/Tokyo', memory: '256MiB' },
   async () => {
+    // 🧹 受付 v170: 棚卸しの計算とお知らせ（毎週日曜11時台の最初の回だけ。ほかの時間は何も読まない）
+    try { await inventory.weeklyTick(admin); } catch (eI) { console.log('inventory weekly error: ' + eI); }
     const db = admin.firestore();
     const nowIso = new Date().toISOString();
     const snap = await db.collection('notifQueue').where('fireAt', '<=', nowIso).limit(300).get();
@@ -210,7 +224,7 @@ exports.sendReminders = onSchedule(
 );
 
 // 💜 NAVIGATOR Beauty（受付 v129）: ユーザー（お客さん）のスマホの通知。中身は beauty.js
-//   毎日20時に1回だけ動く（来場のお礼＝今日来た人／前日のお知らせ＝明日のDAY／v161: 今日まだ＝今日まだチェックしていない人。1晩に1通まで）。
+//   毎日20時に1回だけ動く（来場のお礼＝今日来た人／前日のお知らせ＝明日のDAY／v172: 今日まだ＝今日まだチェックしていない人。1晩に1通まで）。
 //   定時の実行（Cloud Scheduler）は3つまで無料なので、2つに分けずに1つにまとめている（今は overdueReminders・sendReminders と合わせて3つ）
 //   デプロイ: firebase deploy --only functions:beautyDaily
 const beauty = require('./beauty');
@@ -224,3 +238,4 @@ exports.beautyDaily = onSchedule(
     try { console.log('beauty cleanup ' + JSON.stringify(await beauty.cleanup(db, now, admin.firestore.FieldValue.delete()))); } catch (e) { console.log('beauty cleanup error ' + e); }
   }
 );
+

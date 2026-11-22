@@ -117,7 +117,8 @@ service cloud.firestore {
       // 更新：オーナーは全員／ユニオンリーダーは同ユニオンのみ（承認・無効化・役割付与）。
       //       本人は role/status/ckNo（受付の名簿との紐付け）/early（先行利用）を変えない範囲のみ可。
       // v831: ユニオンの管理者は、管理しているユニオン（所属・兼務）の人だけ。管理していないユニオンへは移せない
-      allow update: if isOwnerAdmin()
+      // 🗑 v893: 完全に消す（purge）の予約を付ける・外すのはオーナーだけ（消すのはサーバー＝overdueReminders）
+      allow update: if purgeKeep() && (isOwnerAdmin()
         || (admOf(resource.data.get('union', '')) && admOf(request.resource.data.get('union', '')))
         || (isSelf(uid)
             && request.resource.data.get('role','member')   == resource.data.get('role','member')
@@ -132,7 +133,10 @@ service cloud.firestore {
                 || resource.data.get('unionSelectedV2', false) != true
                 || request.resource.data.get('union', '') == resource.data.get('union', '')))
         || alLeaderOut()
-        || ckLinkByCk();
+        || ckLinkByCk());
+      function purgeKeep() {
+        return isOwnerAdmin() || request.resource.data.get('purge', null) == resource.data.get('purge', null);
+      }
 
       // 🎫 v33: 受付で無効にする時、受付の管理者（ユニオン管理者・受付管理者）がその場でNAVIGATORのアカウントを名簿と紐付けられる
       //   ・まだ紐付いていないアカウントだけ（付け替え・解除はNAVIGATORのアカウント管理で）
@@ -260,6 +264,28 @@ service cloud.firestore {
     //   変えられるのはオーナーだけ
     //   v847: appConfig/features = { flags:{ 機能名:{ on, testers:[uid] } }, at, by }（新機能のテスト）。
     //   読みはログインした人（自分に出すかを決めるため）・変えられるのはオーナーだけ
+    // 📊 v885: Firestore 全体の回数（サーバーの usageStats が書く）。見るのはオーナーだけ・アプリからは書かない
+    match /appStats/{doc} {
+      allow read: if isOwnerAdmin();
+      allow write: if false;
+    }
+    // 📊 v884: 読み取りの内訳（アプリ・画面ごとに端末で数えた数。1人1日1件に足し込む）。見るのはオーナーだけ
+    //   ログインしている人は自分の分（{uid}_{アプリ}）、ログインなし（会員証など）は端末ごとの番号（anon_…）
+    match /readStats/{d}/u/{id} {
+      allow read: if isOwnerAdmin();
+      allow create, update: if d.matches('^[0-9]{8}$')
+        && request.resource.data.keys().hasOnly(['uid', 'app', 'd', 'n', 'by', 'op', 'sec', 'hr', 'ts', 'at', 'ver'])
+        && (!('ts' in request.resource.data) || (request.resource.data.ts is map && request.resource.data.ts.size() <= 60))   // v889: 画面ごとの時間（秒）
+        && (!('sec' in request.resource.data) || request.resource.data.sec is int)   // v888: 画面が出ている時間（秒）
+        && (!('hr' in request.resource.data) || (request.resource.data.hr is map && request.resource.data.hr.size() <= 24))   // v888: 時間帯ごとの秒
+        && (!('op' in request.resource.data) || (request.resource.data.op is map && request.resource.data.op.size() <= 60))   // v887: 画面を開いた回数
+        && request.resource.data.app in ['nav', 'ck']
+        && request.resource.data.d == d
+        && request.resource.data.n is int
+        && request.resource.data.by is map && request.resource.data.by.size() <= 100
+        && ((signedIn() && request.resource.data.uid == request.auth.uid && id == request.auth.uid + '_' + request.resource.data.app)
+            || (request.resource.data.uid == '' && id.matches('^anon_[a-z0-9]{10}_(nav|ck)$')));
+    }
     match /appConfig/{doc} {
       allow read: if doc == 'unions' || (doc == 'features' && signedIn());
       allow write: if doc == 'unions' && isOwnerAdmin()
@@ -618,6 +644,24 @@ service cloud.firestore {
 
     // 📊 稼働率の集計結果（受付システムが計算して保存 → GROOVE MAPの受付連携は読むだけ）
     //   docId = {ユニオン}__{YYYY-MM}。書けるのはそのユニオンの有効メンバー・受付管理者・オーナー
+    // 🧹 v36（受付 v168）: 棚卸し。checkinInventory/{ユニオン} はサーバー（functions/inventory.js）だけが書く。
+    //   読めるのは そのユニオンの人・名簿を見られる人（管理者・リーダー）。
+    //   回答 ans/{会員番号} は、お知らせを受けた人（who に入っている人）かユニオンの管理者だけが、自分の名前で書ける。
+    //   中身は a（ok=続けている・wait=様子見・quit=やめた）・by・at だけ。名簿への反映はサーバーが行う
+    match /checkinInventory/{un} {
+      allow read: if signedIn() && notDisabled(request.auth.uid) && (ckMyUnion() == un || ckCanSee(un));
+      allow write: if false;
+      match /ans/{no} {
+        allow create, update: if signedIn() && notDisabled(request.auth.uid)
+          && request.resource.data.keys().hasOnly(['a', 'by', 'at'])
+          && request.resource.data.by == request.auth.uid
+          && request.resource.data.a in ['ok', 'wait', 'quit']
+          && (get(/databases/$(database)/documents/checkinInventory/$(un)).data.get('who', {}).get(no, []).hasAny([request.auth.uid])
+              || isCkAdmin(un));
+        allow read: if signedIn() && (resource.data.by == request.auth.uid || isCkAdmin(un));
+        allow delete: if false;
+      }
+    }
     match /checkinStats/{sid} {
       allow read: if resource == null || ckCanSee(resource.data.get('union', ''))
         // 🔗 v82: 連携先ユニオン向けの集計（{ユニオン}__{key}__to__{連携先}・「MAPで連携するユニオン」の人の分だけ）は連携先ユニオンの人も読める
@@ -984,7 +1028,7 @@ service cloud.firestore {
       allow create, update: if pid == 'me'
         && request.resource.data.keys().hasOnly(['course', 'goal', 'qs', 'start', 'days', 'atMs', 'why', 'by', 'when', 'lvl', 'ob'])
         && request.resource.data.course in ['diet', 'yuragi', 'inner']
-        // 💜 受付v161: はじめの準備（なりたい私・いつまでに・クエストの時間帯・難しさ・準備をした時刻）
+        // 💜 受付v172: はじめの準備（なりたい私・いつまでに・クエストの時間帯・難しさ・準備をした時刻）
         && request.resource.data.get('why', '') is string && request.resource.data.get('why', '').size() <= 40
         && request.resource.data.get('by', '') is string && request.resource.data.get('by', '').size() <= 10
         && request.resource.data.get('when', {}) is map && request.resource.data.get('when', {}).size() <= 12

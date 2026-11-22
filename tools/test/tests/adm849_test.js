@@ -45,9 +45,11 @@ T.run(async () => {
   // ② 設定タブ：1項目1行
   c('気にした方がいいこと（UPBDが空）があれば設定タブに赤丸', !!$('#adminTabs .adm-tabs span i'));
   w.admTab('set'); await sleep(5);
-  const mn = () => $$('#adminBody .adm-mn > div').map(x => x.textContent);
+  const mn0 = () => $$('#adminBody .adm-mn > div').map(x => x.textContent);
+  c('v885: 設定のいちばん上は「📊 利用状況」', /利用状況/.test(mn0()[0] || ''), mn0()[0]);
+  const mn = () => mn0().slice(1);
   c('設定：公開範囲・MAPの共有・ユニオンとUPBD・新機能のテスト', mn().length === 4 && /^公開範囲/.test(mn()[0]) && /^MAPの共有/.test(mn()[1]) && /^ユニオンとUPBD/.test(mn()[2]) && /^新機能のテスト/.test(mn()[3]));
-  c('右に今の状態', /先行利用・使える人3人/.test(mn()[0]) && /登録待ちの名簿 1人/.test(mn()[0]) && /上の人1人・アップ以外2件/.test(mn()[1]) && /2ユニオン/.test(mn()[2]) && /UPBDが空 1/.test(mn()[2]) && /テスト中3件/.test(mn()[3]));
+  c('右に今の状態', /先行利用・使える人3人/.test(mn()[0]) && /登録待ちの名簿 1人/.test(mn()[0]) && /上の人1人・アップ以外2件/.test(mn()[1]) && /2ユニオン/.test(mn()[2]) && /UPBDが空 1/.test(mn()[2]) && /テスト中4件/.test(mn()[3]));
   c('設定の時は検索を隠す', $('#adminPanel .sd-search').style.display === 'none');
   w.admPg('acc'); await sleep(5);
   c('押すとその設定の画面（中身は前と同じ）', /‹ 設定/.test($('.adm-sph').textContent) && /公開範囲/.test($('.adm-sph').textContent) && $$('#adminBody .acc-seg span').length === 3 && /名簿を貼り付けて先行利用に/.test($('#adminBody').textContent));
@@ -55,7 +57,7 @@ T.run(async () => {
   w.accSetMode('open'); await sleep(10);
   c('設定を変えても同じ画面のまま', /公開範囲/.test($('.adm-sph').textContent));
   w.admPg(''); await sleep(5);
-  c('‹ 設定 で戻る', $$('#adminBody .adm-mn > div').length === 4);
+  c('‹ 設定 で戻る', $$('#adminBody .adm-mn > div').length === 5);
   w.admPg('feat'); await sleep(5);
   c('新機能のテストも開ける', !!$('#featAdmBox'));
   w.admTab('acc'); await sleep(5);
