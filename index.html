@@ -3079,6 +3079,14 @@ body:not(.light) .ev-bar.bar-event{color:#191717}
 body .adm-tabs span.on,body .rv-nps span.on,body .uxm-seg .on,body .mxseg .on,body .pcv-seg span.on,body .wnt .ad.on,body .s3-seg span.on,body #p2ShPv .pv-seg span.on,body .tab.active,body .bhb-t.on,body .pv-btn.active,body .tc-b.on,body .step-btn.active,body .ev-seg-btn.active,body .go-seg-b.on,body .yv-d.today{background:var(--nv-ink)!important;border-color:var(--nv-ink)!important;color:var(--nv-sel-ink)!important;box-shadow:none!important}
 body .ux-nx,body .yk-add .go,body .yk-ok,body .yk-pop .bt span.go,body .pcv-add,body .dpbt>span.g,body .olh-sl .go,body .ux-add span,body .ux-lrow.add span.go,body .ckadm .ad .adb,body #ntfAskOv .go,body #pvGate .pv-go,body .s3-go,body .yr-btn.go,body .ev-cal-badd,body .ev-day-panel-add,body .ev-day-add-btn,body .home-night .hn-btn,body .gl-wzbtn,body .go-btn.pri{background:#EFFF40!important;border-color:#EFFF40!important;color:#373334!important}
 body.light .pptl span em{color:color-mix(in srgb,var(--c) 72%,#000)}
+/* v909: PC の選んだ印・押すボタンもトーン表に（スマホと同じ）・タブの下線はチャコール・計画シートの達成度のカードは字が読める濃いターコイズ・下のページの印はチャコール */
+body .umseg-pc .pt-ms.active,body .sm-seg span.on,body .st-h .lay span.on,body .pcx-b.on,body .pcts-row.sel{background:var(--nv-ink)!important;border-color:var(--nv-ink)!important;color:var(--nv-sel-ink)!important}
+body .ev-cal-nav[onclick^="openTaskQuickSheet"],body .olt-new,body .pcx-b.p{background:#EFFF40!important;border-color:#EFFF40!important;color:#373334!important}
+body .pcx2-tabs span.on{border-bottom-color:var(--nv-ink)!important}
+body .px3-tabs span.on{border-color:var(--nv-ink)!important}body .tp-disp.on{border-bottom-color:var(--nv-ink)!important}
+body .s3-cd:not(.gold){background:linear-gradient(155deg,#1C9586 0%,#167A6E 50%,#115A51 100%)!important}
+body .ux-dots .on{color:var(--text)!important}
+body .ux-dots .on i{background:var(--nv-ink)!important}
 /* v899: 金色の地に黒い字の札は、ライトでは明るい金の地に（濃い金の地だと字が沈むため） */
 body.light .fb-st.new,body.light .olk.p,body.light .olt-sst{background:#F2C14E!important;color:#373334!important}
 body:not(.light) .sm1-r{background:linear-gradient(135deg,#2C2512 0%,#1F1D1A 60%,#2B2413 100%);border-color:rgba(232,199,102,.5);box-shadow:0 10px 30px rgba(0,0,0,.4)}
@@ -3174,7 +3182,7 @@ body .sm1-r .fb .fbr,body .p2fb .fbr{filter:drop-shadow(0 1px 0 rgba(140,90,0,.2
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v908</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v909</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4128,7 +4136,7 @@ body .sm1-r .fb .fbr,body .p2fb .fbr{filter:drop-shadow(0 1px 0 rgba(140,90,0,.2
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v908';</script>
-<script src="app.js?v=v908"></script>
+<script>window.GM_EXPECT_JS='v909';</script>
+<script src="app.js?v=v909"></script>
 </body>
 </html>
