@@ -177,7 +177,7 @@ async (page) => {
       return { ready: user && state.members && state.members.length > 0, user, own: !viewingOwnerUid, ed: !!state.isEditor, on: _nsOn() };
     }).catch(() => ({ ready: false }));
     if (nv.ready) break;
-    if (i > 6 && nv.user === false) break;
+    if (i > 24 && nv.user === false) break; // 開いた直後はログインの読み込み中で false のことがある（2026/11 に本物で起きた）。12秒は待つ
     await sleep(500);
   }
   if (!nv.user) return stop('login-navigator');
