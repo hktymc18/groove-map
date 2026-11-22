@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v905';
+var APP_JS_VERSION = 'v906';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -5202,7 +5202,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v905';
+  var DATA_VERSION = 'v906';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -7341,6 +7341,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v906', d:'2026-11-22', items:['HOME：CALENDAR のタイルをチャコールに（金色はお金のところだけ）','HOME：下のボタンを端が丸い形に','「次はここ」の札をイエローの地にチャコールの字に（読みやすく）'] },
   { v:'v905', d:'2026-11-22', items:['カレンダー：土曜日の色をライトで読みやすい濃いターコイズに','カレンダー：「今日」ボタンは隣と同じ白いボタン、今日の日付はチャコールの丸に白い字に'] },
   { v:'v904', d:'2026-11-22', items:['計画シートも新しいトーンに（上の切り替えはチャコール・達成度のカードはターコイズ・届かなかった数字は金・振り返りの見出しはバイオレット・改善点はターコイズ）','カレンダーの「＋ 予定」はイエロー、月・週・日・ToDo の切り替えはチャコールに（予定の色は今まで通り）'] },
   { v:'v903', d:'2026-11-22', items:['🛠 細かい修正をしました'] },
@@ -23803,7 +23804,7 @@ function renderMenuHub() {
     // v683: PLANの下は 左上MAP・右上ANALYTICS／左下CALENDAR・右下TODO
     { k: 'map', c: 'sky', ic: icn('map'), lb: 'MAP', st: '組織図・メンバー<br><em>' + cnt(state.members) + '人</em>', on: 'switchView(\'current\')' },
     { k: 'stats', c: 'rose', ic: icn('chart'), lb: 'ANALYTICS', st: 'コミッション・稼働' + (S0 !== null ? '<br>S稼働 <em>' + S0 + '人</em>' : ''), on: 'switchView(\'stats\')' },
-    { k: 'cal', c: 'gold', ic: icn('calendar'), lb: 'CALENDAR', st: '今日の予定<br><em>' + evN + '件</em>', on: 'switchView(\'events\');setEventsMode(\'calendar\')' },
+    { k: 'cal', c: 'ink', ic: icn('calendar'), lb: 'CALENDAR', st: '今日の予定<br><em>' + evN + '件</em>', on: 'switchView(\'events\');setEventsMode(\'calendar\')' },
     { k: 'todo', c: 'pur', ic: icn('checksq'), lb: 'TODO', st: '今日のタスク<br><em>' + (tkN ? 'のこり' + tkN + '件' : 'なし') + '</em>', on: 'switchView(\'events\');setEventsMode(\'agenda\')' }];
   if (_homeImgOn()) T.forEach(function(t) { if (UX_MENU_IMG[t.k]) { t.c += ' ph' + (t.k === 'stats' ? ' dk' : ''); t.img = UX_MENU_IMG[t.k]; } }); // v661／v832: 設定で画像なしにもできる
   var sb = function(t, on, nb) { return '<span class="ux-sb" onclick="' + on + '">' + t + (nb ? '<span class="nb">' + nb + '</span>' : '') + '</span>'; };
