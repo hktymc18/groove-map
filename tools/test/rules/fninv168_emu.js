@@ -15,7 +15,7 @@ const d = n => new Date(Date.parse('2026-11-23T00:00:00Z') - n * 86400000).toISO
 (async () => {
   await fetch('http://' + process.env.FIRESTORE_EMULATOR_HOST + '/emulator/v1/projects/inv-test/databases/(default)/documents', { method: 'DELETE' });
   const set = (p, v) => db.doc(p).set(v);
-  await set('checkinUnions/U1', { unionAdmins: ['adm'] });
+  await set('checkinUnions/U1', { unionAdmins: ['adm'], admins: ['rc1', 'up1'] });   // v169: 受付管理者 rc1・up1（UPルビーでもある）
   await set('checkinUnions/U2', {});
   await set('users/up1', { name: '見本 UP', union: 'U1' });          // UPルビー（系列の名前と同じ）
   await set('users/tr1', { name: '見本 担当', union: 'U1' });
@@ -42,7 +42,10 @@ const d = n => new Date(Date.parse('2026-11-23T00:00:00Z') - n * 86400000).toISO
   c('段階', inv.list.filter(x => x.stage === 2).map(x => x.no).sort().join(',') === 'A1,A6' && inv.list.filter(x => x.stage === 1).map(x => x.no).sort().join(',') === 'A2,A7');
   c('最後の動きの中身', inv.list.find(x => x.no === 'A2').last.why === 'PG 受講' && inv.list.find(x => x.no === 'A7').last.why === '面談シート' && inv.list.find(x => x.no === 'A1').last === null);
   c('相手：研修生は担当＋UPルビー、正規はUPルビー（無効のアカウントは入れない・スペース違いも同じ名前）', JSON.stringify(inv.who.A2.slice().sort()) === '["tr1","up1"]' && JSON.stringify(inv.who.A1) === '["up1"]', JSON.stringify(inv.who));
-  c('通知は1人1通にまとめる（up1 に4人・tr1 に1人）', sent.length === 2 && /4人/.test(sent.find(x => x.uid === 'up1').t) && /1人/.test(sent.find(x => x.uid === 'tr1').t), JSON.stringify(sent));
+  c('通知は1人1通にまとめる（up1 に4人・tr1 に1人）', /4人/.test(sent.find(x => x.uid === 'up1').t) && /1人/.test(sent.find(x => x.uid === 'tr1').t), JSON.stringify(sent));
+  c('v169: 受付管理者・ユニオン管理者にもまとめ（U1：4人・28日以上 2人）', sent.length === 4 && /今週の棚卸し（4人）/.test((sent.find(x => x.uid === 'rc1') || {}).t) && /U1：4人（28日以上 2人）/.test((sent.find(x => x.uid === 'adm') || {}).b), JSON.stringify(sent));
+  c('v169: UPルビーで受付管理者の人は1通（お願い＋ユニオン全体）', sent.filter(x => x.uid === 'up1').length === 1 && /ユニオン全体の棚卸し… U1：4人/.test(sent.find(x => x.uid === 'up1').b));
+  c('v169: 候補0人のユニオンの管理者には送らない', !sent.some(x => /U2/.test(x.b)));
   c('U2 の文書も作る（候補0人）', (await db.doc('checkinInventory/U2').get()).data().list.length === 0);
   // ── 同じ日の次の回（12時）：計算しない・送らない ──
   sent.length = 0;
@@ -69,7 +72,8 @@ const d = n => new Date(Date.parse('2026-11-23T00:00:00Z') - n * 86400000).toISO
   // 1週間後：A7 は 23日 → 1回目のまま（送らない）、A2 は 36日 → 2回目（送る）、A4 は様子見が終わって2回目（送る）、A1 は様子見中
   const inv3 = (await db.doc('checkinInventory/U1').get()).data();
   const up = sent.find(x => x.uid === 'up1'), tr = sent.find(x => x.uid === 'tr1');
-  c('次の週：同じ段階はもう送らない・2回目になった人だけ送る', sent.length === 2 && up && /2人/.test(up.t) && tr && /1人/.test(tr.t) && /28日/.test(tr.b) && inv3.sent.A7 === 1 && inv3.sent.A2 === 2 && inv3.sent.A4 === 2 && !inv3.sent.A1, JSON.stringify(sent) + ' ' + JSON.stringify(inv3.sent));
+  c('次の週：同じ段階はもう送らない・2回目になった人だけ送る', up && /2人/.test(up.t) && tr && /1人/.test(tr.t) && /28日/.test(tr.b) && inv3.sent.A7 === 1 && inv3.sent.A2 === 2 && inv3.sent.A4 === 2 && !inv3.sent.A1, JSON.stringify(sent) + ' ' + JSON.stringify(inv3.sent));
+  c('v169: 管理者のまとめは毎週（候補がいる週）', sent.length === 4 && sent.some(x => x.uid === 'rc1') && sent.some(x => x.uid === 'adm'), JSON.stringify(sent.map(x => x.uid)));
   // ── force ──
   sent.length = 0;
   await db.doc('appStats/inventory').set({ force: true }, { merge: true });
