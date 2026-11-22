@@ -22,7 +22,7 @@ T.run(async () => {
   c('区切り付きで入れても読める', r.ptCurrent === 12000);
   w.idqClose(true); w.idqOpen('a'); await sleep(20);
   w.idqTitle('BM'); await sleep(10);
-  c('タイトルを押すと選び直し・見出しの色も変わる', $('#idqTitles .idq-s.sel').dataset.v === 'BM' && $('.iq-tp').textContent === 'BM' && /#C583FF/i.test($('#idqHd').getAttribute('style')), $('#idqHd').getAttribute('style'));
+  c('タイトルを押すと選び直し・見出しの色も変わる', $('#idqTitles .idq-s.sel').dataset.v === 'BM' && $('.iq-tp').textContent === 'BM' && ($('#idqHd').getAttribute('style') || '').indexOf(w.titleRingColor('BM')) >= 0 /* v902: 新しいトーンの色（titleRingColor）に合わせる */, $('#idqHd').getAttribute('style'));
   w.idqClose(true); w.idqOpen('r'); await sleep(20);
   w.idqAct('A'); w.idqRate(50); await sleep(10);
   c('稼働・稼働率', r.activity === 'A' && r.actRate === 50 && $('#idqActs .sel').dataset.a === 'A' && $('#idqRates .sel').dataset.r === '50');

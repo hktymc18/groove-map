@@ -11,7 +11,7 @@ T.run(async () => {
   const css = w.document.getElementById('ppCss').textContent;
   c('PCは右側のパネル（幅440px）', /@media\(min-width:768px\) and \(min-height:501px\)\{#ppPg,#naPg\{left:auto!important;right:0;width:440px/.test(css));
   c('下のボタンはパネルの中', /#naPg \.ux-btm\{position:sticky!important;left:auto!important/.test(css));
-  c('タイトルのカードにカテゴリの色（PCでも読み込む）', !!w.document.getElementById('mxCss') && /--mxtr:/.test(w.document.getElementById('mxCss').textContent) && /--mxtr/.test($('#naPg .ttc').getAttribute('style')));
+  c('タイトルのカードにカテゴリの色（PCでも読み込む）', !!w.document.getElementById('mxCss') && (/--mxtr:/.test(w.document.getElementById('mxCss').textContent) || (w.NV_TONE && /--mxtr:/.test(require('fs').readFileSync(require('path').join(__dirname, '../../../index.html'), 'utf8')))) && /--mxtr/.test($('#naPg .ttc').getAttribute('style')) /* v902: 新しいトーンでは色は index.html にある */);
   w.document.getElementById('naLast').value = '佐藤'; w.naSave(''); await sleep(20);
   c('追加できる', w.state.members.some(m => m.lastName === '佐藤' && m.parentId === 'r'));
 });
