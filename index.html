@@ -2968,7 +2968,7 @@ body:not(.light){
   --bg:#1C1A1B;--placeholder:#6E696B;--surface:#262425;--surface2:#312E2F;--surface3:#3E3A3B;--border:#3E3A3B;--border2:#4A4546;
   --text:#F3F2EE;--text-dim:#A8A3A4;--text-mid:#C9C6C4;
   --accent:#EFFF40;--accent-dim:rgba(239,255,64,.14);--purple:#B095FE;--purple-dim:rgba(176,149,254,.16);
-  --trainee:#26C7B3;--loi:#EFFF40;--gold:#B3BF30;--gold-dim:rgba(239,255,64,.12);--red:#FF7A80;--green:#26C7B3;
+  --trainee:#26C7B3;--loi:#EFFF40;--gold:#F5C242;--gold-dim:rgba(245,194,66,.14);--red:#FF7A80;--green:#26C7B3;
   --s:#26C7B3;--a:#B095FE;--b:#92E3D9;--c:#A8A3A4;--go-sky:#26C7B3;--go-ink:#191717;--go-rose:#FF7A80;
   --mxbr:#B095FE;--mxex:#EFFF40;--mxtr:#26C7B3;--mxfr:#B095FE;--mxot:#6E696B;--mxout:#3E3A3B;
   --shadow:0 24px 64px rgba(0,0,0,.45);--header-bg:rgba(28,26,27,.97);--r:20px;--rsm:12px;--rxs:8px;
@@ -2979,7 +2979,7 @@ body.light{
   --bg:#F6F6F1;--placeholder:#9B999A;--surface:#FFFFFF;--surface2:#EDEDE7;--surface3:#E1E0E1;--border:#DCDBD5;--border2:#C9C7C1;
   --text:#373334;--text-dim:#6E696B;--text-mid:#555052;
   --accent:#1C9586;--accent-dim:rgba(38,199,179,.14);--purple:#602BFC;--purple-dim:rgba(96,43,252,.10);
-  --trainee:#1C9586;--loi:#B3BF30;--gold:#6C731D;--gold-dim:rgba(239,255,64,.30);--red:#C8333D;--green:#1C9586;
+  --trainee:#1C9586;--loi:#B3BF30;--gold:#A57400;--gold-dim:rgba(214,160,30,.16);--red:#C8333D;--green:#1C9586;
   --s:#26C7B3;--a:#B095FE;--b:#92E3D9;--c:#C9C7C1;--go-sky:#1C9586;--go-ink:#191717;--go-rose:#C8333D;
   --mxbr:#602BFC;--mxex:#B3BF30;--mxtr:#26C7B3;--mxfr:#B095FE;--mxot:#9B999A;--mxout:#C9C7C1;
   --shadow:0 24px 64px rgba(55,51,52,.10);--header-bg:rgba(246,246,241,.97);--r:20px;--rsm:12px;--rxs:8px;
@@ -3042,6 +3042,8 @@ body .btn-p,body .btn-s,body .ux-nx,body .ux-bk{border-radius:9999px}
 body h1,body h2,body h3,body .ux-h2{font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;letter-spacing:.06em}
 /* v898: ファーストボーナスの金額を金のグラデーションの文字に（新しいトーンの --gold はくすんだ色だったため） */
 body .sm1-r{background:linear-gradient(135deg,#FFFBEA 0%,#FFFFFF 55%,#FFF4CF 100%);border:1.5px solid #E8C766;box-shadow:0 10px 30px rgba(201,150,20,.16)}
+/* v899: 金色の地に黒い字の札は、ライトでは明るい金の地に（濃い金の地だと字が沈むため） */
+body.light .rv span.BR,body.light .fb-st.new,body.light .olk.p,body.light .olt-sst{background:#F2C14E!important;color:#373334!important}
 body:not(.light) .sm1-r{background:linear-gradient(135deg,#2C2512 0%,#1F1D1A 60%,#2B2413 100%);border-color:rgba(232,199,102,.5);box-shadow:0 10px 30px rgba(0,0,0,.4)}
 body .sm1-r .fb b{font:700 36px Outfit,Inter,sans-serif;letter-spacing:-.01em}
 body .sm1-r .fb .fbr,body .p2fb .fbr{font-variant-numeric:tabular-nums}body .sm1-r .fb .fbr .rs span,body .p2fb .fbr .rs span{text-align:center}
@@ -3135,7 +3137,7 @@ body .sm1-r .fb .fbr,body .p2fb .fbr{filter:drop-shadow(0 1px 0 rgba(140,90,0,.2
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v898</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v899</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4089,7 +4091,7 @@ body .sm1-r .fb .fbr,body .p2fb .fbr{filter:drop-shadow(0 1px 0 rgba(140,90,0,.2
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v898';</script>
-<script src="app.js?v=v898"></script>
+<script>window.GM_EXPECT_JS='v899';</script>
+<script src="app.js?v=v899"></script>
 </body>
 </html>

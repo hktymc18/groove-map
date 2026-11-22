@@ -7,8 +7,8 @@ T.run(async () => {
   w.state.idealMembers = [];
   setWH(390, 844); w._uxSync && w._uxSync(); w.switchView('plan'); await sleep(30);
   const cur = w._p2Ym(0), lm = w._p2Ym(-1);
-  const cfg = w._p2SimCfg(); cfg.preset = 0; cfg.fronts = [1, 2, 3, 0, 0]; cfg.sy = +lm.slice(0, 4); cfg.sm = +lm.slice(5);
-  w.p2Go('sim'); await sleep(30);
+  const cfg = w._p2SimCfg(); cfg.preset = 0; cfg.fronts = [1, 2, 3, 0, 0]; 
+  w.p2Go('sim'); await sleep(30); cfg.sy = +lm.slice(0, 4); cfg.sm = +lm.slice(5); // v899: 開くと今月になるので、開いてから先月に変える
   c('ボタンは「ロードマップのペースに入れる」', /ロードマップのペースに入れる/.test($('.ux-btm').textContent));
   w.p2SimApply(); await sleep(30);
   const nx1 = w._p2YmAdd(cur, 1);
