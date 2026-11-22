@@ -52,7 +52,7 @@ const slice = (a, b) => { const i = H.indexOf(a), j = H.indexOf(b, i); if (i < 0
   // ── 一覧 ──
   const T = W.eval('CARD_TITLES.map(function(b){ return b.k; }).join()'), B = W.eval('CARD_BADGES.map(function(b){ return b.k; }).join()');
   c('タイトルの一覧（8つ・宝石）', T === 'BR,GOLD,LAPIS,RUBY,EMERALD,DIAMOND,BLUE DIAMOND,TEAM ELITE' && W.eval('CARD_TITLES.every(function(b){ return b.t === "gem"; })'), T);
-  c('バッジの一覧（8つ・役職）・NTC Ambassador は無い', B === 'EXPERT,ASSOCIATE,マコシエイト,DIRECTOR,受付,設営,個別,体感' && W.eval('CARD_BADGES.every(function(b){ return b.t === "role" && b.c.length === 2; })'), B);
+  c('バッジの一覧（10個・役職・v171 で MC・SPEAKER）・NTC Ambassador は無い', B === 'EXPERT,ASSOCIATE,マコシエイト,DIRECTOR,受付,設営,個別,体感,MC,SPEAKER' && W.eval('CARD_BADGES.every(function(b){ return b.t === "role" && b.c.length === 2; })'), B);
   // ── 古いデータの読み方 ──
   const TO = m => W.ckTitleOf(m), BO = m => Array.from(W.ckBadgesOf(m)).join(), ROW = m => { const d = W.document.createElement('div'); d.innerHTML = W.ckBadgeRowHtml(m); return [].map.call(d.querySelectorAll('.bdg'), x => x.textContent).join('|'); };
   c('古いデータ: 宝石の badge はタイトルとして読む', TO({ badge: 'RUBY' }) === 'RUBY' && BO({ badge: 'RUBY' }) === '' && ROW({ badge: 'RUBY' }) === 'RUBY');
@@ -79,7 +79,7 @@ const slice = (a, b) => { const i = H.indexOf(a), j = H.indexOf(b, i); if (i < 0
   W.eval("STORE['checkinMembers/ZZ0001'] = { no: 'ZZ0001', name: '見本 太郎', union: 'U1', badge: 'EXPERT', cardToken: 'tok1' }; STORE['cards/tok1'] = { no: 'ZZ0001', badge: 'EXPERT' };");
   let m = { no: 'ZZ0001', name: '見本 太郎', union: 'U1', badge: 'EXPERT', cardToken: 'tok1' };
   W.cardModal(m); await sleep(20);
-  c('タイトル（1つ）とバッジ（複数）を別々に選べる', $('cmTitle') && $('cmTitle').tagName === 'SELECT' && $('cmBadges').querySelectorAll('input[type=checkbox]').length === 8);
+  c('タイトル（1つ）とバッジ（複数）を別々に選べる', $('cmTitle') && $('cmTitle').tagName === 'SELECT' && $('cmBadges').querySelectorAll('input[type=checkbox]').length === 10);
   c('管理者のタイトルに BLUE DIAMOND・TEAM ELITE は出ない', ![].some.call($('cmTitle').options, o => /BLUE DIAMOND|TEAM ELITE/.test(o.value)) && $('cmTitle').options.length === 7);
   c('開いた時: 古い役職の badge をバッジへ自動で移す（名簿と会員証）', JSON.stringify(st('checkinMembers/ZZ0001').badges) === '["EXPERT"]' && !('badge' in st('checkinMembers/ZZ0001')) && JSON.stringify(st('cards/tok1').badges) === '["EXPERT"]' && !('badge' in st('cards/tok1')));
   c('移した時はお知らせを出さない', W.eval('TOASTS.length') === 0);
