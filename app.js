@@ -7331,7 +7331,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
-  { v:'v898', d:'2026-11-22', items:['PLANのシミュレーションのファーストボーナスの金額を、金色に光る大きな数字に'] },
+  { v:'v898', d:'2026-11-22', items:['PLANのシミュレーションのファーストボーナスの金額を、金色に光る大きな数字に','ホームのボタンの右上の数字（再アプローチ・共有MAPなど）を見やすい黄色に'] },
   { v:'v897', d:'2026-11-21', items:['全部の画面を新しい見た目にしました（MAP と同じ4色・丸み・書体）。ライトでは目立つ色をターコイズにして、文字が読みやすいように。大事なボタン（保存・追加・受付連携）はイエローです'], pop:{ t:'見た目が新しくなりました', items:['イエロー・バイオレット・ターコイズ・チャコールの4色に','ボタンやカードを丸く、文字を読みやすい書体に','ライト・ダークどちらも新しい色です'], go:['MAPを開く', "switchView('current')"] } },
   { v:'v896', d:'2026-11-21', items:['MAP（ライト）のユーザーの一覧で、イエローの文字・線が見えにくかったのを直しました（選んだ絞り込み・ADP の札・「＋ ユーザーを足す」）。下のボタンの文字が2行にならないように'] },
   { v:'v895', d:'2026-11-21', items:['MAP の見た目を新しくしました（PC のツリー・スマホの一覧、ライト・ダーク両方）：イエロー・バイオレット・ターコイズ・チャコールの4色、丸みのあるボタンとカード、読みやすい書体に。カードの上の札に「審査中」も出します。ほかの画面は今まで通りです'] },
@@ -23713,7 +23713,7 @@ function _uxMenuCss() {
   st.textContent = "#view-menu{padding:14px 14px 110px;max-width:640px;margin:0 auto}body.ux-land #view-menu{max-width:none;padding:8px 16px 6px}"
     + ".ux-sm{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.ux-sm .ux-sb{height:46px;font-size:13px;padding:0 8px;flex:none;min-width:0;overflow:visible;white-space:nowrap;position:relative}"
     + "body.ux-land .ux-sm{display:flex;justify-content:flex-end;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-top:6px}body.ux-land .ux-sm::-webkit-scrollbar{display:none}body.ux-land .ux-sm .ux-sb{height:38px;padding:0 12px;font-size:12px;overflow:visible}"
-    + ".ux-sb .nb{position:absolute;top:-6px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:var(--gold);color:#2a1a00;font-size:10.5px;font-weight:900;display:flex;align-items:center;justify-content:center;padding:0 5px}"
+    + ".ux-sb .nb{position:absolute;top:-6px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:#EFFF40;color:#373334;box-shadow:0 0 0 2px var(--bg);font-size:10.5px;font-weight:900;display:flex;align-items:center;justify-content:center;padding:0 5px}"
     + "body.ux-land #view-menu .ux-t{height:max(130px,calc(var(--vvh,100vh) - 158px))}"
     // v802: ロゴは<img>ではなく背景（長押し・右クリックの「画像を保存」・ドラッグで持ち出せないように）
     + ".gm-lg{display:block;aspect-ratio:198/104;background:center/contain no-repeat;font-style:normal;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;pointer-events:none}.gm-lg.w{background-image:url(img/logo-w.png)}.gm-lg.d{background-image:url(img/logo-d.png)}"

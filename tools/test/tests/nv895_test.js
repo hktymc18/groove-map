@@ -38,5 +38,6 @@ T.run(async () => {
   c('v898: ファーストボーナスの金額は金のグラデーションの文字', /\.sm1-r \.fb \.fbr[^{]*\{background:linear-gradient\([^)]*#F7D56A/.test(html) && /-webkit-text-fill-color:transparent/.test(html));
   c('v898: ダークでも金（明るい金）', /body:not\(\.light\) \.sm1-r \.fb \.fbr[^{]*\{background:linear-gradient\([^)]*#FFD86B/.test(html));
   c('v898: 数字の幅をそろえる（回る数字のすき間が空かない）', /\.sm1-r \.fb \.fbr,body \.p2fb \.fbr\{font-variant-numeric:tabular-nums\}/.test(html));
+  c('v898: ホームのボタンの数字は黄色（#EFFF40）に黒い字', /\.ux-sb \.nb\{[^}]*background:#EFFF40;color:#373334/.test(fs.readFileSync(path.join(__dirname, '../../../app.js'), 'utf8')));
   c('APP_JS_VERSION v897 以上', +(/APP_JS_VERSION = 'v(\d+)'/.exec(fs.readFileSync(path.join(__dirname, '../../../app.js'), 'utf8')) || [0, 0])[1] >= 897);
 });
