@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v913';
+var APP_JS_VERSION = 'v914';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -5202,7 +5202,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v913';
+  var DATA_VERSION = 'v914';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -7341,6 +7341,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v914', d:'2026-11-22', items:['OUT で「非表示」にした人の下に、同じく非表示の OUT の人しかいない時も、MAP から消えるように','下にまだ人がいて MAP に残る時は、メンバーの画面に「下に ○人いるので残ります」と出るように'] },
   { v:'v913', d:'2026-11-22', items:['MAP のカード（PC はマウスを乗せた時・スマホは名前を押した時）に、研修生の最後の研修（項目・日付・結果・Aさん）を出すように','カードの OL記録は直近1か月の分だけ、日付の新しい順に'] },
   { v:'v912', d:'2026-11-22', items:['予定のタイトルに CT・FT・ST などを入れても、PLAN には数えないように（「PLAN「CT」に数えます」の表示もなくしました）','PLAN の数は計画シートで − ＋ で入れます。10月までの数は記録として残します'] },
   { v:'v911', d:'2026-11-22', items:['MAP（PC・スマホ・サークル）で、女性の名前をピンクに（男女を色で見分けられるように）'] },
@@ -10702,9 +10703,25 @@ function _ruLineHasBr(arr, rootId) {
 // v426: OUT非表示(outHidden)メンバーをツリー描画から除外（配下が残っている場合は孤児防止のため表示継続）
 function _treeVisibleMembers(arr, mt) {
   if (mt === 'current' && typeof _umHide === 'function') arr = _umHide(arr); // v843: ビジネスのMAPにユーザーは出さない（ユーザー台帳で見る）
-  var hasKid = {};
-  for (var i = 0; i < arr.length; i++) { if (arr[i].parentId && !arr[i].deleted) hasKid[arr[i].parentId] = 1; }
-  return arr.filter(function(m) { return !(m.outHidden === true && !hasKid[m.id]); });
+  // v914: 下にいるのが「非表示のOUT」だけなら、その人も消す（前は下に誰かいれば非表示でも残っていた）
+  var kids = {}, byId = {}, memo = {};
+  for (var i = 0; i < arr.length; i++) { var a = arr[i]; byId[a.id] = a; if (a.parentId && !a.deleted) (kids[a.parentId] = kids[a.parentId] || []).push(a); }
+  var vis = function(m, d) {
+    if (memo[m.id] !== undefined) return memo[m.id];
+    if (m.outHidden !== true || d > 60) return (memo[m.id] = true);
+    memo[m.id] = false; // 循環よけ
+    var r = (kids[m.id] || []).some(function(k) { return vis(k, d + 1); });
+    return (memo[m.id] = r);
+  };
+  return arr.filter(function(m) { return vis(m, 0); });
+}
+// v914: 非表示にしたOUTの人の下に、まだ出ている人が何人いるか（いればMAPに残る）
+function _outKeptKids(m, arr) {
+  arr = arr || membersForMap('current');
+  var n = 0, kids = {}; arr.forEach(function(a) { if (a.parentId && !a.deleted) (kids[a.parentId] = kids[a.parentId] || []).push(a); });
+  var walk = function(id, d) { (kids[id] || []).forEach(function(k) { if (d > 60) return; if (k.outHidden === true) walk(k.id, d + 1); else n++; }); };
+  walk(m.id, 0);
+  return n;
 }
 function childrenOf(parentId, members) {
   if (members !== _childIdxSrc || members === state.members) {
@@ -21151,7 +21168,7 @@ function _ppPage(m, pg) {
     var t = (m.title || '').trim(), groups = PP_TITLES.slice();
     if (ideal) groups = [['ex', '審査中', ['LOI', 'Q2', 'Q3', 'Q4']], ['ot', 'BA', ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B9', 'B10', 'B11', 'BM']], ['br', 'BR', ['BR', 'ゴールド', 'ラピス', 'ルビー', 'エメラルド', 'ダイヤモンド', 'ブルーダイヤモンド', 'チームエリート']], ['ot', 'そのほか', ['ユーザー']]];
     h = '<h2 class="ux-h2">タイトル</h2><div class="ux-sub">カードを押すと選べます。選ぶとすぐ保存</div>' + _ttlPickHtml(t, groups, 'ppTitle', '_ppRender'); // v615: カテゴリのカード→リスト
-    if (!ideal && t === 'OUT') h += '<div class="ppl">OUTの後の表示</div><div class="ppb sm" style="--n:2"><span class="' + (!m.outHidden ? 'on' : '') + '" onclick="ppOutVis(0)">ツリーに残す</span><span class="' + (m.outHidden ? 'on' : '') + '" onclick="ppOutVis(1)">非表示</span></div><div class="ux-hint">残す＝当月のMAPにグレーで残ります（翌月コピーで外れます）。非表示＝ツリーから消えます（メンバー一覧の「OUT」からいつでも開けます）</div>'; // v783
+    if (!ideal && t === 'OUT') h += '<div class="ppl">OUTの後の表示</div><div class="ppb sm" style="--n:2"><span class="' + (!m.outHidden ? 'on' : '') + '" onclick="ppOutVis(0)">ツリーに残す</span><span class="' + (m.outHidden ? 'on' : '') + '" onclick="ppOutVis(1)">非表示</span></div><div class="ux-hint">残す＝当月のMAPにグレーで残ります（翌月コピーで外れます）。非表示＝ツリーから消えます（メンバー一覧の「OUT」からいつでも開けます）</div>' + (function() { var kn = m.outHidden ? _outKeptKids(m) : 0; return kn ? '<div class="ux-hint" style="color:var(--red)">下に ' + kn + ' 人いるので、MAPには残ります（下の人が迷子にならないように）。下の人を別の人の下に移すか、OUTにして非表示にすると消えます</div>' : ''; })(); // v783 / v914
   } else if (pg === 'num') {
     var gsv = m.ptCurrent || 0, a = m.activity || '', rate = m.actRate === '' || m.actRate == null ? '' : m.actRate;
     h = '<h2 class="ux-h2">今月の数字</h2>'
