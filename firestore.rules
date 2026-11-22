@@ -1139,6 +1139,19 @@ service cloud.firestore {
     // 💜 受付v140: ユーザーのプランのクエスト（ユニオンごと）。無いユニオンは、アプリに組み込みのクエスト
     //   ckQuest/{ユニオン} = { co: { diet: [{ k, t, off }], yuragi: [...], inner: [...] }, by, at }（1コース10こまで）
     //   アプリ（ログインなし）が1件ずつ読む。書けるのはオーナー・ユニオン管理者・DAYスタッフ（消す＝はじめの内容にもどす）
+    // 💜 受付v174: 今月のチャレンジ（ユニオンごと）。ckChal/{ユニオン} = { m: 'YYYY-MM', t: テーマ（30字まで）, g: 日数（1〜31）, by, at }
+    //   読むのはだれでも1件ずつ（お客さんのアプリ）。書く・消すはオーナー・ユニオン管理者・DAYスタッフだけ
+    match /ckChal/{un} {
+      allow get: if true;
+      allow list: if false;
+      allow create, update: if ckLoungeStaff(un)
+        && request.resource.data.keys().hasOnly(['m', 't', 'g', 'by', 'at'])
+        && request.resource.data.get('by', '') == request.auth.uid
+        && request.resource.data.get('m', '') is string && request.resource.data.get('m', '').matches('^[0-9]{4}-[0-9]{2}$')
+        && request.resource.data.get('t', '') is string && request.resource.data.get('t', '').size() > 0 && request.resource.data.get('t', '').size() <= 30
+        && request.resource.data.get('g', 0) is int && request.resource.data.get('g', 0) >= 1 && request.resource.data.get('g', 0) <= 31;
+      allow delete: if ckLoungeStaff(un);
+    }
     match /ckQuest/{un} {
       allow get: if true;
       allow list: if false;

@@ -1363,6 +1363,31 @@ body.uapp #toast{bottom:calc(96px + env(safe-area-inset-bottom, 0px));}
 .td-soc{margin-top:10px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px;font-size:13px;font-weight:700;cursor:pointer;}
 #uaApp .td-qb.pick{background:var(--ua-vio-soft);border-radius:10px;padding:6px 8px;}
 #uaApp .td-qb em{margin-left:auto;font-style:normal;font-size:10.5px;color:#fff;background:var(--ua-vio);border-radius:999px;padding:1px 7px;flex:none;}
+.td-sc .td-scn{display:flex;align-items:baseline;gap:6px;margin-top:4px;}
+.td-sc .td-scn b{font-size:40px;font-weight:900;color:var(--ua-vio);}
+.td-sc .td-scn span{font-size:13px;color:var(--sub);font-weight:700;}
+.td-sc .td-scn em{font-style:normal;font-size:12px;color:var(--green);font-weight:700;margin-left:6px;}
+.td-bars{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;align-items:end;height:48px;margin-top:6px;}
+.td-bars i{display:block;background:var(--ua-vio-soft);border-radius:5px 5px 2px 2px;}
+.td-bars i.td{background:var(--ua-vio);}
+.td-res{border-color:var(--ua-vio);}
+.td-les{cursor:pointer;}
+.pz-type{margin-top:12px;border:1px solid var(--line);border-radius:14px;padding:10px 12px;display:grid;gap:2px;}
+.pz-type small{font-size:11px;color:var(--sub);}
+.pz-type b{font-size:16px;color:var(--pz);}
+.pz-type span{font-size:12.5px;color:var(--sub);}
+.pz-type button{justify-self:start;margin-top:8px;}
+.ph-wrap .ui-s{font-size:12.5px;}
+.ph-cmp{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0;}
+.ph-cmp figure{margin:0;}
+.ph-cmp img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:12px;display:block;}
+.ph-cmp figcaption{font-size:12px;color:var(--sub);text-align:center;margin-top:4px;}
+.ph-list{display:flex;gap:6px;overflow-x:auto;padding:4px 0;}
+.ph-list span{position:relative;flex:none;width:64px;text-align:center;}
+.ph-list img{width:64px;height:84px;object-fit:cover;border-radius:8px;display:block;}
+.ph-list small{font-size:10.5px;color:var(--sub);}
+.ph-list button{position:absolute;top:2px;right:2px;width:20px;height:20px;padding:0;border-radius:50%;font-size:10px;line-height:1;}
+.ph-add{display:block;text-align:center;margin-top:10px;padding:12px;border-radius:12px;cursor:pointer;}
 /* 💜 v136: 新しいお知らせ・ラウンジの赤丸 */
 #uaTabs button,#uaApp .ua-bell,#uaApp .ua-seg button{position:relative;}
 .ua-dot{position:absolute;top:3px;right:calc(50% - 19px);width:9px;height:9px;border-radius:50%;background:#e2475f;border:2px solid var(--card);box-sizing:content-box;}
@@ -2996,10 +3021,11 @@ if(gTrainerMode) document.documentElement.classList.add('trm');   // 🎓 研修
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v173';
+var APP_VER = 'v174';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v174', d: '2026/11/22', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v173', d: '2026/11/22', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v172', d: '2026/11/22', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v171', d: '2026/11/22', items: ['🏅 会員証のバッジに「MC」と「SPEAKER」を追加しました'] },
@@ -4440,6 +4466,7 @@ function ckLvOf(ev){
 }
 // 本人のカードの PRYSMiO（今の色・前回から・次の色まで・記録）
 function renderPrysm(c){
+  setTimeout(function(){ var b = $('pzShare'); if(b && gUa) b.onclick = function(){ ckShareImage(gUa.c, gUa.token); }; }, 0);   // 💜 v174
   var el = $('pzArea');
   if(!el) return;
   if(!c || c.kind !== 'user'){ el.innerHTML = ''; return; }
@@ -4464,6 +4491,8 @@ function renderPrysm(c){
     + '<div class="pz-bar" aria-hidden="true">' + CK_PRYSM.map(function(x, j){ return '<i style="background:' + x.c + ';' + (j > i ? 'opacity:.28;' : '') + '"></i>'; }).join('')
     + '<b style="left:' + pos.toFixed(1) + '%;"></b></div>'
     + '<div class="pz-next">' + (nx ? esc(nx.b.n) + 'まで あと <b>' + nx.need.toLocaleString() + '</b>' : '🏅 最高の色、プラチナメダリオンです') + '</div>'
+    + (function(){ var ty = ckTypeOf(cur.v); return ty.name ? '<div class="pz-type"><small>あなたは</small><b>' + esc(b.n) + 'タイプ「' + esc(ty.name) + '」</b><span>' + esc(ty.sub) + '</span>'
+        + (gUa ? '<button type="button" id="pzShare">✨ シェア画像を作る</button>' : '') + '</div>' : ''; })()   // 💜 v174
     + (h.length > 1 ? '<div class="pz-hist">' + h.slice(-6).reverse().map(function(r){
         return '<div><span class="mono">' + esc((r.d || '').slice(5).replace('-', '/')) + '</span><span class="dot" style="background:' + ckPrysmBand(r.v).c + ';"></span><b class="mono">' + r.v.toLocaleString() + '</b><span class="nm">' + esc(r.name) + '</span></div>';
       }).join('') + '</div>' : '')
@@ -4546,7 +4575,8 @@ function mpBadges(c, plan, st){
     ['s3', '🔥', '3日連続', st.best >= 3],
     ['s7', '💪', '7日連続', st.best >= 7],
     ['s30', '👑', '30日連続', st.best >= 30],
-    ['t50', '✨', 'チェック50回', st.total >= 50]
+    ['t50', '✨', 'チェック50回', st.total >= 50],
+    ['amb', '👑', 'アンバサダー', st.best >= 30 && v >= 3 && Object.keys(c || {}).some(function(k){ return k.indexOf('inv_') === 0 && c[k] && c[k].n; })]   // 💜 v174: 30日続いた・3回来場・友だちが来てくれた
   ];
 }
 var gMp = null;   // { token, c, plan }
@@ -4556,8 +4586,8 @@ function renderMyPlan(c, token){
   if(!c || c.kind !== 'user' || c.active === false || c.toMember){ el.innerHTML = ''; return; }
   gMp = { token: token, c: c, plan: gMp && gMp.token === token ? gMp.plan : null };
   var pl = db.collection('cards').doc(token).collection('plan').doc('me').get().then(function(s){ return s.exists ? s.data() : null; }, function(){ return gMp.plan; });
-  Promise.all([pl, ckQuestGet(c.union || '')]).then(function(r){
-    gMp.plan = r[0]; gMpQuest = r[1];
+  Promise.all([pl, ckQuestGet(c.union || ''), ckChalGet(c.union || '')]).then(function(r){
+    gMp.plan = r[0]; gMpQuest = r[1]; gMpChal = r[2];   // 💜 v174: 今月のチャレンジ
     mpDraw();
     ckObAuto();   // 💜 v172
   }).catch(function(){ mpDraw(); });
@@ -4783,6 +4813,25 @@ function ckUaToday(){
     if(cl) soc.push('<div class="td-soc" data-go="friends" data-gos="lounge">👏 あなたの投稿に ' + cl + 'こ届いているよ</div>');
   }
   h += soc.join('');
+  // 💜 v174: 今日の美容ポイント（まだ始めていない日は、昨日の結果発表）
+  var sc = mpScore(plan, today), scY = mpScore(plan, yd), bars = [];
+  for(var si = 6; si >= 0; si--){ var sd = mpAddDays(today, -si), sv = mpScore(plan, sd); bars.push('<i style="height:' + Math.max(4, sv) + '%;"' + (sd === today ? ' class="td"' : '') + ' title="' + esc(ckMd(sd)) + ' ' + sv + '"></i>'); }
+  if(!done.length && !ckLesRead(today) && scY) h += '<div class="ua-cd td-sc td-res"><div class="ua-lb">昨日の結果発表</div><div class="td-scn"><b class="mono">' + scY + '</b><span>点</span>'
+    + (mpScore(plan, mpAddDays(today, -2)) ? '<em>' + (scY - mpScore(plan, mpAddDays(today, -2)) >= 0 ? '+' : '') + (scY - mpScore(plan, mpAddDays(today, -2))) + '（その前の日から）</em>' : '') + '</div><div class="td-bars">' + bars.join('') + '</div><p class="ua-p">今日も1つ目からいこう！</p></div>';
+  else h += '<div class="ua-cd td-sc"><div class="ua-lb">今日の美容ポイント</div><div class="td-scn"><b class="mono">' + sc + '</b><span>/ 100</span></div><div class="td-bars">' + bars.join('') + '</div></div>';
+  // 💜 v174: 1日1分
+  var les = ckLesOf(plan);
+  h += '<div class="ua-cd td-les" id="tdLes"><div class="ua-lb">今日の1分<em>' + (ckLesRead(today) ? '読んだ ✓' : '+10ポイント') + '</em></div><b class="td-7t">' + esc(les.t) + '</b></div>';
+  // 💜 v174: 今月のチャレンジ（スタッフが決めた時だけ）
+  var ch = gMpChal, mo = today.slice(0, 7);
+  if(ch && ch.m === mo && ch.t && ch.g){
+    var cn = mpChalDays(plan, mo);
+    h += '<div class="ua-cd td-ch"><div class="ua-lb">今月のチャレンジ<em>' + Math.min(cn, ch.g) + ' / ' + ch.g + '日</em></div><b class="td-7t">' + esc(ch.t) + '</b>'
+      + '<div class="mp-lvbar"><i style="width:' + Math.min(100, Math.round(cn / ch.g * 100)) + '%;"></i></div>'
+      + (cn >= ch.g ? '<p class="ua-p">🎉 チャレンジ達成！</p>' : '<p class="ua-p">今月チェックした日が ' + ch.g + '日になると達成</p>') + '</div>';
+  }
+  // 💜 v174: 今週の写真（このスマホの中だけ）
+  if(gPh && gPh.token === gUa.token){ var lp = gPh.list.length ? gPh.list[gPh.list.length - 1] : null; if(!lp || ckYmdDays(lp.d, today) >= 7) h += '<div class="td-soc" data-go="me">📷 今週の1枚を撮ろう（自分だけが見る写真）</div>'; }
   // はじめの7日
   var e7 = mp7Event(plan);
   if(e7) h += '<div class="ua-cd td-7"><div class="ua-lb">はじめの7日<em>' + e7.n + '日目</em></div><div class="td-dots">'
@@ -4815,6 +4864,7 @@ function ckUaToday(){
   if(!left) h += '<div class="td-all">🎉 今日のクエストは全部できました' + (gBd && gBd.token === gUa.token && gBd.me && (gBd.me.list || []).length ? '<small>バディにも「今日できた」が届いています</small>' : '') + '</div>';
   el.innerHTML = h;
   if($('td7A2')) $('td7A2').onclick = ckA2hsHowModal;
+  if($('tdLes')) $('tdLes').onclick = ckLesOpen;   // 💜 v174
   if($('td7Push')) $('td7Push').onclick = function(){ $('td7Push').disabled = true; ckPushToggle(gUa.c, gUa.token, true, function(){ renderUserNews(gUa.c, gUa.token); ckUaToday(); }); };
   ckUaAppBadge(left);
 }
@@ -4925,6 +4975,180 @@ function ckObAuto(){
   try{ seen = localStorage.getItem(k) || ''; }catch(e){}
   if(seen || document.querySelector('.modalback') || gUa.tab === 'qr') return;   // DAY の当日に受付QRを出している時は出さない
   ckObOpen();
+}
+/* 💜 v174: 第3弾（今日の美容ポイント・1日1分・今月のチャレンジ・自分だけの写真・あなたのタイプ・シェア画像） */
+// ── 1日1分（続けるコツ）。効果はうたわない（薬機法）。習慣のつくり方だけ。はじめた日から順番に1日1つ
+var CK_LESSONS = [
+  ['小さく始める', '毎日できる小ささから始めよう。1つでもチェックできた日は、それで合格です。'],
+  ['いつやるか決める', '「歯みがきのあと」「お風呂のあと」など、今ある習慣のあとに続けると忘れにくくなります。'],
+  ['見える場所に置く', '使うものは、目につく場所に置いておこう。目に入ることが、思い出すきっかけになります。'],
+  ['完璧じゃなくていい', '休んだ日があっても大丈夫。おやすみ券もあります。次の日に、また1つから。'],
+  ['記録すると続く', 'チェックするたびに「続けている自分」が見えてきます。記録は、自分へのごほうびです。'],
+  ['仲間の力', 'バディやラウンジで、同じように続けている人とつながると、続けやすくなります。'],
+  ['ごほうびを決める', '1週間続いたら、自分にちいさなごほうびを。好きな飲みもの・ゆっくりお風呂など。'],
+  ['前の夜に準備', '寝る前に、明日の朝のクエストを思い浮かべておこう。朝の1つ目がスムーズになります。'],
+  ['飲むタイミング', '起きた時・食事の時など、水を飲むタイミングを決めておくと、自然に続きます。'],
+  ['寝る時間をそろえる', '寝る時間と起きる時間を、毎日だいたい同じにしてみよう。1日のリズムが整います。'],
+  ['ついでに動く', '15分の散歩でもOK。エレベーターより階段など、毎日の中で動くきっかけを作ろう。'],
+  ['同じ時間に鏡を見る', '毎日同じ時間・同じ明るさで鏡を見ると、ちょっとした変化に気づきやすくなります。'],
+  ['なりたい私を読み返す', 'はじめに決めた「なりたい私」を、ときどき読み返そう。続ける理由を思い出せます。'],
+  ['DAYは答え合わせ', '次のDAYで測って、続けてきたことを確かめよう。続けた日は、ちゃんと積み上がっています。']
+];
+function ckLesKey(){ return 'bci_les_' + (gUa ? gUa.token : ''); }
+function ckLesRead(d){ try{ var o = JSON.parse(localStorage.getItem(ckLesKey()) || '{}'); return d ? !!o[d] : o; }catch(e){ return d ? false : {}; } }
+function ckLesOf(plan){ var n = plan && plan.start ? Math.max(0, ckYmdDays(plan.start, todayStr())) : 0; var L = CK_LESSONS[n % CK_LESSONS.length]; return { i: n % CK_LESSONS.length, t: L[0], b: L[1] }; }
+function ckLesOpen(){
+  var plan = gMp && gMp.plan, L = ckLesOf(plan), d = todayStr();
+  modal('<div class="ob-wrap"><h2>今日の1分</h2><div class="td-hero">' + ckPalImg() + '<div class="td-bub"><b>' + esc(L.t) + '</b><br>' + esc(L.b) + '</div></div>'
+    + '<div class="btns"><button class="primary" id="lesOk">' + (ckLesRead(d) ? '閉じる' : '読んだ（+10ポイント）') + '</button></div></div>');
+  $('lesOk').onclick = function(){
+    try{ var o = ckLesRead(); o[d] = 1; var ks = Object.keys(o).sort(); while(ks.length > 60) delete o[ks.shift()]; localStorage.setItem(ckLesKey(), JSON.stringify(o)); }catch(e){}
+    closeModal(); if(gUa) gUa.cheer = true; ckUaToday();
+  };
+}
+// ── 今日の美容ポイント（0〜100）：クエスト 70・全部できた 10・連続（10日まで）10・1日1分 10
+function mpScore(plan, d){
+  var qs = mpQs(plan); if(!qs.length) return 0;
+  var done = ((plan.days || {})[d] || []).filter(function(k){ return qs.some(function(q){ return q[0] === k; }); }).length;
+  if(!done && !ckLesRead(d)) return 0;
+  var st = done ? mpStats(plan, d).streak : 0;
+  return Math.round(done / qs.length * 70) + (done === qs.length ? 10 : 0) + Math.min(st, 10) + (ckLesRead(d) ? 10 : 0);
+}
+// ── 今月のチャレンジ（ユニオンごと・スタッフが「💜 Beauty」タブで決める）。ckChal/{ユニオン} = { m: 'YYYY-MM', t, g（日数）, by, at }
+var gMpChal = null;
+function ckChalGet(un){
+  var key = 'bci_chal_' + (un || '');
+  try{ var o = JSON.parse(localStorage.getItem(key) || 'null'); if(o && Date.now() - o.at < 30 * 60000) return Promise.resolve(o.c || null); }catch(e){}
+  return ckAnonDb().collection('ckChal').doc(un || '_').get().then(function(s){
+    var c = s.exists ? (s.data() || {}) : null; if(c) c = { m: c.m || '', t: c.t || '', g: +c.g || 0 };
+    try{ localStorage.setItem(key, JSON.stringify({ at: Date.now(), c: c })); }catch(e){}
+    return c;
+  }).catch(function(){ return null; });
+}
+function mpChalDays(plan, m){ return Object.keys((plan && plan.days) || {}).filter(function(k){ return k.slice(0, 7) === m && (plan.days[k] || []).length; }).length; }
+// ── あなたのタイプ（PRYSMiO の色ごと）。効果はうたわない。名前と、ひとこと
+var CK_TYPES = { 'レッド': ['はじまりの情熱', 'ここからぐんぐん伸びていく、スタートのタイプ'], 'オレンジ': ['元気のつぼみ', '毎日の積み重ねが、これから花ひらくタイプ'],
+  'イエロー': ['ひだまり', 'あたたかく、まわりも明るくするタイプ'], 'グリーン': ['のびやかな若葉', 'コツコツ続けて、しなやかに育つタイプ'],
+  'ブルー': ['澄んだ海', '落ち着いて、自分のペースを守れるタイプ'], 'パープル': ['気品のラベンダー', '大人っぽい落ち着きと華やかさのタイプ'],
+  'プラチナメダリオン': ['輝きのプラチナ', '続けてきた人だけがたどり着く、特別なタイプ'] };
+function ckTypeOf(v){ var b = ckPrysmBand(v), t = CK_TYPES[b.n] || ['', '']; return { band: b, name: t[0], sub: t[1] }; }
+// ── 友だちの招待のリンク（あれば同じキー・無ければ作る）
+function ckJoinFriendKey(c, token){
+  var adb = ckAnonDb(), jr = adb.collection('cards').doc(token).collection('join').doc('me');
+  return jr.get().then(function(s){
+    var k = s.exists ? (s.data().k || '') : '';
+    if(k) return k;
+    k = 'f_' + ckApplyNewId(20);
+    var b = adb.batch();
+    b.set(jr, { k: k, at: FV.serverTimestamp() });
+    b.set(adb.collection('ckJoin').doc(k), { kind: 'friend', union: c.union || '', refNo: String(c.referrerNo || ''), refName: c.referrer || '',
+      invUid: String(c.no), invName: c.name || '', at: FV.serverTimestamp() });
+    return b.commit().then(function(){ return k; });
+  });
+}
+// ── シェア画像（ストーリー用 1080×1920）。名前は入れない。色のタイプ・連続日数・招待のQR
+function ckShareImage(c, token){
+  var h = ckPrysmHist(c); if(!h.length){ toast('PRYSMiO を測ると作れます'); return; }
+  var ty = ckTypeOf(h[h.length - 1].v), st = gMp && gMp.plan ? mpStats(gMp.plan, todayStr()) : { streak: 0, best: 0 };
+  toast('画像を作っています…');
+  ckJoinFriendKey(c, token).catch(function(){ return ''; }).then(function(k){
+    var cv = document.createElement('canvas'); cv.width = 1080; cv.height = 1920;
+    var x = cv.getContext('2d'), g = x.createLinearGradient(0, 0, 0, 1920);
+    g.addColorStop(0, '#0b0b0c'); g.addColorStop(1, '#241a3a'); x.fillStyle = g; x.fillRect(0, 0, 1080, 1920);
+    var rg = x.createRadialGradient(540, 760, 40, 540, 760, 520); rg.addColorStop(0, ty.band.c); rg.addColorStop(1, 'rgba(0,0,0,0)');
+    x.globalAlpha = .55; x.fillStyle = rg; x.fillRect(0, 200, 1080, 1100); x.globalAlpha = 1;
+    x.textAlign = 'center'; x.fillStyle = '#c9a96e'; x.font = '600 40px serif'; x.fillText('NAVIGATOR Beauty', 540, 180);
+    x.fillStyle = '#f4efe6'; x.font = '700 64px sans-serif'; x.fillText('わたしは', 540, 560);
+    x.fillStyle = ty.band.c; x.beginPath(); x.arc(540, 760, 150, 0, Math.PI * 2); x.fill();
+    x.fillStyle = '#f4efe6'; x.font = '800 88px sans-serif'; x.fillText(ty.band.n + 'タイプ', 540, 1020);
+    x.fillStyle = '#e6d3a3'; x.font = 'italic 600 60px serif'; x.fillText('「' + ty.name + '」', 540, 1110);
+    x.fillStyle = '#f4efe6'; x.font = '700 48px sans-serif'; x.fillText((st.best ? '🔥 いちばん長く ' + st.best + '日つづいた' : '毎日のケア、はじめました'), 540, 1240);
+    var done = function(){
+      x.fillStyle = '#a39e94'; x.font = '500 34px sans-serif'; x.fillText('いっしょにはじめよう', 540, 1830);
+      ckShareOut(cv);
+    };
+    if(!k){ done(); return; }
+    var box = document.createElement('div'); box.style.cssText = 'position:fixed;left:-9999px;top:0;'; document.body.appendChild(box);
+    makeQr(box, ckJoinUrl(k), 300);
+    setTimeout(function(){
+      var q = box.querySelector('canvas') || box.querySelector('img');
+      try{ if(q){ x.fillStyle = '#fff'; x.fillRect(370, 1380, 340, 340); x.drawImage(q, 390, 1400, 300, 300); } }catch(e){}
+      document.body.removeChild(box); done();
+    }, 150);
+  });
+}
+function ckShareOut(cv){
+  var url = cv.toDataURL('image/png');
+  var show = function(){
+    modal('<h2>シェア画像</h2><p style="font-size:13px;color:var(--sub);">画像を長押しして保存し、ストーリーなどでシェアしてね。QRから、友だちが申し込めます。</p>'
+      + '<img src="' + url + '" alt="シェア画像" style="width:100%;border-radius:12px;">'
+      + '<div class="btns"><button class="primary" id="shClose">閉じる</button></div>', true);
+    $('shClose').onclick = closeModal;
+  };
+  if(!cv.toBlob || !navigator.canShare){ show(); return; }
+  cv.toBlob(function(bl){
+    var f = null;
+    try{ f = new File([bl], 'navigator-beauty.png', { type: 'image/png' }); }catch(e){}
+    if(f && navigator.canShare({ files: [f] })) navigator.share({ files: [f] }).catch(function(){ show(); });
+    else show();
+  }, 'image/png');
+}
+// ── 自分だけの写真（このスマホの中だけ・IndexedDB。サーバーには送らない）。週に1枚
+var CK_PH_DB = null;
+function ckPhDb(){
+  if(CK_PH_DB) return CK_PH_DB;
+  CK_PH_DB = new Promise(function(ok, ng){
+    if(!window.indexedDB){ ng(new Error('na')); return; }
+    var r = indexedDB.open('nb_photo', 1);
+    r.onupgradeneeded = function(){ r.result.createObjectStore('p', { keyPath: 'id' }); };
+    r.onsuccess = function(){ ok(r.result); }; r.onerror = function(){ ng(r.error); };
+  });
+  CK_PH_DB.catch(function(){ CK_PH_DB = null; });
+  return CK_PH_DB;
+}
+function ckPhList(tk){
+  return ckPhDb().then(function(db){ return new Promise(function(ok){
+    var out = [], q = db.transaction('p').objectStore('p').openCursor();
+    q.onsuccess = function(){ var cu = q.result; if(cu){ if(cu.value.tk === tk) out.push(cu.value); cu['continue'](); } else ok(out.sort(function(a, b){ return a.d < b.d ? -1 : 1; })); };
+    q.onerror = function(){ ok(out); };
+  }); }).catch(function(){ return []; });
+}
+function ckPhPut(rec){ return ckPhDb().then(function(db){ return new Promise(function(ok, ng){ var t = db.transaction('p', 'readwrite'); t.objectStore('p').put(rec); t.oncomplete = function(){ ok(); }; t.onerror = function(){ ng(t.error); }; }); }); }
+function ckPhDel(id){ return ckPhDb().then(function(db){ return new Promise(function(ok){ var t = db.transaction('p', 'readwrite'); t.objectStore('p')['delete'](id); t.oncomplete = function(){ ok(); }; t.onerror = function(){ ok(); }; }); }); }
+function ckPhShrink(file){
+  return new Promise(function(ok, ng){
+    var fr = new FileReader();
+    fr.onload = function(){
+      var im = new Image();
+      im.onload = function(){ var s = Math.min(1, 720 / Math.max(im.width, im.height)), cv = document.createElement('canvas'); cv.width = Math.round(im.width * s); cv.height = Math.round(im.height * s); cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height); ok(cv.toDataURL('image/jpeg', .82)); };
+      im.onerror = function(){ ng(new Error('img')); }; im.src = fr.result;
+    };
+    fr.onerror = function(){ ng(fr.error); }; fr.readAsDataURL(file);
+  });
+}
+var gPh = null;   // { token, list }
+function renderPhotos(){
+  var el = $('phArea'); if(!el || !gUa) return;
+  var tk = gUa.token;
+  ckPhList(tk).then(function(L){
+    gPh = { token: tk, list: L };
+    var last = L.length ? L[L.length - 1] : null, week = last && ckYmdDays(last.d, todayStr()) < 7;
+    el.innerHTML = '<div class="nwwrap ph-wrap"><div class="next-head">MY PHOTO</div>'
+      + '<p class="ui-s">週に1枚、同じ時間・同じ明るさで撮って、自分で見比べよう。<b>写真はこのスマホの中だけに保存</b>され、だれにも送られません（スマホを変えると消えます）。</p>'
+      + (L.length >= 2 ? '<div class="ph-cmp"><figure><img src="' + L[0].u + '" alt="はじめの写真"><figcaption>はじめ ' + esc(ckMd(L[0].d)) + '</figcaption></figure>'
+          + '<figure><img src="' + last.u + '" alt="いちばん新しい写真"><figcaption>いま ' + esc(ckMd(last.d)) + '</figcaption></figure></div>' : '')
+      + (L.length ? '<div class="ph-list">' + L.slice().reverse().map(function(p){ return '<span><img src="' + p.u + '" alt=""><small>' + esc(ckMd(p.d)) + '</small><button type="button" data-phdel="' + esc(p.id) + '" aria-label="消す">✕</button></span>'; }).join('') + '</div>' : '')
+      + '<label class="primary ph-add" for="phIn">' + (week ? '📷 今週の1枚を撮り直す' : '📷 今週の1枚を撮る') + '</label><input type="file" id="phIn" accept="image/*" capture="user" hidden>'
+      + '</div>';
+    $('phIn').onchange = function(){
+      var f = $('phIn').files && $('phIn').files[0]; if(!f) return;
+      ckPhShrink(f).then(function(u){ var d = todayStr(); return ckPhPut({ id: tk + '|' + d, tk: tk, d: d, u: u }); })
+        .then(function(){ toast('保存しました（このスマホの中だけ）'); renderPhotos(); ckUaToday(); })
+        .catch(function(){ toast('写真を保存できませんでした'); });
+    };
+    Array.prototype.forEach.call(el.querySelectorAll('[data-phdel]'), function(b){ b.onclick = function(){ ckPhDel(b.getAttribute('data-phdel')).then(function(){ renderPhotos(); ckUaToday(); }); }; });
+    ckUaToday();
+  });
 }
 function ckRenderUserCard(c, card, brand){
   gCardLast = c;
@@ -15702,18 +15926,8 @@ function renderFriendInvite(c, token){
   $('fiQr').onclick = function(){ ckJoinFriendGo(c, token, 'qr'); };
 }
 function ckJoinFriendGo(c, token, how){
-  var adb = ckAnonDb(), jr = adb.collection('cards').doc(token).collection('join').doc('me');
   ['fiSend', 'fiQr'].forEach(function(id){ if($(id)) $(id).disabled = true; });
-  jr.get().then(function(s){
-    var k = s.exists ? (s.data().k || '') : '';
-    if(k) return k;
-    k = 'f_' + ckApplyNewId(20);
-    var b = adb.batch();
-    b.set(jr, { k: k, at: FV.serverTimestamp() });
-    b.set(adb.collection('ckJoin').doc(k), { kind: 'friend', union: c.union || '', refNo: String(c.referrerNo || ''), refName: c.referrer || '',
-      invUid: String(c.no), invName: c.name || '', at: FV.serverTimestamp() });
-    return b.commit().then(function(){ return k; });
-  }).then(function(k){
+  ckJoinFriendKey(c, token).then(function(k){   // 💜 v174: シェア画像と同じ作り方
     ['fiSend', 'fiQr'].forEach(function(id){ if($(id)) $(id).disabled = false; });
     var url = ckJoinUrl(k);
     if(how === 'send'){
@@ -15844,7 +16058,9 @@ function ckUaMount(c, token){
   mv('plan', 'mpArea');
   $('uaQrCard').appendChild($('mcTilt')); if($('mcErr')) $('uaQrCard').appendChild($('mcErr'));
   mv('friends', 'bdArea'); mv('friends', 'fiArea'); mv('friends', 'lgArea');
-  mv('me', 'pzArea'); mv('me', 'exArea'); mv('me', 'rcptArea'); mv('me', 'mcHelp'); mv('me', 'verCard');
+  mv('me', 'pzArea');
+  var phA = document.createElement('div'); phA.id = 'phArea'; pg('me').appendChild(phA);   // 💜 v174: 自分だけの写真
+  mv('me', 'exArea'); mv('me', 'rcptArea'); mv('me', 'mcHelp'); mv('me', 'verCard');
   var nav = document.createElement('nav'); nav.id = 'uaTabs'; nav.setAttribute('aria-label', 'メニュー');
   nav.innerHTML = ckUaTabs().map(function(t){
     var dt = t[0] === 'home' ? 'news' : t[0] === 'friends' ? 'lg' : '';
@@ -15873,6 +16089,7 @@ function ckUaMount(c, token){
   ckUaSeg('lounge');
   ckUaGo(ckUaPages().indexOf(t0) >= 0 ? t0 : 'today', true);   // 💜 v172: 開いたら「今日」
   ckUaInfo(); ckUaHome();
+  renderPhotos();   // 💜 v174
 }
 function ckUaGo(tab, auto){
   if(!gUa) return;
@@ -16631,6 +16848,7 @@ function btDraw(){
     + '</div>'
     + '<div class="bt-box" id="btPz"></div>'
     + '<div class="bt-box" id="btMt"></div>'
+    + '<div class="bt-box" id="btCh"></div>'
     + '<div class="bt-box" id="btQe"></div>'
     + '</div>';
   $('btNtText').value = keep;
@@ -16639,6 +16857,7 @@ function btDraw(){
   btFuDraw();   // 💜 v147
   btPzDraw();   // 💜 v144
   btMtDraw();   // 💜 v172
+  btChDraw();   // 💜 v174
   btQeDraw();   // 💜 v140
   Array.prototype.forEach.call(box.querySelectorAll('[data-go]'), function(b){
     b.onclick = function(){ var t = $(b.getAttribute('data-go')); if(t && t.scrollIntoView) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
@@ -16813,6 +17032,40 @@ function ckRetention(rows, today){
     if(st && st <= mpAddDays(today, -30)){ r.d30[1]++; if(ks.some(function(k){ return k >= mpAddDays(st, 29); })) r.d30[0]++; }
   });
   return r;
+}
+/* 💜 v174: 今月のチャレンジ（ユニオンごと）。ckChal/{ユニオン} = { m: 'YYYY-MM', t: テーマ（30字）, g: 日数, by, at }。開いた時に1件だけ読む */
+function btChDraw(){
+  var box = $('btCh'), me = gBt;
+  if(!box || !me) return;
+  if(me.ch === undefined){
+    me.ch = null; box.innerHTML = '<h3>🗓 今月のチャレンジ</h3><p class="bt-note">読み込み中…</p>';
+    db.collection('ckChal').doc(me.un).get().then(function(s){ if(gBt === me){ me.ch = s.exists ? (s.data() || {}) : false; btChDraw(); } }).catch(function(){ if(gBt === me){ me.ch = false; btChDraw(); } });
+    return;
+  }
+  if(me.ch === null) return;
+  var m = todayStr().slice(0, 7), cur = me.ch && me.ch.m === m ? me.ch : null;
+  box.innerHTML = '<h3>🗓 今月のチャレンジ' + hq('このユニオンのお客さんのアプリの「今日」に、今月のテーマと「チェックした日 ○ / ○日」が出ます。月が変わると出なくなります（新しい月のチャレンジを決めてください）。効果をうたう言葉は書かないでください。') + '</h3>'
+    + (cur ? '<p class="bt-note" style="margin:0 0 8px;">今出ている：<b>' + esc(cur.t) + '</b>（' + cur.g + '日）</p>' : '<p class="bt-note" style="margin:0 0 8px;">今月（' + esc(m.replace('-', '年') + '月') + '）のチャレンジはまだありません。</p>')
+    + '<label for="btChT" style="display:block;">テーマ（30文字まで）</label><input type="text" id="btChT" maxlength="30" style="display:block;width:100%;" placeholder="例: 12月は保湿月間" value="' + esc(cur ? cur.t : '') + '">'
+    + '<label for="btChG" style="display:block;margin-top:8px;">今月チェックする日の数</label><input type="number" id="btChG" min="1" max="31" inputmode="numeric" style="display:block;width:8em;" value="' + (cur ? cur.g : 20) + '">'
+    + '<div class="btns" style="justify-content:flex-start;margin-top:8px;"><button class="primary" id="btChGo">' + (cur ? '直す' : '今月のチャレンジを出す') + '</button>' + (cur ? '<button id="btChDel" class="danger ghost">やめる</button>' : '') + '</div>';
+  $('btChGo').onclick = function(){
+    var t = $('btChT').value.replace(/\s+/g, ' ').trim(), g = parseInt($('btChG').value, 10);
+    if(!t){ toast('テーマを入れてください'); return; }
+    if(!(g >= 1 && g <= 31)){ toast('日の数は1〜31で入れてください'); return; }
+    var ws = CK_LG_WARN.filter(function(w){ return t.indexOf(w) >= 0; });
+    if(ws.length){ toast('効果をうたう言葉（' + ws.join('・') + '）は使えません'); return; }
+    var d = { m: m, t: t.slice(0, 30), g: g, by: gUser.uid, at: FV.serverTimestamp() };
+    $('btChGo').disabled = true;
+    db.collection('ckChal').doc(me.un).set(d).then(function(){
+      me.ch = { m: m, t: d.t, g: g }; try{ localStorage.removeItem('bci_chal_' + me.un); }catch(e){}
+      toast('今月のチャレンジを出しました。お客さんのアプリには30分ほどで出ます'); btChDraw();
+    }).catch(function(e){ $('btChGo').disabled = false; toast(permMsg(e, '保存できませんでした。ルールの反映をオーナーに確認してください')); });
+  };
+  if($('btChDel')) $('btChDel').onclick = function(){
+    db.collection('ckChal').doc(me.un)['delete']().then(function(){ me.ch = false; try{ localStorage.removeItem('bci_chal_' + me.un); }catch(e){} toast('チャレンジをやめました'); btChDraw(); })
+      .catch(function(e){ toast(permMsg(e, 'やめられませんでした')); });
+  };
 }
 function btMtLoad(){
   var me = gBt; if(!me) return;
