@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v900';
+var APP_JS_VERSION = 'v901';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -1720,7 +1720,7 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
   // ── v514: 陸上トラック型（紙のMAPと同じ：直線＋半円のレーン＝段）──
   // 丸はレーンの線の上にだけ置く（内外にずらさない）。混む段があればトラックの直線部分を延ばして
   // 横に広げ、丸どうしが重ならない間隔を必ず確保する。子は親の外側・同じ並び順でまとめて置く。
-  var COLORS = ['#2CE5B8','#8B7CFF','#FFB454','#FF5D73','#5AD7FF','#4ADE80','#FF9F6E','#C583FF','#3ED5C4','#FF87B3','#FFD166','#67B7FF'];
+  var COLORS = NV_TONE ? NV_LINE : ['#2CE5B8','#8B7CFF','#FFB454','#FF5D73','#5AD7FF','#4ADE80','#FF9F6E','#C583FF','#3ED5C4','#FF87B3','#FFD166','#67B7FF']; // v901: 新しいトーンは系列の線も4色（ツリーと同じ）
   var l1 = kids(root.id);
   // v495: 存在しない系列フォーカスの持ち越しを自動解除
   if (!isPrint && window._pcFocusLineage && !l1.some(function(k) { return k.id === window._pcFocusLineage; })) window._pcFocusLineage = '';
@@ -1976,7 +1976,7 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
   // 中央（0段目＝自分）の囲み
   var c0 = document.createElementNS(NS, 'path');
   c0.setAttribute('d', stadiumPath(laneR(1) - BAND * 0.55));
-  c0.setAttribute('fill', light ? '#f4f6fa' : 'rgba(255,255,255,0.025)'); c0.setAttribute('stroke', light ? '#c9cfda' : '#2a3242'); c0.setAttribute('stroke-width', '1');
+  c0.setAttribute('fill', light ? (NV_TONE ? '#EDEDE7' : '#f4f6fa') : 'rgba(255,255,255,0.025)'); c0.setAttribute('stroke', light ? (NV_TONE ? '#E1E0E1' : '#c9cfda') : (NV_TONE ? '#3E3A3B' : '#2a3242')); c0.setAttribute('stroke-width', '1');
   c0.setAttribute('class', 'orbit-center');
   svg.appendChild(c0);
   // レーン＝段（丸はこの線の上に並ぶ）
@@ -1987,7 +1987,7 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
     // v540: 段の線は背景（ごく薄い点線）。つながりの線を主役に（拓郎さん要望・案C）。PDF（印刷）は紙で消えないよう少し濃く
     ring.setAttribute('fill', 'none');
     // v541: 画面の段の線が見えにくかったので少し濃く・太く（ダークは明るめのグレー、ライトは中間のグレー）
-    ring.setAttribute('stroke', isPrint ? '#c3cad6' : (light ? '#9ca8ba' : '#66779a'));
+    ring.setAttribute('stroke', isPrint ? (NV_TONE ? '#C9C7C1' : '#c3cad6') : (light ? (NV_TONE ? '#B5B3AE' : '#9ca8ba') : (NV_TONE ? '#6E696B' : '#66779a')));
     ring.setAttribute('stroke-width', isPrint ? '1.2' : '1.5');
     ring.setAttribute('stroke-dasharray', isPrint ? '2 5' : '3 4');
     ring.setAttribute('class', 'orbit-lane');
@@ -2032,7 +2032,7 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
     var lb = document.createElementNS(NS, 'text');
     lb.setAttribute('x', CX - Lh - (laneR(d2 - 1) + BAND / 2)); lb.setAttribute('y', CY + 4);
     lb.setAttribute('text-anchor', 'middle'); lb.setAttribute('font-size', '11px'); lb.setAttribute('font-weight', '700');
-    lb.setAttribute('fill', light ? '#a0a9b8' : '#4a5566');
+    lb.setAttribute('fill', light ? (NV_TONE ? '#9B999A' : '#a0a9b8') : (NV_TONE ? '#6E696B' : '#4a5566'));
     lb.setAttribute('class', 'orbit-ring-lb');
     lb.textContent = d2 + '段';
     svg.appendChild(lb);
@@ -2144,6 +2144,13 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
     if (isT) fill = light ? 'rgba(90,215,255,0.18)' : 'rgba(90,215,255,0.22)';
     if (isPcLOI) fill = 'rgba(251,146,60,0.14)';
     if (_isFrO) fill = 'rgba(255,209,102,0.13)';
+    // v901: 新しいトーン（ツリーと同じ区分の色：BR以上＝バイオレット・審査中＝イエロー・研修生＝ターコイズ・フレッシュ＝うすいバイオレット・そのほか＝系列の色）
+    var _nvK = _isBrUp ? 'br' : isPcLOI ? 'ex' : isT ? 'tr' : _isFrO ? 'fr' : 'ba';
+    var NVo = NV_TONE ? _nvCardCol(_nvK, light) : null;
+    if (NVo) {
+      stroke = _nvK === 'ba' ? col : NVo.ring;
+      fill = { br: NVo.fill, ba: NVo.fill, fr: NVo.fill, tr: light ? '#DEF7F4' : 'rgba(38,199,179,.22)', ex: light ? '#FAFFD0' : 'rgba(239,255,64,.13)' }[_nvK]; // フレッシュは地を塗らず縁だけ（たくさんいても重くならない）
+    }
     var g = document.createElementNS(NS, 'g');
     g.setAttribute('class', 'oval-node orbit-node');
     g.setAttribute('data-mid', m.id);
@@ -2154,7 +2161,7 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
     // v519: 923-3 丸の下に不透明の下地（淡い塗り・OUTや薄表示でも後ろの線が透けて見えない）
     var base0 = document.createElementNS(NS, 'circle');
     base0.setAttribute('cx', pos.x); base0.setAttribute('cy', pos.y); base0.setAttribute('r', r);
-    base0.setAttribute('fill', light ? '#ffffff' : '#161920'); base0.setAttribute('class', 'orbit-base'); base0.setAttribute('pointer-events', 'none');
+    base0.setAttribute('fill', NVo ? NVo.fill : (light ? '#ffffff' : '#161920')); base0.setAttribute('class', 'orbit-base'); base0.setAttribute('pointer-events', 'none');
     svg.appendChild(base0);
     var ci = document.createElementNS(NS, 'circle');
     ci.setAttribute('cx', pos.x); ci.setAttribute('cy', pos.y); ci.setAttribute('r', r);
@@ -2170,7 +2177,7 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
       var _bmO = m.badgeMode || '';
       _cbO = (_bmO === 'off') ? '' : ((_bmO === 'on') ? (_autoO || (_isTrO ? 'trainee' : 'fresh')) : _autoO);
     } else if (isT && mapType !== 'current') _cbO = 'trainee'; // 理想MAPなどは今までどおり研修生のみ
-    if (_cbO && !isPrint) {
+    if (_cbO && !isPrint && !NVo) { // v901: 新しいトーンは光らせない（ツリーと同じ）
       var _pr6 = document.createElementNS(NS, 'circle');
       _pr6.setAttribute('cx', pos.x); _pr6.setAttribute('cy', pos.y); _pr6.setAttribute('r', r + 3.5);
       _pr6.setAttribute('fill', 'none');
@@ -2180,13 +2187,13 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
       _pr6.setAttribute('pointer-events', 'none');
       g.insertBefore(_pr6, g.firstChild);
     }
-    if (_isBrUp && !isPrint) g.style.filter = 'drop-shadow(0 0 6px ' + stroke + '88)';
+    if (_isBrUp && !isPrint && !NVo) g.style.filter = 'drop-shadow(0 0 6px ' + stroke + '88)';
     if ((m.title || '').trim() === 'OUT') { if (isPrint) g.setAttribute('opacity', '0.5'); else { g.classList.add('is-out'); g.style.filter = 'grayscale(1)'; g.style.opacity = '0.5'; } } // v539: 画面でも薄く（Safariは<g>のCSSフィルタが効かない） // v514: PDF化（画像変換）ではCSSフィルタが効かない環境があるため属性で
     if (m._ghost) { g.setAttribute('opacity', '0.35'); g.setAttribute('class', 'oval-node orbit-node orbit-ghost'); } // v514: 地域MAPで、つながりを示すために残した他地域の上位者
     // v502: 旧MAP式の4分割サークル（左上=名前2行／右上=稼働／左下=タイトル／右下=(固定PT)・GSV）
-    var _txtCol = light ? '#1a1f2b' : '#f2f4f8';
-    var _dimCol = light ? '#3a4560' : '#cbd5e1';
-    var _divCol = light ? '#556070' : '#7d8aa0';
+    var _txtCol = NVo ? NVo.ink : (light ? '#1a1f2b' : '#f2f4f8');
+    var _dimCol = NVo ? (light ? '#4F4A4B' : '#C9C6C4') : (light ? '#3a4560' : '#cbd5e1');
+    var _divCol = NVo ? (light ? '#9B999A' : '#6E696B') : (light ? '#556070' : '#7d8aa0');
     var lv2 = document.createElementNS(NS, 'line');
     lv2.setAttribute('x1', pos.x); lv2.setAttribute('y1', pos.y - r); lv2.setAttribute('x2', pos.x); lv2.setAttribute('y2', pos.y + r);
     lv2.setAttribute('stroke', _divCol); lv2.setAttribute('stroke-width', '0.9'); lv2.setAttribute('opacity', '0.5'); lv2.setAttribute('pointer-events', 'none');
@@ -2211,7 +2218,7 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
     // v504: 2文字/行（姓2＋名2）のサイズを上限に、行の文字数が多いほど縮小して必ず円内に収める
     var _ln2 = (m.lastName || '').replace(/\s+/g, ''), _fn2 = (m.firstName || '').replace(/\s+/g, '');
     if (!_ln2 && !_fn2) _ln2 = '—';
-    var _nmCol = m.gender === 'female' ? (light ? '#db2777' : '#f9a8d4') : _txtCol;
+    var _nmCol = (m.gender === 'female' && !NVo) ? (light ? '#db2777' : '#f9a8d4') : _txtCol; // v901: 新しいトーンは名前を同じ色に（ツリーと同じ）
     _ln2 = _ln2.substring(0, 4); _fn2 = _fn2.substring(0, 4);
     var _nqx = r * 0.40, _nqy = r * 0.40;
     var _maxL2 = Math.max(_ln2.length, _fn2.length);
@@ -2263,12 +2270,12 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
       _tgS.setAttribute('class', 'orbit-shared'); _tgS.setAttribute('pointer-events', 'none');
       var _oS = document.createElementNS(NS, 'circle'); // 外側の紫の細い輪（縮小表示でも共有と分かる）
       _oS.setAttribute('cx', pos.x); _oS.setAttribute('cy', pos.y); _oS.setAttribute('r', r + 2.6);
-      _oS.setAttribute('fill', 'none'); _oS.setAttribute('stroke', '#8B7CFF'); _oS.setAttribute('stroke-width', '1.8');
+      _oS.setAttribute('fill', 'none'); _oS.setAttribute('stroke', NV_TONE ? (light ? '#602BFC' : '#B095FE') : '#8B7CFF'); _oS.setAttribute('stroke-width', '1.8');
       _tgS.appendChild(_oS);
       var _rS = document.createElementNS(NS, 'rect');
       _rS.setAttribute('x', pos.x - _wS / 2); _rS.setAttribute('y', pos.y + r - _hS / 2);
       _rS.setAttribute('width', _wS); _rS.setAttribute('height', _hS); _rS.setAttribute('rx', _hS / 2);
-      _rS.setAttribute('fill', '#8B7CFF'); _rS.setAttribute('stroke', light ? '#ffffff' : '#161920'); _rS.setAttribute('stroke-width', '1.2');
+      _rS.setAttribute('fill', NV_TONE ? (light ? '#602BFC' : '#B095FE') : '#8B7CFF'); _rS.setAttribute('stroke', light ? '#ffffff' : '#161920'); _rS.setAttribute('stroke-width', '1.2');
       _tgS.appendChild(_rS);
       var _tS = document.createElementNS(NS, 'text');
       _tS.setAttribute('x', pos.x); _tS.setAttribute('y', pos.y + r + _fsS * 0.36);
@@ -2312,7 +2319,7 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
       if (!no || !pos) return;
       var bx = pos.x + nr * 0.74, by = pos.y - nr * 0.74;
       var bg = document.createElementNS(NS, 'g'); bg.setAttribute('class', 'orbit-memo-no');
-      bg.innerHTML = '<circle cx="' + bx.toFixed(1) + '" cy="' + by.toFixed(1) + '" r="9.5" fill="#1a1f2b"/><text x="' + bx.toFixed(1) + '" y="' + (by + 3.6).toFixed(1) + '" text-anchor="middle" font-size="' + (no >= 100 ? 8 : 10) + '" font-weight="800" fill="#ffffff">' + no + '</text>';
+      bg.innerHTML = '<circle cx="' + bx.toFixed(1) + '" cy="' + by.toFixed(1) + '" r="9.5" fill="' + (NV_TONE ? '#373334' : '#1a1f2b') + '"/><text x="' + bx.toFixed(1) + '" y="' + (by + 3.6).toFixed(1) + '" text-anchor="middle" font-size="' + (no >= 100 ? 8 : 10) + '" font-weight="800" fill="#ffffff">' + no + '</text>';
       svg.appendChild(bg);
       var lines = _opsWrap(m.memo, 11, 2);
       if (!lines.length) return;
@@ -5194,7 +5201,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v900';
+  var DATA_VERSION = 'v901';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -7333,6 +7340,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v901', d:'2026-11-22', items:['サークルMAPも新しいトーンに（丸の縁はツリーと同じ区分の色・系列の線は4色・光らせない）','(i) ボタン・MAPのLTSV・理想MAPの上の帯の色も新しいトーンに'] },
   { v:'v900', d:'2026-11-22', items:['ログイン・新規登録の画面も新しいトーンに（ボタンはイエロー・選んだ方はチャコール・角を丸く）','画面のいちばん上の帯の色を、ライト・ダークの背景に合わせる'] },
   { v:'v899', d:'2026-11-22', items:['くすんだ金色（オリーブ色）を、全部の画面で本物の金色に（目標のタイトル・マイルストーン・カレンダーのアイコンなど）','シミュレーションを開いた時、LOIの月は今月から始まるように'] },
   { v:'v898', d:'2026-11-22', items:['PLANのシミュレーションのファーストボーナスの金額を、金色に光る大きな数字に','ホームのボタンの右上の数字（再アプローチ・共有MAPなど）を見やすい黄色に'] },
