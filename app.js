@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v902';
+var APP_JS_VERSION = 'v903';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -5202,7 +5202,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v902';
+  var DATA_VERSION = 'v903';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -7341,6 +7341,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v903', d:'2026-11-22', items:['🛠 細かい修正をしました'] },
   { v:'v902', d:'2026-11-22', items:['ANALYTICSのグラフ・カードも新しいトーンの色に（稼働構成は S＝ターコイズ・A＝うすいターコイズ・B＝灰）','年の目標の Q2〜Q4 の札はイエロー・BR はバイオレット（MAPと同じ）','シミュレーションの組織図の月の色・アイコン・(i)ボタンなど、前の色が残っていた所をすべて新しいトーンに','ライトのMAPで審査中・研修生などの色が前の色に戻っていたのを直す'] },
   { v:'v901', d:'2026-11-22', items:['サークルMAPも新しいトーンに（丸の縁はツリーと同じ区分の色・系列の線は4色・光らせない）','(i) ボタン・MAPのLTSV・理想MAPの上の帯の色も新しいトーンに'] },
   { v:'v900', d:'2026-11-22', items:['ログイン・新規登録の画面も新しいトーンに（ボタンはイエロー・選んだ方はチャコール・角を丸く）','画面のいちばん上の帯の色を、ライト・ダークの背景に合わせる'] },
@@ -24059,7 +24060,7 @@ function _uxIb(k) { return UX_INFO[k] ? '<span class="ux-ib" onclick="uxInfo(\''
 //   ユーザー側は一覧（スマホ）／表（PC）で、ADP・購入・ニーズ・プロフィールを持つ。「研修生にする」でビジネスのMAPへ。
 //   項目：adp {on, next}／buys [{t, d}]（新しい順・20件まで）／needs [タグ]／needMemo／uMemo／fromUser（研修生にした日）
 //   あとで（ユーザー用QR会員証）：ckNo・cardToken・uVisits（イベント来場回数）・uGrade（グレード）を受付から入れる予定（今は画面に出さない）
-var UM_KEYS = ['adp', 'buys', 'needs', 'needMemo', 'uMemo', 'fromUser', 'toUser', 'ngOut', 'ngFrom', 'ckNo', 'cardToken', 'uVisits', 'uGrade', 'uLastAt', 'uPrysm', 'uPrysmD', 'uCkAt', 'ckToMember', 'uDays', 'shopReg', 'fuJ']; // メンバー画面の保存で落とさない（v864: 受付から）
+var UM_KEYS = ['adp', 'buys', 'needs', 'needMemo', 'uMemo', 'fromUser', 'toUser', 'ngOut', 'ngFrom', 'ckNo', 'cardToken', 'uVisits', 'uGrade', 'uLastAt', 'uPrysm', 'uPrysmD', 'uCkAt', 'ckToMember', 'uDays', 'shopReg', 'fuJ', 'uAct']; // メンバー画面の保存で落とさない（v903: uAct＝アプリの活動・v864: 受付から）
 var _umMode = false, _umFlt = 'all', _umRef = '', _umSort = 'ref', _umOpenId = '', _umBuyF = false;
 try { _umMode = localStorage.getItem('gm_umMode') === '1'; } catch (e) {}
 function isUserM(m) { if (!m || m.deleted) return false; var t = String(m.title || '').trim(); return t === 'ユーザー' || /^U$/i.test(t); }
@@ -24121,6 +24122,7 @@ function _umFiltered() {
   else if (_umFlt === 'old') L = L.filter(function(u) { var b = _umLast(u), d = b ? _umDays(b.d) : null; return d !== null && d >= 60; });
   else if (_umFlt === 'needs') L = L.filter(_umHasNeeds);
   else if (_umFlt === 'fu') L = L.filter(_umFuNeed);
+  else if (_umFlt === 'stop') L = L.filter(_umActStop); // v903
   var pt = function(u) { return parseInt(u.ptCurrent, 10) || 0; };
   if (_umSort === 'pt') L.sort(function(a, b) { return pt(b) - pt(a); });
   else if (_umSort === 'old') L.sort(function(a, b) { var x = _umLast(a), y = _umLast(b); return (x ? x.d : '0000') < (y ? y.d : '0000') ? -1 : 1; });
@@ -24139,8 +24141,8 @@ function _umPaneHtml(pc) {
   var chip = function(k, lb) { return '<span class="umc' + (_umFlt === k ? ' on' : '') + '" onclick="umFlt(\'' + k + '\')">' + lb + '</span>'; };
   var h = '<div class="ump' + (pc ? ' pc' : '') + '">';
   h += '<div class="ums"><div><small>今月のポイント</small><b>' + sumPt.toLocaleString() + '</b></div><div><small>固定で上がる</small><b>' + sumFix.toLocaleString() + '</b></div><div><small>ADPあり</small><b>' + adp + '<i>/' + all.length + '</i></b></div></div>';
-  var nFu = all.filter(_umFuNeed).length;
-  h += '<div class="umf">' + chip('all', 'すべて') + chip('noadp', 'ADPなし') + chip('old', '60日買ってない') + chip('needs', 'ニーズあり') + (nFu || _umFlt === 'fu' ? chip('fu', '📝 その後がまだ ' + nFu) : '')
+  var nFu = all.filter(_umFuNeed).length, nStop = all.filter(_umActStop).length;
+  h += '<div class="umf">' + chip('all', 'すべて') + chip('noadp', 'ADPなし') + chip('old', '60日買ってない') + chip('needs', 'ニーズあり') + (nFu || _umFlt === 'fu' ? chip('fu', '📝 その後がまだ ' + nFu) : '') + (nStop || _umFlt === 'stop' ? chip('stop', '⏸ アプリが止まっている ' + nStop) : '')
     + '<span class="umc sel">' + evEsc(_umRef ? '紹介者：' + _umNm(_umById(_umRef)) : '紹介者：すべて') + ' ▾<select onchange="umRefSel(this.value)">' + refOpts + '</select></span>'
     + '<span class="umc sel">並び ▾<select onchange="umSortSel(this.value)"><option value="ref"' + (_umSort === 'ref' ? ' selected' : '') + '>紹介者ごと</option><option value="pt"' + (_umSort === 'pt' ? ' selected' : '') + '>ポイント順</option><option value="old"' + (_umSort === 'old' ? ' selected' : '') + '>買ってから長い順</option></select></span>'
     + _umQ('um_list') + (_bxOn() && ed ? '<span class="umc" onclick="umCkSync(true)" title="受付（BASE CHECK-IN）で登録したユーザーを取り込む">🎫 受付から更新</span>' : '') + (pc && ed ? '<span class="umadd-pc" onclick="umAdd()">＋ ユーザーを足す</span>' : '') + '</div>';
@@ -24167,14 +24169,14 @@ function _umTags(u) { var t = _umNeedS(u); return t ? '<span class="umt">' + evE
 function _umCardHtml(u) {
   var ph = _avatars[u.id], av = ph ? '<img src="' + ph + '" alt="">' : evEsc((u.lastName || u.firstName || '?').charAt(0));
   return '<div class="umcd" onclick="umOpen(\'' + u.id + '\')"><div class="umav">' + av + '</div><div class="umb2"><div class="umn">' + evEsc(_umNm(u)) + '<em class="' + (_umAdp(u) ? 'adp' : 'no') + '">' + (_umAdp(u) ? 'ADP' : 'ADPなし') + '</em></div>'
-    + _umBuyLine(u) + _umCkLine(u) + _umDayLine(u) + (_umTags(u) ? '<div>' + _umTags(u) + '</div>' : '') + '</div>'
+    + _umBuyLine(u) + _umCkLine(u) + _umActLine(u) + _umDayLine(u) + (_umTags(u) ? '<div>' + _umTags(u) + '</div>' : '') + '</div>'
     + '<div class="umpt"><b>' + (parseInt(u.ptCurrent, 10) || 0).toLocaleString() + '</b><small>固定 ' + (parseInt(u.ptFixed, 10) || 0).toLocaleString() + '</small></div>'
     + (state.isEditor ? '<span class="umdel" title="削除" onclick="umDel(\'' + u.id + '\',event)">' + icn('trash') + '</span>' : '') + '</div>'; // v846: 一覧からも削除
 }
 function _umTableHtml(L) {
   var ed = state.isEditor;
   var cell = function(u, k) { var v = parseInt(k === 'c' ? u.ptCurrent : u.ptFixed, 10) || 0; return '<td class="num' + (ed ? ' umed' : '') + '"' + (ed ? ' onclick="umPtCell(event,\'' + u.id + '\',\'' + k + '\',this)"' : '') + '>' + v.toLocaleString() + '</td>'; };
-  return '<div class="umtw"><table class="umtb"><thead><tr><th>氏名</th><th>紹介者</th><th class="num">今月PT</th><th class="num">固定PT</th><th>ADP</th><th>直近の購入</th><th>来場・PRYSMiO</th><th>ニーズ</th><th>プロフィール</th>' + (ed ? '<th></th>' : '') + '</tr></thead><tbody>'
+  return '<div class="umtw"><table class="umtb"><thead><tr><th>氏名</th><th>紹介者</th><th class="num">今月PT</th><th class="num">固定PT</th><th>ADP</th><th>直近の購入</th><th>来場・PRYSMiO</th><th>アプリ</th><th>ニーズ</th><th>プロフィール</th>' + (ed ? '<th></th>' : '') + '</tr></thead><tbody>'
     + L.map(function(u) {
       var r = _umById(u.parentId), b = _umLast(u), d = b ? _umDays(b.d) : null, old = d !== null && d >= 60;
       var prof = [u.birthday ? _umMD(u.birthday) + '生' : '', String(u.uMemo || '').trim()].filter(Boolean).join('・');
@@ -24182,6 +24184,7 @@ function _umTableHtml(L) {
         + '<td>' + (_umAdp(u) ? '<span class="umt adp">あり' + (u.adp.next ? ' ' + _umMD(u.adp.next) : '') + '</span>' : '<span class="umt no">なし</span>') + '</td>'
         + '<td class="' + (old ? 'old' : '') + '">' + (b ? evEsc(b.t || '') + ' <span class="dim">' + _umMD(b.d) + (old ? '（' + d + '日前）' : '') + '</span>' : '<span class="dim">—</span>') + '</td>'
         + '<td>' + (_umCkLine(u, true) || '<span class="dim">—</span>') + '</td>'
+        + '<td>' + (_umActLine(u, true) || '<span class="dim">—</span>') + '</td>'
         + '<td>' + (_umTags(u) || '<span class="dim">—</span>') + '</td><td class="dim">' + evEsc(prof.slice(0, 30) || '—') + '</td>'
         + (ed ? '<td class="umdelc"><span class="umdel" title="削除" onclick="umDel(\'' + u.id + '\',event)">' + icn('trash') + '</span></td>' : '') + '</tr>';
     }).join('') + '</tbody></table></div>';
@@ -24362,6 +24365,31 @@ function _bxLoad() {
   if (_bxTesters || !db) return Promise.resolve(_bxTesters || []);
   return db.doc('checkinConfig/beauty').get().then(function(d) { _bxTesters = (d.exists && (d.data() || {}).testers) || []; return _bxTesters; }).catch(function() { _bxTesters = []; return []; });
 }
+// v903: NAVIGATOR Beauty のアプリの活動（受付から取り込む時にマイプランを読む）。uAct = { co, st, wk, last, start } または null（まだプランなし）
+var UM_ACT_CO = { diet: 'ダイエット編', yuragi: 'ゆらぎ肌ケア編', inner: '体内編' };
+function _umActOf(pl) {
+  if (!pl || !pl.course) return null;
+  var days = pl.days || {}, ok = function(d) { return (days[d] || []).length > 0; }, ymd = function(t) { return t.getFullYear() + '-' + ('0' + (t.getMonth() + 1)).slice(-2) + '-' + ('0' + t.getDate()).slice(-2); };
+  var add = function(d, n) { var p = d.split('-'); return ymd(new Date(+p[0], +p[1] - 1, +p[2] + n)); }, today = ymd(new Date());
+  var st = 0, d = ok(today) ? today : add(today, -1); while (ok(d) && st < 1000) { st++; d = add(d, -1); }
+  var wk = 0; for (var i = 0; i < 7; i++) if (ok(add(today, -i))) wk++;
+  var last = ''; Object.keys(days).forEach(function(k) { if (ok(k) && k > last) last = k; });
+  return { co: pl.course, st: st, wk: wk, last: last, start: String(pl.start || ''), d: today };
+}
+function _umActStop(u) { // 止まっている：マイプランを始めたのに3日以上チェックがない（まだ始めていない人は別）
+  var A = u && u.ckNo ? u.uAct : null; if (!A) return false;
+  var d = _umDays(A.last || A.start); return d !== null && d >= 3;
+}
+function _umActLine(u, tbl) {
+  if (!u || !u.ckNo || u.uAct === undefined) return '';
+  var A = u.uAct;
+  if (!A) return '<span class="umck umact' + (tbl ? ' t' : '') + '">📱 アプリ：まだマイプランを始めていない</span>';
+  var dl = _umDays(A.last || A.start), stop = _umActStop(u);
+  return '<span class="umck umact' + (stop ? ' stop' : '') + (tbl ? ' t' : '') + '" onclick="event.stopPropagation();uxInfo(\'um_act\')">📱 '
+    + (stop ? '⏸ ' + dl + '日チェックなし' : (A.st ? '🔥 ' + A.st + '日連続' : '今日まだ')) + '・この7日 ' + A.wk + '日'
+    + (A.last ? '・最後 ' + _umMD(A.last) : '') + (UM_ACT_CO[A.co] && !tbl ? '・' + UM_ACT_CO[A.co] : '') + '</span>';
+}
+UX_INFO.um_act = { t: 'アプリの活動', h: 'NAVIGATOR Beauty のアプリで、マイプランのクエストをチェックしているかです。<br>・<b>🔥 ○日連続</b>：毎日チェックしている日数<br>・<b>この7日</b>：この7日でチェックした日の数（4日以上なら続いています）<br>・<b>⏸ ○日チェックなし</b>：3日以上チェックがない人。声をかけてみよう<br>受付から取り込んだ時の数字です（MAPを開いた時に、30分に1回まで読み直します）。', ok: 'OK' };
 function _umCkLine(u, tbl) {
   if (!u || !u.ckNo) return '';
   var p = u.uPrysm != null && u.uPrysm !== '' ? umPrysmBand(u.uPrysm) : null;
@@ -24456,7 +24484,12 @@ function umCkSync(force) {
         var D = Object.keys(cd).filter(function(k) { return k.indexOf('exp_') === 0 && cd[k] && cd[k].d; }).map(function(k) { var x = cd[k]; return { e: k.slice(4), d: x.d, ev: String(x.ev || '').slice(0, 40), kind: x.kind || '', menu: x.menu || '', staff: x.staff || '', st: x.st || 'rsv' }; })
           .sort(function(a, b) { return String(b.d).localeCompare(String(a.d)); }).slice(0, 20);
         if (JSON.stringify(D) !== JSON.stringify(u.uDays || [])) { u.uDays = D; ch = 1; }
-        return ch;
+        // v903: NAVIGATOR Beauty のアプリの活動（マイプラン：連続日数・この7日・最後にチェックした日）
+        return db.doc('cards/' + cu.cardToken + '/plan/me').get().then(function(p) {
+          var A = _umActOf(p.exists ? (p.data() || {}) : null);
+          if (u.uAct === undefined || JSON.stringify(A) !== JSON.stringify(u.uAct)) { u.uAct = A; ch = 1; }
+          return ch;
+        }).catch(function() { return ch; });
       }).catch(function() { return 0; }));
     });
     return Promise.all(jobs).then(function(bs) {
@@ -24488,7 +24521,8 @@ function _umCss() {
     + '.umadd-pc{margin-left:auto;color:var(--accent);font-weight:900;cursor:pointer}'
     + '.umg{font-size:12px;font-weight:900;color:var(--text-dim);margin:10px 2px 6px}'
     + '.umday{color:#c08cff}.umfu{display:inline-block;margin-top:4px;font-size:11.5px;font-weight:900;color:#E08A1D;border:1px solid #E08A1D;border-radius:8px;padding:1px 7px;cursor:pointer}'
-    + '.umck{display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;color:var(--text-mid);margin-top:3px}.umck.t{margin:0;white-space:nowrap}.umck i{width:9px;height:9px;border-radius:50%;background:var(--pz);margin-left:4px;flex:none}.umck-inv{color:var(--text-dim)}.umck-hub{margin:8px 2px 0}'
+    + '.umck{display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:800;color:var(--text-mid);margin-top:3px}.umact{cursor:pointer}.umact.stop{color:#e07b25}'
+    + '.umck.t{margin:0;white-space:nowrap}.umck i{width:9px;height:9px;border-radius:50%;background:var(--pz);margin-left:4px;flex:none}.umck-inv{color:var(--text-dim)}.umck-hub{margin:8px 2px 0}'
     + '.umdel{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:10px;cursor:pointer;opacity:.75}.umdel:hover{opacity:1;background:color-mix(in srgb,var(--red) 12%,transparent)}.umdel .lic{width:18px;height:18px}.umtb td.umdelc{width:40px;padding:4px 6px}'
     + '.umcd{display:grid;grid-template-columns:42px 1fr auto auto;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:10px 12px;margin-bottom:8px;cursor:pointer}'
     + '.umav{width:42px;height:42px;border-radius:50%;border:2px solid #E08A1D;display:flex;align-items:center;justify-content:center;font-weight:900;color:#E08A1D;overflow:hidden}.umav img{width:100%;height:100%;object-fit:cover}'
