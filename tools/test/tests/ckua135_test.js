@@ -29,8 +29,10 @@ const vis = (id) => `(function(){ var e=document.getElementById('${id}'); return
     const sfx = dark ? '_d' : '';
     const { ctx, page, ev, wt, errs } = await P.open(b, { dark, hash: '#c=' + TA, data: data(), wait: 2600 });
     await page.addStyleTag({ content: '#toast{display:none!important}' });
-    c('アプリの形（下のタブ5つ：ホーム・プラン・受付QR・なかま・マイページ）' + (dark ? '（ダーク）' : ''), (await ev(`document.body.classList.contains('uapp') && [].map.call(document.querySelectorAll('#uaTabs [data-tab]'),function(b){return b.textContent;}).join('|')`)) === 'ホーム|プラン|受付QR|なかま|マイページ');
-    c('開いた時はホーム（あいさつ・NEWS・今日のクエスト・PRYSMiO・ラウンジの新着）', /見本 はなこ さん/.test(await ev(`document.getElementById('uaHello').textContent`)) && (await ev(vis('nwArea'))) && /今日のクエスト/.test(await ev(`document.getElementById('uaHomeQ').innerText`)) && /820/.test(await ev(`document.getElementById('uaHomePz').innerText`)) && /今週は毎日15分/.test(await ev(`document.getElementById('uaHomeLg').innerText`)));
+    c('アプリの形（下のタブ5つ：ホーム・プラン・今日・なかま・マイページ。v172: 真ん中は「今日」・受付QRは右上）' + (dark ? '（ダーク）' : ''), (await ev(`document.body.classList.contains('uapp') && [].map.call(document.querySelectorAll('#uaTabs [data-tab]'),function(b){return b.textContent;}).join('|')`)) === 'ホーム|プラン|今日|なかま|マイページ' && !!(await ev(`!!document.getElementById('uaQrTop')`)));
+    c('v172: 開いた時は「今日」', (await ev(`document.querySelector('#uaApp .ua-pg.on').getAttribute('data-p')`)) === 'today' && /今日のクエスト/.test(await ev(`document.getElementById('uaToday').innerText`)));
+    await page.click('#uaTabs [data-tab="home"]'); await wt(300);
+    c('ホーム（あいさつ・NEWS・今日のクエスト・PRYSMiO・ラウンジの新着）', /見本 はなこ さん/.test(await ev(`document.getElementById('uaHello').textContent`)) && (await ev(vis('nwArea'))) && /今日のクエスト/.test(await ev(`document.getElementById('uaHomeQ').innerText`)) && /820/.test(await ev(`document.getElementById('uaHomePz').innerText`)) && /今週は毎日15分/.test(await ev(`document.getElementById('uaHomeLg').innerText`)));
     c('ホームではQRのカードもプランも見えない', !(await ev(vis('memberCard'))) && !(await ev(vis('mpArea'))));
     c('下のタブが画面の下に固定（横にはみ出さない）', (await ev(`(function(){ var r=document.getElementById('uaTabs').getBoundingClientRect(); return Math.round(r.bottom) === innerHeight && r.width === innerWidth; })()`)) && (await ev('document.documentElement.scrollWidth')) === 390);
     await page.screenshot({ path: OUT + '/ckua135_home' + sfx + '.png' });
@@ -43,7 +45,7 @@ const vis = (id) => `(function(){ var e=document.getElementById('${id}'); return
     await page.click('#uaTabs [data-tab="plan"]'); await wt(300);
     c('プラン：MY PLAN だけ', (await ev(vis('mpArea'))) && !(await ev(vis('nwArea'))));
     await page.screenshot({ path: OUT + '/ckua135_plan' + sfx + '.png' });
-    await page.click('#uaTabs [data-tab="qr"]'); await wt(300);
+    await page.click('#uaQrTop'); await wt(300);   // v172: 受付QRは右上
     c('受付QR：カード（QR）と来場回数', (await ev(vis('memberCard'))) && /来場 3 回/.test(await ev(`document.getElementById('uaVisits').textContent`)) && !(await ev(vis('mpArea'))));
     await page.screenshot({ path: OUT + '/ckua135_qr' + sfx + '.png' });
     await page.click('#uaTabs [data-tab="friends"]'); await wt(300);
