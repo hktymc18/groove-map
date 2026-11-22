@@ -1152,6 +1152,17 @@ service cloud.firestore {
         && request.resource.data.get('g', 0) is int && request.resource.data.get('g', 0) >= 1 && request.resource.data.get('g', 0) <= 31;
       allow delete: if ckLoungeStaff(un);
     }
+    // 受付v175: 今日の1分をユニオンのスタッフが足す（30こまで。見出し20字・本文120字は画面で確かめる）
+    match /ckLes/{un} {
+      allow get: if true;
+      allow list: if false;
+      allow create, update: if ckLoungeStaff(un)
+        && request.resource.data.keys().hasOnly(['L', 'by', 'at'])
+        && request.resource.data.get('by', '') == request.auth.uid
+        && request.resource.data.get('L', null) is list
+        && request.resource.data.L.size() >= 1 && request.resource.data.L.size() <= 30;
+      allow delete: if ckLoungeStaff(un);
+    }
     match /ckQuest/{un} {
       allow get: if true;
       allow list: if false;

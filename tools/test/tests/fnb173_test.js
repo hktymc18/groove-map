@@ -1,5 +1,6 @@
 // 受付 v173：サーバーの「今日まだ」に人からの反応を入れる（functions/beauty.js の nudge）。架空データ・にせの送信の仕組み
 //   まだの人：今日できたバディの名前を入れる（いなければ今までの文）／今日できた人：今日の 👏 があれば「👏が○こ届いたよ」（無ければ送らない）
+//   v175: 日曜は「今週のまとめ」が届くので、ここは月曜（2026-12-07）で試す
 const path = require('path');
 const B = require(path.join(__dirname, '../../../functions/beauty.js'));
 let fails = 0;
@@ -22,27 +23,27 @@ function fakeMsg(bad) {
   return { sent, sendEach: async (msgs) => { msgs.forEach((m) => sent.push(m)); return { responses: msgs.map((m) => bad && m.token === bad ? { success: false, error: { code: 'messaging/registration-token-not-registered' } } : { success: true }) }; } };
 }
 (async () => {
-  const now = Date.UTC(2026, 11, 6, 11, 0); // 日本時間 2026-12-06 20:00
-  const t0 = Date.UTC(2026, 11, 5, 15, 0);  // 日本時間 2026-12-06 0:00
-  const pl = (x) => Object.assign({ course: 'diet', qs: ['water'], start: '2026-12-01', days: { '2026-12-05': ['water'] }, atMs: 1 }, x);
+  const now = Date.UTC(2026, 11, 7, 11, 0); // 日本時間 2026-12-07 20:00
+  const t0 = Date.UTC(2026, 11, 6, 15, 0);  // 日本時間 2026-12-07 0:00
+  const pl = (x) => Object.assign({ course: 'diet', qs: ['water'], start: '2026-12-01', days: { '2026-12-06': ['water'] }, atMs: 1 }, x);
   const store = {
     // u1：まだ・バディのさくら（今日できた）とゆり（昨日）
     'ckPush/u1': { card: T32('a'), union: 'U1', t: 'tok1', on: true },
     ['cards/' + T32('a') + '/plan/me']: pl({}),
     ['cards/' + T32('a') + '/buddy/me']: { k: 'b_1', list: [{ k: 'b_2', n: '見本 さくら' }, { k: 'b_3', n: '見本 ゆり' }] },
-    'ckBuddy/b_2': { uid: 'u2', n: '見本 さくら', td: '2026-12-06' },
-    'ckBuddy/b_3': { uid: 'u3', n: '見本 ゆり', td: '2026-12-05' },
+    'ckBuddy/b_2': { uid: 'u2', n: '見本 さくら', td: '2026-12-07' },
+    'ckBuddy/b_3': { uid: 'u3', n: '見本 ゆり', td: '2026-12-06' },
     // u4：まだ・バディなし → 今までの文
     'ckPush/u4': { card: T32('d'), union: 'U1', t: 'tok4', on: true },
     ['cards/' + T32('d') + '/plan/me']: pl({}),
     // u5：今日できた・今日の 👏 2こ（昨日の 1こは数えない）
     'ckPush/u5': { card: T32('e'), union: 'U1', t: 'tok5', on: true },
-    ['cards/' + T32('e') + '/plan/me']: pl({ days: { '2026-12-06': ['water'] } }),
+    ['cards/' + T32('e') + '/plan/me']: pl({ days: { '2026-12-07': ['water'] } }),
     ['cards/' + T32('e') + '/lounge/p1']: { at: 1 },
     'ckLounge/p1/clap/x1': { at: t0 + 3600000 }, 'ckLounge/p1/clap/x2': { at: t0 + 7200000 }, 'ckLounge/p1/clap/x3': { at: t0 - 3600000 },
     // u6：今日できた・👏なし → 送らない
     'ckPush/u6': { card: T32('f'), union: 'U1', t: 'tok6', on: true },
-    ['cards/' + T32('f') + '/plan/me']: pl({ days: { '2026-12-06': ['water'] } })
+    ['cards/' + T32('f') + '/plan/me']: pl({ days: { '2026-12-07': ['water'] } })
   };
   const m = fakeMsg();
   const r = await B.nudge(fakeDb(store), m, now, {});

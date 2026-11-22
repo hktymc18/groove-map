@@ -118,7 +118,8 @@ async function nudge(db, messaging, now, skip) {
   const t0 = Date.UTC(+today.slice(0, 4), +today.slice(5, 7) - 1, +today.slice(8, 10)) - 9 * 3600000;   // 日本時間の今日の0時
   const ms = (a) => (a && a.toMillis ? a.toMillis() : +a || 0);
   const qs = await db.collection('ckPush').where('on', '==', true).get();
-  const byBody = {}, out = { date: today, subs: 0, sent: 0, ng: 0, buddy: 0, clap: 0 };
+  const byBody = {}, out = { date: today, subs: 0, sent: 0, ng: 0, buddy: 0, clap: 0, week: 0 };
+  const dow = new Date(Date.UTC(+today.slice(0, 4), +today.slice(5, 7) - 1, +today.slice(8, 10))).getUTCDay();   // 日本時間の今日の曜日（0＝日）
   const add = (body, tag, s) => { const k = tag + '|' + body; (byBody[k] = byBody[k] || { body, tag, subs: [] }).subs.push(s); };
   for (const d of qs.docs) {
     const s = { id: d.id, ref: d.ref, d: d.data() || {} };
@@ -139,7 +140,14 @@ async function nudge(db, messaging, now, skip) {
           cs.docs.forEach((c) => { if (ms((c.data() || {}).at) >= t0) n++; });
         }
       } catch (e) { n = 0; }
-      if (n) { add('今日もできたね！あなたの投稿に👏が' + n + 'こ届いたよ', 'nb-clap-' + today, s); out.clap++; }
+      if (n) { add('今日もできたね！あなたの投稿に👏が' + n + 'こ届いたよ', 'nb-clap-' + today, s); out.clap++; continue; }
+      // 受付v175: 日曜は「今週のまとめ」（👏 の通知が無い人だけ。1晩に1回まで）
+      if (dow === 0) {
+        let w = 0;
+        for (let i = 0; i < 7; i++) if ((days[jstYmd(now, -i)] || []).length) w++;
+        add('今週は' + w + '日できたよ。アプリで「今週のまとめ」を見てみよう', 'nb-week-' + today, s);
+        out.week++;
+      }
       continue;
     }
     let last = String(pl.start || '');
