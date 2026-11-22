@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v912';
+var APP_JS_VERSION = 'v913';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -5202,7 +5202,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v912';
+  var DATA_VERSION = 'v913';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -7341,6 +7341,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v913', d:'2026-11-22', items:['MAP のカード（PC はマウスを乗せた時・スマホは名前を押した時）に、研修生の最後の研修（項目・日付・結果・Aさん）を出すように','カードの OL記録は直近1か月の分だけ、日付の新しい順に'] },
   { v:'v912', d:'2026-11-22', items:['予定のタイトルに CT・FT・ST などを入れても、PLAN には数えないように（「PLAN「CT」に数えます」の表示もなくしました）','PLAN の数は計画シートで − ＋ で入れます。10月までの数は記録として残します'] },
   { v:'v911', d:'2026-11-22', items:['MAP（PC・スマホ・サークル）で、女性の名前をピンクに（男女を色で見分けられるように）'] },
   { v:'v910', d:'2026-11-22', items:['PC：選んだ印はチャコール・押すボタンはイエローに（MAP のビジネス｜ユーザー、編集｜サマリー、今月｜来月、ToDo の左の一覧と＋、OL の企画）','タブの下線もチャコールに','計画シートの達成度のカードは、白い字が読める濃いターコイズに。下のページの印はチャコールに'] },
@@ -11268,15 +11269,15 @@ function memberInfoHtml(m) {
         html += '<div class="ci-plan">' + (e.type === 'task' ? '⬜' : '📅') + ' ' + (d9 ? d9 + ' ' : '') + evEsc(evMemberLabel(e, m)) + '</div>';
       });
     }
-  } else memberNextPlanLines(m).forEach(function(ln){ html += '<div class="ci-plan">' + ln + '</div>'; }); // v361: 研修予定＋カレンダー予定＋OL予定を両方表示
+  } else { var _ltl2 = memberLastTrainLine(m); if (_ltl2) html += '<div class="ci-plan">' + _ltl2 + '</div>'; memberNextPlanLines(m).forEach(function(ln){ html += '<div class="ci-plan">' + ln + '</div>'; }); } // v913: 最後の研修 // v361: 研修予定＋カレンダー予定＋OL予定を両方表示
   var fd = (state.freshData && state.freshData[m.id]) || {};
-  var olog = (fd.olLog || []).filter(function(e){ return e.date || e.to || e.what || e.note; });
+  var olog = memberOlRecent(m); // v913: 直近1か月だけ
   if (olog.length) {
     html += '<div class="ci-ol-lbl">' + icn('pencil') + ' OL記録</div>';
     html += olog.slice(0, 5).map(function(e){
       var d = e.date ? e.date.split('-').slice(1).join('/') : '';
       return '<div class="ci-ol">' + (e.st === 'planned' ? '<span style="background:var(--gold);color:#08121a;font-size:9px;font-weight:800;border-radius:6px;padding:0 5px;margin-right:3px">予定</span>' : '') + (d ? '<span class="ci-ol-d">' + d + '</span> ' : '') + (e.to ? '<b>' + evEsc(e.to) + '</b> ' : '') + (e.what ? evEsc(e.what) : '') + (e.note ? '<div class="ci-ol-note">↳ ' + evEsc(e.note) + '</div>' : '') + '</div>';
-    }).join('');
+    }).join('') + (olog.length > 5 ? '<div class="ci-ol" style="color:var(--text-dim)">ほか ' + (olog.length - 5) + ' 件</div>' : '');
   }
   if (!html) html = '<div class="ci-empty">メモ・OL・予定なし（ダブルタップで編集）</div>';
   // CAL-2: この人との予定をテンプレから即作成（結合メンバーは相手MAP編集ボタンを優先）
@@ -16369,7 +16370,7 @@ function showPcTooltip(mid, ev) {
   // OL記録（組んだアウトライン）— マップ上で見れるように（動線一本化）
   var olHtml = '';
   var _fd = (state.freshData && state.freshData[m.id]) || {}; // v812 #17: 共有メンバーも自分で残したOL記録は出す
-  var _olog = (_fd.olLog || []).filter(function(e){ return e.date || e.to || e.what || e.note; });
+  var _olog = memberOlRecent(m); // v913: 直近1か月だけ
   if (_olog.length) {
     var olRows = _olog.slice(0, 4).map(function(e){
       var od = e.date ? e.date.split('-').slice(1).join('/') : '';
@@ -16385,8 +16386,8 @@ function showPcTooltip(mid, ev) {
   }
   // 次の予定（研修の予定ステップ or 次回予定日）
   var planHtml = '';
-  var _npls = _fgn ? [] : memberNextPlanLines(m); // v361: 研修予定＋カレンダー予定＋OL予定を両方表示（v561: 共有メンバーは上の予定欄に出す）
-  if (_npls.length) planHtml = '<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);font-size:12px;color:#FFB454;line-height:1.7">' + _npls.join('<br>') + '</div>';
+  var _npls = _fgn ? [] : memberNextPlanLines(m); var _ltl = memberLastTrainLine(m); if (_ltl) _npls.unshift(_ltl); // v913: 最後の研修 // v361: 研修予定＋カレンダー予定＋OL予定を両方表示（v561: 共有メンバーは上の予定欄に出す）
+  if (_npls.length) planHtml = '<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);font-size:12px;color:var(--gold);line-height:1.7">' + _npls.join('<br>') + '</div>';
   tip.innerHTML = (_avatars[m.id] ? '<img src="' + _avatars[m.id] + '" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2.5px solid ' + titleRingColor(m.title) + ';display:block;margin-bottom:7px" alt="">' : '')
     + '<div class="pc-tooltip-name" style="color:' + (m.gender==='female'?'var(--female)':'var(--male)') + '">' + name + '</div>'
     + '<div class="pc-tooltip-row"><span class="pc-tooltip-label">タイトル</span><span class="pc-tooltip-val">' + (m.title||'-') + titleMonthsSuffix(m) + restartSuffix(m) + '</span></div>'
@@ -32956,6 +32957,22 @@ function evOnMember(e) { return evVis(e) !== 'self'; } // メンバー側（カ�
 function evShowMine(e) { if (!evIsMemberLinked(e)) return true; if (e.vis) return e.vis !== 'member'; return e.selfShow !== false; } // カレンダー系（旧データは表示）
 function evTdMine(e)   { if (!evIsMemberLinked(e)) return true; if (e.vis) return e.vis !== 'member'; return e.selfShow === true; }  // ToDo/通知/バッジ
 // v361: メンバーの「次の予定」行（研修ファネル予定＋カレンダー予定＋OL予定を全部返す）
+// v913: 研修生の最後の研修（結果を入れた中で一番新しい日付）＝「🎓 マケ（11/18）✓ A:田中」
+function memberLastTrainLine(m) {
+  if (!m || !(typeof memberCat === 'function' && memberCat(m) === '研修生')) return '';
+  var last = null;
+  (m.traineeHistory || []).forEach(function(h) { if (h && h.date && h.result && h.result !== 'planned' && (!last || h.date >= last.date)) last = h; });
+  if (!last) return '';
+  return '<span style="color:var(--text-mid)">🎓 ' + evEsc(last.status || '') + '（' + last.date.split('-').slice(1).map(function(x) { return parseInt(x, 10); }).join('/') + '）'
+    + (last.result === 'left' ? '✗' : '✓') + (last.aSan ? ' A:' + evEsc(last.aSan) : '') + '</span>';
+}
+// v913: OL記録はカードには直近1か月（今日から30日前より後の日付）だけ、日付の新しい順
+function memberOlRecent(m) {
+  var fd = (state.freshData && state.freshData[m.id]) || {}, t = evTodayYmd(), d0 = new Date(t + 'T00:00:00'); d0.setDate(d0.getDate() - 30);
+  var cut = evYmd(d0);
+  return (fd.olLog || []).filter(function(e) { return e && e.date && String(e.date) >= cut && (e.to || e.what || e.note || e.date); })
+    .slice().sort(function(a, b) { return String(b.date).localeCompare(String(a.date)); });
+}
 function memberNextPlanLines(m) {
   var out = [];
   var t = evTodayYmd();
