@@ -3017,7 +3017,7 @@ body .mav{border-width:2px}
 body .mav.glw{animation:none!important}
 body .tp{border-radius:9999px;font-family:Outfit,'Zen Kaku Gothic New',sans-serif;font-weight:700;padding:1px 8px}
 body .mn .n{font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;font-weight:700;letter-spacing:.04em}
-body .mn .n.female{color:var(--text)}
+body .mn .n.female{color:var(--female)} /* v911: 女性の名前はピンク（男女を色で見分ける） */
 body .ma b{border-radius:9999px;color:#191717!important;font-family:Outfit,Inter,sans-serif;font-weight:700}
 body .ma small{color:var(--text-dim)!important}
 body .mgv b{font-family:Outfit,Inter,sans-serif;font-weight:700}
@@ -3087,6 +3087,9 @@ body .px3-tabs span.on{border-color:var(--nv-ink)!important}body .tp-disp.on{bor
 body .s3-cd:not(.gold){background:linear-gradient(155deg,#1C9586 0%,#167A6E 50%,#115A51 100%)!important}
 body .ux-dots .on{color:var(--text)!important}
 body .ux-dots .on i{background:var(--nv-ink)!important}
+/* v911: 女性の名前の色（トーン表になじむローズピンク。ライト #D6337A 白地との差4.5・ダーク #FF8FC0） */
+body:not(.light){--female:#FF8FC0}body.light{--female:#D6337A}
+body .olt-fn.female{color:var(--female)}
 /* v899: 金色の地に黒い字の札は、ライトでは明るい金の地に（濃い金の地だと字が沈むため） */
 body.light .fb-st.new,body.light .olk.p,body.light .olt-sst{background:#F2C14E!important;color:#373334!important}
 body:not(.light) .sm1-r{background:linear-gradient(135deg,#2C2512 0%,#1F1D1A 60%,#2B2413 100%);border-color:rgba(232,199,102,.5);box-shadow:0 10px 30px rgba(0,0,0,.4)}
@@ -3182,7 +3185,7 @@ body .sm1-r .fb .fbr,body .p2fb .fbr{filter:drop-shadow(0 1px 0 rgba(140,90,0,.2
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v910</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v911</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4136,7 +4139,7 @@ body .sm1-r .fb .fbr,body .p2fb .fbr{filter:drop-shadow(0 1px 0 rgba(140,90,0,.2
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v910';</script>
-<script src="app.js?v=v910"></script>
+<script>window.GM_EXPECT_JS='v911';</script>
+<script src="app.js?v=v911"></script>
 </body>
 </html>
