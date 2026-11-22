@@ -10,7 +10,7 @@ const admin = require('firebase-admin');
 const usage = require('./usage');
 // 🗑 v893: 削除したアカウントを完全に消す（オーナーの予約があるものだけ。overdueReminders の最後に動かす）
 const purge = require('./purge');
-// 🧹 受付 v168: 棚卸し（回答の反映は毎回・計算とお知らせは週1の月曜9時。overdueReminders の最後に動かす）
+// 🧹 受付 v168: 棚卸し（回答の反映は overdueReminders の最後・計算とお知らせは v170 から sendReminders の日曜11時台）
 const inventory = require('./inventory');
 
 admin.initializeApp();
@@ -129,6 +129,8 @@ exports.sendReminders = onSchedule(
   // v307: 通知遅延を最大1分程度に短縮していたが、v807で5分ごとに戻した（空でも1回ごとに読み取りが1回かかるため。1日1,440回→288回）
   { schedule: 'every 5 minutes', region: 'asia-northeast1', timeZone: 'Asia/Tokyo', memory: '256MiB' },
   async () => {
+    // 🧹 受付 v170: 棚卸しの計算とお知らせ（毎週日曜11時台の最初の回だけ。ほかの時間は何も読まない）
+    try { await inventory.weeklyTick(admin); } catch (eI) { console.log('inventory weekly error: ' + eI); }
     const db = admin.firestore();
     const nowIso = new Date().toISOString();
     const snap = await db.collection('notifQueue').where('fireAt', '<=', nowIso).limit(300).get();

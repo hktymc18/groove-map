@@ -1,6 +1,7 @@
 /**
  * 🧹 受付 v168: 棚卸しの自動のお知らせ（研修を聞いたけど進まない人・やめた人を、定期的に確かめて無効化する）
- *   overdueReminders（1日5回: 9・12・15・18・21時）の最後に run() を呼ぶ
+ *   overdueReminders（1日5回: 9・12・15・18・21時）の最後に run()（回答の反映・force）、
+ *   sendReminders（5分ごと）の最初に weeklyTick()（v170: 毎週日曜11時の計算とお知らせ）を呼ぶ
  *   （新しい関数を作ると、作る時に呼び出しの権限の設定が要るため、今ある関数に入れる）。
  *
  *   ① 回答の反映（毎回）: checkinInventory/{ユニオン}/ans/{会員番号} = { a: 'ok'|'wait'|'quit', by: uid, at }
@@ -8,7 +9,7 @@
  *        ok   = 続けている … 名簿の invAt＝今日（今日から数え直し）
  *        wait = 様子見     … 名簿の invSnooze＝14日後（その日まで候補に出さない）
  *        quit = やめた     … 名簿と会員証を無効（active=false）。研修生も正規メンバーも（オーナーの指定）
- *   ② 棚卸しの計算とお知らせ（週1・月曜9時の回だけ。appStats/inventory.force=true でその場で1回）
+ *   ② 棚卸しの計算とお知らせ（v170: 週1・日曜11時。appStats/inventory.force=true なら 1日5回の回でその場で1回）
  *      最後の動き＝直近1ヶ月の出席・研修の受講・面談シート・名簿に登録した日・「続けている」にした日 のいちばん新しい日。
  *      14日以上＝1回目、28日以上＝2回目（研修生も正規メンバーも同じ。受付の画面 ckInvStage と同じ判定）。
  *      お知らせの相手（who）＝ 研修生：登録した担当・受講済みにした担当／全員：UPルビー（系列の名前と同じ名前のアカウント）。
@@ -202,19 +203,32 @@ function makeSend(admin, db) {
   };
 }
 
+async function doWeekly(admin, db, today, opt) {
+  const w = await weekly(db, today, opt.send || makeSend(admin, db));
+  await db.collection('appStats').doc('inventory').set({ lastDay: today, lastAt: Date.now(), force: false, last: w }, { merge: true });
+  return w;
+}
+// 1日5回（overdueReminders）：回答の反映と、force の時だけ計算
 async function run(admin, opt) {
   opt = opt || {};
-  const db = admin.firestore(), now = jst(opt.now), today = ymd(now);
+  const db = admin.firestore(), today = ymd(jst(opt.now));
   const applied = await applyAnswers(db, today, admin.firestore.FieldValue);
-  const flagRef = db.collection('appStats').doc('inventory'), flag = (await flagRef.get()).data() || {};
-  const weeklyTime = now.getUTCDay() === 1 && now.getUTCHours() === 9;   // 月曜9時（日本時間）
-  let w = null;
-  if ((weeklyTime && flag.lastDay !== today) || flag.force === true) {
-    w = await weekly(db, today, opt.send || makeSend(admin, db));
-    await flagRef.set({ lastDay: today, lastAt: Date.now(), force: false, last: w }, { merge: true });
-  }
-  console.log(`inventory: applied=${applied}` + (w ? ` weekly=${JSON.stringify(w)}` : ''));
+  const flag = (await db.collection('appStats').doc('inventory').get()).data() || {};
+  const w = flag.force === true ? await doWeekly(admin, db, today, opt) : null;
+  console.log(`inventory: applied=${applied}` + (w ? ` weekly(force)=${JSON.stringify(w)}` : ''));
   return { applied, weekly: w };
 }
+// 5分ごと（sendReminders）：v170 毎週日曜11時台の最初の回だけ計算とお知らせ（ほかの時間は何も読まない）
+async function weeklyTick(admin, opt) {
+  opt = opt || {};
+  const now = jst(opt.now);
+  if (now.getUTCDay() !== 0 || now.getUTCHours() !== 11) return null;   // 日曜11時（日本時間）
+  const db = admin.firestore(), today = ymd(now);
+  const flag = (await db.collection('appStats').doc('inventory').get()).data() || {};
+  if (flag.lastDay === today) return null;
+  const w = await doWeekly(admin, db, today, opt);
+  console.log(`inventory: weekly=${JSON.stringify(w)}`);
+  return w;
+}
 
-module.exports = { run, lastActOf, stageOf, whoOf, normName, D1, D2 };
+module.exports = { run, weeklyTick, lastActOf, stageOf, whoOf, normName, D1, D2 };
