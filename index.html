@@ -3042,6 +3042,12 @@ body .btn-p,body .btn-s,body .ux-nx,body .ux-bk{border-radius:9999px}
 body h1,body h2,body h3,body .ux-h2{font-family:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;letter-spacing:.06em}
 /* v898: ファーストボーナスの金額を金のグラデーションの文字に（新しいトーンの --gold はくすんだ色だったため） */
 body .sm1-r{background:linear-gradient(135deg,#FFFBEA 0%,#FFFFFF 55%,#FFF4CF 100%);border:1.5px solid #E8C766;box-shadow:0 10px 30px rgba(201,150,20,.16)}
+/* v901: 前の色が残っていた所をトーン表に（(i) ボタン・MAPのLTSV・理想MAPの上の帯） */
+body .ux-ib,body .ux-info i,body .ids-ib{border-color:var(--green)!important;color:var(--green)!important}
+body .pc-toolbar .pt-ltsv{background:var(--surface)!important;border:1px solid var(--border)!important;box-shadow:none!important;border-radius:999px!important}
+body .pc-toolbar-ideal{background:linear-gradient(180deg,var(--purple-dim),var(--bg) 80%)!important;border-bottom:2px solid var(--purple)!important}
+body .pc-toolbar-ideal .pv-btn.active{box-shadow:none!important}
+body #pcLtsvI{color:var(--purple)!important}
 /* v899: 金色の地に黒い字の札は、ライトでは明るい金の地に（濃い金の地だと字が沈むため） */
 body.light .rv span.BR,body.light .fb-st.new,body.light .olk.p,body.light .olt-sst{background:#F2C14E!important;color:#373334!important}
 body:not(.light) .sm1-r{background:linear-gradient(135deg,#2C2512 0%,#1F1D1A 60%,#2B2413 100%);border-color:rgba(232,199,102,.5);box-shadow:0 10px 30px rgba(0,0,0,.4)}
@@ -3137,7 +3143,7 @@ body .sm1-r .fb .fbr,body .p2fb .fbr{filter:drop-shadow(0 1px 0 rgba(140,90,0,.2
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v900</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v901</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4091,7 +4097,7 @@ body .sm1-r .fb .fbr,body .p2fb .fbr{filter:drop-shadow(0 1px 0 rgba(140,90,0,.2
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v900';</script>
-<script src="app.js?v=v900"></script>
+<script>window.GM_EXPECT_JS='v901';</script>
+<script src="app.js?v=v901"></script>
 </body>
 </html>
