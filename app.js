@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v899';
+var APP_JS_VERSION = 'v900';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3581,7 +3581,7 @@ function setTheme(theme) {
     renderPCMap(currentView);
   }
 }
-function syncThemeButtons() {
+function syncThemeButtons() { _syncThemeColor();
   var isLight = document.body.classList.contains('light');
   var d = document.getElementById('rbThemeDark');
   var l = document.getElementById('rbThemeLight');
@@ -3591,6 +3591,8 @@ function syncThemeButtons() {
   if (h1) h1.classList.toggle('sel', hi);
   if (h0) h0.classList.toggle('sel', !hi);
 }
+// v900: 画面のいちばん上（時刻の帯）の色をテーマの背景に合わせる（前はいつも黒）
+function _syncThemeColor() { try { var m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute('content', document.body.classList.contains('light') ? '#F6F6F1' : '#1C1A1B'); } catch (e) {} }
 function initTheme() {
   var t = 'dark';
   try { t = localStorage.getItem('gm_theme') || 'dark'; } catch(e){}
@@ -5192,7 +5194,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v899';
+  var DATA_VERSION = 'v900';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -7331,6 +7333,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v900', d:'2026-11-22', items:['ログイン・新規登録の画面も新しいトーンに（ボタンはイエロー・選んだ方はチャコール・角を丸く）','画面のいちばん上の帯の色を、ライト・ダークの背景に合わせる'] },
   { v:'v899', d:'2026-11-22', items:['くすんだ金色（オリーブ色）を、全部の画面で本物の金色に（目標のタイトル・マイルストーン・カレンダーのアイコンなど）','シミュレーションを開いた時、LOIの月は今月から始まるように'] },
   { v:'v898', d:'2026-11-22', items:['PLANのシミュレーションのファーストボーナスの金額を、金色に光る大きな数字に','ホームのボタンの右上の数字（再アプローチ・共有MAPなど）を見やすい黄色に'] },
   { v:'v897', d:'2026-11-21', items:['全部の画面を新しい見た目にしました（MAP と同じ4色・丸み・書体）。ライトでは目立つ色をターコイズにして、文字が読みやすいように。大事なボタン（保存・追加・受付連携）はイエローです'], pop:{ t:'見た目が新しくなりました', items:['イエロー・バイオレット・ターコイズ・チャコールの4色に','ボタンやカードを丸く、文字を読みやすい書体に','ライト・ダークどちらも新しい色です'], go:['MAPを開く', "switchView('current')"] } },
@@ -39772,11 +39775,11 @@ function switchAuthTab(tab) {
   var st = document.getElementById('signupTab');
   if (tab === 'login') {
     lf.style.display = ''; sf.style.display = 'none';
-    lt.style.background = 'var(--accent)'; lt.style.color = '#000';
+    lt.style.background = 'var(--nv-ink)'; lt.style.color = 'var(--nv-sel-ink)'; // v900: 選んだ方はチャコール（トーン表）
     st.style.background = 'transparent'; st.style.color = 'var(--text-dim)';
   } else {
     lf.style.display = 'none'; sf.style.display = '';
-    st.style.background = 'var(--accent)'; st.style.color = '#000';
+    st.style.background = 'var(--nv-ink)'; st.style.color = 'var(--nv-sel-ink)';
     lt.style.background = 'transparent'; lt.style.color = 'var(--text-dim)';
   }
 }
@@ -40424,7 +40427,7 @@ function doLogout() {
 function showForgotPass() {
   var email = ((document.getElementById('loginEmail')||{}).value||'').trim();
   var errEl = document.getElementById('loginError');
-  function say(msg, ok) { if (errEl) { errEl.textContent = msg; errEl.style.color = ok ? '#2CE5B8' : '#FF5D73'; errEl.style.display = ''; } else { alert(msg); } }
+  function say(msg, ok) { if (errEl) { errEl.textContent = msg; errEl.style.color = ok ? 'var(--green)' : 'var(--red)'; errEl.style.display = ''; } else { alert(msg); } }
   if (!email) { say('先にメールアドレスを入力してください'); return; }
   if (!auth) { say('接続エラー。時間をおいて再度お試しください'); return; }
   // リンクをこのアプリ(groove-map)に着地させ、再設定画面を自前で処理する
