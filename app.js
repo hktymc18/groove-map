@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v909';
+var APP_JS_VERSION = 'v910';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -5202,7 +5202,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v909';
+  var DATA_VERSION = 'v910';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -7341,7 +7341,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
-  { v:'v909', d:'2026-11-22', items:['PC：選んだ印はチャコール・押すボタンはイエローに（MAP のビジネス｜ユーザー、編集｜サマリー、今月｜来月、ToDo の左の一覧と＋、OL の企画）','タブの下線もチャコールに','計画シートの達成度のカードは、白い字が読める濃いターコイズに。下のページの印はチャコールに'] },
+  { v:'v910', d:'2026-11-22', items:['PC：選んだ印はチャコール・押すボタンはイエローに（MAP のビジネス｜ユーザー、編集｜サマリー、今月｜来月、ToDo の左の一覧と＋、OL の企画）','タブの下線もチャコールに','計画シートの達成度のカードは、白い字が読める濃いターコイズに。下のページの印はチャコールに'] },
+  { v:'v909', d:'2026-11-22', items:['🛠 細かい修正をしました'] },
   { v:'v908', d:'2026-11-22', items:['ホーム（今日）の数字をチャコールに','押すボタンはイエロー・選んだ印はチャコールにそろえる（ターコイズの地に暗い字で読みにくかった所）','年の目標の「過ぎた」・メンバーの画面のタイトルの札・OL の審査中の札・地域の札なども読みやすく'] },
   { v:'v907', d:'2026-11-22', items:['ToDo の「すべて」「今日」などの選んだ札を、チャコールの地に白い字に（読みやすく）'] },
   { v:'v906', d:'2026-11-22', items:['HOME：CALENDAR のタイルをチャコールに（金色はお金のところだけ）','HOME：下のボタンを端が丸い形に','「次はここ」の札をイエローの地にチャコールの字に（読みやすく）'] },
@@ -24377,7 +24378,15 @@ function _umActOf(pl) {
   if (!pl || !pl.course) return null;
   var days = pl.days || {}, ok = function(d) { return (days[d] || []).length > 0; }, ymd = function(t) { return t.getFullYear() + '-' + ('0' + (t.getMonth() + 1)).slice(-2) + '-' + ('0' + t.getDate()).slice(-2); };
   var add = function(d, n) { var p = d.split('-'); return ymd(new Date(+p[0], +p[1] - 1, +p[2] + n)); }, today = ymd(new Date());
-  var st = 0, d = ok(today) ? today : add(today, -1); while (ok(d) && st < 1000) { st++; d = add(d, -1); }
+  // v909: 受付のアプリと同じ数え方（1日だけ空いた日は、その週（月〜日）に1回まで「おやすみ券」でつなぐ）
+  var wkKey = function(x) { var p = x.split('-'), t = new Date(+p[0], +p[1] - 1, +p[2]); return add(x, -((t.getDay() + 6) % 7)); };
+  var st = 0, used = {}, d = ok(today) ? today : add(today, -1), yd = add(today, -1), g = 0;
+  while (g++ < 2000) {
+    if (ok(d)) { st++; d = add(d, -1); continue; }
+    var pv = add(d, -1);
+    if ((st > 0 || d === yd) && !used[wkKey(d)] && ok(pv)) { used[wkKey(d)] = 1; d = pv; continue; }
+    break;
+  }
   var wk = 0; for (var i = 0; i < 7; i++) if (ok(add(today, -i))) wk++;
   var last = ''; Object.keys(days).forEach(function(k) { if (ok(k) && k > last) last = k; });
   return { co: pl.course, st: st, wk: wk, last: last, start: String(pl.start || ''), d: today };

@@ -1026,7 +1026,7 @@ service cloud.firestore {
       allow get: if true;
       allow list: if false;
       allow create, update: if pid == 'me'
-        && request.resource.data.keys().hasOnly(['course', 'goal', 'qs', 'start', 'days', 'atMs', 'why', 'by', 'when', 'lvl', 'ob'])
+        && request.resource.data.keys().hasOnly(['course', 'goal', 'qs', 'start', 'days', 'atMs', 'why', 'by', 'when', 'lvl', 'ob', 'wk'])
         && request.resource.data.course in ['diet', 'yuragi', 'inner']
         // 💜 受付v172: はじめの準備（なりたい私・いつまでに・クエストの時間帯・難しさ・準備をした時刻）
         && request.resource.data.get('why', '') is string && request.resource.data.get('why', '').size() <= 40
@@ -1034,6 +1034,8 @@ service cloud.firestore {
         && request.resource.data.get('when', {}) is map && request.resource.data.get('when', {}).size() <= 12
         && request.resource.data.get('lvl', 'std') in ['easy', 'std', 'hard']
         && request.resource.data.get('ob', 0) is int
+        // 💜 受付v173: 今週の目標（週に何日）
+        && request.resource.data.get('wk', 4) is int && request.resource.data.get('wk', 4) >= 1 && request.resource.data.get('wk', 4) <= 7
         && request.resource.data.get('goal', '') is string && request.resource.data.get('goal', '').size() <= 40
         && request.resource.data.qs is list && request.resource.data.qs.size() >= 1 && request.resource.data.qs.size() <= 5
         && request.resource.data.get('days', {}) is map && request.resource.data.get('days', {}).size() <= 400
@@ -1137,6 +1139,30 @@ service cloud.firestore {
     // 💜 受付v140: ユーザーのプランのクエスト（ユニオンごと）。無いユニオンは、アプリに組み込みのクエスト
     //   ckQuest/{ユニオン} = { co: { diet: [{ k, t, off }], yuragi: [...], inner: [...] }, by, at }（1コース10こまで）
     //   アプリ（ログインなし）が1件ずつ読む。書けるのはオーナー・ユニオン管理者・DAYスタッフ（消す＝はじめの内容にもどす）
+    // 💜 受付v174: 今月のチャレンジ（ユニオンごと）。ckChal/{ユニオン} = { m: 'YYYY-MM', t: テーマ（30字まで）, g: 日数（1〜31）, by, at }
+    //   読むのはだれでも1件ずつ（お客さんのアプリ）。書く・消すはオーナー・ユニオン管理者・DAYスタッフだけ
+    match /ckChal/{un} {
+      allow get: if true;
+      allow list: if false;
+      allow create, update: if ckLoungeStaff(un)
+        && request.resource.data.keys().hasOnly(['m', 't', 'g', 'by', 'at'])
+        && request.resource.data.get('by', '') == request.auth.uid
+        && request.resource.data.get('m', '') is string && request.resource.data.get('m', '').matches('^[0-9]{4}-[0-9]{2}$')
+        && request.resource.data.get('t', '') is string && request.resource.data.get('t', '').size() > 0 && request.resource.data.get('t', '').size() <= 30
+        && request.resource.data.get('g', 0) is int && request.resource.data.get('g', 0) >= 1 && request.resource.data.get('g', 0) <= 31;
+      allow delete: if ckLoungeStaff(un);
+    }
+    // 受付v175: 今日の1分をユニオンのスタッフが足す（30こまで。見出し20字・本文120字は画面で確かめる）
+    match /ckLes/{un} {
+      allow get: if true;
+      allow list: if false;
+      allow create, update: if ckLoungeStaff(un)
+        && request.resource.data.keys().hasOnly(['L', 'by', 'at'])
+        && request.resource.data.get('by', '') == request.auth.uid
+        && request.resource.data.get('L', null) is list
+        && request.resource.data.L.size() >= 1 && request.resource.data.L.size() <= 30;
+      allow delete: if ckLoungeStaff(un);
+    }
     match /ckQuest/{un} {
       allow get: if true;
       allow list: if false;

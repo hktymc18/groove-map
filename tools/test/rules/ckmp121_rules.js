@@ -38,6 +38,9 @@ const _e = console.error; console.error = (...a) => { if (!/PERMISSION_DENIED|ev
   c('v172: 時間帯は12こまで', !(await ok(setDoc(doc(anon, 'cards/tokU/plan/me'), P(Object.assign({}, OB, { when: Object.fromEntries([...Array(13).keys()].map(i => ['q' + i, 'am'])) }))))));
   c('v172: 準備の印は数字だけ', !(await ok(setDoc(doc(anon, 'cards/tokU/plan/me'), P(Object.assign({}, OB, { ob: 'yes' }))))));
   c('v172: いつまでは10字まで', !(await ok(setDoc(doc(anon, 'cards/tokU/plan/me'), P(Object.assign({}, OB, { by: '2026-12-18-x' }))))));
+  c('v173: 週の目標（wk）を保存できる（1〜7）', await ok(setDoc(doc(anon, 'cards/tokU/plan/me'), P(Object.assign({}, OB, { wk: 5 })))));
+  c('v173: 週の目標は7まで', !(await ok(setDoc(doc(anon, 'cards/tokU/plan/me'), P(Object.assign({}, OB, { wk: 8 }))))));
+  c('v173: 週の目標は数字だけ', !(await ok(setDoc(doc(anon, 'cards/tokU/plan/me'), P(Object.assign({}, OB, { wk: '4' }))))));
   c('ログインしていない人は消せない', !(await ok(require('firebase/firestore').deleteDoc(doc(anon, 'cards/tokU/plan/me')))));
   await env.cleanup();
   console.log(fails ? 'FAIL ' + fails : 'ALL PASS'); process.exit(fails ? 1 : 0);

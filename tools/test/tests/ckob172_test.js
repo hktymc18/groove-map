@@ -131,7 +131,7 @@ const on = (o) => o.ev(`document.querySelector('#uaApp .ua-pg.on').getAttribute(
     const W = new JSDOM('<div></div>', { runScripts: 'outside-only' }).window;
     W.eval([pick(/function esc\(s\)\{[\s\S]*?\n\}/), 'function pad(n){ return (n < 10 ? "0" : "") + n; }', 'function todayStr(){ return "' + T + '"; }', 'var GX_NAME = "ジェッ子ちゃん", JETKO_SVG = "<svg></svg>";',
       pick(/function mpYmd\(d\)\{[^\n]*\}/), pick(/function mpAddDays\(ymd, n\)\{[^\n]*\}/),
-      pick(/function ckRetention\(rows, today\)\{[\s\S]*?\n\}/), pick(/var CK_PAL = \{[\s\S]*?\n\};/), pick(/function ckPalImg\(cls\)\{[\s\S]*?\n\}/), pick(/function ckPalSay\(key, v\)\{[\s\S]*?\n\}/)].join('\n'));
+      pick(/function ckRetention\(rows, today\)\{[\s\S]*?\n\}/), pick(/var CK_PAL = \{[\s\S]*?\n\};/), pick(/function ckPalImg\(cls, rb\)\{[\s\S]*?\n\}/), pick(/function ckPalSay\(key, v\)\{[\s\S]*?\n\}/)].join('\n'));
     const d = n => W.mpAddDays(T, n), mk = (st, ks) => { const o = {}; ks.forEach(k => { o[d(k)] = ['x']; }); return { course: 'diet', start: d(st), days: o }; };
     const r = W.ckRetention([
       { visits: 1, plan: mk(-3, [0, -1, -2, -3]) },   // 7日で4日・始めて3日（7日後はまだ数えない）
