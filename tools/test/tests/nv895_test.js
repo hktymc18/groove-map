@@ -34,5 +34,9 @@ T.run(async () => {
   const row = w._mxRowHtml({ id: 'a', lastName: '見本', firstName: '二', title: 'Q2', activity: 'A' }, 'current', 1, [], true, '#26C7B3', 0, false, false);
   c('スマホ：タイトルの札は区分の色（var(--nvt-ex)）', /background:var\(--nvt-ex\);color:var\(--nvt-ex-ink\)/.test(row), row.slice(0, 200));
   c('スマホ：系列の線も4色', w.MX_FAM === w.NV_LINE);
+  // v898: ファーストボーナスの金額は金のグラデーション（くすんだ --gold を使わない）
+  c('v898: ファーストボーナスの金額は金のグラデーションの文字', /\.sm1-r \.fb \.fbr[^{]*\{background:linear-gradient\([^)]*#F7D56A/.test(html) && /-webkit-text-fill-color:transparent/.test(html));
+  c('v898: ダークでも金（明るい金）', /body:not\(\.light\) \.sm1-r \.fb \.fbr[^{]*\{background:linear-gradient\([^)]*#FFD86B/.test(html));
+  c('v898: 数字の幅をそろえる（回る数字のすき間が空かない）', /\.sm1-r \.fb \.fbr,body \.p2fb \.fbr\{font-variant-numeric:tabular-nums\}/.test(html));
   c('APP_JS_VERSION v897 以上', +(/APP_JS_VERSION = 'v(\d+)'/.exec(fs.readFileSync(path.join(__dirname, '../../../app.js'), 'utf8')) || [0, 0])[1] >= 897);
 });
