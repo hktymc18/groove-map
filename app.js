@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v907';
+var APP_JS_VERSION = 'v908';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -5202,7 +5202,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v907';
+  var DATA_VERSION = 'v908';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -7341,7 +7341,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
-  { v:'v907', d:'2026-11-22', items:['🛠 細かい修正をしました'] },
+  { v:'v908', d:'2026-11-22', items:['🛠 細かい修正をしました'] },
+  { v:'v907', d:'2026-11-22', items:['ToDo の「すべて」「今日」などの選んだ札を、チャコールの地に白い字に（読みやすく）'] },
   { v:'v906', d:'2026-11-22', items:['HOME：CALENDAR のタイルをチャコールに（金色はお金のところだけ）','HOME：下のボタンを端が丸い形に','「次はここ」の札をイエローの地にチャコールの字に（読みやすく）'] },
   { v:'v905', d:'2026-11-22', items:['カレンダー：土曜日の色をライトで読みやすい濃いターコイズに','カレンダー：「今日」ボタンは隣と同じ白いボタン、今日の日付はチャコールの丸に白い字に'] },
   { v:'v904', d:'2026-11-22', items:['計画シートも新しいトーンに（上の切り替えはチャコール・達成度のカードはターコイズ・届かなかった数字は金・振り返りの見出しはバイオレット・改善点はターコイズ）','カレンダーの「＋ 予定」はイエロー、月・週・日・ToDo の切り替えはチャコールに（予定の色は今まで通り）'] },
@@ -24375,7 +24376,7 @@ function _umActOf(pl) {
   if (!pl || !pl.course) return null;
   var days = pl.days || {}, ok = function(d) { return (days[d] || []).length > 0; }, ymd = function(t) { return t.getFullYear() + '-' + ('0' + (t.getMonth() + 1)).slice(-2) + '-' + ('0' + t.getDate()).slice(-2); };
   var add = function(d, n) { var p = d.split('-'); return ymd(new Date(+p[0], +p[1] - 1, +p[2] + n)); }, today = ymd(new Date());
-  // v907: 受付のアプリと同じ数え方（1日だけ空いた日は、その週（月〜日）に1回まで「おやすみ券」でつなぐ）
+  // v908: 受付のアプリと同じ数え方（1日だけ空いた日は、その週（月〜日）に1回まで「おやすみ券」でつなぐ）
   var wkKey = function(x) { var p = x.split('-'), t = new Date(+p[0], +p[1] - 1, +p[2]); return add(x, -((t.getDay() + 6) % 7)); };
   var st = 0, used = {}, d = ok(today) ? today : add(today, -1), yd = add(today, -1), g = 0;
   while (g++ < 2000) {
