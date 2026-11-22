@@ -2907,10 +2907,11 @@ if(gTrainerMode) document.documentElement.classList.add('trm');   // 🎓 研修
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v168';
+var APP_VER = 'v169';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v169', d: '2026/11/22', items: ['🔔 棚卸し：受付管理者・ユニオン管理者にも、毎週月曜の朝に「ユニオンの棚卸し：〇人（28日以上 〇人）」のまとめの通知が届くようにしました（タップで回答ページ）'] },
   { v: 'v168', d: '2026/11/21', items: ['🔔 棚卸しの自動のお知らせ：毎週月曜の朝、14日・28日動きがない人を、研修の担当とUPルビーにスマホの通知でお知らせ。通知から「続けている／様子見／やめた」を選ぶと、名簿に反映されます（やめた＝無効化）', '🧹 名簿の「棚卸し」に、お知らせへの回答の記録を表示'] },
   { v: 'v167', d: '2026/11/21', items: ['🧹 名簿に「棚卸し」を追加：研修・出席・面談シートなどの動きが14日以上ない人を一覧にして、「続けている／様子見（2週間）／無効化」を選べます（研修生も正規メンバーも）', '📅 棚卸しを開くと、名簿に「最後の動き」の列が出て、古い順に並べられます'] },
   { v: 'v166', d: '2026/11/21', items: ['📗 リーダー向けガイドを追加（🔰 使い方 から開けます）：受付管理・研修生登録・ATTACK LIST の使い方と、NAVIGATOR とのつながりを1ページに', '🛠 研修生登録の「＋登録／研修後入力」のタブが黒に戻っていたのを、グレーの丸に直しました'] },
@@ -10235,7 +10236,7 @@ function ckInvOpen(){
       var inv = s.exists ? s.data() : null, lg = $('invLog');
       if(!inv || !lg) return;
       var log = (inv.log || []).slice(-15).reverse();
-      lg.innerHTML = '<h3 style="font-size:14.5px;margin:16px 0 4px;">🔔 自動のお知らせ' + hq('毎週月曜の朝、14日・28日動きがない人を、研修の担当とUPルビーにスマホの通知で聞いています（同じ人に同じ段階は1回だけ）。回答は数時間以内に名簿に反映されます。') + '</h3>'
+      lg.innerHTML = '<h3 style="font-size:14.5px;margin:16px 0 4px;">🔔 自動のお知らせ' + hq('毎週月曜の朝、14日・28日動きがない人を、研修の担当とUPルビーにスマホの通知で聞いています（同じ人に同じ段階は1回だけ）。受付管理者・ユニオン管理者には、候補がいる週は毎週まとめの通知が届きます。回答は数時間以内に名簿に反映されます。') + '</h3>'
         + '<p style="font-size:12.5px;color:var(--sub);margin:0 0 6px;">最後の計算：' + esc(trDateShort(inv.day || '')) + '・お知らせ中 ' + (inv.list || []).length + '人</p>'
         + (log.length ? log.map(function(x){
             return '<div style="font-size:13px;border-bottom:1px solid var(--line);padding:4px 0;">' + esc(trDateShort(x.day)) + '　<b>' + esc(x.name || x.no) + '</b>：'

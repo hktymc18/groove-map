@@ -13,6 +13,7 @@
  *      14日以上＝1回目、28日以上＝2回目（研修生も正規メンバーも同じ。受付の画面 ckInvStage と同じ判定）。
  *      お知らせの相手（who）＝ 研修生：登録した担当・受講済みにした担当／全員：UPルビー（系列の名前と同じ名前のアカウント）。
  *      同じ人に同じ段階のお知らせは1回だけ（sent）。スマホの通知は1人1通にまとめる（NAVIGATOR の通知の登録先へ）。
+ *      v169: 受付管理者・ユニオン管理者には、候補がいる週は毎週「ユニオンの棚卸し：〇人（28日以上 〇人）」のまとめも送る。
  *      結果は checkinInventory/{ユニオン} に1つにまとめる（受付の画面は1回読むだけ）。
  */
 const D1 = 14, D2 = 28;
@@ -129,6 +130,7 @@ async function weekly(db, today, send) {
   }
   const unQs = await db.collection('checkinUnions').get();
   const digest = {};   // uid → [{ name, stage, union }]
+  const adminSum = {}; // uid → [{ un, n, two }]（v169: 受付管理者・ユニオン管理者へのまとめ）
   let total = 0;
   for (const u of unQs.docs) {
     const un = u.id;
@@ -153,19 +155,32 @@ async function weekly(db, today, send) {
       if (st > (prevSent[m.no] || 0)) w.forEach((uid) => (digest[uid] = digest[uid] || []).push({ name: m.name || m.no, stage: st, union: un }));
     });
     list.sort((a, b) => ((a.last ? a.last.d : '') < (b.last ? b.last.d : '') ? -1 : 1));
+    if (list.length) {
+      const ud = u.data() || {}, two = list.filter((x) => x.stage === 2).length;
+      new Set([].concat(ud.admins || [], ud.unionAdmins || [])).forEach((uid) => (adminSum[uid] = adminSum[uid] || []).push({ un, n: list.length, two }));
+    }
     total += list.length;
     await db.collection('checkinInventory').doc(un).set({ union: un, day: today, at: Date.now(), list, who, sent, log: (prev.log || []).slice(-40) });
   }
-  // スマホの通知（1人1通にまとめる）
+  // スマホの通知（1人1通にまとめる。同じ tag なので、担当・UPルビーのお願いと管理者のまとめは1通に入れる）
   let pushed = 0;
-  for (const uid of Object.keys(digest)) {
-    const L = digest[uid], two = L.filter((x) => x.stage === 2).length;
-    const names = L.slice(0, 3).map((x) => x.name).join('・') + (L.length > 3 ? ` ほか${L.length - 3}人` : '');
-    const title = `🧹 棚卸しのお願い（${L.length}人）`;
-    const body = `${names}：研修・出席が${two ? '28' : '14'}日以上ありません。続けているか教えてください（タップで回答）`;
+  const sumText = (S) => S.map((x) => `${x.un}：${x.n}人` + (x.two ? `（28日以上 ${x.two}人）` : '')).join('・');
+  const uids = Array.from(new Set(Object.keys(digest).concat(Object.keys(adminSum))));
+  for (const uid of uids) {
+    const L = digest[uid] || [], S = adminSum[uid] || [];
+    let title, body;
+    if (L.length) {
+      const two = L.filter((x) => x.stage === 2).length;
+      const names = L.slice(0, 3).map((x) => x.name).join('・') + (L.length > 3 ? ` ほか${L.length - 3}人` : '');
+      title = `🧹 棚卸しのお願い（${L.length}人）`;
+      body = `${names}：研修・出席が${two ? '28' : '14'}日以上ありません。続けているか教えてください（タップで回答）` + (S.length ? `\nユニオン全体の棚卸し… ${sumText(S)}` : '');
+    } else {
+      title = `🧹 今週の棚卸し（${S.reduce((a, x) => a + x.n, 0)}人）`;
+      body = `${sumText(S)}。研修・出席が14日以上ない人です。タップして確かめてください（受付の名簿の「🧹 棚卸し」からも）`;
+    }
     try { if (await send(uid, title, body)) pushed++; } catch (e) { console.log(`inventory push error uid=${uid}: ${e}`); }
   }
-  return { unions: unQs.size, candidates: total, notified: Object.keys(digest).length, pushed };
+  return { unions: unQs.size, candidates: total, notified: Object.keys(digest).length, admins: Object.keys(adminSum).length, pushed };
 }
 
 // NAVIGATOR の通知の登録先（users/{uid}/fcmTokens）へ送る。タップで受付の棚卸しの回答ページを開く（sw.js の gm-inv）
