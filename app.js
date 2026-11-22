@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v903';
+var APP_JS_VERSION = 'v904';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -5202,7 +5202,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v903';
+  var DATA_VERSION = 'v904';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -7341,6 +7341,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v904', d:'2026-11-22', items:['🛠 細かい修正をしました'] },
   { v:'v903', d:'2026-11-22', items:['🛠 細かい修正をしました'] },
   { v:'v902', d:'2026-11-22', items:['ANALYTICSのグラフ・カードも新しいトーンの色に（稼働構成は S＝ターコイズ・A＝うすいターコイズ・B＝灰）','年の目標の Q2〜Q4 の札はイエロー・BR はバイオレット（MAPと同じ）','シミュレーションの組織図の月の色・アイコン・(i)ボタンなど、前の色が残っていた所をすべて新しいトーンに','ライトのMAPで審査中・研修生などの色が前の色に戻っていたのを直す'] },
   { v:'v901', d:'2026-11-22', items:['サークルMAPも新しいトーンに（丸の縁はツリーと同じ区分の色・系列の線は4色・光らせない）','(i) ボタン・MAPのLTSV・理想MAPの上の帯の色も新しいトーンに'] },
@@ -24371,7 +24372,15 @@ function _umActOf(pl) {
   if (!pl || !pl.course) return null;
   var days = pl.days || {}, ok = function(d) { return (days[d] || []).length > 0; }, ymd = function(t) { return t.getFullYear() + '-' + ('0' + (t.getMonth() + 1)).slice(-2) + '-' + ('0' + t.getDate()).slice(-2); };
   var add = function(d, n) { var p = d.split('-'); return ymd(new Date(+p[0], +p[1] - 1, +p[2] + n)); }, today = ymd(new Date());
-  var st = 0, d = ok(today) ? today : add(today, -1); while (ok(d) && st < 1000) { st++; d = add(d, -1); }
+  // v904: 受付のアプリと同じ数え方（1日だけ空いた日は、その週（月〜日）に1回まで「おやすみ券」でつなぐ）
+  var wkKey = function(x) { var p = x.split('-'), t = new Date(+p[0], +p[1] - 1, +p[2]); return add(x, -((t.getDay() + 6) % 7)); };
+  var st = 0, used = {}, d = ok(today) ? today : add(today, -1), yd = add(today, -1), g = 0;
+  while (g++ < 2000) {
+    if (ok(d)) { st++; d = add(d, -1); continue; }
+    var pv = add(d, -1);
+    if ((st > 0 || d === yd) && !used[wkKey(d)] && ok(pv)) { used[wkKey(d)] = 1; d = pv; continue; }
+    break;
+  }
   var wk = 0; for (var i = 0; i < 7; i++) if (ok(add(today, -i))) wk++;
   var last = ''; Object.keys(days).forEach(function(k) { if (ok(k) && k > last) last = k; });
   return { co: pl.course, st: st, wk: wk, last: last, start: String(pl.start || ''), d: today };

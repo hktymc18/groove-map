@@ -1286,7 +1286,7 @@ body.uapp #toast{bottom:calc(96px + env(safe-area-inset-bottom, 0px));}
 .td-bub{position:relative;flex:1;min-width:0;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:10px 12px;font-size:14px;font-weight:700;line-height:1.55;}
 .td-bub::before{content:"";position:absolute;left:-7px;top:50%;width:12px;height:12px;background:var(--card);border-left:1px solid var(--line);border-bottom:1px solid var(--line);transform:translateY(-50%) rotate(45deg);}
 #uaApp .td-go{font-size:16px;padding:14px;}
-.td-7 .td-dots{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:8px 0 6px;}
+.td-7 .td-dots,.td-wk .td-dots{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:8px 0 6px;}
 .td-dots i{display:grid;place-items:center;height:26px;border-radius:8px;border:1.5px solid var(--line);font-style:normal;font-size:11px;font-weight:800;color:var(--sub);}
 .td-dots i.on{background:var(--ua-or);border-color:var(--ua-or);color:#fff;}
 .td-dots i.td{border-color:var(--ua-vio);color:var(--ua-vio);}
@@ -1351,6 +1351,18 @@ body.uapp #toast{bottom:calc(96px + env(safe-area-inset-bottom, 0px));}
 .mt-grid small{display:block;font-size:11.5px;color:var(--sub);}
 .mt-grid b{font-size:22px;font-weight:900;}
 .mt-grid i{font-style:normal;font-size:11.5px;color:var(--sub);margin-left:6px;}
+.pal{position:relative;}
+.pal-rb{position:absolute;right:2px;top:4px;width:24px;height:14px;}
+.pal-rb::before,.pal-rb::after{content:"";position:absolute;top:0;width:0;height:0;border-top:7px solid transparent;border-bottom:7px solid transparent;}
+.pal-rb::before{left:0;border-left:12px solid var(--rb);}
+.pal-rb::after{right:0;border-right:12px solid var(--rb);}
+.td-lv{display:block;margin-top:4px;font-size:11px;font-weight:700;color:var(--sub);}
+.td-dots i.rest{border-style:dashed;color:var(--ua-vio);}
+.td-rest{font-size:12px;}
+.td-back{border-color:var(--ua-or);}
+.td-soc{margin-top:10px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px;font-size:13px;font-weight:700;cursor:pointer;}
+#uaApp .td-qb.pick{background:var(--ua-vio-soft);border-radius:10px;padding:6px 8px;}
+#uaApp .td-qb em{margin-left:auto;font-style:normal;font-size:10.5px;color:#fff;background:var(--ua-vio);border-radius:999px;padding:1px 7px;flex:none;}
 /* 💜 v136: 新しいお知らせ・ラウンジの赤丸 */
 #uaTabs button,#uaApp .ua-bell,#uaApp .ua-seg button{position:relative;}
 .ua-dot{position:absolute;top:3px;right:calc(50% - 19px);width:9px;height:9px;border-radius:50%;background:#e2475f;border:2px solid var(--card);box-sizing:content-box;}
@@ -2984,10 +2996,11 @@ if(gTrainerMode) document.documentElement.classList.add('trm');   // 🎓 研修
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v172';
+var APP_VER = 'v173';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v173', d: '2026/11/22', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v172', d: '2026/11/22', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v171', d: '2026/11/22', items: ['🏅 会員証のバッジに「MC」と「SPEAKER」を追加しました'] },
   { v: 'v170', d: '2026/11/22', items: ['🔔 棚卸しの通知は、毎週日曜の11時に届くようにしました（前は月曜の朝）'] },
@@ -4460,6 +4473,7 @@ function renderPrysm(c){
 }
 /* 💜 段階5: マイプラン（ユーザーのカードの上で。本人＝カードのリンクを持っている人だけが書ける）
    cards/{トークン}/plan/me = { course, goal, qs:[使うクエスト], start, days:{ 'YYYY-MM-DD': [できたクエスト] }, atMs }
+   v173: wk（週の目標の日数・3〜7）
    v172: why（なりたい私）・by（いつまでに YYYY-MM-DD）・when（クエスト → am|noon|pm|bed）・lvl（easy|std|hard）・ob（はじめの準備をした時刻）
    ※ 効果をうたわない（薬機法）。クエストは「習慣」だけ。製品の名前はスタッフが会場で伝える */
 var MP_COURSES = [
@@ -4493,14 +4507,28 @@ function mpCourse(k){
 function mpYmd(d){ return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
 function mpAddDays(ymd, n){ var p = ymd.split('-'), d = new Date(+p[0], +p[1] - 1, +p[2] + n); return mpYmd(d); }
 // 連続日数（今日できていなければ昨日までの連続）・合計・レベル
+// 💜 v173: おやすみ券。1日だけ空いた日は、その週（月〜日）に1回まで「おやすみ」として連続をつなぐ（保存はしない・数え方だけ）。
+//   今日まだの時は昨日までで数える。rest = おやすみにした日。wk = 今週（月曜から）チェックした日の数
+function mpWeekKey(d){ var p = d.split('-'), t = new Date(+p[0], +p[1] - 1, +p[2]); return mpAddDays(d, -((t.getDay() + 6) % 7)); }
 function mpStats(plan, today){
   var days = (plan && plan.days) || {}, ok = function(d){ return (days[d] || []).length > 0; };
-  var cur = 0, d = ok(today) ? today : mpAddDays(today, -1);
-  while(ok(d) && cur < 1000){ cur++; d = mpAddDays(d, -1); }
-  var best = 0, run = 0, keys = Object.keys(days).filter(ok).sort(), prev = '';
-  keys.forEach(function(k){ run = (prev && mpAddDays(prev, 1) === k) ? run + 1 : 1; if(run > best) best = run; prev = k; });
+  var cur = 0, rest = [], usedW = {}, d = ok(today) ? today : mpAddDays(today, -1), yd = mpAddDays(today, -1), guard = 0;
+  while(guard++ < 2000){
+    if(ok(d)){ cur++; d = mpAddDays(d, -1); continue; }
+    var w = mpWeekKey(d), pv = mpAddDays(d, -1);
+    if((cur > 0 || d === yd) && !usedW[w] && ok(pv)){ usedW[w] = 1; rest.push(d); d = pv; continue; }
+    break;
+  }
+  var best = 0, run = 0, keys = Object.keys(days).filter(ok).sort(), prev = '', rW = {};
+  keys.forEach(function(k){
+    if(prev && mpAddDays(prev, 1) === k) run++;
+    else if(prev && mpAddDays(prev, 2) === k && !rW[mpWeekKey(mpAddDays(prev, 1))]){ rW[mpWeekKey(mpAddDays(prev, 1))] = 1; run++; }
+    else { run = 1; rW = {}; }
+    if(run > best) best = run; prev = k;
+  });
   var total = 0; Object.keys(days).forEach(function(k){ total += (days[k] || []).length; });
-  return { streak: cur, best: best, total: total, daysDone: keys.length, lv: Math.floor(total / 15) + 1, xp: total % 15 };
+  var w0 = mpWeekKey(today), wk = 0; for(var i = 0; i < 7; i++){ var x = mpAddDays(w0, i); if(x <= today && ok(x)) wk++; }
+  return { streak: cur, best: best, total: total, daysDone: keys.length, lv: Math.floor(total / 15) + 1, xp: total % 15, rest: rest, restWeek: !!usedW[w0], wk: wk };
 }
 // バッジ（来場・測定は受付の記録から、続ける系はマイプランから）
 function mpBadges(c, plan, st){
@@ -4604,12 +4632,14 @@ function mpSetup(courseK){
       + '<label>コース</label><div class="ulg-chips" id="mypCo">' + MP_COURSES.map(function(x){ return '<button type="button" data-k="' + x.k + '"' + (x.k === sel ? ' class="on"' : '') + '>' + esc(x.n) + '</button>'; }).join('') + '</div>'
       + '<label style="margin-top:14px;">毎日のクエスト <small style="font-weight:400;color:var(--sub);">（1〜5こ選ぶ）</small></label><div id="mypQs">'
       + co.q.map(function(q){ return '<label class="mpqs"><input type="checkbox" value="' + q[0] + '"' + (qs.indexOf(q[0]) >= 0 ? ' checked' : '') + '>' + esc(q[1]) + '</label>'; }).join('') + '</div>'
+      + '<label style="margin-top:14px;">今週の目標（週に何日）</label><div class="ulg-chips" id="mypWk">' + [3, 4, 5, 7].map(function(n){ return '<button type="button" data-w="' + n + '"' + ((+cur.wk || 4) === n ? ' class="on"' : '') + '>週' + n + '日</button>'; }).join('') + '</div>'
       + '<label style="margin-top:14px;">目標 <small style="font-weight:400;color:var(--sub);">（なくても可）</small></label>'
       + '<input type="text" id="mypGoal" maxlength="40" value="' + esc(cur.goal || '') + '" placeholder="例: 30日つづける">'
       + '<div class="ulg-chips" id="mypGoalSug">' + ['30日つづける', '毎日1つはやる'].concat(nx ? ['次の測定で' + nx.b.n + 'にする'] : []).map(function(t){ return '<button type="button" data-g="' + esc(t) + '">' + esc(t) + '</button>'; }).join('') + '</div>'
       + '<p style="font-size:11.5px;color:var(--sub);margin:12px 0 0;">クエストは毎日の習慣のチェックです。使う製品やケアの方法は、会場でスタッフに聞いてください。</p>'
       + '<div class="btns"><button id="mypCancel">キャンセル</button><button class="primary" id="mypGo">' + (cur.course ? '保存' : 'はじめる') + '</button></div>');
     $('mypCo').onclick = function(e){ var b = e.target.closest ? e.target.closest('button[data-k]') : null; if(b){ cur.goal = $('mypGoal').value; sel = b.getAttribute('data-k'); draw(); } };
+    $('mypWk').onclick = function(e){ var b = e.target.closest ? e.target.closest('button[data-w]') : null; if(!b) return; cur.wk = +b.getAttribute('data-w'); [].forEach.call($('mypWk').querySelectorAll('button'), function(x){ x.classList.toggle('on', x === b); }); };
     $('mypGoalSug').onclick = function(e){ var b = e.target.closest ? e.target.closest('button[data-g]') : null; if(b) $('mypGoal').value = b.getAttribute('data-g'); };
     $('mypCancel').onclick = closeModal;
     $('mypGo').onclick = function(){
@@ -4617,7 +4647,8 @@ function mpSetup(courseK){
       if(!pick.length){ toast('クエストを1つ以上選んでください'); return; }
       if(pick.length > 5){ toast('クエストは5つまでです'); return; }
       var plan = { course: sel, goal: $('mypGoal').value.trim().slice(0, 40), qs: pick, start: (gMp.plan && gMp.plan.start) || todayStr(), days: (gMp.plan && gMp.plan.days) || {} };
-      ['why', 'by', 'when', 'lvl', 'ob'].forEach(function(k){ if(gMp.plan && gMp.plan[k] != null) plan[k] = gMp.plan[k]; });   // 💜 v172: 準備で決めたことは残す
+      ['why', 'by', 'when', 'lvl', 'ob', 'wk'].forEach(function(k){ if(gMp.plan && gMp.plan[k] != null) plan[k] = gMp.plan[k]; });
+      if(cur.wk) plan.wk = +cur.wk;   // 💜 v173: 週の目標   // 💜 v172: 準備で決めたことは残す
       closeModal();
       mpSave(plan).then(function(){ toast(gMp.plan && gMp.plan.course ? 'プランを保存しました' : 'マイプランを始めました'); });
     };
@@ -4639,11 +4670,23 @@ var CK_PAL = {
     back: 'おかえり！また会えてうれしい。今日は1つだけやってみよう',
     promise: '{name}と約束する',
     first: '最初の1つ、今ここでやってみよう！',
-    firstDone: 'やったね！これで1日目クリア！'
-  }
+    firstDone: 'やったね！これで1日目クリア！',
+    rest: '昨日は「おやすみ券」を使ったよ。今日からまたいっしょにがんばろう',
+    week: '今週の目標クリア！すごい！',
+    lvup: 'なかよし度が上がったよ！'
+  },
+  // 💜 v173: なかよし度（チェックした数で上がる）。[必要なチェックの数, 名前]
+  grow: [[0, 'はじめまして'], [15, 'なかよし'], [45, 'しんゆう'], [90, 'ずっといっしょ'], [180, 'さいこうの相棒']]
 };
-function ckPalImg(cls){
-  return '<span class="pal' + (cls ? ' ' + cls : '') + '" aria-hidden="true">' + (CK_PAL.img ? '<img src="' + esc(CK_PAL.img) + '" alt="">' : CK_PAL.svg) + '</span>';
+// なかよし度：{ lv, name, next（次までのチェックの数・最高なら 0） }
+function ckPalLv(total){
+  var g = CK_PAL.grow || [[0, '']], i = 0;
+  for(var k = 0; k < g.length; k++) if(total >= g[k][0]) i = k;
+  return { lv: i + 1, name: g[i][1], next: i + 1 < g.length ? g[i + 1][0] - total : 0 };
+}
+function ckPalImg(cls, rb){   // rb: 衣装（リボン）の色。v173: PRYSMiO の最新の色
+  return '<span class="pal' + (cls ? ' ' + cls : '') + '" aria-hidden="true">' + (CK_PAL.img ? '<img src="' + esc(CK_PAL.img) + '" alt="">' : CK_PAL.svg)
+    + (rb ? '<i class="pal-rb" style="--rb:' + esc(rb) + ';"></i>' : '') + '</span>';
 }
 function ckPalSay(key, v){
   var s = CK_PAL.say[key] || '';
@@ -4713,9 +4756,33 @@ function ckUaToday(){
   var st = mpStats(plan, today), left = qs.length - done.length, last = '';
   Object.keys(plan.days || {}).forEach(function(k){ if(k < today && (plan.days[k] || []).length && k > last) last = k; });
   var away = last ? ckYmdDays(last, today) : 0;
-  var line = !done.length ? (away >= 3 ? ckPalSay('back') : ckPalSay('start')) : left ? ckPalSay('part', { n: done.length, r: left }) : ckPalSay('all', { d: st.streak });
-  var h = '<div class="td-hero' + (gUa.cheer ? ' pop' : '') + '">' + ckPalImg() + '<div class="td-bub">' + esc(line) + '</div></div>';
+  var yd = mpAddDays(today, -1), wkGoal = +plan.wk || 4;
+  var line = !done.length ? (away >= 3 ? ckPalSay('back') : st.rest.indexOf(yd) >= 0 ? ckPalSay('rest') : ckPalSay('start')) : left ? ckPalSay('part', { n: done.length, r: left }) : (st.wk === wkGoal ? ckPalSay('week') : ckPalSay('all', { d: st.streak }));
+  var ph = ckPrysmHist(gUa.c), rb = ph.length ? ckPrysmBand(ph[ph.length - 1].v).c : '', pl = ckPalLv(st.total);
+  var h = '<div class="td-hero' + (gUa.cheer ? ' pop' : '') + '">' + ckPalImg('', rb) + '<div class="td-bub">' + esc(line)
+    + '<small class="td-lv">' + esc(CK_PAL.name) + 'との なかよし度 Lv.' + pl.lv + '「' + esc(pl.name) + '」' + (pl.next ? '・次まで ' + pl.next + 'チェック' : '') + '</small></div></div>';
   gUa.cheer = false;
+  // 💜 v173: 今週の目標（月〜日）とおやすみ券
+  var w0 = mpWeekKey(today), wdn = ['月', '火', '水', '木', '金', '土', '日'], wd = [];
+  for(var wi = 0; wi < 7; wi++){ var dd = mpAddDays(w0, wi); wd.push('<i class="' + (((plan.days || {})[dd] || []).length ? 'on' : st.rest.indexOf(dd) >= 0 ? 'rest' : dd === today ? 'td' : '') + '">' + wdn[wi] + '</i>'); }
+  h += '<div class="ua-cd td-wk"><div class="ua-lb">今週の目標<em>' + st.wk + ' / ' + wkGoal + '日</em></div><div class="td-dots">' + wd.join('') + '</div>'
+    + (st.wk >= wkGoal ? '<b class="td-7t">🎉 今週の目標クリア！</b>' : '<p class="ua-p">あと' + (wkGoal - st.wk) + '日で今週の目標クリア</p>')
+    + '<p class="ua-p td-rest">🛌 おやすみ券：' + (st.restWeek ? '今週は使ったよ' : '今週あと1枚（1日だけ休んでも、連続はつながる）') + '</p></div>';
+  // 💜 v173: おかえり（3日以上あいた時は、今日は1つだけ）
+  var back = away >= 3 && !done.length;
+  if(back) h += '<div class="ua-cd td-back"><b class="td-7t">おかえり！</b><p class="ua-p">今日は1つだけでOK。いちばん上の1つをやってみよう</p></div>';
+  // 💜 v173: バディの今日・あなたの投稿への 👏
+  var soc = [];
+  if(gBd && gBd.token === gUa.token && gBd.me){
+    var bn = (gBd.me.list || []).filter(function(b){ var x = gBd.sums[b.k]; return x && x.td === today; }).map(function(b){ return (gBd.sums[b.k].n || b.n || '').split(/\s+/).pop(); });
+    if(bn.length) soc.push('<div class="td-soc" data-go="friends" data-gos="buddy">👯 バディの' + esc(bn.slice(0, 2).join('さん・')) + 'さん' + (bn.length > 2 ? 'ほか' + (bn.length - 2) + '人' : '') + 'が今日できたよ</div>');
+  }
+  if(gLg && gLg.token === gUa.token){
+    var me = String((gUa.c || {}).no || ''), cl = 0;
+    (gLg.list || []).forEach(function(p){ if(p.uid === me) cl += +p.claps || 0; });
+    if(cl) soc.push('<div class="td-soc" data-go="friends" data-gos="lounge">👏 あなたの投稿に ' + cl + 'こ届いているよ</div>');
+  }
+  h += soc.join('');
   // はじめの7日
   var e7 = mp7Event(plan);
   if(e7) h += '<div class="ua-cd td-7"><div class="ua-lb">はじめの7日<em>' + e7.n + '日目</em></div><div class="td-dots">'
@@ -4731,7 +4798,7 @@ function ckUaToday(){
   cd.push('<div><small>つづいている日</small><b class="mono">' + st.streak + '日</b></div>');
   h += '<div class="td-cd">' + cd.join('') + '</div>';
   // 時間帯ごとのクエスト（今の時間帯が上）
-  var now = mpSlotNow(), order = MP_SLOTS.slice(), ni = 0;
+  var now = mpSlotNow(), order = MP_SLOTS.slice(), ni = 0, pickDone = false;
   MP_SLOTS.forEach(function(s, i){ if(s[0] === now) ni = i; });
   order = order.slice(ni).concat(order.slice(0, ni));
   var len = 163.4;
@@ -4742,7 +4809,7 @@ function ckUaToday(){
     var L = qs.filter(function(q){ return mpSlotOf(plan, q[0]) === s[0]; });
     if(!L.length) return;
     h += '<div class="td-slot' + (s[0] === now ? ' now' : '') + '"><span class="td-sl">' + s[2] + ' ' + s[1] + (s[0] === now ? '<em>いま</em>' : '') + '</span>'
-      + L.map(function(q){ var on = done.indexOf(q[0]) >= 0; return '<button type="button" class="ua-q td-qb' + (on ? ' on' : '') + '" data-uq="' + q[0] + '" aria-pressed="' + on + '"><i>' + (on ? '✓' : '') + '</i><span>' + esc(q[1]) + '</span></button>'; }).join('') + '</div>';
+      + L.map(function(q){ var on = done.indexOf(q[0]) >= 0, pk = back && !pickDone; if(pk) pickDone = true; return '<button type="button" class="ua-q td-qb' + (on ? ' on' : '') + (pk ? ' pick' : '') + '" data-uq="' + q[0] + '" aria-pressed="' + on + '"><i>' + (on ? '✓' : '') + '</i><span>' + esc(q[1]) + '</span>' + (pk ? '<em>まずはこれ</em>' : '') + '</button>'; }).join('') + '</div>';
   });
   h += '</div>';
   if(!left) h += '<div class="td-all">🎉 今日のクエストは全部できました' + (gBd && gBd.token === gUa.token && gBd.me && (gBd.me.list || []).length ? '<small>バディにも「今日できた」が届いています</small>' : '') + '</div>';
@@ -4758,7 +4825,7 @@ var MP_LVL = [['easy', 'ゆるく', 1, 'まずは1つだけ'], ['std', 'ふつ�
 function ckObOpen(){
   if(!gMp || !gUa) return;
   try{ localStorage.setItem('bci_ob_' + gUa.token, '1'); }catch(e){}
-  var o = { step: 0, why: '', by: '', co: '', lvl: 'std', qs: [], when: {} };
+  var o = { step: 0, why: '', by: '', co: '', lvl: 'std', qs: [], when: {}, wk: 4 };
   var nx = gUa.next, today = todayStr();
   // 次のDAY は後から読み込まれる。読めたら「いつまでに？」に足す（はじめの画面を開いている時だけ）
   gUa.obRedraw = function(){ if(!nx && gUa.next && o.step === 0 && $('obBy')){ nx = gUa.next; draw(); } };
@@ -4777,6 +4844,7 @@ function ckObOpen(){
     } else if(o.step === 2){
       var co = mpCourse(o.co);
       body = '<label>どのくらいやる？</label><div class="ob-lvl" id="obLvl">' + MP_LVL.map(function(l){ return '<button type="button" data-v="' + l[0] + '"' + (o.lvl === l[0] ? ' class="on"' : '') + '><b>' + l[1] + '</b><small>' + l[3] + '</small></button>'; }).join('') + '</div>'
+        + '<label style="margin-top:14px;">週に何日やる？</label><div class="ulg-chips" id="obWk">' + [3, 4, 5, 7].map(function(n){ return '<button type="button" data-v="' + n + '"' + (o.wk === n ? ' class="on"' : '') + '>週' + n + '日' + (n === 4 ? '（おすすめ）' : n === 7 ? '（毎日）' : '') + '</button>'; }).join('') + '</div>'
         + '<label style="margin-top:14px;">毎日のクエストと、やる時間</label><div id="obQs">'
         + co.q.map(function(q){
             var on = o.qs.indexOf(q[0]) >= 0, sl = o.when[q[0]] || MP_SLOT_DEF[q[0]] || 'pm';
@@ -4788,13 +4856,14 @@ function ckObOpen(){
       var co2 = mpCourse(o.co);
       body = '<div class="td-hero">' + ckPalImg() + '<div class="td-bub">' + esc(o.why ? '「' + o.why + '」のために、毎日いっしょにがんばろう！' : '毎日いっしょにがんばろう！') + '</div></div>'
         + '<div class="ob-sum"><div><small>コース</small><b>' + esc(co2.n) + '</b></div>' + (o.by ? '<div><small>いつまでに</small><b>' + esc(ckMd(o.by)) + '（あと' + ckYmdDays(today, o.by) + '日）</b></div>' : '')
-        + '<div><small>毎日のクエスト</small><b>' + o.qs.length + 'こ</b></div></div>'
+        + '<div><small>毎日のクエスト</small><b>' + o.qs.length + 'こ</b></div><div><small>今週の目標</small><b>週' + o.wk + '日</b></div></div>'
         + co2.q.filter(function(q){ return o.qs.indexOf(q[0]) >= 0; }).map(function(q){ var s = MP_SLOTS.filter(function(x){ return x[0] === (o.when[q[0]] || MP_SLOT_DEF[q[0]] || 'pm'); })[0]; return '<p class="ob-li">' + s[2] + ' ' + s[1] + '　' + esc(q[1]) + '</p>'; }).join('');
     }
     modal('<div class="ob-wrap"><h2>はじめの準備</h2>' + dots + body
       + '<div class="btns"><button id="obBack">' + (o.step ? 'もどる' : 'あとで') + '</button><button class="primary" id="obNext">' + (o.step === 3 ? esc(ckPalSay('promise')) : '次へ') + '</button></div></div>');
     var pickOne = function(id, key){ var box = $(id); if(box) box.onclick = function(e){ var b = e.target.closest ? e.target.closest('button[data-v]') : null; if(!b) return; o[key] = b.getAttribute('data-v'); [].forEach.call(box.querySelectorAll('button'), function(x){ x.classList.toggle('on', x === b); }); if(key === 'why' && $('obWhyT')) $('obWhyT').value = ''; if(key === 'by' && $('obByD')) $('obByD').value = ''; }; };
     pickOne('obWhy', 'why'); pickOne('obBy', 'by');
+    if($('obWk')) $('obWk').onclick = function(e){ var b = e.target.closest ? e.target.closest('button[data-v]') : null; if(!b) return; o.wk = +b.getAttribute('data-v'); [].forEach.call($('obWk').querySelectorAll('button'), function(x){ x.classList.toggle('on', x === b); }); };
     if($('obWhyT')) $('obWhyT').oninput = function(){ var v = $('obWhyT').value.trim(); if(v){ o.why = v.slice(0, 40); [].forEach.call($('obWhy').querySelectorAll('button'), function(x){ x.classList.remove('on'); }); } };
     if($('obByD')) $('obByD').onchange = function(){ if($('obByD').value){ o.by = $('obByD').value; [].forEach.call($('obBy').querySelectorAll('button'), function(x){ x.classList.remove('on'); }); } };
     [].forEach.call(document.querySelectorAll('.ob-wrap [data-co]'), function(b){ b.onclick = function(){ o.co = b.getAttribute('data-co'); var co = mpCourse(o.co); o.qs = co.q.slice(0, 3).map(function(q){ return q[0]; }); o.lvl = 'std'; o.step = 2; draw(); }; });
@@ -4818,7 +4887,7 @@ function ckObOpen(){
         o.step = 3; draw(); return;
       }
       var when = {}; o.qs.forEach(function(k){ when[k] = o.when[k] || MP_SLOT_DEF[k] || 'pm'; });
-      var plan = { course: o.co, goal: o.why.slice(0, 40), why: o.why.slice(0, 40), qs: o.qs, when: when, lvl: o.lvl, ob: Date.now(), start: today, days: (gMp.plan && gMp.plan.days) || {} };
+      var plan = { course: o.co, goal: o.why.slice(0, 40), why: o.why.slice(0, 40), qs: o.qs, when: when, lvl: o.lvl, wk: o.wk, ob: Date.now(), start: today, days: (gMp.plan && gMp.plan.days) || {} };
       if(o.by) plan.by = o.by;
       $('obNext').disabled = true;
       mpSave(plan).then(function(){ if(gMp.plan === plan) ckObFirst(); else $('obNext').disabled = false; });

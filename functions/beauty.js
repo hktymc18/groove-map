@@ -3,6 +3,7 @@
  *   毎日20時（index.js の beautyDailyから）:
  *   thanks … 来場した日: 今日のイベントに受付したユーザー（出席の kind=user）に、来場のお礼を送る
  *   nudge … v172: 今日まだクエストをチェックしていない人に「今日まだ」（お礼・前日のお知らせを送った人には送らない）
+ *            v173: まだの人には今日できたバディの名前、今日できた人には今日の投稿への👏の数
  *   dayEve … DAYの前日: 明日のイベントのうち「ユーザーのカードに次のDAYとして出す」（uDay）にしたものを、
  *            そのユニオンで通知を受け取っているユーザーに知らせる
  *   v146: 前日のお知らせに、その人の体感（カードの exp_{イベント}：メニュー・担当・順番）を入れる
@@ -109,27 +110,61 @@ async function thanks(db, messaging, now, sentIds) {
 // v172: 「今日まだ」。マイプランを始めていて、今日まだチェックしていない人だけ。
 //   やめてしまった人にずっと送らないように、最後にチェックした日（無ければ始めた日）から14日までの人だけ。
 //   同じ夜にお礼・前日のお知らせを送った人（skip）には送らない（1晩に1通まで）
+// v173: 人からの反応を入れる（新しい定時の実行は増やさない）
+//   ・まだの人：バディ（cards/{t}/buddy/me のリスト → ckBuddy/{k}.td）で今日できた人がいれば「バディの○○さんは今日できたよ」
+//   ・今日できた人：自分の投稿（cards/{t}/lounge）に今日 👏 が付いていれば「あなたの投稿に👏が○こ届いたよ」（無ければ送らない）
 async function nudge(db, messaging, now, skip) {
   const today = jstYmd(now, 0), from = jstYmd(now, -14);
+  const t0 = Date.UTC(+today.slice(0, 4), +today.slice(5, 7) - 1, +today.slice(8, 10)) - 9 * 3600000;   // 日本時間の今日の0時
+  const ms = (a) => (a && a.toMillis ? a.toMillis() : +a || 0);
   const qs = await db.collection('ckPush').where('on', '==', true).get();
-  const subs = [], out = { date: today, subs: 0, sent: 0, ng: 0 };
+  const byBody = {}, out = { date: today, subs: 0, sent: 0, ng: 0, buddy: 0, clap: 0 };
+  const add = (body, tag, s) => { const k = tag + '|' + body; (byBody[k] = byBody[k] || { body, tag, subs: [] }).subs.push(s); };
   for (const d of qs.docs) {
     const s = { id: d.id, ref: d.ref, d: d.data() || {} };
     if (!subOk(s) || (skip && skip[d.id])) continue;
     out.subs++;
-    const p = await db.collection('cards').doc(s.d.card).collection('plan').doc('me').get();
+    const card = db.collection('cards').doc(s.d.card);
+    const p = await card.collection('plan').doc('me').get();
     const pl = p.exists ? (p.data() || {}) : null;
     if (!pl || !pl.course) continue;
     const days = pl.days || {};
-    if ((days[today] || []).length) continue;
+    if ((days[today] || []).length) {
+      // 今日できた人：今日の 👏
+      let n = 0;
+      try {
+        const mine = await card.collection('lounge').get();
+        for (const m of mine.docs.slice(0, 10)) {
+          const cs = await db.collection('ckLounge').doc(m.id).collection('clap').get();
+          cs.docs.forEach((c) => { if (ms((c.data() || {}).at) >= t0) n++; });
+        }
+      } catch (e) { n = 0; }
+      if (n) { add('今日もできたね！あなたの投稿に👏が' + n + 'こ届いたよ', 'nb-clap-' + today, s); out.clap++; }
+      continue;
+    }
     let last = String(pl.start || '');
     Object.keys(days).forEach((k) => { if ((days[k] || []).length && k > last) last = k; });
     if (!last || last < from) continue;
-    subs.push(s);
+    // まだの人：今日できたバディ
+    const names = [];
+    try {
+      const bm = await card.collection('buddy').doc('me').get();
+      for (const b of ((bm.exists && (bm.data() || {}).list) || []).slice(0, 20)) {
+        const x = await db.collection('ckBuddy').doc(String(b.k || '_')).get();
+        const xd = x.exists ? (x.data() || {}) : {};
+        if (xd.td === today) names.push(String(xd.n || b.n || '').trim().split(/\s+/).pop());
+      }
+    } catch (e) { names.length = 0; }
+    if (names.length) {
+      add('バディの' + names.slice(0, 2).join('さん・') + 'さん' + (names.length > 2 ? 'ほか' + (names.length - 2) + '人' : '') + 'は今日できたよ。あなたも1つやってみよう', 'nb-nudge-' + today, s);
+      out.buddy++;
+    } else add('今日のクエスト、まだだよ。1つだけでもチェックしよう', 'nb-nudge-' + today, s);
   }
-  if (!subs.length) return out;
-  const r = await sendTo(messaging, subs, 'NAVIGATOR Beauty', '今日のクエスト、まだだよ。1つだけでもチェックしよう', 'nb-nudge-' + today, { badge: '1' });
-  out.sent = r.ok; out.ng = r.ng;
+  for (const k of Object.keys(byBody)) {
+    const g = byBody[k];
+    const r = await sendTo(messaging, g.subs, 'NAVIGATOR Beauty', g.body.slice(0, 120), g.tag, g.tag.indexOf('nb-nudge') === 0 ? { badge: '1' } : {});
+    out.sent += r.ok; out.ng += r.ng;
+  }
   return out;
 }
 
