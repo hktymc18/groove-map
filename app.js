@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v910';
+var APP_JS_VERSION = 'v911';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -1256,7 +1256,7 @@ function renderPCMap(mapType) {
     while (nameStr.length > 2 && _estW9(nameStr + '…', nameFs) > _nameMax9 && _estW9(nameStr, nameFs) > _nameMax9) { nameStr = nameStr.slice(0, -1); if (_estW9(nameStr + '…', nameFs) <= _nameMax9) { nameStr += '…'; break; } }
     var nameColor = isF ? (isLightTheme?'#db2777':'#f9a8d4') : (isLightTheme?'#1a1f2b':'#f2f4f8');
     var gsvColor = isLightTheme ? '#3a4560' : '#e2e8f0';
-    if (NVc) { nameColor = NVc.ink; gsvColor = NVc.ink; }
+    if (NVc) { nameColor = isF ? (isLightTheme ? '#D6337A' : '#FF8FC0') : NVc.ink; gsvColor = NVc.ink; } // v911: 女性の名前はピンク
     if(m.morale>0){
       // v501: やる気＝色分き線画アイコン（絵文字廃止）
       var _ml9 = moraleLv(m.morale);
@@ -2219,7 +2219,7 @@ function renderPCOrbit(mapType, targetEl, forceLight, opts) {
     // v504: 2文字/行（姓2＋名2）のサイズを上限に、行の文字数が多いほど縮小して必ず円内に収める
     var _ln2 = (m.lastName || '').replace(/\s+/g, ''), _fn2 = (m.firstName || '').replace(/\s+/g, '');
     if (!_ln2 && !_fn2) _ln2 = '—';
-    var _nmCol = (m.gender === 'female' && !NVo) ? (light ? '#db2777' : '#f9a8d4') : _txtCol; // v901: 新しいトーンは名前を同じ色に（ツリーと同じ）
+    var _nmCol = m.gender === 'female' ? (NVo ? (light ? '#D6337A' : '#FF8FC0') : (light ? '#db2777' : '#f9a8d4')) : _txtCol; // v911: 女性の名前はピンク // v901: 新しいトーンは名前を同じ色に（ツリーと同じ）
     _ln2 = _ln2.substring(0, 4); _fn2 = _fn2.substring(0, 4);
     var _nqx = r * 0.40, _nqy = r * 0.40;
     var _maxL2 = Math.max(_ln2.length, _fn2.length);
@@ -5202,7 +5202,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v910';
+  var DATA_VERSION = 'v911';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -7341,6 +7341,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v911', d:'2026-11-22', items:['MAP（PC・スマホ・サークル）で、女性の名前をピンクに（男女を色で見分けられるように）'] },
   { v:'v910', d:'2026-11-22', items:['PC：選んだ印はチャコール・押すボタンはイエローに（MAP のビジネス｜ユーザー、編集｜サマリー、今月｜来月、ToDo の左の一覧と＋、OL の企画）','タブの下線もチャコールに','計画シートの達成度のカードは、白い字が読める濃いターコイズに。下のページの印はチャコールに'] },
   { v:'v909', d:'2026-11-22', items:['🛠 細かい修正をしました'] },
   { v:'v908', d:'2026-11-22', items:['ホーム（今日）の数字をチャコールに','押すボタンはイエロー・選んだ印はチャコールにそろえる（ターコイズの地に暗い字で読みにくかった所）','年の目標の「過ぎた」・メンバーの画面のタイトルの札・OL の審査中の札・地域の札なども読みやすく'] },
@@ -42759,7 +42760,7 @@ function _p2ShMapSvg(o) {
     if (isLOI) fill = 'rgba(251,146,60,0.14)';
     if (fr) fill = 'rgba(255,209,102,0.13)';
     var txC = light ? '#1a1f2b' : '#f2f4f8', dmC = light ? '#3a4560' : '#cbd5e1', dvC = light ? '#556070' : '#7d8aa0', sw = (brUp ? 3 : 1.6) * Math.max(.8, fs);
-    var nmC = m.gender === 'female' ? (light ? '#db2777' : '#f9a8d4') : txC;
+    var nmC = m.gender === 'female' ? (NV_TONE ? (light ? '#D6337A' : '#FF8FC0') : (light ? '#db2777' : '#f9a8d4')) : txC;
     var tx = function(xx, yy, s, fz, fw, c) { return '<text x="' + f(xx) + '" y="' + f(yy) + '" text-anchor="middle" font-size="' + f(fz) + '" font-weight="' + fw + '" fill="' + c + '">' + evEsc(s) + '</text>'; };
     var h0 = '<g' + (brUp && !light ? ' style="filter:drop-shadow(0 0 ' + f(6 * fs) + 'px ' + stroke + '88)"' : '') + '><circle cx="' + X + '" cy="' + Y + '" r="' + f(r) + '" fill="' + (light ? '#fff' : '#161920') + '"/>'
       + '<circle cx="' + X + '" cy="' + Y + '" r="' + f(r) + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="' + f(sw) + '"' + (dash ? ' stroke-dasharray="5 4"' : '') + '/>';
