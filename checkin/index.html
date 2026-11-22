@@ -1286,7 +1286,7 @@ body.uapp #toast{bottom:calc(96px + env(safe-area-inset-bottom, 0px));}
 .td-bub{position:relative;flex:1;min-width:0;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:10px 12px;font-size:14px;font-weight:700;line-height:1.55;}
 .td-bub::before{content:"";position:absolute;left:-7px;top:50%;width:12px;height:12px;background:var(--card);border-left:1px solid var(--line);border-bottom:1px solid var(--line);transform:translateY(-50%) rotate(45deg);}
 #uaApp .td-go{font-size:16px;padding:14px;}
-.td-7 .td-dots{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:8px 0 6px;}
+.td-7 .td-dots,.td-wk .td-dots{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:8px 0 6px;}
 .td-dots i{display:grid;place-items:center;height:26px;border-radius:8px;border:1.5px solid var(--line);font-style:normal;font-size:11px;font-weight:800;color:var(--sub);}
 .td-dots i.on{background:var(--ua-or);border-color:var(--ua-or);color:#fff;}
 .td-dots i.td{border-color:var(--ua-vio);color:var(--ua-vio);}
@@ -1351,6 +1351,59 @@ body.uapp #toast{bottom:calc(96px + env(safe-area-inset-bottom, 0px));}
 .mt-grid small{display:block;font-size:11.5px;color:var(--sub);}
 .mt-grid b{font-size:22px;font-weight:900;}
 .mt-grid i{font-style:normal;font-size:11.5px;color:var(--sub);margin-left:6px;}
+.pal{position:relative;}
+.pal-rb{position:absolute;right:2px;top:4px;width:24px;height:14px;}
+.pal-rb::before,.pal-rb::after{content:"";position:absolute;top:0;width:0;height:0;border-top:7px solid transparent;border-bottom:7px solid transparent;}
+.pal-rb::before{left:0;border-left:12px solid var(--rb);}
+.pal-rb::after{right:0;border-right:12px solid var(--rb);}
+.td-lv{display:block;margin-top:4px;font-size:11px;font-weight:700;color:var(--sub);}
+.td-dots i.rest{border-style:dashed;color:var(--ua-vio);}
+.td-rest{font-size:12px;}
+.td-back{border-color:var(--ua-or);}
+.td-soc{margin-top:10px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px;font-size:13px;font-weight:700;cursor:pointer;}
+#uaApp .td-qb.pick{background:var(--ua-vio-soft);border-radius:10px;padding:6px 8px;}
+#uaApp .td-qb em{margin-left:auto;font-style:normal;font-size:10.5px;color:#fff;background:var(--ua-vio);border-radius:999px;padding:1px 7px;flex:none;}
+.td-sc .td-scn{display:flex;align-items:baseline;gap:6px;margin-top:4px;}
+.td-sc .td-scn b{font-size:40px;font-weight:900;color:var(--ua-vio);}
+.td-sc .td-scn span{font-size:13px;color:var(--sub);font-weight:700;}
+.td-sc .td-scn em{font-style:normal;font-size:12px;color:var(--green);font-weight:700;margin-left:6px;}
+.td-bars{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;align-items:end;height:48px;margin-top:6px;}
+.td-bars i{display:block;background:var(--ua-vio-soft);border-radius:5px 5px 2px 2px;}
+.td-bars i.td{background:var(--ua-vio);}
+.td-res{border-color:var(--ua-vio);}
+.td-les{cursor:pointer;}
+.td-wsc{cursor:pointer;border-color:var(--ua-or);background:linear-gradient(135deg,var(--card),rgba(232,131,58,.08));}
+.td-wsc .td-7t small{font-size:12px;color:var(--sub);font-weight:700;margin-left:4px;}
+#uaApp .td-wsb{margin-top:8px;}
+.ws-dt{margin:-6px 0 8px;font-size:12.5px;color:var(--sub);}
+.ws-big{display:flex;align-items:baseline;gap:8px;margin:12px 0 4px;}
+.ws-big b{font-size:48px;font-weight:900;color:var(--ua-or);}
+.ws-big span{font-size:14px;color:var(--sub);font-weight:700;}
+.ws-big em{font-style:normal;font-size:14px;font-weight:800;color:var(--green);}
+.ws-dots{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:6px 0 12px;}
+.td-dots i.fu{opacity:.35;border-style:dashed;}
+.les-u{display:inline-block;font-size:11px;color:var(--ua-vio);font-weight:800;margin-bottom:2px;}
+.bt-ls{display:grid;gap:6px;margin:0 0 6px;}
+.bt-lsr{display:flex;gap:8px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:8px 10px;}
+.bt-lsr>div{flex:1;min-width:0;display:grid;gap:2px;}
+.bt-lsr span{font-size:12.5px;color:var(--sub);}
+.bt-lsr button{flex:none;}
+.pz-type{margin-top:12px;border:1px solid var(--line);border-radius:14px;padding:10px 12px;display:grid;gap:2px;}
+.pz-type small{font-size:11px;color:var(--sub);}
+.pz-type b{font-size:16px;color:var(--pz);}
+.pz-type span{font-size:12.5px;color:var(--sub);}
+.pz-type button{justify-self:start;margin-top:8px;}
+.ph-wrap .ui-s{font-size:12.5px;}
+.ph-cmp{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0;}
+.ph-cmp figure{margin:0;}
+.ph-cmp img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:12px;display:block;}
+.ph-cmp figcaption{font-size:12px;color:var(--sub);text-align:center;margin-top:4px;}
+.ph-list{display:flex;gap:6px;overflow-x:auto;padding:4px 0;}
+.ph-list span{position:relative;flex:none;width:64px;text-align:center;}
+.ph-list img{width:64px;height:84px;object-fit:cover;border-radius:8px;display:block;}
+.ph-list small{font-size:10.5px;color:var(--sub);}
+.ph-list button{position:absolute;top:2px;right:2px;width:20px;height:20px;padding:0;border-radius:50%;font-size:10px;line-height:1;}
+.ph-add{display:block;text-align:center;margin-top:10px;padding:12px;border-radius:12px;cursor:pointer;}
 /* 💜 v136: 新しいお知らせ・ラウンジの赤丸 */
 #uaTabs button,#uaApp .ua-bell,#uaApp .ua-seg button{position:relative;}
 .ua-dot{position:absolute;top:3px;right:calc(50% - 19px);width:9px;height:9px;border-radius:50%;background:#e2475f;border:2px solid var(--card);box-sizing:content-box;}
@@ -2984,10 +3037,13 @@ if(gTrainerMode) document.documentElement.classList.add('trm');   // 🎓 研修
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v172';
+var APP_VER = 'v175';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v175', d: '2026/11/22', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
+  { v: 'v174', d: '2026/11/22', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
+  { v: 'v173', d: '2026/11/22', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v172', d: '2026/11/22', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v171', d: '2026/11/22', items: ['🏅 会員証のバッジに「MC」と「SPEAKER」を追加しました'] },
   { v: 'v170', d: '2026/11/22', items: ['🔔 棚卸しの通知は、毎週日曜の11時に届くようにしました（前は月曜の朝）'] },
@@ -4427,6 +4483,7 @@ function ckLvOf(ev){
 }
 // 本人のカードの PRYSMiO（今の色・前回から・次の色まで・記録）
 function renderPrysm(c){
+  setTimeout(function(){ var b = $('pzShare'); if(b && gUa) b.onclick = function(){ ckShareImage(gUa.c, gUa.token); }; }, 0);   // 💜 v174
   var el = $('pzArea');
   if(!el) return;
   if(!c || c.kind !== 'user'){ el.innerHTML = ''; return; }
@@ -4451,6 +4508,8 @@ function renderPrysm(c){
     + '<div class="pz-bar" aria-hidden="true">' + CK_PRYSM.map(function(x, j){ return '<i style="background:' + x.c + ';' + (j > i ? 'opacity:.28;' : '') + '"></i>'; }).join('')
     + '<b style="left:' + pos.toFixed(1) + '%;"></b></div>'
     + '<div class="pz-next">' + (nx ? esc(nx.b.n) + 'まで あと <b>' + nx.need.toLocaleString() + '</b>' : '🏅 最高の色、プラチナメダリオンです') + '</div>'
+    + (function(){ var ty = ckTypeOf(cur.v); return ty.name ? '<div class="pz-type"><small>あなたは</small><b>' + esc(b.n) + 'タイプ「' + esc(ty.name) + '」</b><span>' + esc(ty.sub) + '</span>'
+        + (gUa ? '<button type="button" id="pzShare">✨ シェア画像を作る</button>' : '') + '</div>' : ''; })()   // 💜 v174
     + (h.length > 1 ? '<div class="pz-hist">' + h.slice(-6).reverse().map(function(r){
         return '<div><span class="mono">' + esc((r.d || '').slice(5).replace('-', '/')) + '</span><span class="dot" style="background:' + ckPrysmBand(r.v).c + ';"></span><b class="mono">' + r.v.toLocaleString() + '</b><span class="nm">' + esc(r.name) + '</span></div>';
       }).join('') + '</div>' : '')
@@ -4460,6 +4519,7 @@ function renderPrysm(c){
 }
 /* 💜 段階5: マイプラン（ユーザーのカードの上で。本人＝カードのリンクを持っている人だけが書ける）
    cards/{トークン}/plan/me = { course, goal, qs:[使うクエスト], start, days:{ 'YYYY-MM-DD': [できたクエスト] }, atMs }
+   v173: wk（週の目標の日数・3〜7）
    v172: why（なりたい私）・by（いつまでに YYYY-MM-DD）・when（クエスト → am|noon|pm|bed）・lvl（easy|std|hard）・ob（はじめの準備をした時刻）
    ※ 効果をうたわない（薬機法）。クエストは「習慣」だけ。製品の名前はスタッフが会場で伝える */
 var MP_COURSES = [
@@ -4493,14 +4553,28 @@ function mpCourse(k){
 function mpYmd(d){ return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
 function mpAddDays(ymd, n){ var p = ymd.split('-'), d = new Date(+p[0], +p[1] - 1, +p[2] + n); return mpYmd(d); }
 // 連続日数（今日できていなければ昨日までの連続）・合計・レベル
+// 💜 v173: おやすみ券。1日だけ空いた日は、その週（月〜日）に1回まで「おやすみ」として連続をつなぐ（保存はしない・数え方だけ）。
+//   今日まだの時は昨日までで数える。rest = おやすみにした日。wk = 今週（月曜から）チェックした日の数
+function mpWeekKey(d){ var p = d.split('-'), t = new Date(+p[0], +p[1] - 1, +p[2]); return mpAddDays(d, -((t.getDay() + 6) % 7)); }
 function mpStats(plan, today){
   var days = (plan && plan.days) || {}, ok = function(d){ return (days[d] || []).length > 0; };
-  var cur = 0, d = ok(today) ? today : mpAddDays(today, -1);
-  while(ok(d) && cur < 1000){ cur++; d = mpAddDays(d, -1); }
-  var best = 0, run = 0, keys = Object.keys(days).filter(ok).sort(), prev = '';
-  keys.forEach(function(k){ run = (prev && mpAddDays(prev, 1) === k) ? run + 1 : 1; if(run > best) best = run; prev = k; });
+  var cur = 0, rest = [], usedW = {}, d = ok(today) ? today : mpAddDays(today, -1), yd = mpAddDays(today, -1), guard = 0;
+  while(guard++ < 2000){
+    if(ok(d)){ cur++; d = mpAddDays(d, -1); continue; }
+    var w = mpWeekKey(d), pv = mpAddDays(d, -1);
+    if((cur > 0 || d === yd) && !usedW[w] && ok(pv)){ usedW[w] = 1; rest.push(d); d = pv; continue; }
+    break;
+  }
+  var best = 0, run = 0, keys = Object.keys(days).filter(ok).sort(), prev = '', rW = {};
+  keys.forEach(function(k){
+    if(prev && mpAddDays(prev, 1) === k) run++;
+    else if(prev && mpAddDays(prev, 2) === k && !rW[mpWeekKey(mpAddDays(prev, 1))]){ rW[mpWeekKey(mpAddDays(prev, 1))] = 1; run++; }
+    else { run = 1; rW = {}; }
+    if(run > best) best = run; prev = k;
+  });
   var total = 0; Object.keys(days).forEach(function(k){ total += (days[k] || []).length; });
-  return { streak: cur, best: best, total: total, daysDone: keys.length, lv: Math.floor(total / 15) + 1, xp: total % 15 };
+  var w0 = mpWeekKey(today), wk = 0; for(var i = 0; i < 7; i++){ var x = mpAddDays(w0, i); if(x <= today && ok(x)) wk++; }
+  return { streak: cur, best: best, total: total, daysDone: keys.length, lv: Math.floor(total / 15) + 1, xp: total % 15, rest: rest, restWeek: !!usedW[w0], wk: wk };
 }
 // バッジ（来場・測定は受付の記録から、続ける系はマイプランから）
 function mpBadges(c, plan, st){
@@ -4518,7 +4592,8 @@ function mpBadges(c, plan, st){
     ['s3', '🔥', '3日連続', st.best >= 3],
     ['s7', '💪', '7日連続', st.best >= 7],
     ['s30', '👑', '30日連続', st.best >= 30],
-    ['t50', '✨', 'チェック50回', st.total >= 50]
+    ['t50', '✨', 'チェック50回', st.total >= 50],
+    ['amb', '👑', 'アンバサダー', st.best >= 30 && v >= 3 && Object.keys(c || {}).some(function(k){ return k.indexOf('inv_') === 0 && c[k] && c[k].n; })]   // 💜 v174: 30日続いた・3回来場・友だちが来てくれた
   ];
 }
 var gMp = null;   // { token, c, plan }
@@ -4528,8 +4603,9 @@ function renderMyPlan(c, token){
   if(!c || c.kind !== 'user' || c.active === false || c.toMember){ el.innerHTML = ''; return; }
   gMp = { token: token, c: c, plan: gMp && gMp.token === token ? gMp.plan : null };
   var pl = db.collection('cards').doc(token).collection('plan').doc('me').get().then(function(s){ return s.exists ? s.data() : null; }, function(){ return gMp.plan; });
-  Promise.all([pl, ckQuestGet(c.union || '')]).then(function(r){
-    gMp.plan = r[0]; gMpQuest = r[1];
+  Promise.all([pl, ckQuestGet(c.union || ''), ckChalGet(c.union || ''), ckLesGet(c.union || '')]).then(function(r){
+    gMp.plan = r[0]; gMpQuest = r[1]; gMpChal = r[2];   // 💜 v174: 今月のチャレンジ
+    gMpLes = r[3];   // 💜 v175: スタッフが足した今日の1分
     mpDraw();
     ckObAuto();   // 💜 v172
   }).catch(function(){ mpDraw(); });
@@ -4604,12 +4680,14 @@ function mpSetup(courseK){
       + '<label>コース</label><div class="ulg-chips" id="mypCo">' + MP_COURSES.map(function(x){ return '<button type="button" data-k="' + x.k + '"' + (x.k === sel ? ' class="on"' : '') + '>' + esc(x.n) + '</button>'; }).join('') + '</div>'
       + '<label style="margin-top:14px;">毎日のクエスト <small style="font-weight:400;color:var(--sub);">（1〜5こ選ぶ）</small></label><div id="mypQs">'
       + co.q.map(function(q){ return '<label class="mpqs"><input type="checkbox" value="' + q[0] + '"' + (qs.indexOf(q[0]) >= 0 ? ' checked' : '') + '>' + esc(q[1]) + '</label>'; }).join('') + '</div>'
+      + '<label style="margin-top:14px;">今週の目標（週に何日）</label><div class="ulg-chips" id="mypWk">' + [3, 4, 5, 7].map(function(n){ return '<button type="button" data-w="' + n + '"' + ((+cur.wk || 4) === n ? ' class="on"' : '') + '>週' + n + '日</button>'; }).join('') + '</div>'
       + '<label style="margin-top:14px;">目標 <small style="font-weight:400;color:var(--sub);">（なくても可）</small></label>'
       + '<input type="text" id="mypGoal" maxlength="40" value="' + esc(cur.goal || '') + '" placeholder="例: 30日つづける">'
       + '<div class="ulg-chips" id="mypGoalSug">' + ['30日つづける', '毎日1つはやる'].concat(nx ? ['次の測定で' + nx.b.n + 'にする'] : []).map(function(t){ return '<button type="button" data-g="' + esc(t) + '">' + esc(t) + '</button>'; }).join('') + '</div>'
       + '<p style="font-size:11.5px;color:var(--sub);margin:12px 0 0;">クエストは毎日の習慣のチェックです。使う製品やケアの方法は、会場でスタッフに聞いてください。</p>'
       + '<div class="btns"><button id="mypCancel">キャンセル</button><button class="primary" id="mypGo">' + (cur.course ? '保存' : 'はじめる') + '</button></div>');
     $('mypCo').onclick = function(e){ var b = e.target.closest ? e.target.closest('button[data-k]') : null; if(b){ cur.goal = $('mypGoal').value; sel = b.getAttribute('data-k'); draw(); } };
+    $('mypWk').onclick = function(e){ var b = e.target.closest ? e.target.closest('button[data-w]') : null; if(!b) return; cur.wk = +b.getAttribute('data-w'); [].forEach.call($('mypWk').querySelectorAll('button'), function(x){ x.classList.toggle('on', x === b); }); };
     $('mypGoalSug').onclick = function(e){ var b = e.target.closest ? e.target.closest('button[data-g]') : null; if(b) $('mypGoal').value = b.getAttribute('data-g'); };
     $('mypCancel').onclick = closeModal;
     $('mypGo').onclick = function(){
@@ -4617,7 +4695,8 @@ function mpSetup(courseK){
       if(!pick.length){ toast('クエストを1つ以上選んでください'); return; }
       if(pick.length > 5){ toast('クエストは5つまでです'); return; }
       var plan = { course: sel, goal: $('mypGoal').value.trim().slice(0, 40), qs: pick, start: (gMp.plan && gMp.plan.start) || todayStr(), days: (gMp.plan && gMp.plan.days) || {} };
-      ['why', 'by', 'when', 'lvl', 'ob'].forEach(function(k){ if(gMp.plan && gMp.plan[k] != null) plan[k] = gMp.plan[k]; });   // 💜 v172: 準備で決めたことは残す
+      ['why', 'by', 'when', 'lvl', 'ob', 'wk'].forEach(function(k){ if(gMp.plan && gMp.plan[k] != null) plan[k] = gMp.plan[k]; });
+      if(cur.wk) plan.wk = +cur.wk;   // 💜 v173: 週の目標   // 💜 v172: 準備で決めたことは残す
       closeModal();
       mpSave(plan).then(function(){ toast(gMp.plan && gMp.plan.course ? 'プランを保存しました' : 'マイプランを始めました'); });
     };
@@ -4639,11 +4718,26 @@ var CK_PAL = {
     back: 'おかえり！また会えてうれしい。今日は1つだけやってみよう',
     promise: '{name}と約束する',
     first: '最初の1つ、今ここでやってみよう！',
-    firstDone: 'やったね！これで1日目クリア！'
-  }
+    firstDone: 'やったね！これで1日目クリア！',
+    rest: '昨日は「おやすみ券」を使ったよ。今日からまたいっしょにがんばろう',
+    week: '今週の目標クリア！すごい！',
+    lvup: 'なかよし度が上がったよ！',
+    wsGood: '目標クリア！{n}日もできたね。来週もこの調子でいこう',   // 💜 v175: 週のまとめ
+    wsSome: '{n}日できたね。来週はあと1日ふやしてみよう',
+    wsZero: 'お休みの週だったね。今日から1つずつ、またいっしょにやろう'
+  },
+  // 💜 v173: なかよし度（チェックした数で上がる）。[必要なチェックの数, 名前]
+  grow: [[0, 'はじめまして'], [15, 'なかよし'], [45, 'しんゆう'], [90, 'ずっといっしょ'], [180, 'さいこうの相棒']]
 };
-function ckPalImg(cls){
-  return '<span class="pal' + (cls ? ' ' + cls : '') + '" aria-hidden="true">' + (CK_PAL.img ? '<img src="' + esc(CK_PAL.img) + '" alt="">' : CK_PAL.svg) + '</span>';
+// なかよし度：{ lv, name, next（次までのチェックの数・最高なら 0） }
+function ckPalLv(total){
+  var g = CK_PAL.grow || [[0, '']], i = 0;
+  for(var k = 0; k < g.length; k++) if(total >= g[k][0]) i = k;
+  return { lv: i + 1, name: g[i][1], next: i + 1 < g.length ? g[i + 1][0] - total : 0 };
+}
+function ckPalImg(cls, rb){   // rb: 衣装（リボン）の色。v173: PRYSMiO の最新の色
+  return '<span class="pal' + (cls ? ' ' + cls : '') + '" aria-hidden="true">' + (CK_PAL.img ? '<img src="' + esc(CK_PAL.img) + '" alt="">' : CK_PAL.svg)
+    + (rb ? '<i class="pal-rb" style="--rb:' + esc(rb) + ';"></i>' : '') + '</span>';
 }
 function ckPalSay(key, v){
   var s = CK_PAL.say[key] || '';
@@ -4713,9 +4807,56 @@ function ckUaToday(){
   var st = mpStats(plan, today), left = qs.length - done.length, last = '';
   Object.keys(plan.days || {}).forEach(function(k){ if(k < today && (plan.days[k] || []).length && k > last) last = k; });
   var away = last ? ckYmdDays(last, today) : 0;
-  var line = !done.length ? (away >= 3 ? ckPalSay('back') : ckPalSay('start')) : left ? ckPalSay('part', { n: done.length, r: left }) : ckPalSay('all', { d: st.streak });
-  var h = '<div class="td-hero' + (gUa.cheer ? ' pop' : '') + '">' + ckPalImg() + '<div class="td-bub">' + esc(line) + '</div></div>';
+  var yd = mpAddDays(today, -1), wkGoal = +plan.wk || 4;
+  var line = !done.length ? (away >= 3 ? ckPalSay('back') : st.rest.indexOf(yd) >= 0 ? ckPalSay('rest') : ckPalSay('start')) : left ? ckPalSay('part', { n: done.length, r: left }) : (st.wk === wkGoal ? ckPalSay('week') : ckPalSay('all', { d: st.streak }));
+  var ph = ckPrysmHist(gUa.c), rb = ph.length ? ckPrysmBand(ph[ph.length - 1].v).c : '', pl = ckPalLv(st.total);
+  var h = '<div class="td-hero' + (gUa.cheer ? ' pop' : '') + '">' + ckPalImg('', rb) + '<div class="td-bub">' + esc(line)
+    + '<small class="td-lv">' + esc(CK_PAL.name) + 'との なかよし度 Lv.' + pl.lv + '「' + esc(pl.name) + '」' + (pl.next ? '・次まで ' + pl.next + 'チェック' : '') + '</small></div></div>';
   gUa.cheer = false;
+  // 💜 v175: 週のまとめができた（日曜＝今週・月〜水＝先週。開いたら出なくなる）
+  var wsW = mpWeekSumW0(plan, today), wsS = ckWsShow(plan, today), wsL = wsW && wsW === mpWeekKey(today) ? '今週' : '先週';
+  if(wsS){ var wr = mpWeekSum(plan, wsS); h += '<div class="ua-cd td-wsc" id="tdWsC"><div class="ua-lb">📊 ' + wsL + 'のまとめができたよ</div><b class="td-7t">' + wr.n + '日できた<small>（目標は週' + wr.goal + '日）</small></b><p class="ua-p">タップして見る</p></div>'; }
+  // 💜 v173: 今週の目標（月〜日）とおやすみ券
+  var w0 = mpWeekKey(today), wdn = ['月', '火', '水', '木', '金', '土', '日'], wd = [];
+  for(var wi = 0; wi < 7; wi++){ var dd = mpAddDays(w0, wi); wd.push('<i class="' + (((plan.days || {})[dd] || []).length ? 'on' : st.rest.indexOf(dd) >= 0 ? 'rest' : dd === today ? 'td' : '') + '">' + wdn[wi] + '</i>'); }
+  h += '<div class="ua-cd td-wk"><div class="ua-lb">今週の目標<em>' + st.wk + ' / ' + wkGoal + '日</em></div><div class="td-dots">' + wd.join('') + '</div>'
+    + (st.wk >= wkGoal ? '<b class="td-7t">🎉 今週の目標クリア！</b>' : '<p class="ua-p">あと' + (wkGoal - st.wk) + '日で今週の目標クリア</p>')
+    + '<p class="ua-p td-rest">🛌 おやすみ券：' + (st.restWeek ? '今週は使ったよ' : '今週あと1枚（1日だけ休んでも、連続はつながる）') + '</p>'
+    + (wsW ? '<button type="button" class="ua-btn td-wsb" id="tdWs">📊 ' + wsL + 'のまとめ</button>' : '') + '</div>';
+  // 💜 v173: おかえり（3日以上あいた時は、今日は1つだけ）
+  var back = away >= 3 && !done.length;
+  if(back) h += '<div class="ua-cd td-back"><b class="td-7t">おかえり！</b><p class="ua-p">今日は1つだけでOK。いちばん上の1つをやってみよう</p></div>';
+  // 💜 v173: バディの今日・あなたの投稿への 👏
+  var soc = [];
+  if(gBd && gBd.token === gUa.token && gBd.me){
+    var bn = (gBd.me.list || []).filter(function(b){ var x = gBd.sums[b.k]; return x && x.td === today; }).map(function(b){ return (gBd.sums[b.k].n || b.n || '').split(/\s+/).pop(); });
+    if(bn.length) soc.push('<div class="td-soc" data-go="friends" data-gos="buddy">👯 バディの' + esc(bn.slice(0, 2).join('さん・')) + 'さん' + (bn.length > 2 ? 'ほか' + (bn.length - 2) + '人' : '') + 'が今日できたよ</div>');
+  }
+  if(gLg && gLg.token === gUa.token){
+    var me = String((gUa.c || {}).no || ''), cl = 0;
+    (gLg.list || []).forEach(function(p){ if(p.uid === me) cl += +p.claps || 0; });
+    if(cl) soc.push('<div class="td-soc" data-go="friends" data-gos="lounge">👏 あなたの投稿に ' + cl + 'こ届いているよ</div>');
+  }
+  h += soc.join('');
+  // 💜 v174: 今日の美容ポイント（まだ始めていない日は、昨日の結果発表）
+  var sc = mpScore(plan, today), scY = mpScore(plan, yd), bars = [];
+  for(var si = 6; si >= 0; si--){ var sd = mpAddDays(today, -si), sv = mpScore(plan, sd); bars.push('<i style="height:' + Math.max(4, sv) + '%;"' + (sd === today ? ' class="td"' : '') + ' title="' + esc(ckMd(sd)) + ' ' + sv + '"></i>'); }
+  if(!done.length && !ckLesRead(today) && scY) h += '<div class="ua-cd td-sc td-res"><div class="ua-lb">昨日の結果発表</div><div class="td-scn"><b class="mono">' + scY + '</b><span>点</span>'
+    + (mpScore(plan, mpAddDays(today, -2)) ? '<em>' + (scY - mpScore(plan, mpAddDays(today, -2)) >= 0 ? '+' : '') + (scY - mpScore(plan, mpAddDays(today, -2))) + '（その前の日から）</em>' : '') + '</div><div class="td-bars">' + bars.join('') + '</div><p class="ua-p">今日も1つ目からいこう！</p></div>';
+  else h += '<div class="ua-cd td-sc"><div class="ua-lb">今日の美容ポイント</div><div class="td-scn"><b class="mono">' + sc + '</b><span>/ 100</span></div><div class="td-bars">' + bars.join('') + '</div></div>';
+  // 💜 v174: 1日1分
+  var les = ckLesOf(plan);
+  h += '<div class="ua-cd td-les" id="tdLes"><div class="ua-lb">今日の1分<em>' + (ckLesRead(today) ? '読んだ ✓' : '+10ポイント') + '</em></div><b class="td-7t">' + esc(les.t) + '</b></div>';
+  // 💜 v174: 今月のチャレンジ（スタッフが決めた時だけ）
+  var ch = gMpChal, mo = today.slice(0, 7);
+  if(ch && ch.m === mo && ch.t && ch.g){
+    var cn = mpChalDays(plan, mo);
+    h += '<div class="ua-cd td-ch"><div class="ua-lb">今月のチャレンジ<em>' + Math.min(cn, ch.g) + ' / ' + ch.g + '日</em></div><b class="td-7t">' + esc(ch.t) + '</b>'
+      + '<div class="mp-lvbar"><i style="width:' + Math.min(100, Math.round(cn / ch.g * 100)) + '%;"></i></div>'
+      + (cn >= ch.g ? '<p class="ua-p">🎉 チャレンジ達成！</p>' : '<p class="ua-p">今月チェックした日が ' + ch.g + '日になると達成</p>') + '</div>';
+  }
+  // 💜 v174: 今週の写真（このスマホの中だけ）
+  if(gPh && gPh.token === gUa.token){ var lp = gPh.list.length ? gPh.list[gPh.list.length - 1] : null; if(!lp || ckYmdDays(lp.d, today) >= 7) h += '<div class="td-soc" data-go="me">📷 今週の1枚を撮ろう（自分だけが見る写真）</div>'; }
   // はじめの7日
   var e7 = mp7Event(plan);
   if(e7) h += '<div class="ua-cd td-7"><div class="ua-lb">はじめの7日<em>' + e7.n + '日目</em></div><div class="td-dots">'
@@ -4731,7 +4872,7 @@ function ckUaToday(){
   cd.push('<div><small>つづいている日</small><b class="mono">' + st.streak + '日</b></div>');
   h += '<div class="td-cd">' + cd.join('') + '</div>';
   // 時間帯ごとのクエスト（今の時間帯が上）
-  var now = mpSlotNow(), order = MP_SLOTS.slice(), ni = 0;
+  var now = mpSlotNow(), order = MP_SLOTS.slice(), ni = 0, pickDone = false;
   MP_SLOTS.forEach(function(s, i){ if(s[0] === now) ni = i; });
   order = order.slice(ni).concat(order.slice(0, ni));
   var len = 163.4;
@@ -4742,12 +4883,15 @@ function ckUaToday(){
     var L = qs.filter(function(q){ return mpSlotOf(plan, q[0]) === s[0]; });
     if(!L.length) return;
     h += '<div class="td-slot' + (s[0] === now ? ' now' : '') + '"><span class="td-sl">' + s[2] + ' ' + s[1] + (s[0] === now ? '<em>いま</em>' : '') + '</span>'
-      + L.map(function(q){ var on = done.indexOf(q[0]) >= 0; return '<button type="button" class="ua-q td-qb' + (on ? ' on' : '') + '" data-uq="' + q[0] + '" aria-pressed="' + on + '"><i>' + (on ? '✓' : '') + '</i><span>' + esc(q[1]) + '</span></button>'; }).join('') + '</div>';
+      + L.map(function(q){ var on = done.indexOf(q[0]) >= 0, pk = back && !pickDone; if(pk) pickDone = true; return '<button type="button" class="ua-q td-qb' + (on ? ' on' : '') + (pk ? ' pick' : '') + '" data-uq="' + q[0] + '" aria-pressed="' + on + '"><i>' + (on ? '✓' : '') + '</i><span>' + esc(q[1]) + '</span>' + (pk ? '<em>まずはこれ</em>' : '') + '</button>'; }).join('') + '</div>';
   });
   h += '</div>';
   if(!left) h += '<div class="td-all">🎉 今日のクエストは全部できました' + (gBd && gBd.token === gUa.token && gBd.me && (gBd.me.list || []).length ? '<small>バディにも「今日できた」が届いています</small>' : '') + '</div>';
   el.innerHTML = h;
   if($('td7A2')) $('td7A2').onclick = ckA2hsHowModal;
+  if($('tdLes')) $('tdLes').onclick = ckLesOpen;   // 💜 v174
+  if($('tdWs')) $('tdWs').onclick = function(){ ckWsOpen(wsW); };   // 💜 v175
+  if($('tdWsC')) $('tdWsC').onclick = function(){ ckWsOpen(wsS); };
   if($('td7Push')) $('td7Push').onclick = function(){ $('td7Push').disabled = true; ckPushToggle(gUa.c, gUa.token, true, function(){ renderUserNews(gUa.c, gUa.token); ckUaToday(); }); };
   ckUaAppBadge(left);
 }
@@ -4758,7 +4902,7 @@ var MP_LVL = [['easy', 'ゆるく', 1, 'まずは1つだけ'], ['std', 'ふつ�
 function ckObOpen(){
   if(!gMp || !gUa) return;
   try{ localStorage.setItem('bci_ob_' + gUa.token, '1'); }catch(e){}
-  var o = { step: 0, why: '', by: '', co: '', lvl: 'std', qs: [], when: {} };
+  var o = { step: 0, why: '', by: '', co: '', lvl: 'std', qs: [], when: {}, wk: 4 };
   var nx = gUa.next, today = todayStr();
   // 次のDAY は後から読み込まれる。読めたら「いつまでに？」に足す（はじめの画面を開いている時だけ）
   gUa.obRedraw = function(){ if(!nx && gUa.next && o.step === 0 && $('obBy')){ nx = gUa.next; draw(); } };
@@ -4777,6 +4921,7 @@ function ckObOpen(){
     } else if(o.step === 2){
       var co = mpCourse(o.co);
       body = '<label>どのくらいやる？</label><div class="ob-lvl" id="obLvl">' + MP_LVL.map(function(l){ return '<button type="button" data-v="' + l[0] + '"' + (o.lvl === l[0] ? ' class="on"' : '') + '><b>' + l[1] + '</b><small>' + l[3] + '</small></button>'; }).join('') + '</div>'
+        + '<label style="margin-top:14px;">週に何日やる？</label><div class="ulg-chips" id="obWk">' + [3, 4, 5, 7].map(function(n){ return '<button type="button" data-v="' + n + '"' + (o.wk === n ? ' class="on"' : '') + '>週' + n + '日' + (n === 4 ? '（おすすめ）' : n === 7 ? '（毎日）' : '') + '</button>'; }).join('') + '</div>'
         + '<label style="margin-top:14px;">毎日のクエストと、やる時間</label><div id="obQs">'
         + co.q.map(function(q){
             var on = o.qs.indexOf(q[0]) >= 0, sl = o.when[q[0]] || MP_SLOT_DEF[q[0]] || 'pm';
@@ -4788,13 +4933,14 @@ function ckObOpen(){
       var co2 = mpCourse(o.co);
       body = '<div class="td-hero">' + ckPalImg() + '<div class="td-bub">' + esc(o.why ? '「' + o.why + '」のために、毎日いっしょにがんばろう！' : '毎日いっしょにがんばろう！') + '</div></div>'
         + '<div class="ob-sum"><div><small>コース</small><b>' + esc(co2.n) + '</b></div>' + (o.by ? '<div><small>いつまでに</small><b>' + esc(ckMd(o.by)) + '（あと' + ckYmdDays(today, o.by) + '日）</b></div>' : '')
-        + '<div><small>毎日のクエスト</small><b>' + o.qs.length + 'こ</b></div></div>'
+        + '<div><small>毎日のクエスト</small><b>' + o.qs.length + 'こ</b></div><div><small>今週の目標</small><b>週' + o.wk + '日</b></div></div>'
         + co2.q.filter(function(q){ return o.qs.indexOf(q[0]) >= 0; }).map(function(q){ var s = MP_SLOTS.filter(function(x){ return x[0] === (o.when[q[0]] || MP_SLOT_DEF[q[0]] || 'pm'); })[0]; return '<p class="ob-li">' + s[2] + ' ' + s[1] + '　' + esc(q[1]) + '</p>'; }).join('');
     }
     modal('<div class="ob-wrap"><h2>はじめの準備</h2>' + dots + body
       + '<div class="btns"><button id="obBack">' + (o.step ? 'もどる' : 'あとで') + '</button><button class="primary" id="obNext">' + (o.step === 3 ? esc(ckPalSay('promise')) : '次へ') + '</button></div></div>');
     var pickOne = function(id, key){ var box = $(id); if(box) box.onclick = function(e){ var b = e.target.closest ? e.target.closest('button[data-v]') : null; if(!b) return; o[key] = b.getAttribute('data-v'); [].forEach.call(box.querySelectorAll('button'), function(x){ x.classList.toggle('on', x === b); }); if(key === 'why' && $('obWhyT')) $('obWhyT').value = ''; if(key === 'by' && $('obByD')) $('obByD').value = ''; }; };
     pickOne('obWhy', 'why'); pickOne('obBy', 'by');
+    if($('obWk')) $('obWk').onclick = function(e){ var b = e.target.closest ? e.target.closest('button[data-v]') : null; if(!b) return; o.wk = +b.getAttribute('data-v'); [].forEach.call($('obWk').querySelectorAll('button'), function(x){ x.classList.toggle('on', x === b); }); };
     if($('obWhyT')) $('obWhyT').oninput = function(){ var v = $('obWhyT').value.trim(); if(v){ o.why = v.slice(0, 40); [].forEach.call($('obWhy').querySelectorAll('button'), function(x){ x.classList.remove('on'); }); } };
     if($('obByD')) $('obByD').onchange = function(){ if($('obByD').value){ o.by = $('obByD').value; [].forEach.call($('obBy').querySelectorAll('button'), function(x){ x.classList.remove('on'); }); } };
     [].forEach.call(document.querySelectorAll('.ob-wrap [data-co]'), function(b){ b.onclick = function(){ o.co = b.getAttribute('data-co'); var co = mpCourse(o.co); o.qs = co.q.slice(0, 3).map(function(q){ return q[0]; }); o.lvl = 'std'; o.step = 2; draw(); }; });
@@ -4818,7 +4964,7 @@ function ckObOpen(){
         o.step = 3; draw(); return;
       }
       var when = {}; o.qs.forEach(function(k){ when[k] = o.when[k] || MP_SLOT_DEF[k] || 'pm'; });
-      var plan = { course: o.co, goal: o.why.slice(0, 40), why: o.why.slice(0, 40), qs: o.qs, when: when, lvl: o.lvl, ob: Date.now(), start: today, days: (gMp.plan && gMp.plan.days) || {} };
+      var plan = { course: o.co, goal: o.why.slice(0, 40), why: o.why.slice(0, 40), qs: o.qs, when: when, lvl: o.lvl, wk: o.wk, ob: Date.now(), start: today, days: (gMp.plan && gMp.plan.days) || {} };
       if(o.by) plan.by = o.by;
       $('obNext').disabled = true;
       mpSave(plan).then(function(){ if(gMp.plan === plan) ckObFirst(); else $('obNext').disabled = false; });
@@ -4856,6 +5002,272 @@ function ckObAuto(){
   try{ seen = localStorage.getItem(k) || ''; }catch(e){}
   if(seen || document.querySelector('.modalback') || gUa.tab === 'qr') return;   // DAY の当日に受付QRを出している時は出さない
   ckObOpen();
+}
+/* 💜 v174: 第3弾（今日の美容ポイント・1日1分・今月のチャレンジ・自分だけの写真・あなたのタイプ・シェア画像） */
+// ── 1日1分（続けるコツ）。効果はうたわない（薬機法）。習慣のつくり方だけ。はじめた日から順番に1日1つ
+var CK_LESSONS = [
+  ['小さく始める', '毎日できる小ささから始めよう。1つでもチェックできた日は、それで合格です。'],
+  ['いつやるか決める', '「歯みがきのあと」「お風呂のあと」など、今ある習慣のあとに続けると忘れにくくなります。'],
+  ['見える場所に置く', '使うものは、目につく場所に置いておこう。目に入ることが、思い出すきっかけになります。'],
+  ['完璧じゃなくていい', '休んだ日があっても大丈夫。おやすみ券もあります。次の日に、また1つから。'],
+  ['記録すると続く', 'チェックするたびに「続けている自分」が見えてきます。記録は、自分へのごほうびです。'],
+  ['仲間の力', 'バディやラウンジで、同じように続けている人とつながると、続けやすくなります。'],
+  ['ごほうびを決める', '1週間続いたら、自分にちいさなごほうびを。好きな飲みもの・ゆっくりお風呂など。'],
+  ['前の夜に準備', '寝る前に、明日の朝のクエストを思い浮かべておこう。朝の1つ目がスムーズになります。'],
+  ['飲むタイミング', '起きた時・食事の時など、水を飲むタイミングを決めておくと、自然に続きます。'],
+  ['寝る時間をそろえる', '寝る時間と起きる時間を、毎日だいたい同じにしてみよう。1日のリズムが整います。'],
+  ['ついでに動く', '15分の散歩でもOK。エレベーターより階段など、毎日の中で動くきっかけを作ろう。'],
+  ['同じ時間に鏡を見る', '毎日同じ時間・同じ明るさで鏡を見ると、ちょっとした変化に気づきやすくなります。'],
+  ['なりたい私を読み返す', 'はじめに決めた「なりたい私」を、ときどき読み返そう。続ける理由を思い出せます。'],
+  ['DAYは答え合わせ', '次のDAYで測って、続けてきたことを確かめよう。続けた日は、ちゃんと積み上がっています。']
+];
+function ckLesKey(){ return 'bci_les_' + (gUa ? gUa.token : ''); }
+function ckLesRead(d){ try{ var o = JSON.parse(localStorage.getItem(ckLesKey()) || '{}'); return d ? !!o[d] : o; }catch(e){ return d ? false : {}; } }
+// 💜 v175: ユニオンのスタッフが足した分（ckLes/{ユニオン}.L）を先に、そのあと もともとの分。はじめた日から順番に1日1つ
+var gMpLes = null;
+function ckLesGet(un){
+  var key = 'bci_lesu_' + (un || '');
+  try{ var o = JSON.parse(localStorage.getItem(key) || 'null'); if(o && Date.now() - o.at < 6 * 3600000) return Promise.resolve(o.L || []); }catch(e){}
+  return ckAnonDb().collection('ckLes').doc(un || '_').get().then(function(s){
+    var L = ((s.exists && (s.data() || {}).L) || []).filter(function(x){ return x && typeof x.t === 'string' && typeof x.b === 'string' && x.t && x.b; })
+      .slice(0, 30).map(function(x){ return { t: x.t.slice(0, 20), b: x.b.slice(0, 120) }; });
+    try{ localStorage.setItem(key, JSON.stringify({ at: Date.now(), L: L })); }catch(e){}
+    return L;
+  }).catch(function(){ return []; });
+}
+function ckLesAll(){ return (gMpLes || []).map(function(x){ return [x.t, x.b, 1]; }).concat(CK_LESSONS); }
+function ckLesOf(plan){ var A = ckLesAll(), n = plan && plan.start ? Math.max(0, ckYmdDays(plan.start, todayStr())) : 0, L = A[n % A.length]; return { i: n % A.length, t: L[0], b: L[1], u: !!L[2] }; }
+function ckLesOpen(){
+  var plan = gMp && gMp.plan, L = ckLesOf(plan), d = todayStr();
+  modal('<div class="ob-wrap"><h2>今日の1分</h2><div class="td-hero">' + ckPalImg() + '<div class="td-bub">' + (L.u ? '<small class="les-u">スタッフから</small>' : '') + '<b>' + esc(L.t) + '</b><br>' + esc(L.b) + '</div></div>'
+    + '<div class="btns"><button class="primary" id="lesOk">' + (ckLesRead(d) ? '閉じる' : '読んだ（+10ポイント）') + '</button></div></div>');
+  $('lesOk').onclick = function(){
+    try{ var o = ckLesRead(); o[d] = 1; var ks = Object.keys(o).sort(); while(ks.length > 60) delete o[ks.shift()]; localStorage.setItem(ckLesKey(), JSON.stringify(o)); }catch(e){}
+    closeModal(); if(gUa) gUa.cheer = true; ckUaToday();
+  };
+}
+// ── 今日の美容ポイント（0〜100）：クエスト 70・全部できた 10・連続（10日まで）10・1日1分 10
+function mpScore(plan, d){
+  var qs = mpQs(plan); if(!qs.length) return 0;
+  var done = ((plan.days || {})[d] || []).filter(function(k){ return qs.some(function(q){ return q[0] === k; }); }).length;
+  if(!done && !ckLesRead(d)) return 0;
+  var st = done ? mpStats(plan, d).streak : 0;
+  return Math.round(done / qs.length * 70) + (done === qs.length ? 10 : 0) + Math.min(st, 10) + (ckLesRead(d) ? 10 : 0);
+}
+// ── 今月のチャレンジ（ユニオンごと・スタッフが「💜 Beauty」タブで決める）。ckChal/{ユニオン} = { m: 'YYYY-MM', t, g（日数）, by, at }
+var gMpChal = null;
+function ckChalGet(un){
+  var key = 'bci_chal_' + (un || '');
+  try{ var o = JSON.parse(localStorage.getItem(key) || 'null'); if(o && Date.now() - o.at < 30 * 60000) return Promise.resolve(o.c || null); }catch(e){}
+  return ckAnonDb().collection('ckChal').doc(un || '_').get().then(function(s){
+    var c = s.exists ? (s.data() || {}) : null; if(c) c = { m: c.m || '', t: c.t || '', g: +c.g || 0 };
+    try{ localStorage.setItem(key, JSON.stringify({ at: Date.now(), c: c })); }catch(e){}
+    return c;
+  }).catch(function(){ return null; });
+}
+function mpChalDays(plan, m){ return Object.keys((plan && plan.days) || {}).filter(function(k){ return k.slice(0, 7) === m && (plan.days[k] || []).length; }).length; }
+// ── あなたのタイプ（PRYSMiO の色ごと）。効果はうたわない。名前と、ひとこと
+var CK_TYPES = { 'レッド': ['はじまりの情熱', 'ここからぐんぐん伸びていく、スタートのタイプ'], 'オレンジ': ['元気のつぼみ', '毎日の積み重ねが、これから花ひらくタイプ'],
+  'イエロー': ['ひだまり', 'あたたかく、まわりも明るくするタイプ'], 'グリーン': ['のびやかな若葉', 'コツコツ続けて、しなやかに育つタイプ'],
+  'ブルー': ['澄んだ海', '落ち着いて、自分のペースを守れるタイプ'], 'パープル': ['気品のラベンダー', '大人っぽい落ち着きと華やかさのタイプ'],
+  'プラチナメダリオン': ['輝きのプラチナ', '続けてきた人だけがたどり着く、特別なタイプ'] };
+function ckTypeOf(v){ var b = ckPrysmBand(v), t = CK_TYPES[b.n] || ['', '']; return { band: b, name: t[0], sub: t[1] }; }
+// ── 友だちの招待のリンク（あれば同じキー・無ければ作る）
+function ckJoinFriendKey(c, token){
+  var adb = ckAnonDb(), jr = adb.collection('cards').doc(token).collection('join').doc('me');
+  return jr.get().then(function(s){
+    var k = s.exists ? (s.data().k || '') : '';
+    if(k) return k;
+    k = 'f_' + ckApplyNewId(20);
+    var b = adb.batch();
+    b.set(jr, { k: k, at: FV.serverTimestamp() });
+    b.set(adb.collection('ckJoin').doc(k), { kind: 'friend', union: c.union || '', refNo: String(c.referrerNo || ''), refName: c.referrer || '',
+      invUid: String(c.no), invName: c.name || '', at: FV.serverTimestamp() });
+    return b.commit().then(function(){ return k; });
+  });
+}
+// ── シェア画像（ストーリー用 1080×1920）。名前は入れない。色のタイプ・連続日数・招待のQR
+function ckShareImage(c, token){
+  var h = ckPrysmHist(c); if(!h.length){ toast('PRYSMiO を測ると作れます'); return; }
+  var ty = ckTypeOf(h[h.length - 1].v), st = gMp && gMp.plan ? mpStats(gMp.plan, todayStr()) : { streak: 0, best: 0 };
+  toast('画像を作っています…');
+  ckJoinFriendKey(c, token).catch(function(){ return ''; }).then(function(k){
+    var cv = ckShareBase(), x = cv.getContext('2d');
+    var rg = x.createRadialGradient(540, 760, 40, 540, 760, 520); rg.addColorStop(0, ty.band.c); rg.addColorStop(1, 'rgba(0,0,0,0)');
+    x.globalAlpha = .55; x.fillStyle = rg; x.fillRect(0, 200, 1080, 1100); x.globalAlpha = 1;
+    x.fillStyle = '#f4efe6'; x.font = '700 64px sans-serif'; x.fillText('わたしは', 540, 560);
+    x.fillStyle = ty.band.c; x.beginPath(); x.arc(540, 760, 150, 0, Math.PI * 2); x.fill();
+    x.fillStyle = '#f4efe6'; x.font = '800 88px sans-serif'; x.fillText(ty.band.n + 'タイプ', 540, 1020);
+    x.fillStyle = '#e6d3a3'; x.font = 'italic 600 60px serif'; x.fillText('「' + ty.name + '」', 540, 1110);
+    x.fillStyle = '#f4efe6'; x.font = '700 48px sans-serif'; x.fillText((st.best ? '🔥 いちばん長く ' + st.best + '日つづいた' : '毎日のケア、はじめました'), 540, 1240);
+    ckShareFin(cv, k);
+  });
+}
+// 💜 v175: シェア画像の土台（背景・ロゴ）と仕上げ（招待のQR・ひとこと → シェア）
+function ckShareBase(){
+  var cv = document.createElement('canvas'); cv.width = 1080; cv.height = 1920;
+  var x = cv.getContext('2d'), g = x.createLinearGradient(0, 0, 0, 1920);
+  g.addColorStop(0, '#0b0b0c'); g.addColorStop(1, '#241a3a'); x.fillStyle = g; x.fillRect(0, 0, 1080, 1920);
+  x.textAlign = 'center'; x.fillStyle = '#c9a96e'; x.font = '600 40px serif'; x.fillText('NAVIGATOR Beauty', 540, 180);
+  return cv;
+}
+function ckShareFin(cv, k){
+  var x = cv.getContext('2d');
+  var done = function(){
+    x.textAlign = 'center'; x.fillStyle = '#a39e94'; x.font = '500 34px sans-serif'; x.fillText('いっしょにはじめよう', 540, 1830);
+    ckShareOut(cv);
+  };
+  if(!k){ done(); return; }
+  var box = document.createElement('div'); box.style.cssText = 'position:fixed;left:-9999px;top:0;'; document.body.appendChild(box);
+  makeQr(box, ckJoinUrl(k), 300);
+  setTimeout(function(){
+    var q = box.querySelector('canvas') || box.querySelector('img');
+    try{ if(q){ x.fillStyle = '#fff'; x.fillRect(370, 1380, 340, 340); x.drawImage(q, 390, 1400, 300, 300); } }catch(e){}
+    document.body.removeChild(box); done();
+  }, 150);
+}
+/* 💜 v175: 週のまとめ（月〜日）。日曜は今週の、月〜水は先週のまとめを「今日」に出す（開いたら出なくなる）。「今週の目標」からはいつでも開ける */
+var MP_WDN = ['月', '火', '水', '木', '金', '土', '日'];
+function mpWeekSum(plan, w0){
+  var days = (plan && plan.days) || {}, today = todayStr(), sum = 0, cnt = 0;
+  var r = { w0: w0, w1: mpAddDays(w0, 6), n: 0, chk: 0, les: 0, avg: 0, best: '', bestSc: 0, dots: [], goal: +(plan && plan.wk) || 4, prev: 0, hasPrev: false };
+  for(var i = 0; i < 7; i++){
+    var d = mpAddDays(w0, i), k = (days[d] || []).length;
+    if(d > today){ r.dots.push('fu'); continue; }
+    var sc = mpScore(plan, d); cnt++; sum += sc;
+    if(k){ r.n++; r.chk += k; }
+    if(ckLesRead(d)) r.les++;
+    if(sc > r.bestSc){ r.bestSc = sc; r.best = d; }
+    r.dots.push(k ? 'on' : '');
+  }
+  r.avg = cnt ? Math.round(sum / cnt) : 0;
+  var pw = mpAddDays(w0, -7);
+  for(var j = 0; j < 7; j++) if((days[mpAddDays(pw, j)] || []).length) r.prev++;
+  r.hasPrev = !!(plan && plan.start && plan.start <= mpAddDays(pw, 6));
+  return r;
+}
+function mpDow(d){ var p = d.split('-'); return new Date(+p[0], +p[1] - 1, +p[2]).getDay(); }
+// まとめる週（日曜＝今週・ほかの日＝先週）。はじめた日より前の週なら ''
+function mpWeekSumW0(plan, today){
+  var w0 = mpDow(today) === 0 ? mpWeekKey(today) : mpWeekKey(mpAddDays(today, -7));
+  return plan && plan.start && plan.start <= mpAddDays(w0, 6) ? w0 : '';
+}
+function ckWsKey(){ return 'bci_wsum_' + (gUa ? gUa.token : ''); }
+function ckWsSeen(w0){ try{ return localStorage.getItem(ckWsKey()) === w0; }catch(e){ return false; } }
+// 「今日」に「まとめができたよ」を出す週（日曜と月〜水・まだ開いていない時）
+function ckWsShow(plan, today){ var w0 = mpWeekSumW0(plan, today), dw = mpDow(today); return w0 && (dw === 0 || dw <= 3) && !ckWsSeen(w0) ? w0 : ''; }
+function ckWsOpen(w0){
+  var plan = gMp && gMp.plan; if(!plan || !w0) return;
+  try{ localStorage.setItem(ckWsKey(), w0); }catch(e){}
+  ckUaToday();
+  var r = mpWeekSum(plan, w0), now = w0 === mpWeekKey(todayStr()), df = r.n - r.prev;
+  var line = r.n >= r.goal ? ckPalSay('wsGood', { n: r.n }) : r.n ? ckPalSay('wsSome', { n: r.n }) : ckPalSay('wsZero');
+  modal('<div class="ob-wrap ws-wrap"><h2>' + (now ? '今週' : '先週') + 'のまとめ</h2><p class="ws-dt">' + esc(ckMd(r.w0) + '〜' + ckMd(r.w1)) + '</p>'
+    + '<div class="td-hero">' + ckPalImg() + '<div class="td-bub">' + esc(line) + '</div></div>'
+    + '<div class="ws-big"><b class="mono">' + r.n + '</b><span>/ 目標' + r.goal + '日</span>' + (r.n >= r.goal ? '<em>🎉 クリア</em>' : '') + '</div>'
+    + '<div class="td-dots ws-dots">' + r.dots.map(function(x, i){ return '<i class="' + x + '">' + MP_WDN[i] + '</i>'; }).join('') + '</div>'
+    + '<div class="ob-sum"><div><small>チェックした数</small><b>' + r.chk + '回</b></div><div><small>平均の美容ポイント</small><b>' + r.avg + '点</b></div>'
+    + '<div><small>今日の1分</small><b>' + r.les + '日読んだ</b></div>'
+    + (r.best ? '<div><small>いちばんの日</small><b>' + esc(ckMd(r.best)) + '（' + r.bestSc + '点）</b></div>' : '')
+    + (r.hasPrev ? '<div><small>その前の週から</small><b>' + (df > 0 ? '+' + df + '日' : df < 0 ? df + '日' : 'おなじ') + '</b></div>' : '') + '</div>'
+    + '<div class="btns">' + (r.n ? '<button id="wsShare">画像でシェア</button>' : '') + '<button class="primary" id="wsClose">閉じる</button></div></div>');
+  $('wsClose').onclick = closeModal;
+  if($('wsShare')) $('wsShare').onclick = function(){ ckWsImage(r, now); };
+}
+// 週のまとめのシェア画像（名前は入れない）
+function ckWsImage(r, now){
+  if(!gUa) return;
+  toast('画像を作っています…');
+  ckJoinFriendKey(gUa.c, gUa.token).catch(function(){ return ''; }).then(function(k){
+    var cv = ckShareBase(), x = cv.getContext('2d');
+    x.fillStyle = '#f4efe6'; x.font = '700 64px sans-serif'; x.fillText(now ? '今週のまとめ' : '先週のまとめ', 540, 360);
+    x.fillStyle = '#a39e94'; x.font = '500 40px sans-serif'; x.fillText(ckMd(r.w0) + ' 〜 ' + ckMd(r.w1), 540, 430);
+    x.fillStyle = '#f4efe6'; x.font = '900 260px sans-serif'; x.fillText(String(r.n), 540, 740);
+    x.font = '700 60px sans-serif'; x.fillText('日できた', 540, 830);
+    for(var i = 0; i < 7; i++){
+      var cx = 540 + (i - 3) * 130, on = r.dots[i] === 'on';
+      x.beginPath(); x.arc(cx, 980, 52, 0, Math.PI * 2);
+      if(on){ x.fillStyle = '#e8833a'; x.fill(); } else { x.strokeStyle = '#5a5366'; x.lineWidth = 5; x.stroke(); }
+      x.fillStyle = on ? '#fff' : '#8a8494'; x.font = '800 40px sans-serif'; x.fillText(MP_WDN[i], cx, 995);
+    }
+    x.fillStyle = r.n >= r.goal ? '#e6d3a3' : '#f4efe6'; x.font = '700 52px sans-serif';
+    x.fillText(r.n >= r.goal ? '🎉 週' + r.goal + '日の目標クリア！' : '目標は週' + r.goal + '日', 540, 1140);
+    x.fillStyle = '#a39e94'; x.font = '500 40px sans-serif'; x.fillText('平均 ' + r.avg + '点・チェック ' + r.chk + '回', 540, 1220);
+    ckShareFin(cv, k);
+  });
+}
+function ckShareOut(cv){
+  var url = cv.toDataURL('image/png');
+  var show = function(){
+    modal('<h2>シェア画像</h2><p style="font-size:13px;color:var(--sub);">画像を長押しして保存し、ストーリーなどでシェアしてね。QRから、友だちが申し込めます。</p>'
+      + '<img src="' + url + '" alt="シェア画像" style="width:100%;border-radius:12px;">'
+      + '<div class="btns"><button class="primary" id="shClose">閉じる</button></div>', true);
+    $('shClose').onclick = closeModal;
+  };
+  if(!cv.toBlob || !navigator.canShare){ show(); return; }
+  cv.toBlob(function(bl){
+    var f = null;
+    try{ f = new File([bl], 'navigator-beauty.png', { type: 'image/png' }); }catch(e){}
+    if(f && navigator.canShare({ files: [f] })) navigator.share({ files: [f] }).catch(function(){ show(); });
+    else show();
+  }, 'image/png');
+}
+// ── 自分だけの写真（このスマホの中だけ・IndexedDB。サーバーには送らない）。週に1枚
+var CK_PH_DB = null;
+function ckPhDb(){
+  if(CK_PH_DB) return CK_PH_DB;
+  CK_PH_DB = new Promise(function(ok, ng){
+    if(!window.indexedDB){ ng(new Error('na')); return; }
+    var r = indexedDB.open('nb_photo', 1);
+    r.onupgradeneeded = function(){ r.result.createObjectStore('p', { keyPath: 'id' }); };
+    r.onsuccess = function(){ ok(r.result); }; r.onerror = function(){ ng(r.error); };
+  });
+  CK_PH_DB.catch(function(){ CK_PH_DB = null; });
+  return CK_PH_DB;
+}
+function ckPhList(tk){
+  return ckPhDb().then(function(db){ return new Promise(function(ok){
+    var out = [], q = db.transaction('p').objectStore('p').openCursor();
+    q.onsuccess = function(){ var cu = q.result; if(cu){ if(cu.value.tk === tk) out.push(cu.value); cu['continue'](); } else ok(out.sort(function(a, b){ return a.d < b.d ? -1 : 1; })); };
+    q.onerror = function(){ ok(out); };
+  }); }).catch(function(){ return []; });
+}
+function ckPhPut(rec){ return ckPhDb().then(function(db){ return new Promise(function(ok, ng){ var t = db.transaction('p', 'readwrite'); t.objectStore('p').put(rec); t.oncomplete = function(){ ok(); }; t.onerror = function(){ ng(t.error); }; }); }); }
+function ckPhDel(id){ return ckPhDb().then(function(db){ return new Promise(function(ok){ var t = db.transaction('p', 'readwrite'); t.objectStore('p')['delete'](id); t.oncomplete = function(){ ok(); }; t.onerror = function(){ ok(); }; }); }); }
+function ckPhShrink(file){
+  return new Promise(function(ok, ng){
+    var fr = new FileReader();
+    fr.onload = function(){
+      var im = new Image();
+      im.onload = function(){ var s = Math.min(1, 720 / Math.max(im.width, im.height)), cv = document.createElement('canvas'); cv.width = Math.round(im.width * s); cv.height = Math.round(im.height * s); cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height); ok(cv.toDataURL('image/jpeg', .82)); };
+      im.onerror = function(){ ng(new Error('img')); }; im.src = fr.result;
+    };
+    fr.onerror = function(){ ng(fr.error); }; fr.readAsDataURL(file);
+  });
+}
+var gPh = null;   // { token, list }
+function renderPhotos(){
+  var el = $('phArea'); if(!el || !gUa) return;
+  var tk = gUa.token;
+  ckPhList(tk).then(function(L){
+    gPh = { token: tk, list: L };
+    var last = L.length ? L[L.length - 1] : null, week = last && ckYmdDays(last.d, todayStr()) < 7;
+    el.innerHTML = '<div class="nwwrap ph-wrap"><div class="next-head">MY PHOTO</div>'
+      + '<p class="ui-s">週に1枚、同じ時間・同じ明るさで撮って、自分で見比べよう。<b>写真はこのスマホの中だけに保存</b>され、だれにも送られません（スマホを変えると消えます）。</p>'
+      + (L.length >= 2 ? '<div class="ph-cmp"><figure><img src="' + L[0].u + '" alt="はじめの写真"><figcaption>はじめ ' + esc(ckMd(L[0].d)) + '</figcaption></figure>'
+          + '<figure><img src="' + last.u + '" alt="いちばん新しい写真"><figcaption>いま ' + esc(ckMd(last.d)) + '</figcaption></figure></div>' : '')
+      + (L.length ? '<div class="ph-list">' + L.slice().reverse().map(function(p){ return '<span><img src="' + p.u + '" alt=""><small>' + esc(ckMd(p.d)) + '</small><button type="button" data-phdel="' + esc(p.id) + '" aria-label="消す">✕</button></span>'; }).join('') + '</div>' : '')
+      + '<label class="primary ph-add" for="phIn">' + (week ? '📷 今週の1枚を撮り直す' : '📷 今週の1枚を撮る') + '</label><input type="file" id="phIn" accept="image/*" capture="user" hidden>'
+      + '</div>';
+    $('phIn').onchange = function(){
+      var f = $('phIn').files && $('phIn').files[0]; if(!f) return;
+      ckPhShrink(f).then(function(u){ var d = todayStr(); return ckPhPut({ id: tk + '|' + d, tk: tk, d: d, u: u }); })
+        .then(function(){ toast('保存しました（このスマホの中だけ）'); renderPhotos(); ckUaToday(); })
+        .catch(function(){ toast('写真を保存できませんでした'); });
+    };
+    Array.prototype.forEach.call(el.querySelectorAll('[data-phdel]'), function(b){ b.onclick = function(){ ckPhDel(b.getAttribute('data-phdel')).then(function(){ renderPhotos(); ckUaToday(); }); }; });
+    ckUaToday();
+  });
 }
 function ckRenderUserCard(c, card, brand){
   gCardLast = c;
@@ -15633,18 +16045,8 @@ function renderFriendInvite(c, token){
   $('fiQr').onclick = function(){ ckJoinFriendGo(c, token, 'qr'); };
 }
 function ckJoinFriendGo(c, token, how){
-  var adb = ckAnonDb(), jr = adb.collection('cards').doc(token).collection('join').doc('me');
   ['fiSend', 'fiQr'].forEach(function(id){ if($(id)) $(id).disabled = true; });
-  jr.get().then(function(s){
-    var k = s.exists ? (s.data().k || '') : '';
-    if(k) return k;
-    k = 'f_' + ckApplyNewId(20);
-    var b = adb.batch();
-    b.set(jr, { k: k, at: FV.serverTimestamp() });
-    b.set(adb.collection('ckJoin').doc(k), { kind: 'friend', union: c.union || '', refNo: String(c.referrerNo || ''), refName: c.referrer || '',
-      invUid: String(c.no), invName: c.name || '', at: FV.serverTimestamp() });
-    return b.commit().then(function(){ return k; });
-  }).then(function(k){
+  ckJoinFriendKey(c, token).then(function(k){   // 💜 v174: シェア画像と同じ作り方
     ['fiSend', 'fiQr'].forEach(function(id){ if($(id)) $(id).disabled = false; });
     var url = ckJoinUrl(k);
     if(how === 'send'){
@@ -15775,7 +16177,9 @@ function ckUaMount(c, token){
   mv('plan', 'mpArea');
   $('uaQrCard').appendChild($('mcTilt')); if($('mcErr')) $('uaQrCard').appendChild($('mcErr'));
   mv('friends', 'bdArea'); mv('friends', 'fiArea'); mv('friends', 'lgArea');
-  mv('me', 'pzArea'); mv('me', 'exArea'); mv('me', 'rcptArea'); mv('me', 'mcHelp'); mv('me', 'verCard');
+  mv('me', 'pzArea');
+  var phA = document.createElement('div'); phA.id = 'phArea'; pg('me').appendChild(phA);   // 💜 v174: 自分だけの写真
+  mv('me', 'exArea'); mv('me', 'rcptArea'); mv('me', 'mcHelp'); mv('me', 'verCard');
   var nav = document.createElement('nav'); nav.id = 'uaTabs'; nav.setAttribute('aria-label', 'メニュー');
   nav.innerHTML = ckUaTabs().map(function(t){
     var dt = t[0] === 'home' ? 'news' : t[0] === 'friends' ? 'lg' : '';
@@ -15804,6 +16208,7 @@ function ckUaMount(c, token){
   ckUaSeg('lounge');
   ckUaGo(ckUaPages().indexOf(t0) >= 0 ? t0 : 'today', true);   // 💜 v172: 開いたら「今日」
   ckUaInfo(); ckUaHome();
+  renderPhotos();   // 💜 v174
 }
 function ckUaGo(tab, auto){
   if(!gUa) return;
@@ -16562,6 +16967,8 @@ function btDraw(){
     + '</div>'
     + '<div class="bt-box" id="btPz"></div>'
     + '<div class="bt-box" id="btMt"></div>'
+    + '<div class="bt-box" id="btCh"></div>'
+    + '<div class="bt-box" id="btLs"></div>'
     + '<div class="bt-box" id="btQe"></div>'
     + '</div>';
   $('btNtText').value = keep;
@@ -16570,6 +16977,8 @@ function btDraw(){
   btFuDraw();   // 💜 v147
   btPzDraw();   // 💜 v144
   btMtDraw();   // 💜 v172
+  btChDraw();   // 💜 v174
+  btLsDraw();   // 💜 v175
   btQeDraw();   // 💜 v140
   Array.prototype.forEach.call(box.querySelectorAll('[data-go]'), function(b){
     b.onclick = function(){ var t = $(b.getAttribute('data-go')); if(t && t.scrollIntoView) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
@@ -16744,6 +17153,80 @@ function ckRetention(rows, today){
     if(st && st <= mpAddDays(today, -30)){ r.d30[1]++; if(ks.some(function(k){ return k >= mpAddDays(st, 29); })) r.d30[0]++; }
   });
   return r;
+}
+/* 💜 v174: 今月のチャレンジ（ユニオンごと）。ckChal/{ユニオン} = { m: 'YYYY-MM', t: テーマ（30字）, g: 日数, by, at }。開いた時に1件だけ読む */
+function btChDraw(){
+  var box = $('btCh'), me = gBt;
+  if(!box || !me) return;
+  if(me.ch === undefined){
+    me.ch = null; box.innerHTML = '<h3>🗓 今月のチャレンジ</h3><p class="bt-note">読み込み中…</p>';
+    db.collection('ckChal').doc(me.un).get().then(function(s){ if(gBt === me){ me.ch = s.exists ? (s.data() || {}) : false; btChDraw(); } }).catch(function(){ if(gBt === me){ me.ch = false; btChDraw(); } });
+    return;
+  }
+  if(me.ch === null) return;
+  var m = todayStr().slice(0, 7), cur = me.ch && me.ch.m === m ? me.ch : null;
+  box.innerHTML = '<h3>🗓 今月のチャレンジ' + hq('このユニオンのお客さんのアプリの「今日」に、今月のテーマと「チェックした日 ○ / ○日」が出ます。月が変わると出なくなります（新しい月のチャレンジを決めてください）。効果をうたう言葉は書かないでください。') + '</h3>'
+    + (cur ? '<p class="bt-note" style="margin:0 0 8px;">今出ている：<b>' + esc(cur.t) + '</b>（' + cur.g + '日）</p>' : '<p class="bt-note" style="margin:0 0 8px;">今月（' + esc(m.replace('-', '年') + '月') + '）のチャレンジはまだありません。</p>')
+    + '<label for="btChT" style="display:block;">テーマ（30文字まで）</label><input type="text" id="btChT" maxlength="30" style="display:block;width:100%;" placeholder="例: 12月は保湿月間" value="' + esc(cur ? cur.t : '') + '">'
+    + '<label for="btChG" style="display:block;margin-top:8px;">今月チェックする日の数</label><input type="number" id="btChG" min="1" max="31" inputmode="numeric" style="display:block;width:8em;" value="' + (cur ? cur.g : 20) + '">'
+    + '<div class="btns" style="justify-content:flex-start;margin-top:8px;"><button class="primary" id="btChGo">' + (cur ? '直す' : '今月のチャレンジを出す') + '</button>' + (cur ? '<button id="btChDel" class="danger ghost">やめる</button>' : '') + '</div>';
+  $('btChGo').onclick = function(){
+    var t = $('btChT').value.replace(/\s+/g, ' ').trim(), g = parseInt($('btChG').value, 10);
+    if(!t){ toast('テーマを入れてください'); return; }
+    if(!(g >= 1 && g <= 31)){ toast('日の数は1〜31で入れてください'); return; }
+    var ws = CK_LG_WARN.filter(function(w){ return t.indexOf(w) >= 0; });
+    if(ws.length){ toast('効果をうたう言葉（' + ws.join('・') + '）は使えません'); return; }
+    var d = { m: m, t: t.slice(0, 30), g: g, by: gUser.uid, at: FV.serverTimestamp() };
+    $('btChGo').disabled = true;
+    db.collection('ckChal').doc(me.un).set(d).then(function(){
+      me.ch = { m: m, t: d.t, g: g }; try{ localStorage.removeItem('bci_chal_' + me.un); }catch(e){}
+      toast('今月のチャレンジを出しました。お客さんのアプリには30分ほどで出ます'); btChDraw();
+    }).catch(function(e){ $('btChGo').disabled = false; toast(permMsg(e, '保存できませんでした。ルールの反映をオーナーに確認してください')); });
+  };
+  if($('btChDel')) $('btChDel').onclick = function(){
+    db.collection('ckChal').doc(me.un)['delete']().then(function(){ me.ch = false; try{ localStorage.removeItem('bci_chal_' + me.un); }catch(e){} toast('チャレンジをやめました'); btChDraw(); })
+      .catch(function(e){ toast(permMsg(e, 'やめられませんでした')); });
+  };
+}
+/* 💜 v175: 今日の1分をスタッフが足す。ckLes/{ユニオン} = { L: [{ t: 見出し（20字）, b: 本文（120字） }]（30こまで）, by, at }。
+   お客さんのアプリでは、このユニオンで足した分 → もともとの分 の順に、はじめた日から1日1つ */
+function btLsDraw(){
+  var box = $('btLs'), me = gBt;
+  if(!box || !me) return;
+  if(me.ls === undefined){
+    me.ls = null; box.innerHTML = '<h3>📖 今日の1分</h3><p class="bt-note">読み込み中…</p>';
+    db.collection('ckLes').doc(me.un).get().then(function(s){ if(gBt === me){ me.ls = s.exists ? (((s.data() || {}).L) || []) : []; btLsDraw(); } }).catch(function(){ if(gBt === me){ me.ls = []; btLsDraw(); } });
+    return;
+  }
+  if(me.ls === null) return;
+  var L = me.ls;
+  box.innerHTML = '<h3>📖 今日の1分' + hq('お客さんのアプリの「今日」に、続けるコツが1日1つ出ます。ここで足した分が先に、そのあと もともとの' + CK_LESSONS.length + '本が、はじめた日から順番に出ます。効果をうたう言葉は書かないでください。足した分は、お客さんのアプリには数時間で出ます。') + '</h3>'
+    + '<p class="bt-note" style="margin:0 0 8px;">このユニオンで足した分：' + L.length + ' / 30こ（ほかに、もともとの' + CK_LESSONS.length + '本）</p>'
+    + (L.length ? '<div class="bt-ls">' + L.map(function(x, i){ return '<div class="bt-lsr"><div><b>' + esc(x.t || '') + '</b><span>' + esc(x.b || '') + '</span></div><button type="button" class="danger ghost" data-lsdel="' + i + '">消す</button></div>'; }).join('') + '</div>' : '')
+    + (L.length < 30 ? '<label for="btLsT" style="display:block;margin-top:8px;">見出し（20文字まで）</label><input type="text" id="btLsT" maxlength="20" style="display:block;width:100%;" placeholder="例: 冬は加湿を">'
+      + '<label for="btLsB" style="display:block;margin-top:8px;">本文（120文字まで）</label><textarea id="btLsB" maxlength="120" rows="3" style="display:block;width:100%;" placeholder="例: 寝る前に加湿器のスイッチを入れる、を毎日の流れに入れてみよう。"></textarea>'
+      + '<div class="btns" style="justify-content:flex-start;margin-top:8px;"><button class="primary" id="btLsGo">足す</button></div>'
+      : '<p class="bt-note">30こまでです。足す時は、どれかを消してください。</p>');
+  var save = function(N, msg, btn){
+    if(btn) btn.disabled = true;
+    var ref = db.collection('ckLes').doc(me.un);
+    (N.length ? ref.set({ L: N, by: gUser.uid, at: FV.serverTimestamp() }) : ref['delete']()).then(function(){
+      me.ls = N; try{ localStorage.removeItem('bci_lesu_' + me.un); }catch(e){}
+      toast(msg); btLsDraw();
+    }).catch(function(e){ if(btn) btn.disabled = false; toast(permMsg(e, '保存できませんでした。ルールの反映をオーナーに確認してください')); });
+  };
+  if($('btLsGo')) $('btLsGo').onclick = function(){
+    var t = $('btLsT').value.replace(/\s+/g, ' ').trim(), b = $('btLsB').value.replace(/\s+/g, ' ').trim();
+    if(!t || !b){ toast('見出しと本文を入れてください'); return; }
+    var ws = CK_LG_WARN.filter(function(w){ return (t + b).indexOf(w) >= 0; });
+    if(ws.length){ toast('効果をうたう言葉（' + ws.join('・') + '）は使えません'); return; }
+    save(L.concat([{ t: t.slice(0, 20), b: b.slice(0, 120) }]), '足しました。お客さんのアプリには数時間で出ます', $('btLsGo'));
+  };
+  Array.prototype.forEach.call(box.querySelectorAll('[data-lsdel]'), function(bt){ bt.onclick = function(){
+    var i = +bt.getAttribute('data-lsdel'), x = L[i];
+    if(!x || !window.confirm('「' + (x.t || '') + '」を消しますか？')) return;
+    save(L.filter(function(_, j){ return j !== i; }), '消しました', bt);
+  }; });
 }
 function btMtLoad(){
   var me = gBt; if(!me) return;
