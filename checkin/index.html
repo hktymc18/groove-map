@@ -2907,10 +2907,11 @@ if(gTrainerMode) document.documentElement.classList.add('trm');   // 🎓 研修
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v170';
+var APP_VER = 'v171';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v171', d: '2026/11/22', items: ['🏅 会員証のバッジに「MC」と「SPEAKER」を追加しました'] },
   { v: 'v170', d: '2026/11/22', items: ['🔔 棚卸しの通知は、毎週日曜の11時に届くようにしました（前は月曜の朝）'] },
   { v: 'v169', d: '2026/11/22', items: ['🔔 棚卸し：受付管理者・ユニオン管理者にも、毎週月曜の朝に「ユニオンの棚卸し：〇人（28日以上 〇人）」のまとめの通知が届くようにしました（タップで回答ページ）'] },
   { v: 'v168', d: '2026/11/21', items: ['🔔 棚卸しの自動のお知らせ：毎週月曜の朝、14日・28日動きがない人を、研修の担当とUPルビーにスマホの通知でお知らせ。通知から「続けている／様子見／やめた」を選ぶと、名簿に反映されます（やめた＝無効化）', '🧹 名簿の「棚卸し」に、お知らせへの回答の記録を表示'] },
@@ -4036,7 +4037,9 @@ var CARD_BADGES = [
   { k: '受付', t: 'role', c: ['#8af0a8', '#1f8a43'] },
   { k: '設営', t: 'role', c: ['#ffc27a', '#c25a0a'] },
   { k: '個別', t: 'role', c: ['#7ae8e0', '#13807a'] },
-  { k: '体感', t: 'role', c: ['#ffe27a', '#b88a00'] }
+  { k: '体感', t: 'role', c: ['#ffe27a', '#b88a00'] },
+  { k: 'MC', t: 'role', c: ['#c7d0de', '#45526a'] },        // v171
+  { k: 'SPEAKER', t: 'role', c: ['#f0cf9c', '#86552a'] }    // v171
 ];
 // 🔒 オーナーだけが付け外しできるタイトル（firestore.rules の ckTopBadge と一致させること）
 function ckTopTitle(k){ return k === 'BLUE DIAMOND' || k === 'TEAM ELITE'; }
