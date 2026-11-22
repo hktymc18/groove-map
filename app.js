@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v911';
+var APP_JS_VERSION = 'v913';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -5202,7 +5202,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v911';
+  var DATA_VERSION = 'v913';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -7341,6 +7341,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v913', d:'2026-11-22', items:['MAP のカード（PC はマウスを乗せた時・スマホは名前を押した時）に、研修生の最後の研修（項目・日付・結果・Aさん）を出すように','カードの OL記録は直近1か月の分だけ、日付の新しい順に'] },
+  { v:'v912', d:'2026-11-22', items:['予定のタイトルに CT・FT・ST などを入れても、PLAN には数えないように（「PLAN「CT」に数えます」の表示もなくしました）','PLAN の数は計画シートで − ＋ で入れます。10月までの数は記録として残します'] },
   { v:'v911', d:'2026-11-22', items:['MAP（PC・スマホ・サークル）で、女性の名前をピンクに（男女を色で見分けられるように）'] },
   { v:'v910', d:'2026-11-22', items:['PC：選んだ印はチャコール・押すボタンはイエローに（MAP のビジネス｜ユーザー、編集｜サマリー、今月｜来月、ToDo の左の一覧と＋、OL の企画）','タブの下線もチャコールに','計画シートの達成度のカードは、白い字が読める濃いターコイズに。下のページの印はチャコールに'] },
   { v:'v909', d:'2026-11-22', items:['🛠 細かい修正をしました'] },
@@ -11267,15 +11269,15 @@ function memberInfoHtml(m) {
         html += '<div class="ci-plan">' + (e.type === 'task' ? '⬜' : '📅') + ' ' + (d9 ? d9 + ' ' : '') + evEsc(evMemberLabel(e, m)) + '</div>';
       });
     }
-  } else memberNextPlanLines(m).forEach(function(ln){ html += '<div class="ci-plan">' + ln + '</div>'; }); // v361: 研修予定＋カレンダー予定＋OL予定を両方表示
+  } else { var _ltl2 = memberLastTrainLine(m); if (_ltl2) html += '<div class="ci-plan">' + _ltl2 + '</div>'; memberNextPlanLines(m).forEach(function(ln){ html += '<div class="ci-plan">' + ln + '</div>'; }); } // v913: 最後の研修 // v361: 研修予定＋カレンダー予定＋OL予定を両方表示
   var fd = (state.freshData && state.freshData[m.id]) || {};
-  var olog = (fd.olLog || []).filter(function(e){ return e.date || e.to || e.what || e.note; });
+  var olog = memberOlRecent(m); // v913: 直近1か月だけ
   if (olog.length) {
     html += '<div class="ci-ol-lbl">' + icn('pencil') + ' OL記録</div>';
     html += olog.slice(0, 5).map(function(e){
       var d = e.date ? e.date.split('-').slice(1).join('/') : '';
       return '<div class="ci-ol">' + (e.st === 'planned' ? '<span style="background:var(--gold);color:#08121a;font-size:9px;font-weight:800;border-radius:6px;padding:0 5px;margin-right:3px">予定</span>' : '') + (d ? '<span class="ci-ol-d">' + d + '</span> ' : '') + (e.to ? '<b>' + evEsc(e.to) + '</b> ' : '') + (e.what ? evEsc(e.what) : '') + (e.note ? '<div class="ci-ol-note">↳ ' + evEsc(e.note) + '</div>' : '') + '</div>';
-    }).join('');
+    }).join('') + (olog.length > 5 ? '<div class="ci-ol" style="color:var(--text-dim)">ほか ' + (olog.length - 5) + ' 件</div>' : '');
   }
   if (!html) html = '<div class="ci-empty">メモ・OL・予定なし（ダブルタップで編集）</div>';
   // CAL-2: この人との予定をテンプレから即作成（結合メンバーは相手MAP編集ボタンを優先）
@@ -16368,7 +16370,7 @@ function showPcTooltip(mid, ev) {
   // OL記録（組んだアウトライン）— マップ上で見れるように（動線一本化）
   var olHtml = '';
   var _fd = (state.freshData && state.freshData[m.id]) || {}; // v812 #17: 共有メンバーも自分で残したOL記録は出す
-  var _olog = (_fd.olLog || []).filter(function(e){ return e.date || e.to || e.what || e.note; });
+  var _olog = memberOlRecent(m); // v913: 直近1か月だけ
   if (_olog.length) {
     var olRows = _olog.slice(0, 4).map(function(e){
       var od = e.date ? e.date.split('-').slice(1).join('/') : '';
@@ -16384,8 +16386,8 @@ function showPcTooltip(mid, ev) {
   }
   // 次の予定（研修の予定ステップ or 次回予定日）
   var planHtml = '';
-  var _npls = _fgn ? [] : memberNextPlanLines(m); // v361: 研修予定＋カレンダー予定＋OL予定を両方表示（v561: 共有メンバーは上の予定欄に出す）
-  if (_npls.length) planHtml = '<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);font-size:12px;color:#FFB454;line-height:1.7">' + _npls.join('<br>') + '</div>';
+  var _npls = _fgn ? [] : memberNextPlanLines(m); var _ltl = memberLastTrainLine(m); if (_ltl) _npls.unshift(_ltl); // v913: 最後の研修 // v361: 研修予定＋カレンダー予定＋OL予定を両方表示（v561: 共有メンバーは上の予定欄に出す）
+  if (_npls.length) planHtml = '<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);font-size:12px;color:var(--gold);line-height:1.7">' + _npls.join('<br>') + '</div>';
   tip.innerHTML = (_avatars[m.id] ? '<img src="' + _avatars[m.id] + '" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2.5px solid ' + titleRingColor(m.title) + ';display:block;margin-bottom:7px" alt="">' : '')
     + '<div class="pc-tooltip-name" style="color:' + (m.gender==='female'?'var(--female)':'var(--male)') + '">' + name + '</div>'
     + '<div class="pc-tooltip-row"><span class="pc-tooltip-label">タイトル</span><span class="pc-tooltip-val">' + (m.title||'-') + titleMonthsSuffix(m) + restartSuffix(m) + '</span></div>'
@@ -19169,9 +19171,10 @@ function _p2Act(ym) {
 //  予定＝日付が来たら実施、タスク＝完了チェックで実施。関連メンバーが複数なら人数分（DLR動員2人＝2）
 var P2_KIND_KEY = { 'CT': 'ct', 'FT': 'ft', 'CT取り': 'ctget', 'ST': 'st', 'SNST': 'snst' }; // v550 → v570: カレンダーから数えるのはこの5つだけ（マケ・PG・DLRは研修履歴から）
 function _p2EvKey(e) { return (e && P2_KIND_KEY[evGuessKind(e.title)]) || ''; } // v570: 種類の欄は廃止。タイトルだけで判定
-var P2_AUTO_ACT_FROM = '2026-10'; // この月からは「自動＋手入力」。それより前は二重計上を避けて多い方
+var P2_AUTO_ACT_FROM = '2026-10';
+function _p2EvCountEnd() { return _p2YmAdd(P2_MAN_FROM, -1) + '-31'; } // v912: 予定から数える最後の日（2026-10-31） // この月からは「自動＋手入力」。それより前は二重計上を避けて多い方
 function _p2KindEvs(key, from, to) {
-  var out = [];
+  var out = [], cEnd = _p2EvCountEnd(); if (!to || to > cEnd) to = cEnd; // v912: 予定から PLAN に数えるのは10月の記録だけ（11月からは何も数えない）
   (state.events || []).forEach(function(e) {
     if (!e || e.deleted || !e.date || /^UN_/.test(String(e.id || '')) || e.date < from || e.date > to || !evOnMember(e)) return; // v562: 「自分のみ」は数えない
     if (_p2EvKey(e) !== key) return;
@@ -19191,7 +19194,7 @@ function _p2EvDoneAt(e, t) {
 }
 // v550: CT取り＝会う約束が取れた件数。約束が取れたらCTの予定を入れるので「その期間に作ったCTの予定」で数える
 function _p2CtGotEvs(from, to) {
-  var out = [];
+  var out = [], cEnd = _p2EvCountEnd(); if (!to || to > cEnd) to = cEnd; // v912
   (state.events || []).forEach(function(e) {
     if (!e || e.deleted || /^UN_/.test(String(e.id || '')) || _p2EvKey(e) !== 'ct' || !evOnMember(e)) return;
     var d0 = '';
@@ -24816,7 +24819,7 @@ function _p2MonPageHtml(i) {
   return '<div id="p2MonCur">' + h + '</div>';
 }
 // ════ v598: 今週やること（行動の一覧 → 行動の画面）と、振り返り（1問1答） ════
-UX_INFO['do'] = { t: '今週やることの数え方', h: '今月の目標（フロント・ST回数など）から、<b>残りの数 ÷ 残りの週</b>で今週の数を出しています。<br>CT・FT・ST・SNST・CT取りは「＋1」で入れた数（2026年11月からは予定とは連動しません）、PG・DLRは<b>研修履歴</b>から自動で数えます。<br>行を押すと、その行動の予定・結果待ちが見られます' };
+UX_INFO['do'] = { t: '今週やることの数え方', h: '今月の目標（フロント・ST回数など）から、<b>残りの数 ÷ 残りの週</b>で今週の数を出しています。<br>CT・FT・ST・SNST・CT取りは「＋1」で入れた数（予定とは連動しません）、PG・DLRは<b>研修履歴</b>から自動で数えます。<br>行を押すと、その行動の予定・結果待ちが見られます' };
 function _p2DoCss2() {
   if (document.getElementById('p2DoCss2')) return;
   var st = document.createElement('style'); st.id = 'p2DoCss2';
@@ -26233,7 +26236,7 @@ function p2WeekOk() { _p2().weekOk = _p2WeekKey(); saveGoals(); if (currentView 
 function p2TodayHtml() {
   if (viewingOwnerUid || !state.goals || !state.goals.plan) return '';
   var t = evTodayYmd(), items = [];
-  (state.events || []).filter(function(e) { return e && !e.deleted && e.date === t && !/^UN_/.test(String(e.id || '')) && _p2EvKey(e) && !(e.type === 'task' && e.done) && (e.type === 'task' ? evTdMine(e) : evShowMine(e)); }) // v567: 自分に出さない予定は除く
+  (state.events || []).filter(function(e) { return e && !e.deleted && e.date === t && e.date <= _p2EvCountEnd() && !/^UN_/.test(String(e.id || '')) && _p2EvKey(e) && !(e.type === 'task' && e.done) && (e.type === 'task' ? evTdMine(e) : evShowMine(e)); }) // v567: 自分に出さない予定は除く
     .sort(function(a, b) { return (a.time || '99').localeCompare(b.time || '99'); }).slice(0, 3).forEach(function(e) {
       items.push('<div class="p2td-it" onclick="openEventActions(\'' + e.id + '\')"><span class="tm">' + (e.time || '今日') + '</span><span class="kd">' + evEsc(evGuessKind(e.title)) + '</span><span class="tt">' + evEsc(e.title || '') + '</span></div>');
     });
@@ -27705,7 +27708,7 @@ function _p2FunnelHtml(ym) {
     + _p2ActRow(ym, 'pg', 'PG', 'PG', 0)
     + _p2ActRow(ym, 'dlr', 'DLR', 'DLR動員', F * c.dlr)
     + (function() { var lag = _p2Lagging(ym); return lag ? '<div class="p2a-lag">😤 ' + lag + ' <span class="p2a-lk" onclick="p2NotesOpen(\'why\',\'read\')">📖 やる理由を読み返す</span></div>' : ''; })()
-    + '<details class="p2a-help"><summary>ⓘ 数え方</summary>ST・SNST・CT取り・CT・FTは「＋1」で記録した数（2026年11月からは予定とは連動しません。10月までは、タイトルにその言葉が入った予定も数えています）。PG・マケ・DLR動員は研修履歴から：自分の直下の研修生に結果（進んだ・流れた）を入れたら1人（DLRは会場に来た人だけ）。チームの研修生の分は「今月の目標」のチーム欄に数えます。やった分は「＋1」で記録。ST・SNST・CT取りは「予約」で時間の枠を入れておく。CT取り＝会う約束が取れた件数。CT取りの目標はCTの必要数＋' + cfg.ctBuf + '%（ドタキャン分）。PGは係数外（DLRの3日前までに実施）。🔥＝週の目標（月の必要数÷週の数）を続けてクリアした週数。点線の式をタップすると、数字が決まるまでの流れが見られます</details>';
+    + '<details class="p2a-help"><summary>ⓘ 数え方</summary>ST・SNST・CT取り・CT・FTは「＋1」で記録した数（予定とは連動しません。10月までの数は、そのころの数え方の記録です）。PG・マケ・DLR動員は研修履歴から：自分の直下の研修生に結果（進んだ・流れた）を入れたら1人（DLRは会場に来た人だけ）。チームの研修生の分は「今月の目標」のチーム欄に数えます。やった分は「＋1」で記録。ST・SNST・CT取りは「予約」で時間の枠を入れておく。CT取り＝会う約束が取れた件数。CT取りの目標はCTの必要数＋' + cfg.ctBuf + '%（ドタキャン分）。PGは係数外（DLRの3日前までに実施）。🔥＝週の目標（月の必要数÷週の数）を続けてクリアした週数。点線の式をタップすると、数字が決まるまでの流れが見られます</details>';
   h += '<div class="p2-meta" style="margin-top:8px">🎪 今後のDLR：' + (dlrEvs.length ? dlrEvs.slice(0, 3).map(function(u) { return parseInt(u.date.slice(5, 7), 10) + '/' + parseInt(u.date.slice(8, 10), 10); }).join('・') + '（ユニオン予定より）' : 'ユニオン予定に「' + evEsc(_p2DlrKw()) + '」を含む予定がありません（表記は「係数」の設定で変更可）') + '</div>';
   h += '<span class="p2-btn pri" onclick="p2Mobilize()">🎪 動員を計画（タスク自動生成）</span>';
   h += '</div>';
@@ -27914,7 +27917,7 @@ function p2DoMenu(which) {
     if (F) h += '<div class="p2do-base">計算のもと：フロント目標 <b>F＝' + F + '人</b>' + ({ ideal: '（理想MAP）', roadmap: '（ロードマップ）', month: '（今月の目標）' }[_p2FrontSrc(ym)] || '') + ' × 1人あたり CT' + c.ct + '・FT' + c.ft + '・DLR' + c.dlr + '</div>';
     h += mi('🧮', 'why', 'なぜこの数字？', '今月の必要数から、今週やる数を逆算する流れ');
     h += mi('🎮', 'tut', '1分で体験', 'Fや係数を動かして、数字の決まり方を体験', !viewingOwnerUid && !_p2().tutSeen);
-    h += '<div class="p2do-sec">数え方</div><div class="p2do-rule">ST・SNST・CT取り・CT・FTは「＋1」で記録した数（2026年11月からは予定とは連動しません。10月までは、タイトルにその言葉が入った予定も数えています）。<br>PG・マケ・DLR動員は研修履歴から：自分の直下の研修生に結果（進んだ・流れた）を入れたら1人（DLRは会場に来た人だけ）。チームの研修生の分は「今月の目標」のチーム欄に数えます。<br>CT取り＝会う約束が取れた件数。目標はCTの必要数＋' + cfg.ctBuf + '%（ドタキャン分）。<br>やった分は、行をタップして「やった（＋1）」。🔥＝週の目標を続けてクリアした週数</div>';
+    h += '<div class="p2do-sec">数え方</div><div class="p2do-rule">ST・SNST・CT取り・CT・FTは「＋1」で記録した数（予定とは連動しません。10月までの数は、そのころの数え方の記録です）。<br>PG・マケ・DLR動員は研修履歴から：自分の直下の研修生に結果（進んだ・流れた）を入れたら1人（DLRは会場に来た人だけ）。チームの研修生の分は「今月の目標」のチーム欄に数えます。<br>CT取り＝会う約束が取れた件数。目標はCTの必要数＋' + cfg.ctBuf + '%（ドタキャン分）。<br>やった分は、行をタップして「やった（＋1）」。🔥＝週の目標を続けてクリアした週数</div>';
   } else {
     var dl = _p2DlrEvents();
     h += '<div class="ms-hd"><div class="ms-hinfo"><div class="ms-name">設定・計画</div></div><span class="ms-x" onclick="_p2SheetClose(\'p2DoMnOv\')">✕</span></div><div style="padding:0 16px 18px">';
@@ -32954,6 +32957,22 @@ function evOnMember(e) { return evVis(e) !== 'self'; } // メンバー側（カ�
 function evShowMine(e) { if (!evIsMemberLinked(e)) return true; if (e.vis) return e.vis !== 'member'; return e.selfShow !== false; } // カレンダー系（旧データは表示）
 function evTdMine(e)   { if (!evIsMemberLinked(e)) return true; if (e.vis) return e.vis !== 'member'; return e.selfShow === true; }  // ToDo/通知/バッジ
 // v361: メンバーの「次の予定」行（研修ファネル予定＋カレンダー予定＋OL予定を全部返す）
+// v913: 研修生の最後の研修（結果を入れた中で一番新しい日付）＝「🎓 マケ（11/18）✓ A:田中」
+function memberLastTrainLine(m) {
+  if (!m || !(typeof memberCat === 'function' && memberCat(m) === '研修生')) return '';
+  var last = null;
+  (m.traineeHistory || []).forEach(function(h) { if (h && h.date && h.result && h.result !== 'planned' && (!last || h.date >= last.date)) last = h; });
+  if (!last) return '';
+  return '<span style="color:var(--text-mid)">🎓 ' + evEsc(last.status || '') + '（' + last.date.split('-').slice(1).map(function(x) { return parseInt(x, 10); }).join('/') + '）'
+    + (last.result === 'left' ? '✗' : '✓') + (last.aSan ? ' A:' + evEsc(last.aSan) : '') + '</span>';
+}
+// v913: OL記録はカードには直近1か月（今日から30日前より後の日付）だけ、日付の新しい順
+function memberOlRecent(m) {
+  var fd = (state.freshData && state.freshData[m.id]) || {}, t = evTodayYmd(), d0 = new Date(t + 'T00:00:00'); d0.setDate(d0.getDate() - 30);
+  var cut = evYmd(d0);
+  return (fd.olLog || []).filter(function(e) { return e && e.date && String(e.date) >= cut && (e.to || e.what || e.note || e.date); })
+    .slice().sort(function(a, b) { return String(b.date).localeCompare(String(a.date)); });
+}
 function memberNextPlanLines(m) {
   var out = [];
   var t = evTodayYmd();
@@ -37366,15 +37385,14 @@ function _evRewardOnDone(e) {
   if (!e.templateStage || e.rewarded) return false;
   if (viewingOwnerUid) return false; // 共有MAP閲覧・編集中は相手の予定なので自分の実績に入れない
   // v548: 種類（CT/FT/マケ/PG/DLR）が付いた予定はPLANがカレンダーから自動で数えるので、実績の手入力欄には足さない（XPだけ）
-  var _autoK = (typeof _p2EvKey === 'function') ? _p2EvKey(e) : '';
-  var xp = _autoK ? _stageXpOnly(e.templateStage) : _stageRecord(e.templateStage, evTodayYmd());
+  var xp = _stageXpOnly(e.templateStage); // v912: 予定を済みにしても PLAN の数には足さない（XPだけ）
   e.rewarded = true; // 二重加算防止（チェックを外して付け直しても再加算しない）
   var lbl = _evTplStageLabel(e.templateStage);
   if ((e.templateStage === 'ct' || e.templateStage === 'ft') && e.memberId && typeof openOlRecordModal === 'function') {
     var mid = e.memberId;
-    toastAction('' + lbl + ' +1 をMAP実績に記録 (+' + xp + 'XP)', 'OL記録', function(){ openOlRecordModal(mid); }, 6000);
+    toastAction('' + lbl + ' 済み (+' + xp + 'XP)', 'OL記録', function(){ openOlRecordModal(mid); }, 6000);
   } else {
-    toast('' + lbl + ' +1 をMAP実績に記録 (+' + xp + 'XP)');
+    toast('' + lbl + ' 済み (+' + xp + 'XP)');
   }
   return true;
 }
@@ -37641,7 +37659,7 @@ function evLinkHintRender() {
   var el = document.getElementById('evLinkHint'); if (!el) return;
   var ti = document.getElementById('evTitle'), title = ti ? ti.value : '', parts = [];
   var pk = _p2EvKey({ title: title }), step = _tsStepOf({ title: title });
-  if (pk) parts.push('PLAN「' + P2_LINK_LB[pk] + '」に数えます' + (_evMemberIds.length && _evVis === 'self' ? '<span class="dim">（「自分のみ」は数えません）</span>' : ''));
+  // v912: 予定は PLAN に数えない（「PLAN「CT」に数えます」は出さない）
   if (step) {
     var tr = _evMemberIds.map(function(id) { return _mFind(id) || (/^MG_/.test(String(id)) && typeof _mgFind === 'function' ? _mgFind(id) : null); }).filter(function(m) { return m && _tsIsTrainee(m); }); // v813 #18: 共有メンバーも
     if (tr.length) parts.push(tr.slice(0, 3).map(function(m) { return evEsc(m.lastName || m.firstName || ''); }).join('・') + (tr.length > 3 ? ' ほか' : '') + 'さんの研修ステップ「' + step + '」に予定で入ります');
@@ -37655,8 +37673,7 @@ function evLinkHelp() {
   var hp = document.getElementById('evLinkHelpBox'); if (!hp) return;
   if (hp.style.display !== 'none') { hp.style.display = 'none'; return; }
   hp.innerHTML = '<b>タイトルに入れた言葉で自動で連携します</b>'
-    + '<div><span>ST・SNST・CT取り</span>PLANの「時間の枠」（予約した回数）</div>'
-    + '<div><span>CT・FT</span>PLANの行動量（日付が来たら、関連メンバーの人数分）</div>'
+    + '<div><span>ST・SNST・CT取り・CT・FT</span>PLANには数えません。PLANの数は計画シートで − ＋ で入れます</div>'
     + '<div><span>FT・マケ・PG・DLR・EXP・PA・面談・BPC・CO</span>関連メンバーに研修生を選ぶと、その人の研修履歴に「予定」で入ります。結果（進んだ・流れた）を入れると、自分の直下の研修生はPLANの行動量（PG・FT・マケ・DLR動員）、それ以外はチームの目標に数えます</div>'
     + '<div><span>それ以外</span>どこにも数えません（ふつうの予定）</div>';
   hp.style.display = '';
