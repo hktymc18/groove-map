@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v914';
+var APP_JS_VERSION = 'v915';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -5202,7 +5202,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v914';
+  var DATA_VERSION = 'v915';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -7341,6 +7341,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v915', d:'2026-11-23', items:['メンバーの画面・設定の選んだ札（非表示・稼働・性別・見た目など）をチャコールにそろえて読みやすく','PC の MAP の表の稼働・段・研修中の字を、読める濃さの色に'] },
   { v:'v914', d:'2026-11-22', items:['OUT で「非表示」にした人の下に、同じく非表示の OUT の人しかいない時も、MAP から消えるように','下にまだ人がいて MAP に残る時は、メンバーの画面に「下に ○人いるので残ります」と出るように'] },
   { v:'v913', d:'2026-11-22', items:['MAP のカード（PC はマウスを乗せた時・スマホは名前を押した時）に、研修生の最後の研修（項目・日付・結果・Aさん）を出すように','カードの OL記録は直近1か月の分だけ、日付の新しい順に'] },
   { v:'v912', d:'2026-11-22', items:['予定のタイトルに CT・FT・ST などを入れても、PLAN には数えないように（「PLAN「CT」に数えます」の表示もなくしました）','PLAN の数は計画シートで − ＋ で入れます。10月までの数は記録として残します'] },
@@ -9849,8 +9850,8 @@ function renderPCTable(mapType) {
     if (cnt === 0) return;
     var chip = document.createElement('div');
     chip.className = 'tbl-filter-chip' + (_tblFilterAct === act ? ' active' : '');
-    chip.style.color = act==='S'?'var(--s)':act==='A'?'var(--a)':act==='B'?'var(--b)':'var(--c)';
-    if (_tblFilterAct === act) chip.style.borderColor = chip.style.color;
+    if (!NV_TONE) { chip.style.color = act==='S'?'var(--s)':act==='A'?'var(--a)':act==='B'?'var(--b)':'var(--c)';
+    if (_tblFilterAct === act) chip.style.borderColor = chip.style.color; } // v915: 新しいトーンはふつうの札（選んだ方はチャコール）
     chip.textContent = act + ' ' + cnt;
     chip.onclick = function() { _tblFilterAct = _tblFilterAct === act ? '' : act; renderPCTable(mapType); };
     filterBar.appendChild(chip);
@@ -9923,7 +9924,7 @@ function renderPCTable(mapType) {
     var tdD = document.createElement('td');
     tdD.className = 'col-depth';
     tdD.textContent = depthMap[m.id] !== undefined ? depthMap[m.id] : '-';
-    tdD.style.color = familyMap[m.id] || 'var(--text-dim)';
+    tdD.style.color = NV_TONE ? 'var(--text-mid)' : (familyMap[m.id] || 'var(--text-dim)'); // v915: 段の数字は灰（明るい系列色は読めない）
     tr.appendChild(tdD);
 
     // アクション列（名前の左）
@@ -9960,8 +9961,8 @@ function renderPCTable(mapType) {
     var tdT = document.createElement('td');
     tdT.className = 'col-title' + (isEd ? ' editable' : '');
     var LOI_T = ['LOI','Q2','Q3','Q4'];
-    if (LOI_T.indexOf((m.title||'').trim()) >= 0) tdT.style.color = '#4ADE80';
-    else if (m.trainee) tdT.style.color = '#5AD7FF';
+    if (LOI_T.indexOf((m.title||'').trim()) >= 0) tdT.style.color = NV_TONE ? 'var(--gold)' : '#4ADE80';
+    else if (m.trainee) tdT.style.color = NV_TONE ? 'var(--trainee)' : '#5AD7FF'; // v915: 濃いターコイズ（読める色）
     tdT.textContent = m.title || '-';
     if (isEd) tdT.onclick = function() { inlineSelect(tdT, m, 'title', mapType); };
     tr.appendChild(tdT);
@@ -9973,7 +9974,7 @@ function renderPCTable(mapType) {
     if (m.activity && m.actRate) actText += ' ' + m.actRate + '%';
     if (m.activity === 'S' && !m.actRate) actText = 'S 120%'; // v492: 実測があればそちら
     tdA.textContent = actText;
-    tdA.style.color = m.activity==='S'?'var(--s)':m.activity==='A'?'var(--a)':m.activity==='B'?'var(--b)':m.activity==='C'?'var(--c)':'var(--text-dim)';
+    tdA.style.color = NV_TONE ? (m.activity ? 'var(--text)' : 'var(--text-dim)') : (m.activity==='S'?'var(--s)':m.activity==='A'?'var(--a)':m.activity==='B'?'var(--b)':m.activity==='C'?'var(--c)':'var(--text-dim)'); // v915: 稼働の字はチャコール
     if (isEd) tdA.onclick = function() { inlineSelect(tdA, m, 'activity', mapType); };
     tr.appendChild(tdA);
 
@@ -10007,7 +10008,7 @@ function renderPCTable(mapType) {
     } else if (m.trainee) {
       var ls = getLatestStatus(m);
       tdTr.textContent = ls || '研修中';
-      tdTr.style.color = '#5AD7FF';
+      tdTr.style.color = NV_TONE ? 'var(--trainee)' : '#5AD7FF';
     }
     tr.appendChild(tdTr);
 
@@ -20792,7 +20793,7 @@ function _ppTrHtml(m) {
   }).join('');
   var h = '<h2 class="ux-h2">研修</h2><div class="ux-sub">変えるとすぐ保存されます</div>'
     + '<div class="ppl ppl2">ステップ<i>押すと記録を足す</i></div><div class="pptrg">' + grid + '</div>'
-    + '<div class="ppl ppl2">研修結果</div><div class="ppseg">' + [['', '進行中', 'clock', '#5AD7FF'], ['BC', 'BC', 'checksq', 'var(--accent)'], ['ユーザー', 'ユーザー', 'bag', 'var(--gold)'], ['流れた', '流れた', 'ban', 'var(--red)']].map(function(x) {
+    + '<div class="ppl ppl2">研修結果</div><div class="ppseg">' + [['', '進行中', 'clock', 'var(--green)'], ['BC', 'BC', 'checksq', 'var(--accent)'], ['ユーザー', 'ユーザー', 'bag', 'var(--gold)'], ['流れた', '流れた', 'ban', 'var(--red)']].map(function(x) {
       return '<span class="' + (rs === x[0] ? 'on' : '') + '" style="--c:' + x[3] + '" onclick="ppTrRes(\'' + x[0] + '\')">' + icn(x[2]) + x[1] + '</span>';
     }).join('') + '</div>';
   if (rs === 'BC' && detectCategory((m.title || '').trim()) !== 'BA' && detectCategory((m.title || '').trim()) !== 'BR') h += '<div class="ppnote g" onclick="ppGo(\'title\')">BC獲得！タイトルを BA（LOI など）に変えましょう ›</div>';
