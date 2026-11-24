@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v915';
+var APP_JS_VERSION = 'v916';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -5202,7 +5202,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v915';
+  var DATA_VERSION = 'v916';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -7341,6 +7341,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v916', d:'2026-11-24', items:['ユニオン予定の地域で、「愛知」「愛知県」と「名古屋」を同じ地域とみなすように（地域の言い方が違うと予定が出なかった）'] },
   { v:'v915', d:'2026-11-23', items:['メンバーの画面・設定の選んだ札（非表示・稼働・性別・見た目など）をチャコールにそろえて読みやすく','PC の MAP の表の稼働・段・研修中の字を、読める濃さの色に'] },
   { v:'v914', d:'2026-11-22', items:['OUT で「非表示」にした人の下に、同じく非表示の OUT の人しかいない時も、MAP から消えるように','下にまだ人がいて MAP に残る時は、メンバーの画面に「下に ○人いるので残ります」と出るように'] },
   { v:'v913', d:'2026-11-22', items:['MAP のカード（PC はマウスを乗せた時・スマホは名前を押した時）に、研修生の最後の研修（項目・日付・結果・Aさん）を出すように','カードの OL記録は直近1か月の分だけ、日付の新しい順に'] },
@@ -32135,6 +32136,8 @@ function loadUnionEvents() {
     _unionApplyToState();
   }).catch(function(e) { console.log('union load:', e && e.message); });
 }
+// v916: ユニオン予定の地域の比べ方（「愛知」「愛知県」と「名古屋」のように、MAP の地域と同じ決まりで同じ地域とみなす）
+function _unAreaSame(a, b) { return normalizeRegionValue(a || '') === normalizeRegionValue(b || ''); }
 function _unionApplyToState() {
   var mine = (state.events || []).filter(function(e) { return !e._union; });
   var add = [];
@@ -32147,7 +32150,7 @@ function _unionApplyToState() {
       if ((u.endDate || u.date) < cut) return;
       if (_unionPrefs.hidden.indexOf(u.id) >= 0) return;
       // 地域&条件：地域指定ありの予定は同じ活動地域の人だけ（管理者と作成者は管理のため全地域見える）
-      if (u.area && u.area !== myArea && !(admin || _admOf(u.union)) && u.createdBy !== currentUser.uid) return;
+      if (u.area && !_unAreaSame(u.area, myArea) && !(admin || _admOf(u.union)) && u.createdBy !== currentUser.uid) return; // v916: 愛知＝名古屋 など地域の言い方の違いは同じ地域とみなす
       var c = {};
       for (var k in u) { if (u.hasOwnProperty(k)) c[k] = u[k]; }
       c.id = 'UN_' + u.id;
@@ -32287,7 +32290,7 @@ function openUnionListSheet() {
     .sort(function(a, b) { return (a.date || '') < (b.date || '') ? -1 : 1; });
   var rows2 = '';
   list.forEach(function(u) {
-    var mine2 = !u.area || u.area === myArea;
+    var mine2 = !u.area || _unAreaSame(u.area, myArea);
     rows2 += '<div class="fol-log" style="cursor:pointer' + (mine2 ? '' : ';opacity:.5') + '" onclick="openUnionEventSheet(\'UN_' + u.id + '\')">'
       + '<span class="fol-log-main"><span class="fol-log-ttl">' + evEsc(u.title || '') + '</span>'
       + '<span class="fol-log-sub">' + evEsc(u.date || '') + (u.allDay ? ' 終日' : (u.time ? ' ' + u.time : '')) + '・' + (u.area ? evEsc(u.area) : '全地域') + '</span></span></div>';
