@@ -4,7 +4,20 @@
   var store = window.__FBDATA || {};
   store['users/' + OWNER] = store['users/' + OWNER] || { name: '山内北斗', org: '山内北斗', area: '福岡', union: 'GRANT', upRuby: 'テスト', upBd: 'テスト', unionSelectedV2: true, status: 'active', email: 't@example.com', privacy: { ver: '2026-10', at: '2026-10-01T00:00:00Z' } };
   // merge・update で FieldValue.delete()（このスタブでは undefined）の項目は消す（本物と同じ）
-  function mergeDel(old, d) { var o = Object.assign({}, old || {}, cp(d)); Object.keys(d || {}).forEach(function (k) { if (d[k] === undefined) delete o[k]; }); return o; }
+  // v176: 「a.b」の項目名（update の入れ子）と arrayUnion・arrayRemove も本物と同じに
+  function mergeDel(old, d) {
+    var o = cp(old || {}) || {};
+    Object.keys(d || {}).forEach(function (k) {
+      var v = d[k], ks = k.indexOf('.') > 0 ? k.split('.') : [k], t = o;
+      for (var i = 0; i < ks.length - 1; i++) { if (!t[ks[i]] || typeof t[ks[i]] !== 'object') t[ks[i]] = {}; t = t[ks[i]]; }
+      var last = ks[ks.length - 1];
+      if (v === undefined) { delete t[last]; return; }
+      if (v && v.__op === 'union') { var a = Array.isArray(t[last]) ? t[last].slice() : []; v.v.forEach(function (x) { if (a.indexOf(x) < 0) a.push(x); }); t[last] = a; return; }
+      if (v && v.__op === 'remove') { t[last] = (Array.isArray(t[last]) ? t[last] : []).filter(function (x) { return v.v.indexOf(x) < 0; }); return; }
+      t[last] = cp(v);
+    });
+    return o;
+  }
   function cp(d) { return d === undefined ? undefined : JSON.parse(JSON.stringify(d)); }
   function snap(path) { var d = store[path]; return { exists: d !== undefined, id: path.split('/').pop(), data: function () { return cp(d); }, get: function (k) { return d ? d[k] : undefined; }, ref: docRef(path) }; }
   function docRef(path) {
@@ -15,7 +28,7 @@
         var hold = window.__FBHOLD && window.__FBHOLD.test(path), log = window.__FBLOG;
         if (log) log.push({ p: path, t: 'start' });
         if (hold) return new Promise(function () {});
-        store[path] = (o && o.merge) ? mergeDel(store[path], d) : cp(d);
+        store[path] = (o && o.merge) ? mergeDel(store[path], d) : mergeDel({}, d);
         return new Promise(function (res) { setTimeout(function () { if (log) log.push({ p: path, t: 'end' }); res(); }, window.__FBDELAY || 0); });
       },
       update: function (d) { store[path] = mergeDel(store[path], d); return Promise.resolve(); },
@@ -41,7 +54,7 @@
   var authObj = { currentUser: user, onAuthStateChanged: function (cb) { setTimeout(function () { cb(user); }, 0); return function () {}; },
     signOut: function () { return Promise.resolve(); }, signInWithEmailAndPassword: function () { return Promise.resolve({ user: user }); },
     signInWithPopup: function () { return Promise.resolve({ user: user }); }, setPersistence: function () { return Promise.resolve(); } };
-  var FV = { delete: function () { return undefined; }, serverTimestamp: function () { return new Date().toISOString(); }, arrayUnion: function () { return [].slice.call(arguments); }, arrayRemove: function () { return []; }, increment: function (n) { return n; } };
+  var FV = { delete: function () { return undefined; }, serverTimestamp: function () { return new Date().toISOString(); }, arrayUnion: function () { return { __op: 'union', v: [].slice.call(arguments) }; }, arrayRemove: function () { return { __op: 'remove', v: [].slice.call(arguments) }; }, increment: function (n) { return n; } };
   window.firebase = { apps: [], initializeApp: function () { return {}; }, app: function () { return {}; },
     firestore: Object.assign(function () { return db; }, { FieldValue: FV, CACHE_SIZE_UNLIMITED: -1, Timestamp: { now: function () { return { toDate: function () { return new Date(); } }; }, fromDate: function (d) { return { toDate: function () { return d; } }; } } }),
     auth: Object.assign(function () { return authObj; }, { GoogleAuthProvider: function () {}, Auth: { Persistence: { LOCAL: 'local' } } }),
