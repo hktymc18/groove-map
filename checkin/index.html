@@ -47,6 +47,40 @@
 button{border-radius:999px;}
 .modal{border-radius:22px;}
 .trtabs button.on, .trsex button.on{background:var(--chip);color:var(--ink);border-color:var(--chip);font-weight:700;}
+/* ⚙ v176: 設定タブ */
+.st-wrap{max-width:640px;margin:0 auto;}
+.st-h{font-size:20px;font-weight:900;margin:10px 0 2px;} .st-lead{color:var(--sub);font-size:12.5px;margin:0 0 12px;}
+.st-card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:10px 14px;margin:0 0 12px;}
+.st-card h3{font-size:13.5px;color:var(--sub);margin:2px 0 4px;}
+.st-ck{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);font-size:14px;}
+.st-ck:last-child{border-bottom:0;}
+.st-ck .ic{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;flex:0 0 auto;}
+.st-ck .ic.ok{background:var(--green-soft);color:var(--green);} .st-ck .ic.ng{background:var(--amber-soft);color:var(--amber);}
+.st-ck .go{margin-left:auto;color:var(--green);font-weight:700;font-size:13px;white-space:nowrap;cursor:pointer;background:none;border:0;padding:0;}
+.st-menu{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px 14px;margin:0 0 8px;cursor:pointer;width:100%;text-align:left;}
+.st-menu .e{font-size:22px;width:30px;text-align:center;flex:0 0 auto;} .st-menu b{display:block;font-size:15.5px;} .st-menu small{display:block;color:var(--sub);font-size:12.5px;line-height:1.45;font-weight:400;}
+.st-menu::after{content:"›";margin-left:auto;color:var(--sub);font-size:22px;} .st-menu.own{border-style:dashed;}
+.st-crumb{font-size:13px;color:var(--sub);margin:8px 0 4px;} .st-crumb button{border:0;background:none;padding:0;color:var(--green);font-weight:700;font-size:13px;}
+.st-chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin:0 0 8px;scrollbar-width:none;}
+.st-chips button{flex:0 0 auto;font-size:13px;font-weight:700;padding:5px 12px;} .st-chips button.on{background:var(--ink);color:var(--card);border-color:var(--ink);}
+.st-pr{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line);} .st-pr:last-child{border-bottom:0;}
+.st-pr b{font-size:15px;} .st-pr small{color:var(--sub);font-size:12px;margin-left:6px;}
+.st-roles{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px;}
+.st-r{font-size:11.5px;font-weight:700;border-radius:999px;padding:1px 9px;}
+.st-r.ua{background:#fdecec;color:#c0392b;} .st-r.ad{background:#e8f0fe;color:#2563eb;} .st-r.ld{background:#fff4d6;color:#8a6d1f;} .st-r.tr{background:#ece6fb;color:#6d3fd1;}
+.st-r.fr{background:#e6f4ec;color:#2f9e62;} .st-r.ol{background:#e6f6f7;color:#13807a;} .st-r.na{color:var(--sub);border:1px dashed var(--line);}
+.st-pr .ed{margin-left:auto;font-size:12.5px;padding:5px 12px;flex:0 0 auto;}
+.st-seg{display:flex;background:var(--chip);border-radius:999px;padding:3px;margin:4px 0 8px;}
+.st-seg button{flex:1;border:0;background:none;border-radius:999px;padding:7px;font-weight:700;color:var(--sub);}
+.st-seg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12);}
+.st-sw{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);}
+.st-sw .t{flex:1;min-width:0;} .st-sw .t b{display:block;font-size:14.5px;} .st-sw .t small{display:block;color:var(--sub);font-size:12px;line-height:1.45;}
+.st-sw input[type=checkbox]{appearance:none;-webkit-appearance:none;width:46px;height:28px;border-radius:999px;background:#c9c9ce;position:relative;flex:0 0 auto;margin:0;cursor:pointer;transition:background .15s;}
+.st-sw input[type=checkbox]::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:left .15s;}
+.st-sw input[type=checkbox]:checked{background:var(--green);} .st-sw input[type=checkbox]:checked::after{left:21px;}
+.st-sw input[type=checkbox]:disabled{opacity:.45;cursor:default;}
+.st-opts{display:flex;flex-wrap:wrap;gap:6px;} .st-opts button{font-size:13px;font-weight:700;padding:5px 12px;}
+.st-opts button.on{background:var(--green);border-color:var(--green);color:var(--on-green,#fff);}
 *{box-sizing:border-box;}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 html,body{margin:0;}
@@ -1801,6 +1835,7 @@ body.practice .topbar{top:var(--pxh,36px);}
       <button data-pane="pEvents">イベント</button>
       <button data-pane="pFin">会計</button>
       <button data-pane="pStats">集計</button>
+      <button data-pane="pSet" class="hide">⚙ 設定</button>
       <button data-pane="pBeauty" class="hide">💜 Beauty<span class="nav-dot" hidden></span></button>
       <button id="btnLogout" title="ログアウト">⎋</button>
     </nav>
@@ -1981,6 +2016,14 @@ body.practice .topbar{top:var(--pxh,36px);}
   </section>
 
   <!-- 集計 -->
+  <!-- ⚙ v176: ユニオンの設定（体制チェック・人と役割・その人の設定・ユニオンの基本・連携・イベントの決まり・オーナーだけ） -->
+  <section class="pane" id="pSet">
+    <div class="st-wrap">
+      <div class="toolrow"><label for="setUnionSel" style="font-weight:700;font-size:13px;">ユニオン:</label><select id="setUnionSel"></select></div>
+      <div id="setBody"><p style="color:var(--sub);font-size:13px;">読み込み中…</p></div>
+    </div>
+  </section>
+
   <section class="pane" id="pStats">
     <div class="monthnav panehead">
       <button class="ghost" id="stPrev">◀</button><b id="stMonthLabel"></b><button class="ghost" id="stNext">▶</button>
@@ -2746,7 +2789,7 @@ function ckApplyFinUi(){
   if(!ok && $('pFin') && $('pFin').classList.contains('on')){ var k = document.querySelector('nav button[data-pane="pKiosk"]'); if(k) k.click(); }
   // ⭐ 名簿・集計タブは、オーナー・管理者（ユニオン・受付）・リーダーだけ。一般メンバーには出さない
   var rs = ckRosterUnions().length > 0;
-  ['pRoster', 'pStats'].forEach(function(id){
+  ['pRoster', 'pStats', 'pSet'].forEach(function(id){
     var t = document.querySelector('nav button[data-pane="' + id + '"]');
     if(t) t.classList.toggle('hide', !rs);
     if(!rs && $(id) && $(id).classList.contains('on')){ var k2 = document.querySelector('nav button[data-pane="pKiosk"]'); if(k2) k2.click(); }
@@ -3037,10 +3080,11 @@ if(gTrainerMode) document.documentElement.classList.add('trm');   // 🎓 研修
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v175';
+var APP_VER = 'v176';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v176', d: '2026/11/24', items: ['⚙ 新しい「設定」タブ：体制チェック（足りない役割・未設定がひと目で）・人と役割（受付管理者・リーダー・研修担当・徴収なし・OL 受付を1人ずつ付け外し）・その人の会員証（グレード・タイトル・バッジ）・ユニオンの基本・連携・オーナーだけ を1か所にまとめました'] },
   { v: 'v175', d: '2026/11/22', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v174', d: '2026/11/22', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v173', d: '2026/11/22', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
@@ -9131,6 +9175,7 @@ Array.prototype.forEach.call(tabs, function(b){
       if(!(gFinLoaded.k === fk && Date.now() - gFinLoaded.at < 120000)) loadFinanceTab();
     }
     if(b.getAttribute('data-pane') === 'pStats' && (gStatDirty || !gStat)) loadStatsNow();
+    if(b.getAttribute('data-pane') === 'pSet') stOpen();
     if(b.getAttribute('data-pane') === 'pBeauty'){ if(gBt && gBt.recvOnly) btDraw(); else if(!gBt || Date.now() - gBt.at > 60000) btLoad(); else btDraw(); }
   };
 });
@@ -11045,6 +11090,287 @@ function invEnter(){
       };
     });
   }).catch(function(e){ $('invBox').innerHTML = '<p class="mc-err">' + esc(permMsg(e, '読み込めませんでした')) + '</p>'; });
+}
+/* ══════════ ⚙ v176: 設定タブ（ユニオン管理者・受付管理者・リーダー・オーナー） ══════════
+   ばらばらの場所にあった設定を1か所に。保存先は今までと同じ（今までの画面もそのまま使える）。
+   ・人の役割：ユニオン管理者 unionAdmins・リーダー leaders（オーナーだけ）／受付管理者 admins（ユニオン管理者・オーナー）／
+     研修生登録の担当 trainers（＋リーダー）… checkinUnions/{ユニオン} の uid の一覧。アカウントのある人だけ付けられる
+   ・徴収なし freeRoles{番号}・OL チェックアウト（olHosts）… 名簿の人ごと（受付管理者も）
+   ・会員証：グレード・タイトル・バッジ（受付管理者も。BLUE DIAMOND・TEAM ELITE と特別カードはオーナーだけ）
+   名簿の人とアカウントは、アカウントの「受付の名簿と紐付け（ckNo）」→ 同じ名前（1人だけの時）の順でつなぐ */
+var gSetUnion = '', gSet = { view: 'top', f: 'has', q: '' }, gSetData = null;
+var ST_ROLES = [
+  { k: 'ua', n: 'ユニオン管理者', key: 'unionAdmins', acct: 1, d: 'そのユニオンの責任者。名簿・会計・受付管理者の任命など全部（オーナーが指定）' },
+  { k: 'ad', n: '受付管理者', key: 'admins', acct: 1, d: '名簿の編集・イベントを作る・会計・受付' },
+  { k: 'ld', n: 'リーダー', key: 'leaders', acct: 1, d: '名簿と集計を見る・研修生登録の担当の任命・研修生の登録（オーナーが指定）' },
+  { k: 'tr', n: '研修生登録の担当', key: 'trainers', acct: 1, d: '研修生登録のページで、研修生の登録と受講の記録' },
+  { k: 'fr', n: '徴収なし', d: '受付で QR を読むといつも ¥0（統括・スタッフなど）' },
+  { k: 'ol', n: 'OL チェックアウトを受け付ける', d: '会員証に OL チェックアウトの QR が出る' }
+];
+function stCanRole(k, un){
+  if(k === 'ua' || k === 'ld') return isOwner();
+  if(k === 'ad') return isCoreAdmin(un);
+  if(k === 'tr') return isCoreAdmin(un) || isLeader(un);
+  return canEditUnion(un);   // 徴収なし・OL
+}
+function stOpen(){
+  var L = ckRosterUnions();
+  if(!gSetUnion || L.indexOf(gSetUnion) < 0) gSetUnion = L.indexOf(gRosterUnion) >= 0 ? gRosterUnion : (L.indexOf(gUnion) >= 0 ? gUnion : L[0] || gUnion);
+  fillUnionSel($('setUnionSel'), gSetUnion, L);
+  gSet.view = 'top';
+  stLoad();
+}
+$('setUnionSel').onchange = function(){ gSetUnion = this.value; gSet.view = 'top'; stLoad(); };
+function stLoad(){
+  var un = gSetUnion;
+  $('setBody').innerHTML = '<p style="color:var(--sub);font-size:13px;">読み込み中…</p>';
+  Promise.all([
+    db.collection('checkinUnions').doc(un).get(),
+    fetchMembers(un),
+    ckUsersOf(un).catch(function(){ return { forEach: function(){} }; }),
+    db.collection('checkinInventory').doc(un).get().catch(function(){ return null; })
+  ]).then(function(r){
+    var ud = r[0].exists ? r[0].data() : {}, members = r[1], users = [];
+    r[2].forEach(function(d){ var u = d.data() || {}; if(u.status === 'disabled' || u.deleted) return; u.uid = d.id; users.push(u); });
+    // 名簿の人とアカウントをつなぐ（ckNo → 同じ名前が1人だけ）
+    var byNo = {}, used = {}, byName = {};
+    users.forEach(function(u){ if(u.ckNo) byNo[String(u.ckNo)] = u; var k = groupKey(u.name); (byName[k] = byName[k] || []).push(u); });
+    var persons = [];
+    members.forEach(function(m){
+      if(ckMemberOff(m)) return;
+      var u = byNo[m.no] || null;
+      if(!u){ var c = (byName[groupKey(m.name)] || []).filter(function(x){ return !x.ckNo && !used[x.uid]; }); if(c.length === 1) u = c[0]; }
+      if(u) used[u.uid] = 1;
+      persons.push({ m: m, u: u });
+    });
+    users.forEach(function(u){ if(!used[u.uid]) persons.push({ m: null, u: u }); });
+    // ほかのユニオンから任命されている人（兼務）もアカウントだけの行に
+    var ids = {}; persons.forEach(function(p){ if(p.u) ids[p.u.uid] = 1; });
+    var extra = [];
+    ['unionAdmins', 'admins', 'leaders', 'trainers'].forEach(function(k){ (ud[k] || []).forEach(function(uid){ if(!ids[uid]){ ids[uid] = 1; extra.push(uid); } }); });
+    return Promise.all(extra.map(function(uid){
+      return db.collection('users').doc(uid).get().then(function(s){ var u = s.exists ? s.data() : { name: uid.slice(0, 8) }; u.uid = uid; u.xUnion = true; persons.push({ m: null, u: u }); }).catch(function(){});
+    })).then(function(){
+      // OL チェックアウトを受け付けている人
+      var ols = persons.filter(function(p){ return p.m && p.m.olKey; });
+      return Promise.all(ols.map(function(p){ return db.collection('olHosts').doc(p.m.olKey).get().then(function(s){ p.ol = s.exists && !!s.data().on; p.olCount = s.exists ? (s.data().count || 0) : 0; }).catch(function(){}); }));
+    }).then(function(){
+      if(un !== gSetUnion) return;
+      gSetData = { un: un, ud: ud, persons: persons, members: members, inv: r[3] && r[3].exists ? r[3].data() : null };
+      stRender();
+    });
+  }).catch(function(e){ $('setBody').innerHTML = '<p class="mc-err">' + esc(permMsg(e, '読み込めませんでした')) + '</p>'; });
+}
+function stHas(p, k){
+  var ud = gSetData.ud, uid = p.u && p.u.uid;
+  if(k === 'fr') return !!(p.m && (ud.freeRoles || {})[p.m.no]);
+  if(k === 'ol') return !!p.ol;
+  var R = ST_ROLES.filter(function(x){ return x.k === k; })[0];
+  return !!(uid && (ud[R.key] || []).indexOf(uid) >= 0);
+}
+function stRender(){ if(gSet.view === 'people') stPeople(); else stTop(); }
+function stTop(){
+  var D = gSetData, ud = D.ud, un = D.un;
+  var cnt = function(k){ return (ud[k] || []).length; };
+  var active = D.members.filter(function(m){ return !ckMemberOff(m); });
+  var unlinked = D.persons.filter(function(p){ return p.m && !p.u; }).length;
+  var inv = D.inv && (D.inv.list || []).length;
+  var ck = function(ok, tx, go, act){ return '<div class="st-ck"><span class="ic ' + (ok ? 'ok">✓' : 'ng">!') + '</span><span>' + tx + '</span>' + (go ? '<button class="go" data-st="' + act + '">' + go + ' ›</button>' : '') + '</div>'; };
+  var withRole = D.persons.filter(function(p){ return ST_ROLES.some(function(r){ return stHas(p, r.k); }); }).length;
+  $('setBody').innerHTML = '<h2 class="st-h">⚙ ユニオンの設定</h2><p class="st-lead">' + esc(un) + ' の体制と設定を、ここにまとめました。</p>'
+    + '<div class="st-card"><h3>✅ 体制チェック</h3>'
+    + ck(cnt('unionAdmins') > 0, 'ユニオン管理者 ' + cnt('unionAdmins') + '人', cnt('unionAdmins') ? '' : (isOwner() ? '指定する' : ''), 'f-ua')
+    + ck(cnt('admins') > 0, '受付管理者 ' + cnt('admins') + '人', '見る', 'f-ad')
+    + ck(true, 'リーダー ' + cnt('leaders') + '人', cnt('leaders') ? '見る' : '', 'f-ld')
+    + ck(cnt('trainers') > 0, '研修生登録の担当 ' + cnt('trainers') + '人', cnt('trainers') ? '見る' : '任命する', 'f-tr')
+    + ck(!!ud.payLink, 'PayPay の受け取りリンク ' + (ud.payLink ? '設定済み' : '未設定'), ud.payLink ? '' : '設定する', 'base')
+    + ck(!!(ud.area && ud.noPrefix), '地域 ' + esc(ud.area || '未設定') + '・番号 ' + esc(ud.noPrefix ? ud.noPrefix + '0001〜' : '未設定'), (ud.area && ud.noPrefix) ? '' : '設定する', 'base')
+    + ck(!!ud.issuer, '電子領収書の発行者 ' + esc(ud.issuer || '未設定（領収書は出ません）'), ud.issuer ? '' : '設定する', 'base')
+    + ck(!unlinked, 'NAVIGATOR と紐付いていない人 ' + unlinked + '人' + hq('名簿の人と NAVIGATOR のアカウントがつながっていない人です（同じ名前のアカウントも無い人）。アカウントが無いと、受付管理者・研修担当などの役割は付けられません。紐付けは NAVIGATOR の「アカウント管理」で、ユニオン管理者・オーナーが行います。'), unlinked ? '見る' : '', 'f-na')
+    + (D.inv ? ck(!inv, '🧹 棚卸し ' + (inv || 0) + '人', inv ? '見る' : '', 'inv') : '')
+    + '</div>'
+    + '<button class="st-menu" data-st="people"><span class="e">👥</span><span><b>人と役割</b><small>役割がある人 ' + withRole + '人・受付管理者・リーダー・研修担当・徴収なし・OL 受付。グレード・タイトル・バッジもここから</small></span></button>'
+    + (canEditUnion(un) ? '<button class="st-menu" data-st="base"><span class="e">🏠</span><span><b>ユニオンの基本</b><small>地域・番号の頭文字・領収書・PayPay・追加オプション</small></span></button>' : '')
+    + (isCoreAdmin(un) ? '<button class="st-menu" data-st="money"><span class="e">🙈</span><span><b>受付の金額</b><small>いま：' + (ud.hideMoney ? '統括（ユニオン管理者）だけに表示' : '受付する人全員に表示') + '</small></span></button>' : '')
+    + '<button class="st-menu" data-st="link"><span class="e">🔗</span><span><b>連携</b><small>NAVIGATOR との紐付け・MAP で連携するユニオン・ATTACK LIST</small></span></button>'
+    + '<button class="st-menu" data-st="event"><span class="e">📜</span><span><b>イベントの決まり</b><small>誓約書' + (isCoreAdmin(un) ? '・DAY HOST' : '') + '</small></span></button>'
+    + (isOwner() ? '<button class="st-menu own" data-st="owner"><span class="e">🔒</span><span><b>オーナーだけ</b><small>ユニオン管理者・リーダーの指定／特別カード・裏面・解禁／ユニオンの追加・名前・削除</small></span></button>' : '');
+  stBind($('setBody'));
+}
+// ボタンの動き（今までの画面を呼ぶものは、そのユニオンに切り替えてから）
+function stAct(a){
+  var un = gSetData.un;
+  var asRoster = function(fn){ if(gRosterUnion !== un){ gRosterUnion = un; renderRosterUnionSel(); } fn(); };
+  if(a === 'people'){ gSet.view = 'people'; gSet.f = 'has'; stRender(); return; }
+  if(a.indexOf('f-') === 0){ gSet.view = 'people'; gSet.f = a.slice(2); stRender(); return; }
+  if(a === 'top'){ gSet.view = 'top'; stRender(); return; }
+  if(a === 'base'){ gFinUnion = un; $('btnRcptSet').onclick(); return; }
+  if(a === 'money'){ asRoster(function(){ $('btnHideMoney').onclick(); }); return; }
+  if(a === 'inv'){ asRoster(function(){ loadMembers(function(){ ckInvOpen(); }); }); return; }
+  if(a === 'link'){ stLinkModal(); return; }
+  if(a === 'event'){
+    modal('<h2>📜 イベントの決まり — ' + esc(un) + '</h2>'
+      + '<button class="st-menu" id="stPl"><span class="e">📜</span><span><b>誓約書</b><small>オンライン受講の誓約書の記録（イベントの「📜 誓約書」と同じ）</small></span></button>'
+      + (isCoreAdmin(un) ? '<button class="st-menu" id="stDay"><span class="e">🌸</span><span><b>DAY HOST</b><small>DAY の受付・案内をする人（Beauty の「🌸 DAY HOST」と同じ）</small></span></button>' : '')
+      + '<p style="font-size:12.5px;color:var(--sub);">MC・スピーカー・受付担当・運営は、イベントごとに「受付」タブで登録します。</p>'
+      + '<div class="btns"><button id="stEvClose">閉じる</button></div>');
+    $('stEvClose').onclick = closeModal;
+    $('stPl').onclick = function(){ pledgeArchiveModal(null); };
+    if($('stDay')) $('stDay').onclick = function(){ ckOwnerListOpen('dayStaff', un); };
+    return;
+  }
+  if(a === 'owner'){
+    var it = [['stUa', '🛡', 'ユニオン管理者を指定', 'btnUnionAdmins'], ['stLd', '⭐', 'リーダーを指定', 'btnLeaders'], ['stBt', '💜', 'ユーザー機能の確認メンバー', 'btnBeautyTesters'],
+      ['stKb', '🃏', '特別カード工房', 'btnKobo'], ['stBk', '🂠', 'カードの裏面', 'btnBacks'], ['stLa', '🖤', 'カード解禁', 'btnLaunch'],
+      ['stAdd', '＋', 'ユニオンを追加', 'btnAddUnion'], ['stRen', '✏', 'ユニオン名を変更', 'btnRenUnion'], ['stDel', '🗑', 'ユニオンを削除', 'btnDelUnion']];
+    modal('<h2>🔒 オーナーだけ — ' + esc(un) + '</h2>' + it.map(function(x){ return '<button class="st-menu own" id="' + x[0] + '"><span class="e">' + x[1] + '</span><span><b>' + x[2] + '</b></span></button>'; }).join('')
+      + '<div class="btns"><button id="stOwClose">閉じる</button></div>', true);
+    $('stOwClose').onclick = closeModal;
+    it.forEach(function(x){ $(x[0]).onclick = function(){ asRoster(function(){ $(x[3]).onclick(); }); }; });
+  }
+}
+function stBind(el){ Array.prototype.forEach.call(el.querySelectorAll('[data-st]'), function(b){ b.onclick = function(){ stAct(b.getAttribute('data-st')); }; }); }
+function stLinkModal(){
+  var D = gSetData, un = D.un;
+  var linked = D.persons.filter(function(p){ return p.m && p.u; }).length, un2 = D.persons.filter(function(p){ return p.m && !p.u; });
+  var also = D.members.filter(function(m){ return !ckMemberOff(m) && (m.alsoUnions || []).length; });
+  modal('<h2>🔗 連携 — ' + esc(un) + '</h2>'
+    + '<div class="st-card"><h3>NAVIGATOR のアカウント</h3><p style="margin:0;font-size:14px;">つながっている人 <b>' + linked + '人</b>・つながっていない人 <b>' + un2.length + '人</b></p>'
+    + '<p style="font-size:12.5px;color:var(--sub);margin:6px 0 0;">紐付けは NAVIGATOR の「アカウント管理」で、名簿の番号を選びます（ユニオン管理者・オーナー）。紐付けると、受付で「無効」にした時に NAVIGATOR も止まり、研修の受講記録が MAP に入ります。</p>'
+    + (un2.length ? '<details style="margin-top:6px;"><summary style="font-size:13px;cursor:pointer;">つながっていない人を見る</summary><p style="font-size:13px;margin:6px 0 0;">' + un2.map(function(p){ return esc(p.m.name || p.m.no); }).join('・') + '</p></details>' : '') + '</div>'
+    + '<div class="st-card"><h3>MAP で連携するユニオン</h3><p style="margin:0;font-size:14px;">設定している人 <b>' + also.length + '人</b></p><p style="font-size:12.5px;color:var(--sub);margin:6px 0 0;">ほかの地域のユニオンのチームで活動している人は、名簿の「編集」で設定します。</p></div>'
+    + '<div class="st-card"><h3>ATTACK LIST</h3><p style="font-size:12.5px;color:var(--sub);margin:0;">アカウント・ユニオンは NAVIGATOR と同じです。ATTACK LIST の「リーダーの指定」「シートのフォーマット」は ATTACK LIST の設定から（ユニオン管理者）。</p></div>'
+    + '<div class="btns"><button id="stLkClose">閉じる</button></div>');
+  $('stLkClose').onclick = closeModal;
+}
+// 👥 人と役割
+function stPeople(){
+  var D = gSetData, un = D.un, q = groupKey(gSet.q);
+  var F = [['has', '役割がある人'], ['all', 'すべて']].concat(ST_ROLES.map(function(r){ return [r.k, r.k === 'ol' ? 'OL 受付中' : r.n]; })).concat([['na', 'アカウントなし']]);
+  var cnt = function(f){ return D.persons.filter(function(p){ return stMatch(p, f); }).length; };
+  var L = D.persons.filter(function(p){ return stMatch(p, gSet.f) && (!q || groupKey((p.m ? p.m.name + p.m.no + (p.m.kana || '') : '') + (p.u ? p.u.name : '')).indexOf(q) >= 0); });
+  L.sort(function(a, b){ var x = (a.m ? a.m.no : 'zz'), y = (b.m ? b.m.no : 'zz'); return x < y ? -1 : x > y ? 1 : 0; });
+  $('setBody').innerHTML = '<p class="st-crumb"><button data-st="top">⚙ 設定</button> › <b>人と役割</b></p><h2 class="st-h">👥 人と役割</h2><p class="st-lead">1人1行。「変える」で役割と会員証（グレード・タイトル・バッジ）を変えます。</p>'
+    + '<div class="st-chips">' + F.map(function(f){ return '<button data-sf="' + f[0] + '"' + (gSet.f === f[0] ? ' class="on"' : '') + '>' + esc(f[1]) + ' ' + cnt(f[0]) + '</button>'; }).join('') + '</div>'
+    + '<input type="search" id="stQ" placeholder="名前・番号で探す（役割を付ける人も）" value="' + esc(gSet.q) + '" style="width:100%;margin:0 0 8px;">'
+    + '<div class="st-card" id="stList" style="padding:2px 14px;">' + (L.length ? L.slice(0, 300).map(function(p, i){
+        var rs = ST_ROLES.filter(function(r){ return stHas(p, r.k); });
+        return '<div class="st-pr"><div style="flex:1;min-width:0;"><b>' + esc(p.m ? p.m.name : (p.u.name || '')) + '</b><small>' + esc(p.m ? p.m.no : (p.u.xUnion ? 'ほかのユニオン（' + (p.u.union || '') + '）' : '名簿になし')) + '</small>'
+          + (p.m && p.m.trainee ? ' <span class="pill n">研修生</span>' : '')
+          + '<div class="st-roles">' + rs.map(function(r){ return '<span class="st-r ' + r.k + '">' + esc(r.k === 'ol' ? 'OL 受付中' : r.n) + '</span>'; }).join('')
+          + (p.m && !p.u ? '<span class="st-r na">アカウントなし</span>' : '') + '</div></div>'
+          + '<button class="ed" data-sp="' + D.persons.indexOf(p) + '">変える</button></div>';
+      }).join('') : '<p style="color:var(--sub);font-size:13px;">該当する人はいません。</p>') + '</div>'
+    + (L.length > 300 ? '<p style="font-size:12px;color:var(--sub);">300人まで表示しています。名前で探してください。</p>' : '');
+  stBind($('setBody'));
+  Array.prototype.forEach.call(document.querySelectorAll('#setBody [data-sf]'), function(b){ b.onclick = function(){ gSet.f = b.getAttribute('data-sf'); stPeople(); }; });
+  Array.prototype.forEach.call(document.querySelectorAll('#setBody [data-sp]'), function(b){ b.onclick = function(){ stPerson(D.persons[+b.getAttribute('data-sp')], 'role'); }; });
+  var qi = $('stQ'); qi.oninput = function(){ gSet.q = qi.value; var pos = qi.selectionStart; stPeople(); var n = $('stQ'); n.focus(); try{ n.setSelectionRange(pos, pos); }catch(e){} };
+}
+function stMatch(p, f){
+  if(f === 'all') return true;
+  if(f === 'na') return !!(p.m && !p.u);
+  if(f === 'has') return ST_ROLES.some(function(r){ return stHas(p, r.k); });
+  return stHas(p, f);
+}
+// その人の設定（役割・会員証）
+function stPerson(p, tab){
+  var D = gSetData, un = D.un, m = p.m, name = m ? m.name : (p.u.name || '');
+  var head = '<div style="font-size:12px;color:var(--sub);">' + esc(m ? m.no + (m.group ? '・' + m.group + ' の系列' : '') : 'アカウントだけ（名簿にいない人）') + '</div><h2 style="margin:0 0 6px;">' + esc(name) + ' の設定</h2>'
+    + (m ? '<div class="st-seg"><button data-tb="role"' + (tab === 'role' ? ' class="on"' : '') + '>役割</button><button data-tb="card"' + (tab === 'card' ? ' class="on"' : '') + '>🎫 会員証</button></div>' : '');
+  if(tab === 'card' && m){ stCardTab(p, head); return; }
+  var sw = function(r){
+    var has = stHas(p, r.k), need = r.acct ? !!p.u : !!m, can = need && stCanRole(r.k, un);
+    var why = !need ? (r.acct ? 'アカウントが無いので付けられません（NAVIGATOR などで登録してから）' : '名簿にいない人には付けられません')
+      : !can ? (r.k === 'ua' || r.k === 'ld' ? '🔒 オーナーが指定します' : r.k === 'ad' ? '🔒 ユニオン管理者・オーナーが任命します' : '🔒 管理者が設定します') : '';
+    return '<div class="st-sw"><div class="t"><b>' + esc(r.n) + (r.k === 'ol' && p.olCount ? '<small style="display:inline;margin-left:4px;">（これまで ' + p.olCount + '人）</small>' : '') + '</b><small>' + esc(r.d) + (why ? '<br><span style="color:var(--amber);">' + esc(why) + '</span>' : '') + '</small></div>'
+      + '<input type="checkbox" data-rk="' + r.k + '"' + (has ? ' checked' : '') + (can ? '' : ' disabled') + ' aria-label="' + esc(r.n) + '"></div>'
+      + (r.k === 'fr' && m ? '<div id="stFrRole" style="' + (has ? '' : 'display:none;') + 'padding:0 0 8px;"><select id="stFrSel" style="width:auto;"' + (can ? '' : ' disabled') + '>'
+          + ['staff', 'unionadmin', 'mc', 'speaker'].map(function(x){ var cur = ((D.ud.freeRoles || {})[m.no] || {}).r || 'staff'; return '<option value="' + x + '"' + (cur === x ? ' selected' : '') + '>' + esc(roleLabel(x)) + '</option>'; }).join('') + '</select></div>' : '');
+  };
+  modal(head + ST_ROLES.map(sw).join('') + '<p class="mc-err" id="stErr"></p><div class="btns"><button id="stPClose">閉じる</button><button class="primary" id="stPSave">保存</button></div>', true);
+  var fr = document.querySelector('.modal input[data-rk="fr"]');
+  if(fr) fr.onchange = function(){ $('stFrRole').style.display = fr.checked ? '' : 'none'; };
+  stSegBind(p);
+  $('stPClose').onclick = closeModal;
+  $('stPSave').onclick = function(){
+    var upd = {}, olTo = null, chg = [];
+    ST_ROLES.forEach(function(r){
+      var cb = document.querySelector('.modal input[data-rk="' + r.k + '"]');
+      if(!cb || cb.disabled) return;
+      var was = stHas(p, r.k);
+      if(r.k === 'fr'){
+        var rv = $('stFrSel') ? $('stFrSel').value : 'staff', cur = (D.ud.freeRoles || {})[m.no];
+        if(cb.checked && (!cur || cur.r !== rv)){ upd['freeRoles.' + m.no] = { n: m.name || '', r: rv }; chg.push(r.n); }
+        if(!cb.checked && cur){ upd['freeRoles.' + m.no] = FV.delete(); chg.push(r.n); }
+        return;
+      }
+      if(cb.checked === was) return;
+      chg.push(r.n);
+      if(r.k === 'ol'){ olTo = cb.checked; return; }
+      upd[r.key] = cb.checked ? FV.arrayUnion(p.u.uid) : FV.arrayRemove(p.u.uid);
+    });
+    if(!chg.length){ closeModal(); return; }
+    $('stPSave').disabled = true;
+    var ps = [];
+    if(Object.keys(upd).length) ps.push(db.collection('checkinUnions').doc(un).update(upd));
+    if(olTo !== null) ps.push(olHostSet(m, olTo));
+    Promise.all(ps).then(function(){
+      toast(name + ' さん：' + chg.join('・') + ' を変えました');
+      // 今までの画面が使う控えも新しく
+      delete gMemCache[un];
+      closeModal();
+      return db.collection('checkinUnions').doc(un).get().then(function(sn){
+        var d = sn.exists ? sn.data() : {};
+        gCkAdmins[un] = d.admins || []; gUnionAdmins[un] = d.unionAdmins || []; gLeaders[un] = d.leaders || [];
+        stLoad();
+      });
+    }).catch(function(e){ $('stPSave').disabled = false; $('stErr').textContent = permMsg(e, '保存できませんでした'); });
+  };
+}
+function stSegBind(p){ Array.prototype.forEach.call(document.querySelectorAll('.modal [data-tb]'), function(b){ b.onclick = function(){ stPerson(p, b.getAttribute('data-tb')); }; }); }
+function stCardTab(p, head){
+  var m = p.m, un = gSetData.un, can = canEditUnion(un);
+  var curT = ckTitleOf(m), curB = ckBadgesOf(m), curG = m.grade || '', tLock = !isOwner() && ckTopTitle(curT);
+  var st = { g: curG, t: curT, b: curB.slice() };
+  modal(head
+    + '<label>グレード（カードの色）</label><div class="st-opts" id="stG">' + GRADES.map(function(g){ return '<button data-g="' + esc(g) + '"' + (g === curG ? ' class="on"' : '') + (can ? '' : ' disabled') + '>' + esc(GRADE_MENU[g] || g) + '</button>'; }).join('') + '</div>'
+    + '<label>タイトル</label><select id="stT"' + (can && !tLock ? '' : ' disabled') + '><option value="">なし</option>'
+    + CARD_TITLES.filter(function(b){ return isOwner() || !ckTopTitle(b.k) || curT === b.k; }).map(function(b){ return '<option' + (b.k === curT ? ' selected' : '') + '>' + esc(b.k) + '</option>'; }).join('') + '</select>'
+    + (tLock ? '<p style="font-size:12px;color:var(--amber);margin:4px 0 0;">🔒 BLUE DIAMOND・TEAM ELITE はオーナーだけが変えられます</p>' : '')
+    + '<label>バッジ（いくつでも）</label><div class="st-opts" id="stB">' + CARD_BADGES.map(function(b){ return '<button data-b="' + esc(b.k) + '"' + (curB.indexOf(b.k) >= 0 ? ' class="on"' : '') + (can ? '' : ' disabled') + '>' + esc(b.k) + '</button>'; }).join('') + '</div>'
+    + '<label>特別カード 🔒</label><p style="font-size:13.5px;margin:0;">' + (m.skin ? '設定あり（' + esc(m.skinName || m.skin) + '）' : 'なし') + '<span style="color:var(--sub);font-size:12px;">（オーナーが特別カード工房で付けます）</span></p>'
+    + (can ? '' : '<p style="font-size:12.5px;color:var(--amber);">🔒 会員証を変えられるのは、ユニオン管理者・受付管理者です</p>')
+    + '<div class="btns" style="justify-content:flex-start;"><button id="stCm">会員証の URL・QR・再発行・無効化</button></div>'
+    + '<p class="mc-err" id="stErr"></p><div class="btns"><button id="stPClose">閉じる</button>' + (can ? '<button class="primary" id="stCSave">保存</button>' : '') + '</div>', true);
+  stSegBind(p);
+  $('stPClose').onclick = closeModal;
+  $('stCm').onclick = function(){ cardModal(m); };
+  Array.prototype.forEach.call(document.querySelectorAll('#stG [data-g]'), function(b){ b.onclick = function(){ st.g = b.getAttribute('data-g'); Array.prototype.forEach.call(document.querySelectorAll('#stG [data-g]'), function(x){ x.classList.toggle('on', x === b); }); }; });
+  Array.prototype.forEach.call(document.querySelectorAll('#stB [data-b]'), function(b){ b.onclick = function(){ var k = b.getAttribute('data-b'), i = st.b.indexOf(k); if(i >= 0) st.b.splice(i, 1); else st.b.push(k); b.classList.toggle('on', i < 0); }; });
+  if($('stCSave')) $('stCSave').onclick = function(){
+    var t = $('stT').disabled ? curT : $('stT').value;
+    var bs = CARD_BADGES.filter(function(b){ return st.b.indexOf(b.k) >= 0; }).map(function(b){ return b.k; })
+      .concat(curB.filter(function(k){ return !ckBadge(k); }));   // 一覧に無い前のバッジは消さずに残す
+    var w = { badges: bs.length ? bs : FV.delete() };
+    if(isOwner() || !ckTopTitle(t)) w.cardTitle = t || FV.delete();
+    if(m.badge && (isOwner() || !ckTopTitle(m.badge))) w.badge = FV.delete();
+    if(st.g !== curG) w.grade = st.g || FV.delete();
+    $('stCSave').disabled = true;
+    var batch = db.batch();
+    batch.set(db.collection('checkinMembers').doc(m.no), w, { merge: true });
+    if(m.cardToken) batch.set(db.collection('cards').doc(m.cardToken), w, { merge: true });
+    batch.commit().then(function(){
+      if(st.g !== curG){ if(st.g) m.grade = st.g; else delete m.grade; }
+      if(w.cardTitle !== undefined){ if(t) m.cardTitle = t; else delete m.cardTitle; }
+      if(bs.length) m.badges = bs; else delete m.badges;
+      if(w.badge) delete m.badge;
+      try{ olSyncDesign(m); }catch(e){}
+      delete gMemCache[un];
+      toast((m.name || '') + ' さんの会員証を変えました（本人が開き直すと反映）');
+      closeModal(); stRender();
+    }).catch(function(e){ $('stCSave').disabled = false; $('stErr').textContent = permMsg(e, '保存できませんでした（ユニオン管理者・受付管理者のみ）'); });
+  };
 }
 /* ── 📋 v153: タイトルで絞って名前の一覧をコピー（NAVIGATORの「名簿を貼り付けて先行利用に」へ）──
    有効な人だけ（研修生・無効は入れない）。範囲は表示中のユニオンか、見られる全ユニオン */
