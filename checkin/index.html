@@ -1929,6 +1929,20 @@ body.practice .topbar{top:var(--pxh,36px);}
       <label for="rosterUnionSel" style="font-weight:700;font-size:13px;">ユニオン:</label>
       <select id="rosterUnionSel"></select>
       <button id="btnRosterMore" class="mob-only" aria-expanded="false">⚙ 管理メニュー ▸</button>
+      <span class="pill n hide" id="roBadge">閲覧のみ</span>
+      <input type="search" id="q" placeholder="氏名・番号・系列で検索">
+      <select id="qTitle" title="タイトルで絞り込み" style="width:auto;"></select>
+      <label style="display:flex;align-items:center;gap:4px;font-size:12.5px;font-weight:400;white-space:nowrap;margin:0;cursor:pointer;"><input type="checkbox" id="qShowOff" style="width:auto;margin:0;">無効も表示</label>
+      <button class="primary" id="btnAddMember">＋ メンバー追加</button>
+      <button id="btnCsvIn" class="rmore">CSV取込</button>
+      <button id="btnCsvOut" class="rmore">CSV出力</button>
+      <button id="btnNameCopy" class="rmore" title="タイトルで絞って名前の一覧をコピー（NAVIGATORの先行利用に貼り付け）">📋 名前をコピー</button>
+      <button id="btnGroupRen" class="hide rmore">系列名変更</button>
+      <button id="btnGoSet" class="rmore" title="任命・ユニオンの設定・オーナー用の機能は「⚙ 設定」タブにまとめました">⚙ 任命・設定へ</button>
+      <button id="btnInv" class="rmore" title="しばらく動きがない人（研修・出席・面談シート）を確かめて、続けている／様子見／無効化を選ぶ">🧹 棚卸し</button>
+    </div>
+    <!-- v177: 任命・オーナー用のボタンは「⚙ 設定」タブへ移した。設定から呼ぶので要素と処理は残す（画面には出さない） -->
+    <div id="rosterOld" style="display:none !important;" aria-hidden="true">
       <button id="btnCkAdmins" class="hide rmore">👑 受付管理者</button>
       <button id="btnFreeMembers" class="hide rmore" title="いつも徴収なしで出席に入れる人（ユニオン管理者など）">🆓 徴収なしメンバー</button>
       <button id="btnTrainers" class="hide rmore">🎓 研修生登録の担当</button>
@@ -1943,16 +1957,6 @@ body.practice .topbar{top:var(--pxh,36px);}
       <button id="btnLaunch" class="ghost hide rmore" title="BLUE DIAMOND・TEAM ELITEのPLATINUMカードを解禁（オーナーのみ）">🖤 カード解禁</button>
       <button id="btnHideMoney" class="hide rmore" title="受付画面の金額を統括（ユニオン管理者）だけに見せる">🙈 受付の金額</button>
       <button id="btnDelUnion" class="ghost hide rmore" title="綴り間違いなどで不要なユニオンを削除（オーナーのみ）">🗑 ユニオン削除</button>
-      <span class="pill n hide" id="roBadge">閲覧のみ</span>
-      <input type="search" id="q" placeholder="氏名・番号・系列で検索">
-      <select id="qTitle" title="タイトルで絞り込み" style="width:auto;"></select>
-      <label style="display:flex;align-items:center;gap:4px;font-size:12.5px;font-weight:400;white-space:nowrap;margin:0;cursor:pointer;"><input type="checkbox" id="qShowOff" style="width:auto;margin:0;">無効も表示</label>
-      <button class="primary" id="btnAddMember">＋ メンバー追加</button>
-      <button id="btnCsvIn" class="rmore">CSV取込</button>
-      <button id="btnCsvOut" class="rmore">CSV出力</button>
-      <button id="btnNameCopy" class="rmore" title="タイトルで絞って名前の一覧をコピー（NAVIGATORの先行利用に貼り付け）">📋 名前をコピー</button>
-      <button id="btnGroupRen" class="hide rmore">系列名変更</button>
-      <button id="btnInv" class="rmore" title="しばらく動きがない人（研修・出席・面談シート）を確かめて、続けている／様子見／無効化を選ぶ">🧹 棚卸し</button>
     </div>
     <div class="toolrow hide rmore" id="bulkRow">
       <span style="font-size:13px;font-weight:700;" id="selCount">選択中: 0名</span>
@@ -3080,10 +3084,11 @@ if(gTrainerMode) document.documentElement.classList.add('trm');   // 🎓 研修
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v176';
+var APP_VER = 'v177';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v177', d: '2026/11/24', items: ['🧹 名簿の「⚙ 管理メニュー」をすっきりさせました。受付管理者・研修担当・徴収なし・ユニオン管理者・リーダーの任命、管理者一覧、受付の金額、オーナー用の機能（特別カード工房・カードの裏面・ユニオンの追加・名前の変更・削除など）は「⚙ 設定」タブから使えます'] },
   { v: 'v176', d: '2026/11/24', items: ['⚙ 新しい「設定」タブ：体制チェック（足りない役割・未設定がひと目で）・人と役割（受付管理者・リーダー・研修担当・徴収なし・OL 受付を1人ずつ付け外し）・その人の会員証（グレード・タイトル・バッジ）・ユニオンの基本・連携・オーナーだけ を1か所にまとめました'] },
   { v: 'v175', d: '2026/11/22', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v174', d: '2026/11/22', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
@@ -3447,8 +3452,8 @@ var GX_ROLES = [
       { sel: '#evList', pre: gxPane('pEvents'), t: '作ったイベント', x: '作ったイベントはここに並ぶよ。当日はこの一覧の<b>「受付を開始」</b>からでも受付できるよ。' }
     ] },
     { id: 'set4', t: '受付担当を決める', sub: '1分・当日受付する人を任命', steps: [
-      { sel: '#btnCkAdmins', pre: gxPane('pRoster'), t: '👑 受付管理者', x: '当日受付をする人を<b>受付管理者</b>に任命しよう。任命された人は、この「受付管理」で受付や名簿の操作ができるよ。', miss: '任命はユニオン管理者だけができるよ（名簿タブの「👑 受付管理者」）。' },
-      { sel: '#btnTrainers', pre: gxPane('pRoster'), t: '🎓 研修生登録の担当', x: '研修担当の人はここで任命。任命された人は<b>「研修受講カード」</b>から研修生を登録できるよ。', miss: '任命はユニオン管理者だけができるよ（名簿タブの「🎓 研修生登録の担当」）。' },
+      { sel: 'nav button[data-pane="pSet"]', click: true, t: '「⚙ 設定」タブ', x: '任命は<b>「⚙ 設定」</b>タブでするよ。押してみて！', miss: '「⚙ 設定」タブはユニオン管理者・受付管理者・リーダーに出るよ。' },
+      { sel: '#setBody', pre: gxPane('pSet'), t: '👥 人と役割', x: '<b>「👥 人と役割」</b>で人を探して<b>「変える」</b>→ スイッチで<b>受付管理者</b>（当日受付をする人）や<b>研修担当</b>（研修受講カードから研修生を登録できる人）を付けよう。', miss: '任命はユニオン管理者がするよ（研修担当はリーダーもできるよ）。' },
       { sel: null, t: '準備OK！🎉', x: 'これで準備は完了！ほかのユニオンと<b>合同イベント</b>を開くときは「⑤ 合同イベントを作る」も見てね。次は<b>「受付する人」</b>のミッションで、当日の受付の流れを見てみよう。' }
     ] },
     { id: 'set5', t: '合同イベントを作る', sub: '2分・ほかのユニオンといっしょに開催', steps: [
@@ -8112,7 +8117,7 @@ $('btnAdminsView').onclick = function(){
         + (ckBeautyOn() ? '<label style="margin-top:14px;">🌸 ' + CK_DAY_NAME + hq('オーナーかユニオン管理者が「💜 Beauty」タブで決めます。DAYの体感（DAYスタッフの任命・担当の割り振り）・お知らせ・ラウンジの確認・クエストの編集ができます。') + '</label>'
           + (days.map(function(uid){ return row(uid, ''); }).join('') || '<p style="font-size:12.5px;color:var(--sub);margin:4px 0 0;">いません</p>') : '')
         + '';
-      modal('<h2>👥 管理者一覧 — ' + esc(un) + hq('任命・解除は、名簿タブの「👑 受付管理者」「🎓 研修生登録の担当」ボタンから行えます（研修生登録の担当はリーダーも任命できます）。') + '</h2>' + h
+      modal('<h2>👥 管理者一覧 — ' + esc(un) + hq('任命・解除は「⚙ 設定」タブの「👥 人と役割」から行えます（研修生登録の担当はリーダーも任命できます）。') + '</h2>' + h
         + '<div class="btns"><button id="avClose">閉じる</button></div>', true);
       $('avClose').onclick = closeModal;
       if($('avCore')) $('avCore').onclick = function(){
@@ -10978,6 +10983,7 @@ function ckLoadLastAct(union){
   });
 }
 $('btnInv').onclick = function(){ ckInvOpen(); };
+$('btnGoSet').onclick = function(){ var b = document.querySelector('nav button[data-pane="pSet"]'); if(b) b.click(); };
 function ckInvOpen(){
   var un = gRosterUnion, edit = canEditRoster();
   modal('<h2>🧹 棚卸し — ' + esc(un) + '</h2><p style="font-size:13px;color:var(--sub);">読み込み中…（直近1ヶ月の出席を確かめています）</p>', true);
@@ -11206,6 +11212,9 @@ function stAct(a){
   if(a === 'top'){ gSet.view = 'top'; stRender(); return; }
   if(a === 'base'){ gFinUnion = un; $('btnRcptSet').onclick(); return; }
   if(a === 'money'){ asRoster(function(){ $('btnHideMoney').onclick(); }); return; }
+  // v177: 一覧でまとめて任命（ほかのユニオンの人も）・管理者一覧（兼務の設定）は、名簿から移した前の画面を呼ぶ
+  var L1 = { 'l-ad': 'btnCkAdmins', 'l-tr': 'btnTrainers', 'l-fr': 'btnFreeMembers', 'l-av': 'btnAdminsView' };
+  if(L1[a]){ asRoster(function(){ $(L1[a]).onclick(); }); return; }
   if(a === 'inv'){ asRoster(function(){ loadMembers(function(){ ckInvOpen(); }); }); return; }
   if(a === 'link'){ stLinkModal(); return; }
   if(a === 'event'){
@@ -11261,7 +11270,12 @@ function stPeople(){
           + (p.m && !p.u ? '<span class="st-r na">アカウントなし</span>' : '') + '</div></div>'
           + '<button class="ed" data-sp="' + D.persons.indexOf(p) + '">変える</button></div>';
       }).join('') : '<p style="color:var(--sub);font-size:13px;">該当する人はいません。</p>') + '</div>'
-    + (L.length > 300 ? '<p style="font-size:12px;color:var(--sub);">300人まで表示しています。名前で探してください。</p>' : '');
+    + (L.length > 300 ? '<p style="font-size:12px;color:var(--sub);">300人まで表示しています。名前で探してください。</p>' : '')
+    + '<h3 class="st-sh" style="margin:16px 0 6px;font-size:13px;color:var(--sub);">一覧でまとめて（ほかのユニオンの人を任命する時も）</h3>'
+    + (isCoreAdmin(un) ? '<button class="st-menu" data-st="l-ad"><span class="e">👑</span><span><b>受付管理者の一覧</b></span></button>' : '')
+    + (isCoreAdmin(un) || isLeader(un) ? '<button class="st-menu" data-st="l-tr"><span class="e">🎓</span><span><b>研修生登録の担当の一覧</b></span></button>' : '')
+    + (canEditUnion(un) ? '<button class="st-menu" data-st="l-fr"><span class="e">🆓</span><span><b>徴収なしメンバーの一覧</b></span></button>' : '')
+    + '<button class="st-menu" data-st="l-av"><span class="e">👥</span><span><b>管理者一覧</b><small>' + (isOwner() ? '兼務のユニオン管理者もここで' : '任命されている人の一覧') + '</small></span></button>';
   stBind($('setBody'));
   Array.prototype.forEach.call(document.querySelectorAll('#setBody [data-sf]'), function(b){ b.onclick = function(){ gSet.f = b.getAttribute('data-sf'); stPeople(); }; });
   Array.prototype.forEach.call(document.querySelectorAll('#setBody [data-sp]'), function(b){ b.onclick = function(){ stPerson(D.persons[+b.getAttribute('data-sp')], 'role'); }; });
