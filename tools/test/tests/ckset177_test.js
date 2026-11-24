@@ -37,7 +37,7 @@ const toPeople = async (ev, wt) => {
     if (vw < 500) {
       await toPeople(ev, wt);
       const t = await ev(`document.getElementById('setBody').innerText`);
-      c('人と役割の下に一覧の入口（受付管理者・研修担当・徴収なし・管理者一覧）', ['受付管理者の一覧', '研修生登録の担当の一覧', '徴収なしメンバーの一覧', '管理者一覧'].every(k => t.indexOf(k) >= 0), t.slice(-300));
+      c('人と役割の下に一覧の入口（受付管理者・研修担当・徴収なし・管理者一覧）', ['受付管理者の一覧', '研修担当の一覧', '徴収なしメンバーの一覧', '管理者一覧'].every(k => t.indexOf(k) >= 0), t.slice(-300));
       await page.screenshot({ path: OUT + '/ckset177_people.png', fullPage: true });
       await ev(`document.querySelector('#setBody [data-st="l-ad"]').click()`); await wt(700);
       c('👑 受付管理者の一覧が開く（他ユニオンから追加あり）', /他ユニオンから追加/.test(await ev(`(document.querySelector('.modal')||{}).innerText||''`)));
@@ -52,6 +52,29 @@ const toPeople = async (ev, wt) => {
       c('オーナーだけ → 🃏 特別カード工房が開く', !!(await page.waitForSelector('#kbNew', { timeout: 4000 }).catch(() => null)));
     }
     c(vw + 'px エラーなし', errs.length === 0, errs.join(' | '));
+    await ctx.close();
+  }
+  // v178: PC（1600px）では体制チェックとメニューが横並び・人の一覧が3列
+  {
+    const { ev, wt, errs, ctx } = await P.open(b, { data: data(), vw: 1600, vh: 900, wait: 2000 });
+    await ev(`(function(){ var x=document.getElementById('gxHintOk'); if(x) x.click(); })()`);
+    await ev(`document.querySelector('nav button[data-pane="pSet"]').click()`); await wt(400);
+    await ev(`(function(){ var s=document.getElementById('setUnionSel'); s.value='GRANT'; s.dispatchEvent(new Event('change')); })()`); await wt(900);
+    const r = JSON.parse(await ev(`(function(){ var a=document.querySelector('.st-top > .st-card').getBoundingClientRect(), m=document.querySelector('.st-menus').getBoundingClientRect(); return JSON.stringify({a:[a.left,a.top,a.right], m:[m.left,m.top]}); })()`));
+    c('PC：体制チェックとメニューが横に並ぶ', r.m[0] > r.a[2] && Math.abs(r.m[1] - r.a[1]) < 4, JSON.stringify(r));
+    await ev(`document.querySelector('#setBody [data-st="people"]').click()`); await wt(300);
+    const cols = await ev(`getComputedStyle(document.getElementById('stList')).gridTemplateColumns.split(' ').length`);
+    c('PC：人の一覧が3列', cols === 3, cols);
+    c('PC：横にはみ出さない', await ev(`document.documentElement.scrollWidth <= window.innerWidth`));
+    c('PC：エラーなし', errs.length === 0, errs.join(' | '));
+    await ctx.close();
+  }
+  // 390px では今まで通り1列
+  {
+    const { ev, wt, ctx } = await P.open(b, { data: data(), vw: 390, vh: 844, wait: 2000 });
+    await ev(`(function(){ var x=document.getElementById('gxHintOk'); if(x) x.click(); })()`);
+    await toPeople(ev, wt);
+    c('スマホ：人の一覧は1列のまま', await ev(`getComputedStyle(document.getElementById('stList')).display !== 'grid'`));
     await ctx.close();
   }
   // リーダー：研修担当の一覧と管理者一覧だけ
