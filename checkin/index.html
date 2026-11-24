@@ -80,6 +80,19 @@ button{border-radius:999px;}
 .st-sw input[type=checkbox]:checked{background:var(--green);} .st-sw input[type=checkbox]:checked::after{left:21px;}
 .st-sw input[type=checkbox]:disabled{opacity:.45;cursor:default;}
 .st-opts{display:flex;flex-wrap:wrap;gap:6px;} .st-opts button{font-size:13px;font-weight:700;padding:5px 12px;}
+/* v178: PC では横に広く（体制チェックとメニューを2列・人の一覧を2列） */
+@media (min-width:900px){
+  .st-wrap{max-width:1160px;}
+  .st-top{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:18px;align-items:start;}
+  .st-top > .st-card{margin:0;position:sticky;top:12px;}
+  .st-menus{display:grid;gap:10px;} .st-menus .st-menu{margin:0;}
+  .st-chips{flex-wrap:wrap;overflow:visible;}
+  #stQ{max-width:420px;}
+  #stList{display:grid;grid-template-columns:1fr 1fr;column-gap:32px;padding:4px 20px !important;}
+  #stList .st-pr:last-child{border-bottom:1px solid var(--line);}
+  .st-lists{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;} .st-lists .st-menu{margin:0;height:100%;}
+}
+@media (min-width:1300px){ #stList{grid-template-columns:1fr 1fr 1fr;} }
 .st-opts button.on{background:var(--green);border-color:var(--green);color:var(--on-green,#fff);}
 *{box-sizing:border-box;}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
@@ -3084,10 +3097,11 @@ if(gTrainerMode) document.documentElement.classList.add('trm');   // 🎓 研修
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v177';
+var APP_VER = 'v178';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v178', d: '2026/11/24', items: ['🖥 「⚙ 設定」タブを PC の広い画面に合わせました（体制チェックとメニューを横に並べ、人と役割の一覧も2〜3列に）'] },
   { v: 'v177', d: '2026/11/24', items: ['🧹 名簿の「⚙ 管理メニュー」をすっきりさせました。受付管理者・研修担当・徴収なし・ユニオン管理者・リーダーの任命、管理者一覧、受付の金額、オーナー用の機能（特別カード工房・カードの裏面・ユニオンの追加・名前の変更・削除など）は「⚙ 設定」タブから使えます'] },
   { v: 'v176', d: '2026/11/24', items: ['⚙ 新しい「設定」タブ：体制チェック（足りない役割・未設定がひと目で）・人と役割（受付管理者・リーダー・研修担当・徴収なし・OL 受付を1人ずつ付け外し）・その人の会員証（グレード・タイトル・バッジ）・ユニオンの基本・連携・オーナーだけ を1か所にまとめました'] },
   { v: 'v175', d: '2026/11/22', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
@@ -11184,7 +11198,7 @@ function stTop(){
   var ck = function(ok, tx, go, act){ return '<div class="st-ck"><span class="ic ' + (ok ? 'ok">✓' : 'ng">!') + '</span><span>' + tx + '</span>' + (go ? '<button class="go" data-st="' + act + '">' + go + ' ›</button>' : '') + '</div>'; };
   var withRole = D.persons.filter(function(p){ return ST_ROLES.some(function(r){ return stHas(p, r.k); }); }).length;
   $('setBody').innerHTML = '<h2 class="st-h">⚙ ユニオンの設定</h2><p class="st-lead">' + esc(un) + ' の体制と設定を、ここにまとめました。</p>'
-    + '<div class="st-card"><h3>✅ 体制チェック</h3>'
+    + '<div class="st-top"><div class="st-card"><h3>✅ 体制チェック</h3>'
     + ck(cnt('unionAdmins') > 0, 'ユニオン管理者 ' + cnt('unionAdmins') + '人', cnt('unionAdmins') ? '' : (isOwner() ? '指定する' : ''), 'f-ua')
     + ck(cnt('admins') > 0, '受付管理者 ' + cnt('admins') + '人', '見る', 'f-ad')
     + ck(true, 'リーダー ' + cnt('leaders') + '人', cnt('leaders') ? '見る' : '', 'f-ld')
@@ -11194,13 +11208,14 @@ function stTop(){
     + ck(!!ud.issuer, '電子領収書の発行者 ' + esc(ud.issuer || '未設定（領収書は出ません）'), ud.issuer ? '' : '設定する', 'base')
     + ck(!unlinked, 'NAVIGATOR と紐付いていない人 ' + unlinked + '人' + hq('名簿の人と NAVIGATOR のアカウントがつながっていない人です（同じ名前のアカウントも無い人）。アカウントが無いと、受付管理者・研修担当などの役割は付けられません。紐付けは NAVIGATOR の「アカウント管理」で、ユニオン管理者・オーナーが行います。'), unlinked ? '見る' : '', 'f-na')
     + (D.inv ? ck(!inv, '🧹 棚卸し ' + (inv || 0) + '人', inv ? '見る' : '', 'inv') : '')
-    + '</div>'
+    + '</div><div class="st-menus">'
     + '<button class="st-menu" data-st="people"><span class="e">👥</span><span><b>人と役割</b><small>役割がある人 ' + withRole + '人・受付管理者・リーダー・研修担当・徴収なし・OL 受付。グレード・タイトル・バッジもここから</small></span></button>'
     + (canEditUnion(un) ? '<button class="st-menu" data-st="base"><span class="e">🏠</span><span><b>ユニオンの基本</b><small>地域・番号の頭文字・領収書・PayPay・追加オプション</small></span></button>' : '')
     + (isCoreAdmin(un) ? '<button class="st-menu" data-st="money"><span class="e">🙈</span><span><b>受付の金額</b><small>いま：' + (ud.hideMoney ? '統括（ユニオン管理者）だけに表示' : '受付する人全員に表示') + '</small></span></button>' : '')
     + '<button class="st-menu" data-st="link"><span class="e">🔗</span><span><b>連携</b><small>NAVIGATOR との紐付け・MAP で連携するユニオン・ATTACK LIST</small></span></button>'
     + '<button class="st-menu" data-st="event"><span class="e">📜</span><span><b>イベントの決まり</b><small>誓約書' + (isCoreAdmin(un) ? '・DAY HOST' : '') + '</small></span></button>'
-    + (isOwner() ? '<button class="st-menu own" data-st="owner"><span class="e">🔒</span><span><b>オーナーだけ</b><small>ユニオン管理者・リーダーの指定／特別カード・裏面・解禁／ユニオンの追加・名前・削除</small></span></button>' : '');
+    + (isOwner() ? '<button class="st-menu own" data-st="owner"><span class="e">🔒</span><span><b>オーナーだけ</b><small>ユニオン管理者・リーダーの指定／特別カード・裏面・解禁／ユニオンの追加・名前・削除</small></span></button>' : '')
+    + '</div></div>';
   stBind($('setBody'));
 }
 // ボタンの動き（今までの画面を呼ぶものは、そのユニオンに切り替えてから）
@@ -11272,10 +11287,10 @@ function stPeople(){
       }).join('') : '<p style="color:var(--sub);font-size:13px;">該当する人はいません。</p>') + '</div>'
     + (L.length > 300 ? '<p style="font-size:12px;color:var(--sub);">300人まで表示しています。名前で探してください。</p>' : '')
     + '<h3 class="st-sh" style="margin:16px 0 6px;font-size:13px;color:var(--sub);">一覧でまとめて（ほかのユニオンの人を任命する時も）</h3>'
-    + (isCoreAdmin(un) ? '<button class="st-menu" data-st="l-ad"><span class="e">👑</span><span><b>受付管理者の一覧</b></span></button>' : '')
-    + (isCoreAdmin(un) || isLeader(un) ? '<button class="st-menu" data-st="l-tr"><span class="e">🎓</span><span><b>研修生登録の担当の一覧</b></span></button>' : '')
+    + '<div class="st-lists">' + (isCoreAdmin(un) ? '<button class="st-menu" data-st="l-ad"><span class="e">👑</span><span><b>受付管理者の一覧</b></span></button>' : '')
+    + (isCoreAdmin(un) || isLeader(un) ? '<button class="st-menu" data-st="l-tr"><span class="e">🎓</span><span><b>研修担当の一覧</b></span></button>' : '')
     + (canEditUnion(un) ? '<button class="st-menu" data-st="l-fr"><span class="e">🆓</span><span><b>徴収なしメンバーの一覧</b></span></button>' : '')
-    + '<button class="st-menu" data-st="l-av"><span class="e">👥</span><span><b>管理者一覧</b><small>' + (isOwner() ? '兼務のユニオン管理者もここで' : '任命されている人の一覧') + '</small></span></button>';
+    + '<button class="st-menu" data-st="l-av"><span class="e">👥</span><span><b>管理者一覧</b><small>' + (isOwner() ? '兼務のユニオン管理者もここで' : '任命されている人の一覧') + '</small></span></button></div>';
   stBind($('setBody'));
   Array.prototype.forEach.call(document.querySelectorAll('#setBody [data-sf]'), function(b){ b.onclick = function(){ gSet.f = b.getAttribute('data-sf'); stPeople(); }; });
   Array.prototype.forEach.call(document.querySelectorAll('#setBody [data-sp]'), function(b){ b.onclick = function(){ stPerson(D.persons[+b.getAttribute('data-sp')], 'role'); }; });
