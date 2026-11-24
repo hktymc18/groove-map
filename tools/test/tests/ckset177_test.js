@@ -63,8 +63,12 @@ const toPeople = async (ev, wt) => {
     const r = JSON.parse(await ev(`(function(){ var a=document.querySelector('.st-top > .st-card').getBoundingClientRect(), m=document.querySelector('.st-menus').getBoundingClientRect(); return JSON.stringify({a:[a.left,a.top,a.right], m:[m.left,m.top]}); })()`));
     c('PC：体制チェックとメニューが横に並ぶ', r.m[0] > r.a[2] && Math.abs(r.m[1] - r.a[1]) < 4, JSON.stringify(r));
     await ev(`document.querySelector('#setBody [data-st="people"]').click()`); await wt(300);
-    const cols = await ev(`getComputedStyle(document.getElementById('stList')).gridTemplateColumns.split(' ').length`);
-    c('PC：人の一覧が3列', cols === 3, cols);
+    const tb = JSON.parse(await ev(`(function(){ var tb=document.querySelector('#stList .st-tbl'); var rows=[].map.call(tb.querySelectorAll('tbody tr'), function(r){ return [].map.call(r.cells, function(c){ return c.innerText.trim(); }).join('|'); }); return JSON.stringify({vis: getComputedStyle(tb).display, cards: getComputedStyle(document.querySelector('#stList .st-rows')).display, head: tb.tHead.innerText, rows: rows}); })()`));
+    c('PC：1行1名の表（役割ごとの列に ✓）・カードは隠れる', tb.vis === 'table' && tb.cards === 'none' && /ユニオン 管理者 受付 管理者 リーダー 研修担当 徴収なし OL 受付/.test(tb.head.replace(/\s+/g, ' '))
+      && tb.rows.some(r => /^GR0002\|見本 受付\|－\|✓\|－\|－\|－\|－\|変える$/.test(r)), JSON.stringify(tb));
+    await ev(`[].filter.call(document.querySelectorAll('#stList .st-tbl tbody tr'), function(r){ return /見本 受付/.test(r.innerText); })[0].querySelector('[data-sp]').click()`); await wt(300);
+    c('PC：表の「変える」でその人の設定が開く', /見本 受付/.test(await ev(`document.getElementById('modalHost').innerText`)) && (await ev(`document.querySelectorAll('#modalHost input[data-rk]').length`)) === 6);
+    await ev(`document.getElementById('modalHost').innerHTML=''`);
     c('PC：横にはみ出さない', await ev(`document.documentElement.scrollWidth <= window.innerWidth`));
     c('PC：エラーなし', errs.length === 0, errs.join(' | '));
     await ctx.close();
@@ -74,7 +78,7 @@ const toPeople = async (ev, wt) => {
     const { ev, wt, ctx } = await P.open(b, { data: data(), vw: 390, vh: 844, wait: 2000 });
     await ev(`(function(){ var x=document.getElementById('gxHintOk'); if(x) x.click(); })()`);
     await toPeople(ev, wt);
-    c('スマホ：人の一覧は1列のまま', await ev(`getComputedStyle(document.getElementById('stList')).display !== 'grid'`));
+    c('スマホ：今まで通りのカード型（表は隠れる）', await ev(`getComputedStyle(document.querySelector('#stList .st-tbl')).display === 'none' && getComputedStyle(document.querySelector('#stList .st-rows')).display !== 'none'`));
     await ctx.close();
   }
   // リーダー：研修担当の一覧と管理者一覧だけ

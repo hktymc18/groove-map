@@ -88,11 +88,23 @@ button{border-radius:999px;}
   .st-menus{display:grid;gap:10px;} .st-menus .st-menu{margin:0;}
   .st-chips{flex-wrap:wrap;overflow:visible;}
   #stQ{max-width:420px;}
-  #stList{display:grid;grid-template-columns:1fr 1fr;column-gap:32px;padding:4px 20px !important;}
-  #stList .st-pr:last-child{border-bottom:1px solid var(--line);}
+  #stList{padding:0 !important;overflow:hidden;}
+  #stList .st-rows{display:none;} #stList .st-tbl{display:table;}
   .st-lists{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;} .st-lists .st-menu{margin:0;height:100%;}
 }
-@media (min-width:1300px){ #stList{grid-template-columns:1fr 1fr 1fr;} }
+/* v179: PC の「人と役割」は1行1名の表（役割ごとの列に ✓） */
+.st-tbl{display:none;width:100%;border-collapse:collapse;font-size:14px;}
+.st-tbl th{font-size:12px;color:var(--sub);font-weight:700;text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);line-height:1.35;}
+.st-tbl td{padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:middle;}
+.st-tbl tbody tr:last-child td{border-bottom:0;} .st-tbl tbody tr:hover td{background:rgba(127,127,127,.07);}
+.st-tbl .no{color:var(--sub);font-variant-numeric:tabular-nums;white-space:nowrap;width:96px;}
+.st-tbl .nm b{font-size:14.5px;} .st-tbl .nm small{color:var(--sub);font-size:11.5px;margin-left:8px;}
+.st-tbl .c{text-align:center;width:88px;} .st-tbl .op{text-align:right;width:90px;}
+.st-tbl .op button{font-size:12.5px;padding:5px 14px;}
+.st-ok{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;font-size:12px;font-weight:900;}
+.st-ok.ua{background:#fdecec;color:#c0392b;} .st-ok.ad{background:#e8f0fe;color:#2563eb;} .st-ok.ld{background:#fff4d6;color:#8a6d1f;}
+.st-ok.tr{background:#ece6fb;color:#6d3fd1;} .st-ok.fr{background:#e6f4ec;color:#2f9e62;} .st-ok.ol{background:#e6f6f7;color:#13807a;}
+.st-no{color:var(--line);}
 .st-opts button.on{background:var(--green);border-color:var(--green);color:var(--on-green,#fff);}
 *{box-sizing:border-box;}
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
@@ -3097,10 +3109,11 @@ if(gTrainerMode) document.documentElement.classList.add('trm');   // 🎓 研修
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v178';
+var APP_VER = 'v179';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v179', d: '2026/11/24', items: ['🖥 PC の「⚙ 設定 › 人と役割」を1行1名の表にしました（役割ごとの列に ✓。縦に見ると、だれが OL を受け付けているかなどがひと目で分かります）'] },
   { v: 'v178', d: '2026/11/24', items: ['🖥 「⚙ 設定」タブを PC の広い画面に合わせました（体制チェックとメニューを横に並べ、人と役割の一覧も2〜3列に）'] },
   { v: 'v177', d: '2026/11/24', items: ['🧹 名簿の「⚙ 管理メニュー」をすっきりさせました。受付管理者・研修担当・徴収なし・ユニオン管理者・リーダーの任命、管理者一覧、受付の金額、オーナー用の機能（特別カード工房・カードの裏面・ユニオンの追加・名前の変更・削除など）は「⚙ 設定」タブから使えます'] },
   { v: 'v176', d: '2026/11/24', items: ['⚙ 新しい「設定」タブ：体制チェック（足りない役割・未設定がひと目で）・人と役割（受付管理者・リーダー・研修担当・徴収なし・OL 受付を1人ずつ付け外し）・その人の会員証（グレード・タイトル・バッジ）・ユニオンの基本・連携・オーナーだけ を1か所にまとめました'] },
@@ -11277,14 +11290,14 @@ function stPeople(){
   $('setBody').innerHTML = '<p class="st-crumb"><button data-st="top">⚙ 設定</button> › <b>人と役割</b></p><h2 class="st-h">👥 人と役割</h2><p class="st-lead">1人1行。「変える」で役割と会員証（グレード・タイトル・バッジ）を変えます。</p>'
     + '<div class="st-chips">' + F.map(function(f){ return '<button data-sf="' + f[0] + '"' + (gSet.f === f[0] ? ' class="on"' : '') + '>' + esc(f[1]) + ' ' + cnt(f[0]) + '</button>'; }).join('') + '</div>'
     + '<input type="search" id="stQ" placeholder="名前・番号で探す（役割を付ける人も）" value="' + esc(gSet.q) + '" style="width:100%;margin:0 0 8px;">'
-    + '<div class="st-card" id="stList" style="padding:2px 14px;">' + (L.length ? L.slice(0, 300).map(function(p, i){
+    + '<div class="st-card" id="stList" style="padding:2px 14px;">' + (L.length ? '<div class="st-rows">' + L.slice(0, 300).map(function(p, i){
         var rs = ST_ROLES.filter(function(r){ return stHas(p, r.k); });
         return '<div class="st-pr"><div style="flex:1;min-width:0;"><b>' + esc(p.m ? p.m.name : (p.u.name || '')) + '</b><small>' + esc(p.m ? p.m.no : (p.u.xUnion ? 'ほかのユニオン（' + (p.u.union || '') + '）' : '名簿になし')) + '</small>'
           + (p.m && p.m.trainee ? ' <span class="pill n">研修生</span>' : '')
           + '<div class="st-roles">' + rs.map(function(r){ return '<span class="st-r ' + r.k + '">' + esc(r.k === 'ol' ? 'OL 受付中' : r.n) + '</span>'; }).join('')
           + (p.m && !p.u ? '<span class="st-r na">アカウントなし</span>' : '') + '</div></div>'
           + '<button class="ed" data-sp="' + D.persons.indexOf(p) + '">変える</button></div>';
-      }).join('') : '<p style="color:var(--sub);font-size:13px;">該当する人はいません。</p>') + '</div>'
+      }).join('') + '</div>' + stTable(L.slice(0, 300)) : '<p style="color:var(--sub);font-size:13px;">該当する人はいません。</p>') + '</div>'
     + (L.length > 300 ? '<p style="font-size:12px;color:var(--sub);">300人まで表示しています。名前で探してください。</p>' : '')
     + '<h3 class="st-sh" style="margin:16px 0 6px;font-size:13px;color:var(--sub);">一覧でまとめて（ほかのユニオンの人を任命する時も）</h3>'
     + '<div class="st-lists">' + (isCoreAdmin(un) ? '<button class="st-menu" data-st="l-ad"><span class="e">👑</span><span><b>受付管理者の一覧</b></span></button>' : '')
@@ -11295,6 +11308,18 @@ function stPeople(){
   Array.prototype.forEach.call(document.querySelectorAll('#setBody [data-sf]'), function(b){ b.onclick = function(){ gSet.f = b.getAttribute('data-sf'); stPeople(); }; });
   Array.prototype.forEach.call(document.querySelectorAll('#setBody [data-sp]'), function(b){ b.onclick = function(){ stPerson(D.persons[+b.getAttribute('data-sp')], 'role'); }; });
   var qi = $('stQ'); qi.oninput = function(){ gSet.q = qi.value; var pos = qi.selectionStart; stPeople(); var n = $('stQ'); n.focus(); try{ n.setSelectionRange(pos, pos); }catch(e){} };
+}
+// v179: PC 用の表（1行1名・役割ごとの列に ✓）。スマホは上のカード型（CSS で切り替え）
+function stTable(L){
+  var D = gSetData, H = { ua: 'ユニオン<br>管理者', ad: '受付<br>管理者', ld: 'リーダー', tr: '研修担当', fr: '徴収なし', ol: 'OL 受付' };
+  return '<table class="st-tbl"><thead><tr><th>番号</th><th>氏名</th>' + ST_ROLES.map(function(r){ return '<th class="c">' + H[r.k] + '</th>'; }).join('') + '<th></th></tr></thead><tbody>'
+    + L.map(function(p){
+      var sub = p.m ? (p.u ? '' : 'アカウントなし') : (p.u.xUnion ? 'ほかのユニオン（' + (p.u.union || '') + '）' : '名簿になし');
+      return '<tr><td class="no">' + esc(p.m ? p.m.no : '—') + '</td>'
+        + '<td class="nm"><b>' + esc(p.m ? p.m.name : (p.u.name || '')) + '</b>' + (p.m && p.m.trainee ? ' <span class="pill n">研修生</span>' : '') + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</td>'
+        + ST_ROLES.map(function(r){ return '<td class="c">' + (stHas(p, r.k) ? '<span class="st-ok ' + r.k + '" title="' + esc(r.n) + '">✓</span>' : '<span class="st-no">－</span>') + '</td>'; }).join('')
+        + '<td class="op"><button data-sp="' + D.persons.indexOf(p) + '">変える</button></td></tr>';
+    }).join('') + '</tbody></table>';
 }
 function stMatch(p, f){
   if(f === 'all') return true;
