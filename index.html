@@ -599,7 +599,7 @@ input::-moz-placeholder { color: var(--placeholder, #3a3f4a) !important; }
 .ev-dt-row .fi{min-width:0;width:100%}
 @media(max-width:767px),(max-height:500px){.ev-dt-row>.fr{flex:1 1 100%!important}}
 .overlay{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity .22s}
-.overlay.open{opacity:1;pointer-events:all}
+.overlay.open{opacity:1;pointer-events:all;z-index:305} /* v918 #50: 設定・再アプローチの画面（z-index 300）の後ろに隠れないように */
 .sheet{background:var(--surface);border-radius:20px 20px 0 0;border-top:1px solid var(--border);padding:18px 18px 44px;width:100%;max-height:88vh;max-height:calc(100dvh - env(safe-area-inset-top) - 30px);overflow-y:auto;transform:translateY(36px);transition:transform .22s}
 .overlay.open .sheet{transform:translateY(0)}
 .sh-title{font-size:16px;font-weight:700;margin-bottom:14px}
@@ -3189,7 +3189,7 @@ body .sm1-r .fb .fbr,body .p2fb .fbr{filter:drop-shadow(0 1px 0 rgba(140,90,0,.2
     </div>
     <div id="sharedMapBtn" style="display:none;font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;font-family:'Inter','IBM Plex Mono',monospace;border:1px solid var(--purple);color:var(--purple);background:var(--purple-dim);white-space:nowrap" onclick="openSharedDashboard()">共有MAP <span id="sharedMapCount"></span></div>
     <div class="user-dot" id="userDot" title=""></div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v916</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:1px"><div id="versionTag" onclick="openReleaseNotes()" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5;letter-spacing:0.5px;cursor:pointer" title="お知らせ（アップデート情報）">v918</div><div id="lastSavedTag" style="font-size:9px;color:var(--text-dim);font-family:Inter,IBM Plex Mono,monospace;opacity:0.5"></div></div>
   </div>
 </header>
 
@@ -4084,12 +4084,13 @@ body .sm1-r .fb .fbr,body .p2fb .fbr{filter:drop-shadow(0 1px 0 rgba(140,90,0,.2
       <input class="fi" id="evAsan" placeholder="名前を入力（空欄＝自分）" style="margin-top:6px" oninput="evAsanInput(this.value)">
     </div>
     <div class="fr" id="evSelfShowRow" style="display:none">
-      <label class="fl">この予定・タスクの扱い（メンバー選択時）</label>
+      <label class="fl">どこに出すか（メンバーを選んだ時）</label>
       <div class="rg">
-        <div class="rb sel" id="evVisMember" onclick="selEvVis('member')" title="メンバーのカード・ホバーに出す。自分のカレンダー・ToDoには出さない"><svg class="lic" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20.5c0-4 3.3-6.5 7.5-6.5s7.5 2.5 7.5 6.5"/></svg> メンバーのみ</div>
-        <div class="rb" id="evVisSelf" onclick="selEvVis('self')" title="自分のカレンダー・ToDoだけに出す。メンバーのカード・共有先には出さず、行動にも数えない"><svg class="lic" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="16" rx="2"/><path d="M8 2.5V7M16 2.5V7M3.5 10.5h17"/></svg> 自分のみ</div>
+        <div class="rb sel" id="evVisMember" onclick="selEvVis('member')" title="メンバーのカード・ホバーに出す。自分のカレンダー・ToDoには出さない"><svg class="lic" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20.5c0-4 3.3-6.5 7.5-6.5s7.5 2.5 7.5 6.5"/></svg> MAPのカードだけ</div>
+        <div class="rb" id="evVisSelf" onclick="selEvVis('self')" title="自分のカレンダー・ToDoだけに出す。メンバーのカード・共有先には出さず、行動にも数えない"><svg class="lic" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="16" rx="2"/><path d="M8 2.5V7M16 2.5V7M3.5 10.5h17"/></svg> 自分のカレンダーだけ</div>
         <div class="rb" id="evVisBoth" onclick="selEvVis('both')" title="メンバーのカードと自分のカレンダー・ToDoの両方に出す"><svg class="lic" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.6 2.7-5.8 6-5.8s6 2.2 6 5.8"/><circle cx="17" cy="9" r="2.6"/><path d="M16.5 14.4c2.6.2 4.5 2 4.5 5"/></svg> 両方</div>
       </div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:5px;line-height:1.5">MAPのカード＝自分の MAP のその人のカード・メンバーの画面（予定・活動）に出ます。メンバー本人のアプリのカレンダーには入りません</div>
     </div>
     <!-- A1: 詳細はデフォルト格納（ミニマル）。値が入っている時は自動で開く -->
     <div class="ev-adv-toggle" id="evAdvToggle" onclick="evToggleAdv()">▾ 詳細（優先度・メモ・場所）</div>
@@ -4143,7 +4144,7 @@ body .sm1-r .fb .fbr,body .p2fb .fbr{filter:drop-shadow(0 1px 0 rgba(140,90,0,.2
   </div>
 </div>
 
-<script>window.GM_EXPECT_JS='v916';</script>
-<script src="app.js?v=v916"></script>
+<script>window.GM_EXPECT_JS='v918';</script>
+<script src="app.js?v=v918"></script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v916';
+var APP_JS_VERSION = 'v918';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -5202,7 +5202,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v916';
+  var DATA_VERSION = 'v918';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -6957,6 +6957,7 @@ function _renderCurrentViewNow() {
   else if (currentView === 'ol') renderOL();
   else if (currentView === 'menu') renderMenuHub();
   if (!window._keepSpinner) _hideSwitching(); // 共有MAP読込中は全データが揃うまで維持
+  try { _mgFailNote(); } catch (eMg) {} // v917
 }
 // デバウンス：連続呼び出し（結合リスナー多重発火等）を1フレームにまとめる。
 // 直近150ms実行が無ければ即時（操作の体感を守る）、連打中は120ms後に1回だけ。
@@ -7341,6 +7342,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v918', d:'2026-11-25', items:['#50 設定から「MAPの共有」を開くと、画面が設定の後ろに隠れて出てこなかったのを直しました','#49 予定でメンバーを選んだ時の「どこに出すか」の言葉を直しました（MAPのカードだけ／自分のカレンダーだけ／両方。メンバー本人のアプリのカレンダーには入りません）'] },
+  { v:'v917', d:'2026-11-25', items:['共有の共有（結合したMAP）が見られない時は、MAP の上に「見る許可が届いていません」と理由を出すように','MAP の共有の画面を開いた時にも、結合したMAPの見る許可を配り直すように','「○○経由」の共有を外す時は、経由した人の MAP の中も見えなくなることを確認するように'] },
   { v:'v916', d:'2026-11-24', items:['ユニオン予定の地域で、「愛知」「愛知県」と「名古屋」を同じ地域とみなすように（地域の言い方が違うと予定が出なかった）'] },
   { v:'v915', d:'2026-11-23', items:['メンバーの画面・設定の選んだ札（非表示・稼働・性別・見た目など）をチャコールにそろえて読みやすく','PC の MAP の表の稼働・段・研修中の字を、読める濃さの色に'] },
   { v:'v914', d:'2026-11-22', items:['OUT で「非表示」にした人の下に、同じく非表示の OUT の人しかいない時も、MAP から消えるように','下にまだ人がいて MAP に残る時は、メンバーの画面に「下に ○人いるので残ります」と出るように'] },
@@ -21844,10 +21847,11 @@ function _efHtml(o) {
   h += '<div class="efw"><input id="efQ" placeholder="🔍 名前でさがす" value="' + evEsc(_ef.q || '') + '" oninput="efQ(this.value)" autocomplete="off"><div id="efWhoLs">' + _efWhoRows(o.mids) + '</div></div>';
   if (o.mids.length) {
     var v = o.vis === 'member' || o.vis === 'self' ? o.vis : 'both';
-    h += '<div class="efl">この予定を出すカレンダー</div><div class="efv">'
-      + '<span class="' + (v === 'member' ? 'on' : '') + '" onclick="efVis(\'member\')">メンバーだけ<small>自分には出さない</small></span>'
-      + '<span class="' + (v === 'self' ? 'on' : '') + '" onclick="efVis(\'self\')">自分だけ<small>メンバーに出さない</small></span>'
-      + '<span class="' + (v === 'both' ? 'on' : '') + '" onclick="efVis(\'both\')">両方<small>自分とメンバー</small></span></div>';
+    h += '<div class="efl">どこに出すか</div><div class="efv">' // v918 #49: 「メンバーのカレンダー」に入ると読めたので、言葉を直す
+      + '<span class="' + (v === 'member' ? 'on' : '') + '" onclick="efVis(\'member\')">MAPのカードだけ<small>自分のカレンダーには出さない</small></span>'
+      + '<span class="' + (v === 'self' ? 'on' : '') + '" onclick="efVis(\'self\')">自分のカレンダーだけ<small>カードには出さない</small></span>'
+      + '<span class="' + (v === 'both' ? 'on' : '') + '" onclick="efVis(\'both\')">両方<small>カードとカレンダー</small></span></div>'
+      + '<div class="ux-hint" style="margin-top:6px">MAPのカード＝自分の MAP のその人のカード・メンバーの画面（予定・活動）に出ます。メンバー本人のアプリのカレンダーには入りません</div>';
   }
   // 色・通知・場所メモ・繰り返し・共有
   var cat = o.cat ? findCategory(o.cat) : null, rl = 'なし', rp = 'なし';
@@ -40614,6 +40618,7 @@ function openShareModal() {
   var modal = document.getElementById('shareModal');
   if (modal) modal.classList.add('open');
   loadShareUserList();
+  try { propagateDerivedShares(); } catch (eP) {} // v917: 共有の画面を開いた時も、結合したMAPの見る許可を配り直す（取りこぼし・外された分を戻す）
 }
 
 function closeShareModal(e) {
@@ -41413,6 +41418,9 @@ function buildSharedCard(owner) {
 function leaveSharedMap(ownerUid) {
   if (!db || !currentUser) return;
   var o = sharedOwners.filter(function(x) { return x.uid === ownerUid; })[0] || {}, nm = o.org || o.name || 'このMAP';
+  if (o.derived) { // v917: 結合経由の共有（○○経由）を外すと、経由した人の MAP の中のツリーも見えなくなる
+    if (!confirm('「' + nm + '」は、' + (o.viaName || '共有してくれている人') + 'さんの MAP に結合されているので見えている MAP です。\n外すと、' + (o.viaName || 'その人') + 'さんの MAP の中の「' + nm + '」のメンバーも見えなくなります。\n（' + (o.viaName || 'その人') + 'さんがアプリを開くと、また見えるようになります）\n外しますか？')) return;
+  } else
   if (!confirm('「' + nm + '」の共有を外しますか？\n共有MAPの一覧から消えて、見られなくなります' + (isMerged(ownerUid) ? '（自分のMAPへの結合も解除します）' : '') + '。\nもう一度見たい時は、相手に共有してもらってください。')) return;
   db.doc('maps/' + ownerUid + '/shared/' + currentUser.uid).delete().then(function() {
     db.doc('sharedWith/' + currentUser.uid + '/from/' + ownerUid).delete().catch(function() {});
@@ -41756,9 +41764,22 @@ function propagateDerivedShares() {
 }
 // 共有MAP閲覧中：閲覧先の結合構成(meta/merged)を読み、結合先ツリーのデータも取得して合成する
 var _viewMerged = { owner: null, maps: [], data: {} };
-function stopViewMergedSync() { _viewMerged = { owner: null, maps: [], data: {} }; }
+function stopViewMergedSync() { _viewMerged = { owner: null, maps: [], data: {}, fail: {} }; _mgFailNote(); }
+// v917: 閲覧先の MAP に結合されたツリーが、見る許可が無くて読めない時は、MAP の上に理由を出す（前は何も出ずに見えないだけだった）
+function _mgFailNote() {
+  var old = document.getElementById('mgFailNote'); if (old && old.parentNode) old.parentNode.removeChild(old);
+  if (!viewingOwnerUid || !_viewMerged || _viewMerged.owner !== viewingOwnerUid) return;
+  var f = _viewMerged.fail || {}, ks = Object.keys(f); if (!ks.length) return;
+  var vo = (sharedOwners || []).filter(function(x) { return x.uid === viewingOwnerUid; })[0] || {}, via = vo.org || vo.name || 'この MAP の持ち主';
+  var mx = document.body.classList.contains('ux-mx') && document.getElementById('mxTop');
+  var host = mx || document.getElementById('view-current'); if (!host || currentView !== 'current') return;
+  var d = document.createElement('div'); d.id = 'mgFailNote';
+  d.style.cssText = 'margin:8px 12px;padding:10px 12px;border-radius:14px;border:1px solid var(--border);background:var(--surface);font-size:12.5px;line-height:1.6;color:var(--text-mid)';
+  d.innerHTML = '<b style="color:var(--red)">' + ks.map(function(k) { return evEsc(f[k] || '結合したMAP'); }).join('・') + ' のツリーは、まだ見る許可が届いていません。</b><br>' + evEsc(via) + 'さんがアプリを開くか、MAP の共有の画面を開くと届きます。';
+  if (mx) host.appendChild(d); else host.insertBefore(d, host.firstChild);
+}
 function startViewMergedSync(ownerUid) {
-  _viewMerged = { owner: ownerUid, maps: [], data: {} };
+  _viewMerged = { owner: ownerUid, maps: [], data: {}, fail: {} }; _mgFailNote();
   if (!db) return;
   var month = state.currentMonth;
   fsGet('maps/' + ownerUid + '/meta/merged').then(function(d) {
@@ -41770,8 +41791,14 @@ function startViewMergedSync(ownerUid) {
       fsGet('maps/' + mmCfg.uid + '/months/' + month + '_current').then(function(md) {
         if (viewingOwnerUid !== ownerUid || _viewMerged.owner !== ownerUid) return;
         _viewMerged.data[mmCfg.uid] = (md && md.members) ? md.members : [];
+        if (_viewMerged.fail) delete _viewMerged.fail[mmCfg.uid];
         if (currentView === 'current' || currentView === 'members') renderCurrentView();
-      }).catch(function(e) { console.log('view merge load:', e && e.message); }); // 権限未反映(旧ルール)なら黙ってスキップ
+        _mgFailNote();
+      }).catch(function(e) {
+        console.log('view merge load:', e && e.message);
+        if (viewingOwnerUid !== ownerUid || _viewMerged.owner !== ownerUid) return;
+        if (e && e.code === 'permission-denied') { _viewMerged.fail[mmCfg.uid] = mmCfg.name || ''; _mgFailNote(); } // v917: 見る許可が無い
+      });
     });
   }).catch(function(){});
 }
