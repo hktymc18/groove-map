@@ -6602,7 +6602,7 @@ setTimeout(_vvhUpdate, 300); setTimeout(_vvhUpdate, 1000); setTimeout(_vvhUpdate
 var _gmHidAt = 0;
 document.addEventListener('visibilitychange', function() {
   try {
-    if (document.hidden) { _gmHidAt = Date.now(); return; }
+    if (document.hidden) { _gmHidAt = Date.now(); try { flushPendingSave(true); } catch (eF) {} return; } // v920: 上にスワイプして閉じる前に保存を始める
     var away = _gmHidAt ? Date.now() - _gmHidAt : 0; _gmHidAt = 0;
     if (away < 1800000 || !USE_FIREBASE || !db || !currentUser || !currentUser.uid || viewingOwnerUid || (typeof _aggActive !== 'undefined' && _aggActive)) return;
     if (typeof flushPendingSave === 'function') flushPendingSave();
@@ -7342,7 +7342,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
-  { v:'v920', d:'2026-11-25', items:['名前などを直してすぐログアウトしても、保存が終わってからログアウトするようにしました（直した名前が元に戻ることがありました）'] },
+  { v:'v920', d:'2026-11-25', items:['名前などを直してすぐアプリを閉じた（上にスワイプした）時やログアウトした時に、直した内容が元に戻ることがあったのを直しました'] },
   { v:'v919', d:'2026-11-25', items:['名前を入れる欄で、iPhone の「連絡先を自動入力」が出て漢字に変換できなかったのを直しました','設定 › 見た目 に「MAP を開いた時の段数」（2〜5段・全段）。ログアウトしても・別の端末でも同じ段数で開きます','リスタート表示（🔄）：付いている人のタイトルを変えると消すか聞くように。同じ月に BR にしてすぐ戻した時は降格扱いにしないように。付けるボタンはプロフィールの下の一覧へ'] },
   { v:'v918', d:'2026-11-25', items:['#50 設定から「MAPの共有」を開くと、画面が設定の後ろに隠れて出てこなかったのを直しました','#49 予定でメンバーを選んだ時の「どこに出すか」の言葉を直しました（MAPのカードだけ／自分のカレンダーだけ／両方。メンバー本人のアプリのカレンダーには入りません）'] },
   { v:'v917', d:'2026-11-25', items:['共有の共有（結合したMAP）が見られない時は、MAP の上に「見る許可が届いていません」と理由を出すように','MAP の共有の画面を開いた時にも、結合したMAPの見る許可を配り直すように','「○○経由」の共有を外す時は、経由した人の MAP の中も見えなくなることを確認するように'] },
@@ -16229,12 +16229,12 @@ function autoSave() {
   if (_saveTimer) clearTimeout(_saveTimer);
   _saveTimer = setTimeout(function() { _saveTimer = null; _doSaveNow(); }, 1500);
 }
-function _doSaveNow() {
+function _doSaveNow(quick) {
   var uid = _savePendingUid;
   if (!uid) return;
   _savePendingUid = null;
   // v920: 書き込みが終わったか（true＝保存できた）を返す。ログアウトはこれを待つ
-  var p = fsSaveToFirestore(uid)
+  var p = fsSaveToFirestore(uid, quick)
     .then(function() { updateLastSaved(); toast(viewingOwnerUid ? '共有MAPに保存しました ✓' : '保存しました ✓'); recordHistory(); return true; })
     .catch(function(e) { if (e && e.gmNotReady) { _fsNotReadyMsg(); return false; } if (e && e.gmConflict) return true; /* v810: 知らせて読み直し済み */ console.error('自動保存エラー:', e); toast('保存に失敗しました（編集権限をご確認ください）'); return false; });
   _saveInflight = p;
@@ -16243,9 +16243,9 @@ function _doSaveNow() {
 }
 var _saveInflight = null; // v920: 書き込み中の保存
 // 画面切替・終了前に未保存分を確定させる（v920: 書き込みが終わるのを待てるよう Promise を返す）
-function flushPendingSave() {
+function flushPendingSave(quick) {
   if (_saveTimer) { clearTimeout(_saveTimer); _saveTimer = null; }
-  if (_savePendingUid) return _doSaveNow();
+  if (_savePendingUid) return _doSaveNow(quick);
   return _saveInflight || Promise.resolve(true);
 }
 
@@ -33608,7 +33608,7 @@ function showUpdateBanner() {
   b.innerHTML = '<span>🔄 新しいバージョンがあります</span><span style="color:var(--accent);font-weight:800;cursor:pointer" onclick="location.reload()">更新</span>';
   document.body.appendChild(b);
 }
-window.addEventListener('pagehide', function(){ try { flushPendingSave(); } catch(e){} });
+window.addEventListener('pagehide', function(){ try { flushPendingSave(true); } catch(e){} }); // v920: 待たずにすぐ書き込みを始める
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function() {
     navigator.serviceWorker.register('sw.js').then(function(reg) {
@@ -42099,7 +42099,7 @@ function _fsConflict(uid, month) {
   toast('⚠️ ほかの画面（別のタブ・端末）で先に保存されていたため、最新を読み込みました（この画面の直前の変更は保存していません）');
   if (!viewingOwnerUid && currentUser && uid === currentUser.uid && state.currentMonth === month) { try { fsLoadFromFirestore(uid); } catch (e) {} }
 }
-function fsSaveToFirestore(uid) {
+function fsSaveToFirestore(uid, quick) {
   if (!_fsOwnReady(uid)) { var eNr = new Error('not-loaded'); eNr.gmNotReady = true; return Promise.reject(eNr); } // v797
   var month = state.currentMonth;
   var curPath = 'maps/' + uid + '/months/' + month + '_current';
@@ -42112,6 +42112,9 @@ function fsSaveToFirestore(uid) {
   var _stSig = JSON.stringify([state.stats, state.commission, state.freshData || {}]);
   var needId = _fsSavedSig[_idPath] !== _idSig, needSt = _fsSavedSig[_stPath] !== _stSig;
   var rd = function(path) { return _fsGetRaw(path).catch(function() { return undefined; }); }; // サーバーから（先読みは使わない）。読めない時は undefined
+  // v920: アプリを閉じる時（画面が隠れた時）は、サーバーを待たず端末の控えで合成して、すぐ書き込みを始める。
+  //       書き込みを始めておけば、アプリが止められても端末に残り、次に開いた時に送られる（サーバーを読む間に止められて消えていた）
+  if (quick) rd = function(path) { return db.doc(path).get({ source: 'cache' }).then(function(d) { return d.exists ? d.data() : null; }).catch(function() { return undefined; }); };
   return Promise.all([skipMerge ? null : rd(curPath), needId && !skipMerge ? rd(_idPath) : null, needSt ? rd(_stPath) : null]).then(function(R) {
     var rC = R[0], rI = R[1], rS = R[2];
     // 理想MAP・数字：自分が読んだ後にほかの画面が保存していたら、上書きしない
