@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v917';
+var APP_JS_VERSION = 'v918';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -5202,7 +5202,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v917';
+  var DATA_VERSION = 'v918';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -7342,6 +7342,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v918', d:'2026-11-25', items:['#50 設定から「MAPの共有」を開くと、画面が設定の後ろに隠れて出てこなかったのを直しました','#49 予定でメンバーを選んだ時の「どこに出すか」の言葉を直しました（MAPのカードだけ／自分のカレンダーだけ／両方。メンバー本人のアプリのカレンダーには入りません）'] },
   { v:'v917', d:'2026-11-25', items:['共有の共有（結合したMAP）が見られない時は、MAP の上に「見る許可が届いていません」と理由を出すように','MAP の共有の画面を開いた時にも、結合したMAPの見る許可を配り直すように','「○○経由」の共有を外す時は、経由した人の MAP の中も見えなくなることを確認するように'] },
   { v:'v916', d:'2026-11-24', items:['ユニオン予定の地域で、「愛知」「愛知県」と「名古屋」を同じ地域とみなすように（地域の言い方が違うと予定が出なかった）'] },
   { v:'v915', d:'2026-11-23', items:['メンバーの画面・設定の選んだ札（非表示・稼働・性別・見た目など）をチャコールにそろえて読みやすく','PC の MAP の表の稼働・段・研修中の字を、読める濃さの色に'] },
@@ -21846,10 +21847,11 @@ function _efHtml(o) {
   h += '<div class="efw"><input id="efQ" placeholder="🔍 名前でさがす" value="' + evEsc(_ef.q || '') + '" oninput="efQ(this.value)" autocomplete="off"><div id="efWhoLs">' + _efWhoRows(o.mids) + '</div></div>';
   if (o.mids.length) {
     var v = o.vis === 'member' || o.vis === 'self' ? o.vis : 'both';
-    h += '<div class="efl">この予定を出すカレンダー</div><div class="efv">'
-      + '<span class="' + (v === 'member' ? 'on' : '') + '" onclick="efVis(\'member\')">メンバーだけ<small>自分には出さない</small></span>'
-      + '<span class="' + (v === 'self' ? 'on' : '') + '" onclick="efVis(\'self\')">自分だけ<small>メンバーに出さない</small></span>'
-      + '<span class="' + (v === 'both' ? 'on' : '') + '" onclick="efVis(\'both\')">両方<small>自分とメンバー</small></span></div>';
+    h += '<div class="efl">どこに出すか</div><div class="efv">' // v918 #49: 「メンバーのカレンダー」に入ると読めたので、言葉を直す
+      + '<span class="' + (v === 'member' ? 'on' : '') + '" onclick="efVis(\'member\')">MAPのカードだけ<small>自分のカレンダーには出さない</small></span>'
+      + '<span class="' + (v === 'self' ? 'on' : '') + '" onclick="efVis(\'self\')">自分のカレンダーだけ<small>カードには出さない</small></span>'
+      + '<span class="' + (v === 'both' ? 'on' : '') + '" onclick="efVis(\'both\')">両方<small>カードとカレンダー</small></span></div>'
+      + '<div class="ux-hint" style="margin-top:6px">MAPのカード＝自分の MAP のその人のカード・メンバーの画面（予定・活動）に出ます。メンバー本人のアプリのカレンダーには入りません</div>';
   }
   // 色・通知・場所メモ・繰り返し・共有
   var cat = o.cat ? findCategory(o.cat) : null, rl = 'なし', rp = 'なし';

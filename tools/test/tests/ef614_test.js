@@ -31,8 +31,8 @@ T.run(async () => {
   w.efQ('鈴木'); c('名前でさがす', $('#efWhoLs').textContent.indexOf('鈴木 一郎') >= 0 && $('#efWhoLs').textContent.indexOf('佐藤') < 0);
   w.efWho('a1');
   c('選ぶと上に名前・リストに✓・検索はリセット', $('.efsel').textContent.indexOf('佐藤 花') >= 0 && !!$('#efWhoLs .efr.on') && $('#efQ').value === '');
-  c('出すカレンダー3つ（メンバーだけ・自分だけ・両方）', $$('.efv span').length === 3 && $('.efv').textContent.indexOf('自分だけ') >= 0 && $('.efv span.on').textContent.indexOf('両方') === 0);
-  w.efVis('self'); c('自分だけを選べる', $('.efv span.on').textContent.indexOf('自分だけ') === 0);
+  c('出す場所3つ（MAPのカードだけ・自分のカレンダーだけ・両方。v918 で言葉を直した）', $$('.efv span').length === 3 && $('.efv').textContent.indexOf('自分のカレンダーだけ') >= 0 && $('.efv span.on').textContent.indexOf('両方') === 0);
+  w.efVis('self'); c('自分のカレンダーだけを選べる', $('.efv span.on').textContent.indexOf('自分のカレンダーだけ') === 0);
   w.efTgl('ntf'); c('通知はその場で開く', $$('.efa .op .efch span').length === 6);
   w.efRemind('30'); c('通知 30分前', w._ef.o.remind === '30' && $('.efa').textContent.indexOf('30分前') >= 0);
   w.efTgl('memo'); c('場所・メモもその場で入力欄', !!$('#efPlace') && !!$('#efMemo'));
