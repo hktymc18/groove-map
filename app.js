@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v918';
+var APP_JS_VERSION = 'v919';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -5202,7 +5202,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v918';
+  var DATA_VERSION = 'v919';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -7342,6 +7342,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v919', d:'2026-11-25', items:['名前を入れる欄で、iPhone の「連絡先を自動入力」が出て漢字に変換できなかったのを直しました','設定 › 見た目 に「MAP を開いた時の段数」（2〜5段・全段）。ログアウトしても・別の端末でも同じ段数で開きます','リスタート表示（🔄）：付いている人のタイトルを変えると消すか聞くように。同じ月に BR にしてすぐ戻した時は降格扱いにしないように。付けるボタンはプロフィールの下の一覧へ'] },
   { v:'v918', d:'2026-11-25', items:['#50 設定から「MAPの共有」を開くと、画面が設定の後ろに隠れて出てこなかったのを直しました','#49 予定でメンバーを選んだ時の「どこに出すか」の言葉を直しました（MAPのカードだけ／自分のカレンダーだけ／両方。メンバー本人のアプリのカレンダーには入りません）'] },
   { v:'v917', d:'2026-11-25', items:['共有の共有（結合したMAP）が見られない時は、MAP の上に「見る許可が届いていません」と理由を出すように','MAP の共有の画面を開いた時にも、結合したMAPの見る許可を配り直すように','「○○経由」の共有を外す時は、経由した人の MAP の中も見えなくなることを確認するように'] },
   { v:'v916', d:'2026-11-24', items:['ユニオン予定の地域で、「愛知」「愛知県」と「名古屋」を同じ地域とみなすように（地域の言い方が違うと予定が出なかった）'] },
@@ -10138,8 +10139,8 @@ function inlineText(td, member, field, mapType) {
   var oldLast = member.lastName || '';
   var oldFirst = member.firstName || '';
   td.textContent = '';
-  var i1 = document.createElement('input'); i1.className = 'inline-input'; i1.style.width = '60px'; i1.placeholder = '姓'; i1.value = oldLast;
-  var i2 = document.createElement('input'); i2.className = 'inline-input'; i2.style.width = '60px'; i2.style.marginLeft = '4px'; i2.placeholder = '名'; i2.value = oldFirst;
+  var i1 = document.createElement('input'); i1.className = 'inline-input'; i1.style.width = '60px'; i1.placeholder = '例：山田'; i1.value = oldLast; i1.setAttribute('autocomplete', 'off'); i1.name = 'nv-inl-a'; // v919: iPhone の連絡先の自動入力で変換できなくなるのを防ぐ
+  var i2 = document.createElement('input'); i2.className = 'inline-input'; i2.style.width = '60px'; i2.style.marginLeft = '4px'; i2.placeholder = '例：花子'; i2.value = oldFirst; i2.setAttribute('autocomplete', 'off'); i2.name = 'nv-inl-b';
   td.appendChild(i1); td.appendChild(i2);
   i1.focus();
   function finish() {
@@ -11888,7 +11889,7 @@ function _idqRender() {
       + '<div class="iq-ab usr" onclick="idqAdd(\'user\')"><i>＋</i><div><b>ユーザーを足す</b><span>1人 <label onclick="event.stopPropagation()"><input id="idqUserPt" type="number" inputmode="numeric" value="' + _idqUserPt() + '" onfocus="edSelAll(this)" onchange="_idqUserPtSet(this.value)">P ✎</label></span></div></div></div>'
       + '<div class="iq-hint">押すと1人足して閉じます。ユーザーはB1に数えません</div>';
   }
-  if (m.idealNew) h += '<div class="iq-lb">名前（なくてもOK）</div><div class="iq-nmin"><input class="fi" id="idqLast" placeholder="姓" value="' + evEsc(m.lastName || '') + '" onchange="idqName()"><input class="fi" id="idqFirst" placeholder="名" value="' + evEsc(m.firstName || '') + '" onchange="idqName()"></div>';
+  if (m.idealNew) h += '<div class="iq-lb">名前（なくてもOK）</div><div class="iq-nmin"><input class="fi" id="idqNmA" name="nv-idqnma" autocomplete="off" placeholder="例：山田" value="' + evEsc(m.lastName || '') + '" onchange="idqName()"><input class="fi" id="idqNmB" name="nv-idqnmb" autocomplete="off" placeholder="例：花子" value="' + evEsc(m.firstName || '') + '" onchange="idqName()"></div>';
   h += '<div class="iq-lb">タイトル</div><div id="idqTitles">' + _idqTitleSegs(tl) + '</div>'
     + '<div class="iq-lb">今月の数字</div>'
     + '<div class="iq-rw"><div class="k">GSV</div><div class="iq-gsv"><span class="iq-rb" onclick="idqStep(-500)">−</span><label class="iq-num"><input id="idqGsv" type="text" inputmode="numeric" value="' + (m.ptCurrent || 0).toLocaleString() + '" onfocus="this.value=String(this.value).replace(/[^0-9]/g, \'\');edSelAll(this)" onblur="this.value=(parseInt(this.value.replace(/[^0-9]/g, \'\'), 10) || 0).toLocaleString()" onchange="idqGsvSet(this.value)"><b>P</b><em>タップで入力・±500</em></label><span class="iq-rb" onclick="idqStep(500)">＋</span></div></div>'
@@ -11902,7 +11903,7 @@ function _idqUserPtSet(v) { var x = Math.max(0, parseInt(v, 10) || 0); try { loc
 // 変更はその場で保存。シートは作り直さず選択表示だけ更新（入力→チップのタップが途中で消えないように）
 // v774: 新しい人の名前は、入れたまま（欄から出ないまま）ほかを押しても消えないよう、変更のたびに読み取る
 function _idqNameKeep() {
-  var m = _idqMember(), l = document.getElementById('idqLast'), f = document.getElementById('idqFirst');
+  var m = _idqMember(), l = document.getElementById('idqNmA'), f = document.getElementById('idqNmB');
   if (!m || !l || !f) return false;
   var ln = l.value.trim() || m.lastName, fn = f.value.trim();
   if (ln === m.lastName && fn === (m.firstName || '')) return false;
@@ -11926,7 +11927,7 @@ function idqTitle(t) { var m = _idqMember(); if (!m) return; m.title = t; delete
 function idqGsvSet(v) { var m = _idqMember(); if (!m) return; var g = parseInt(String(v).replace(/[^0-9-]/g, ''), 10); /* v772: 3桁区切りの表示でも読む */ if (isNaN(g)) return; setMemberGSV(m, Math.max(0, g), state.idealMembers); if (m.idealNew) m.ptSelf = Math.max(0, g); _idqChanged(); }
 function idqName() {
   var m = _idqMember(); if (!m) return;
-  var l = document.getElementById('idqLast'), f = document.getElementById('idqFirst');
+  var l = document.getElementById('idqNmA'), f = document.getElementById('idqNmB');
   if (l) m.lastName = l.value.trim() || m.lastName; if (f) m.firstName = f.value.trim();
   _idealAfter('');
 }
@@ -12007,7 +12008,7 @@ function idqSave() {
   var r = ((document.getElementById('idqRate') || {}).value || '').trim();
   m.actRate = r === '' ? '' : Math.max(0, parseInt(r, 10) || 0);
   if (m.idealNew) {
-    var l = document.getElementById('idqLast'), f = document.getElementById('idqFirst');
+    var l = document.getElementById('idqNmA'), f = document.getElementById('idqNmB');
     if (l) m.lastName = l.value.trim() || m.lastName;
     if (f) m.firstName = f.value.trim();
   }
@@ -17171,8 +17172,8 @@ function openQuickAdd() {
     + '<div style="display:flex;gap:6px;align-items:center;margin-bottom:10px"><span style="font-size:12px;flex:none">📍 追加先</span>'
     + '<select class="fi" id="qaParent" style="flex:1;padding:8px 10px;font-size:13px">' + pOpts + '</select></div>'
     + '<div style="display:flex;gap:8px;margin-bottom:10px">'
-    + '<input class="fi" id="qaLast" placeholder="姓" style="flex:1">'
-    + '<input class="fi" id="qaFirst" placeholder="名" style="flex:1"></div>'
+    + '<input class="fi" id="qaNmA" name="nv-qanma" autocomplete="off" placeholder="例：山田" style="flex:1">'
+    + '<input class="fi" id="qaNmB" name="nv-qanmb" autocomplete="off" placeholder="例：花子" style="flex:1"></div>'
     + '<div style="display:flex;gap:8px;margin-bottom:10px">'
     + '<span class="qa-chip qa-g' + (_qaGender !== 'female' ? ' sel' : '') + '" id="qaGm" onclick="qaGenderSel(\'male\')" style="flex:1;text-align:center">👨 男性</span>'
     + '<span class="qa-chip qa-g' + (_qaGender === 'female' ? ' sel' : '') + '" id="qaGf" onclick="qaGenderSel(\'female\')" style="flex:1;text-align:center">👩 女性</span></div>'
@@ -17191,7 +17192,7 @@ function openQuickAdd() {
     + '</div></div>';
   document.body.appendChild(ov);
   requestAnimationFrame(function() { ov.classList.add('show'); });
-  setTimeout(function() { var i = document.getElementById('qaLast'); if (i) i.focus(); }, 150);
+  setTimeout(function() { var i = document.getElementById('qaNmA'); if (i) i.focus(); }, 150);
 }
 function qaStageSel(t) { qaTitleSel(t); }
 function qaGenderSel(g) {
@@ -17215,8 +17216,8 @@ function _qaTrStep(m, stage, d) {
 }
 function qaSave(cont) {
   try { if (typeof isPCMode === 'function' && isPCMode()) _pcTreeCaptureView(); } catch(ePv) {} // v519: 923-7 追加後も見ていた位置のまま（中央に戻さない）
-  var last = ((document.getElementById('qaLast') || {}).value || '').trim();
-  var first = ((document.getElementById('qaFirst') || {}).value || '').trim();
+  var last = ((document.getElementById('qaNmA') || {}).value || '').trim();
+  var first = ((document.getElementById('qaNmB') || {}).value || '').trim();
   if (!last && !first) { toast('名前を入力してください'); return; }
   var pid = _liveParentId((document.getElementById('qaParent') || {}).value || '');   // v892 #45: 削除した人の下には足さない
   if (!pid) { toast('追加先を選んでください'); return; }
@@ -17249,7 +17250,7 @@ function qaSave(cont) {
   var nm = (last + ' ' + first).trim();
   var _qr = (m.traineeHistory[0] || {}); toast('⚡ ' + nm + ' さんを追加しました（' + stage + (_qr.date ? '・' + parseInt(_qr.date.slice(5, 7), 10) + '/' + parseInt(_qr.date.slice(8, 10), 10) + (_qr.result === 'planned' ? ' 予定' : ' ✓進んだ') : '') + '）');
   if (cont) {
-    var l9 = document.getElementById('qaLast'), f9 = document.getElementById('qaFirst');
+    var l9 = document.getElementById('qaNmA'), f9 = document.getElementById('qaNmB');
     var g9 = document.getElementById('qaGsv'); if (g9) g9.value = ''; _qaAct = 'x'; qaActSel('x'); // v565
     if (l9) { l9.value = ''; l9.focus(); }
     if (f9) f9.value = '';
@@ -17259,8 +17260,8 @@ function qaSave(cont) {
 }
 function qaToFull() {
   // 入力途中の内容を引き継いで従来のフル編集フォームへ
-  var last = ((document.getElementById('qaLast') || {}).value || '').trim();
-  var first = ((document.getElementById('qaFirst') || {}).value || '').trim();
+  var last = ((document.getElementById('qaNmA') || {}).value || '').trim();
+  var first = ((document.getElementById('qaNmB') || {}).value || '').trim();
   var pid = (document.getElementById('qaParent') || {}).value || '';
   var _pk = _qaPicked(), g = _qaGender, qcat = _pk.cat, stage = _pk.t; // v570
   var _qaAct0 = qcat === '研修生' ? '' : _qaAct, _qaG0 = qcat === '研修生' ? 0 : _qaGsvVal(); // v567
@@ -17268,8 +17269,8 @@ function qaToFull() {
   if (pid) selectedParentId = pid;
   openAdd();
   try {
-    var fl = document.getElementById('fLast'); if (fl) fl.value = last;
-    var ff = document.getElementById('fFirst'); if (ff) ff.value = first;
+    var fl = document.getElementById('fNmA'); if (fl) fl.value = last;
+    var ff = document.getElementById('fNmB'); if (ff) ff.value = first;
     selGender(g, true);
     selCategory(qcat);
     var ft = document.getElementById('fTitle'); if (ft) ft.value = stage;
@@ -17312,7 +17313,7 @@ function openAdd() {
     pl.textContent = '📍 0段目＝あなた（MAPのいちばん上）'; // v559
     pl.style.display = '';
     try { // アカウントの名前を入れておく（空の時だけ）
-      var _nm0 = (currentUser && currentUser.name) ? String(currentUser.name).trim() : '', _fl0 = document.getElementById('fLast'), _ff0 = document.getElementById('fFirst');
+      var _nm0 = (currentUser && currentUser.name) ? String(currentUser.name).trim() : '', _fl0 = document.getElementById('fNmA'), _ff0 = document.getElementById('fNmB');
       if (_nm0 && _fl0 && !_fl0.value) { var _sp0 = _nm0.split(/[\s　]+/); _fl0.value = _sp0[0]; if (_ff0 && _sp0.length > 1) _ff0.value = _sp0.slice(1).join(' '); }
     } catch (eNm0) {}
   }
@@ -17373,8 +17374,8 @@ function _meOpen(id) {
     var _mnm = ((m.lastName||'') + ' ' + (m.firstName||'')).replace(/\s+/g,' ').replace(/^\s+|\s+$/g,'') || 'メンバー編集';
     document.getElementById('shTitle').textContent = _mnm;
     document.getElementById('btnDel').style.visibility = 'visible';
-    set('fLast', m.lastName);
-    set('fFirst', m.firstName);
+    set('fNmA', m.lastName);
+    set('fNmB', m.firstName);
     set('fAct', m.activity);
     set('fActRate', m.actRate);
     set('fMorale', m.morale||2);
@@ -17481,7 +17482,7 @@ function _meOpen(id) {
   }
 }
 function clearForm() {
-  ['fLast','fFirst','fActRate','fPtC','fPtF','fMemo','fTitle','fInsta','fLine','fRegion','fAge'].forEach(function(id){
+  ['fNmA','fNmB','fActRate','fPtC','fPtF','fMemo','fTitle','fInsta','fLine','fRegion','fAge'].forEach(function(id){
     var el = document.getElementById(id);
     if (el) el.value='';
   });
@@ -17770,7 +17771,7 @@ function closeModal() {
 function closeMemberEdit() {
   var el = document.getElementById('modal');
   if (el && el.classList.contains('open') && editingId) {
-    var last = document.getElementById('fLast'), first = document.getElementById('fFirst');
+    var last = document.getElementById('fNmA'), first = document.getElementById('fNmB');
     if ((last && last.value.trim()) || (first && first.value.trim())) { saveMember(); return; }
   }
   closeModal();
@@ -17865,8 +17866,8 @@ function saveMember() {
   if (editingId) { for (var _pi=0; _pi<state.members.length; _pi++){ if (state.members[_pi].id===editingId){ _prevMember=state.members[_pi]; break; } } }
   var m = {
     id: editingId || 'id-'+Date.now(),
-    lastName: document.getElementById('fLast').value.trim(),
-    firstName: document.getElementById('fFirst').value.trim(),
+    lastName: document.getElementById('fNmA').value.trim(),
+    firstName: document.getElementById('fNmB').value.trim(),
     gender: fGender,
     title: document.getElementById('fTitle').value.trim(),
     // v416/v417: カテゴリを保存（タイトル未選択でも復元できるように）。
@@ -17924,6 +17925,8 @@ function saveMember() {
     })(),
     // v426: ロールアップ記録は持ち越し（下の遷移処理で更新）。OUT後の表示はOUTの時だけチップから読む
     rollup: (editingId && _prevMember) ? (_prevMember.rollup || '') : '',
+    // v919: 今のタイトルにした月（手で変えた時だけ更新）。同じ月の中で BR にして戻した時は降格扱いにしないため
+    titleAt: (function() { var t9 = ((document.getElementById('fTitle') || {}).value || '').trim(), cm9 = state.currentMonth || currentMonthStr(); if (editingId && _prevMember && (_prevMember.title || '').trim() === t9) return _prevMember.titleAt || ''; return cm9; })(),
     outHidden: (function() {
       if (((document.getElementById('fTitle') || {}).value || '').trim() !== 'OUT') return false;
       var _rh = document.getElementById('rbOutHide');
@@ -17965,7 +17968,7 @@ function saveMember() {
         setTimeout(function() { toast('🚪 ' + _nm6 + 'さんをOUTにしました。直下 ' + _liveKids6.length + '人 は今月はそのまま、翌月コピーで上のアップラインの直下に移動します'); }, 400);
       }
       m.rollup = '';
-    } else if (isBROrAbove(_t0m) && !isBROrAbove(_t1m) && _t1m !== 'OUT' && m.parentId) {
+    } else if (isBROrAbove(_t0m) && !isBROrAbove(_t1m) && _t1m !== 'OUT' && m.parentId && !(_prevMember.titleAt && _prevMember.titleAt === (state.currentMonth || currentMonthStr()))) { // v919 C: 同じ月の中で BR にして戻した時は、間違いを直しただけなので降格扱いにしない
       var _dt6 = demoteTitleFor(m, state.currentMonth || currentMonthStr());
       var _mvKids6 = _liveKids6.filter(function(c) { return _ruLineHasBr(state.members, c.id); }); // v437: BRを含む系列のみ上へ
       if (confirm('🔄 ' + _nm6 + 'さんを「' + _t0m + '」から降格（ロールアップ）として処理しますか？\n\n・タイトルは登録月から自動で「' + _dt6 + '」になります\n・直下のうちBRを含む系列 ' + _mvKids6.length + '/' + _liveKids6.length + ' は上のアップラインの直下に移動します（BRのいない系列は残ります）\n・「リスタート1ヶ月目」の表示が始まります（6ヶ月以内にBR復帰で組織を取り戻せます）\n\nキャンセル＝タイトルの変更だけ行い、組織はそのまま')) {
@@ -17984,6 +17987,9 @@ function saveMember() {
         }
       }
       m.rollup = '';
+    } else if (_t0m !== _t1m && !isBROrAbove(_t1m) && _prevMember.rollup && _prevMember.rollup.at) {
+      // v919 B: リスタート表示（🔄）が付いている人のタイトルを手で変えた時は、表示も消すか聞く
+      if (confirm('🔄 ' + _nm6 + 'さんには「リスタート表示（BRから降格した人）」が付いています。\nタイトルを変えるので、リスタート表示も消しますか？\n（BR から下がった人でなければ「OK」）')) m.rollup = '';
     }
   }
   if (editingId) {
@@ -20197,7 +20203,17 @@ if (NV_TONE) MX_FAM = NV_LINE; // v895: 新しいトーンは系列の線も4色
 // 段の初期値（端末ごとに記憶）を一度だけ当てる
 // v659: 段の選び方はアプリを開いている間だけ覚える（開いた時は2段。前回の「全段」が光ったまま2段で出るのを直す）
 var _mxLv = ''; try { localStorage.removeItem('gm_mapLevel'); } catch (eLv) {}
-function _mxLevelGet() { return _mxLv; }
+// v919: MAP を開いた時の段数（設定 › 見た目）。プロフィール（users/{uid}.mapLevel）に保存。2〜5・all
+function mapLevelPref() { var v = String((currentUser && currentUser.mapLevel) || '2'); return /^(2|3|4|5|all)$/.test(v) ? v : '2'; }
+function setMapLevelPref(v) {
+  if (!/^(2|3|4|5|all)$/.test(String(v)) || !currentUser) return;
+  currentUser.mapLevel = String(v);
+  try { if (currentUser.uid) fsSet('users/' + currentUser.uid, { mapLevel: String(v) }).catch(function() {}); } catch (e) {}
+  _mxLv = v === '2' ? '' : String(v); window._mxLvInit = ''; // 次に MAP を描く時に当てる
+  toast('MAP を開いた時は ' + (v === 'all' ? '全段' : v + '段') + ' にします');
+}
+function _mapLevelApplyPref() { var v = mapLevelPref(); if (v !== '2' && !_mxLv) { _mxLv = v; window._mxLvInit = ''; } }
+function _mxLevelGet() { if (!_mxLv) _mapLevelApplyPref(); return _mxLv; }
 function _mxLevelInit(members) {
   var lv = _mxLevelGet(); if (!lv || !members || !members.length) return;
   var key = (state.currentMonth || '') + '|' + currentView + '|' + lv; if (window._mxLvInit === key) return; window._mxLvInit = key; // 月・MAPが変わったら選んだ段を当て直す
@@ -20733,10 +20749,10 @@ function ppBadge(v) { _ppSave(function() { selBadgeMode(v); }, '点滅表示を�
 function ppGender(g) { _ppSave(function() { selGender(g); }, '保存しました'); }
 function ppTrainee(v) { _ppSave(function() { selTrainee(!!v); }, '保存しました'); }
 function ppName() {
-  var l = document.getElementById('ppLast'), f = document.getElementById('ppFirst'); if (!l || !f) return;
+  var l = document.getElementById('ppNmA'), f = document.getElementById('ppNmB'); if (!l || !f) return;
   if (!l.value.trim() && !f.value.trim()) { toast('名前を入れてください'); return; }
   if (_pp.map === 'ideal') { var m = _ppM(); if (m) { m.lastName = l.value.trim() || m.lastName; m.firstName = f.value.trim(); _idealAfter('名前を保存しました'); _ppRender(); } return; }
-  _ppSave(function() { document.getElementById('fLast').value = l.value.trim(); document.getElementById('fFirst').value = f.value.trim(); }, '名前を保存しました');
+  _ppSave(function() { document.getElementById('fNmA').value = l.value.trim(); document.getElementById('fNmB').value = f.value.trim(); }, '名前を保存しました');
 }
 function ppStart(d) { var m = _ppM(); if (!m) return; var sm = String(m.startMonth || memberStartMonth(m) || (state.currentMonth || currentMonthStr())).replace('.', '-'); ppSetF('fStartMonth', _p2YmAdd(sm, d), 'スタート月を保存しました'); }
 function ppBirth(v) { _ppSave(function() { _fBirthSet(v || '', ''); }, '誕生日を保存しました'); }
@@ -21137,7 +21153,7 @@ function _ppHub(m) {
     var cur = _idealCurMap()[m.id];
     if (cur && !m.idealNew) h += '<div class="ux-sub" style="margin-top:8px">現状：' + evEsc(cur.title || '−') + '・GSV ' + (cur.ptCurrent || 0).toLocaleString() + '・稼働 ' + evEsc(cur.activity || '−') + (cur.actRate ? ' ' + cur.actRate + '%' : '') + '</div>';
     else h += '<div class="ux-sub" style="margin-top:8px">理想で足した新しい人</div>';
-    if (m.idealNew) h += '<div class="ppl">名前（なくてもOK）</div><div class="ppn"><input class="ppin" id="ppLast" placeholder="姓" value="' + evEsc(m.lastName || '') + '" onchange="ppName()"><input class="ppin" id="ppFirst" placeholder="名" value="' + evEsc(m.firstName || '') + '" onchange="ppName()"></div>';
+    if (m.idealNew) h += '<div class="ppl">名前（なくてもOK）</div><div class="ppn"><input class="ppin" id="ppNmA" name="nv-ppnma" autocomplete="off" placeholder="例：山田" value="' + evEsc(m.lastName || '') + '" onchange="ppName()"><input class="ppin" id="ppNmB" name="nv-ppnmb" autocomplete="off" placeholder="例：花子" value="' + evEsc(m.firstName || '') + '" onchange="ppName()"></div>';
     if (m.idealKind !== 'user') {
       var mine = arr.filter(function(x) { return x.parentId === m.id && !x.deleted && x.idealNew; });
       var nB = mine.filter(function(x) { return x.idealKind === 'biz'; }).length, nU = mine.filter(function(x) { return x.idealKind === 'user'; }).length;
@@ -21190,7 +21206,7 @@ function _ppPage(m, pg) {
       + '<div class="ppl">やる気</div><div class="ppb" style="--n:3">' + [[1, 'パヤパヤ'], [2, 'やる気'], [3, '死ぬ気']].map(function(x) { return '<span class="' + (lv === x[0] ? 'on' : '') + '" style="--a:var(--purple)" onclick="ppMorale(' + x[0] + ')">' + moraleIcon(x[0], 26) + '<small>' + x[1] + '</small></span>'; }).join('') + '</div>'
       + '<div class="ppl">優先度（候補として見たい人）</div><div class="ppb sm" style="--n:4">' + [['', 'なし'], ['高', '高'], ['中', '中'], ['低', '低']].map(function(x) { return '<span class="' + (pr === x[0] ? 'on' : '') + '" onclick="ppPrio(\'' + x[0] + '\')">' + x[1] + '</span>'; }).join('') + '</div>'
       + '<div class="ppl">点滅表示（PCの組織図で目立たせる）</div><div class="ppb sm" style="--n:3">' + [['', '自動'], ['on', '表示'], ['off', '非表示']].map(function(x) { return '<span class="' + (bm === x[0] ? 'on' : '') + '" onclick="ppBadge(\'' + x[0] + '\')">' + x[1] + '</span>'; }).join('') + '</div>'
-      + (rsOk ? '<div class="ppl">リスタート表示（BRから降格した人）</div>' + (m.rollup && m.rollup.at ? '<div class="ux-hint">🔄 ' + evEsc(String(m.rollup.at)) + ' 開始・' + _restartMonths(m) + 'ヶ月目</div><span class="ux-lk" onclick="memberRestartClear(\'' + m.id + '\');_ppRender()">解除する</span>' : '<span class="ux-lk" onclick="memberRestartSet(\'' + m.id + '\');_ppRender()">＋ リスタート表示を設定</span>') : '');
+      + (m.rollup && m.rollup.at ? '<div class="ppl">リスタート表示（BRから降格した人）</div><div class="ux-hint">🔄 ' + evEsc(String(m.rollup.at)) + ' 開始・' + _restartMonths(m) + 'ヶ月目</div><span class="ux-lk" onclick="memberRestartClear(\'' + m.id + '\');_ppRender()">解除する</span>' : ''); // v919 A: 付ける方は下の「上の人を変える・削除」の所へ
   } else if (pg === 'memo') {
     h = '<h2 class="ux-h2">メモ</h2><div class="ux-sub">予定・心境・気づいたこと。書くと自動で保存（MAPを共有している人にも見えます）</div><textarea class="ppmemo" placeholder="ここに書く" oninput="ppMemo(this.value)">' + evEsc(m.memo || '') + '</textarea><div class="ux-sub" id="ppMemoSv" style="text-align:right">' + (m.memo ? '保存ずみ' : '') + '</div>';
     _pmCss(); h += _pmBox(m.id, 'pp'); // v726
@@ -21198,7 +21214,7 @@ function _ppPage(m, pg) {
     var rg = (m.region || '').trim(), regs = REGION_PRESETS.slice(); if (rg && regs.indexOf(rg) < 0) regs.push(rg);
     var sm = _smKnown(m).replace('.', '-'); // v858: 分からない人は「年・月」のまま（今の月を出さない）
     h = '<h2 class="ux-h2">プロフィール</h2>'
-      + '<div class="ppl">名前</div><div class="ppn"><input class="ppin" id="ppLast" placeholder="姓" value="' + evEsc(m.lastName || '') + '" onchange="ppName()"><input class="ppin" id="ppFirst" placeholder="名" value="' + evEsc(m.firstName || '') + '" onchange="ppName()"></div>'
+      + '<div class="ppl">名前</div><div class="ppn"><input class="ppin" id="ppNmA" name="nv-ppnma" autocomplete="off" placeholder="例：山田" value="' + evEsc(m.lastName || '') + '" onchange="ppName()"><input class="ppin" id="ppNmB" name="nv-ppnmb" autocomplete="off" placeholder="例：花子" value="' + evEsc(m.firstName || '') + '" onchange="ppName()"></div>'
       + '<div class="ppl">性別</div><div class="ppb sm" style="--n:2"><span class="' + (m.gender !== 'female' ? 'on' : '') + '" onclick="ppGender(\'male\')">男性</span><span class="' + (m.gender === 'female' ? 'on' : '') + '" style="--a:var(--female)" onclick="ppGender(\'female\')">女性</span></div>'
       + '<div class="ppl">地域</div><div class="ppt" style="--k:var(--accent)">' + regs.map(function(r) { return '<span class="' + (r === rg ? 'on' : '') + '" onclick="ppSetF(\'fRegion\',\'' + evEsc(r) + '\',\'地域を保存しました\')">' + evEsc(r) + '</span>'; }).join('') + '<span class="' + (!rg ? 'on' : '') + '" onclick="ppSetF(\'fRegion\',\'\',\'地域を外しました\')">未設定</span><span onclick="var v=prompt(\'地域を入力\',\'\');if(v)ppSetF(\'fRegion\',v.trim(),\'地域を保存しました\')">＋ ほか</span></div>'
       + '<div class="ppl">' + (isUserM(m) ? 'スタート月（ユーザーになった月）' : 'スタート月（組織に入った月）') + '</div>' + _ymSelHtml(sm, 'ppStartYM') // v615: 年・月をリストで
@@ -21208,6 +21224,7 @@ function _ppPage(m, pg) {
       + '<div class="ppl">Instagram・LINE</div><input class="ppin" placeholder="InstagramのURL" value="' + evEsc(m.instaUrl || '') + '" onchange="ppSetF(\'fInsta\',this.value.trim(),\'保存しました\')"><input class="ppin" style="margin-top:8px" placeholder="LINE ID または URL" value="' + evEsc(m.lineId || '') + '" onchange="ppSetF(\'fLine\',this.value.trim(),\'保存しました\')">'
       + '<div class="ux-list" style="margin-top:14px"><div class="ux-li" onclick="ppGo(\'photo\')"><span class="ic">' + icn('camera') + '</span><span>写真<small>' + (_avatars[m.id] ? '変える・位置を直す・消す' : '選ぶ・撮る') + '</small></span><span class="ch">›</span></div></div>'
       + '<div class="ppdanger"><div class="ux-list" style="margin-top:8px">' + (m.parentId ? '<div class="ux-li" onclick="ppUp()"><span class="ic">↕</span><span>上の人を変える<small>今は ' + evEsc(((_ppFind(m.parentId, 'current') || {}).lastName || '') + ' ' + ((_ppFind(m.parentId, 'current') || {}).firstName || '')) + 'さんの下</small></span><span class="ch">›</span></div>' : '')
+      + (!(m.rollup && m.rollup.at) && !isBROrAbove((m.title || '').trim()) && (m.title || '').trim() !== 'OUT' && !_pp.ideal && _pp.map !== 'ideal' ? '<div class="ux-li" onclick="memberRestartSet(\'' + m.id + '\');_ppRender()"><span class="ic">🔄</span><span>リスタート表示を付ける<small>BR から下がった人だけ（6か月 🔄 が出ます）</small></span><span class="ch">›</span></div>' : '') // v919 A
       + '<div class="ux-li" onclick="ppDel()"><span class="ic" style="color:var(--red)">' + icn('trash') + '</span><span style="color:var(--red)">このメンバーを削除</span><span class="ch">›</span></div></div></div>';
   }
   return h;
@@ -21987,10 +22004,10 @@ function naOpen(pid) {
   _ttlOpen = '';
   _na = { pid: _liveParentId(pid) || roots[0].id, last: '', first: '', gender: 'male', title: t, act: '', gsv: '', date: '', asan: '', chg: false };
   _naRender();
-  setTimeout(function() { var i = document.getElementById('naLast'); if (i) try { i.focus(); } catch (e2) {} }, 60);
+  setTimeout(function() { var i = document.getElementById('naNmA'); if (i) try { i.focus(); } catch (e2) {} }, 60);
 }
 function naClose() { var p = document.getElementById('naPg'); if (p && p.parentNode) p.parentNode.removeChild(p); _na = null; }
-function _naKeep() { if (!_na) return; ['last', 'first', 'gsv', 'date', 'asan'].forEach(function(k) { var el = document.getElementById('na' + k.charAt(0).toUpperCase() + k.slice(1)); if (el) _na[k] = el.value; }); }
+function _naKeep() { if (!_na) return; ['last', 'first', 'gsv', 'date', 'asan'].forEach(function(k) { var el = document.getElementById(k === 'last' ? 'naNmA' : k === 'first' ? 'naNmB' : 'na' + k.charAt(0).toUpperCase() + k.slice(1)); /* v919: 名前の欄は naNmA・naNmB */ if (el) _na[k] = el.value; }); }
 function naSet(k, v) { if (!_na) return; _naKeep(); _na[k] = v; if (k === 'title') { _ttlOpen = ''; try { localStorage.setItem('gm_naTitle', v); } catch (e) {} } _naRender(); }
 function naTitle(t) { naSet('title', t); }
 function _naReRender() { _naKeep(); _naRender(); } // v774: タイトルのカードを開け閉めした時、入れた名前・GSVなどを消さない
@@ -22018,7 +22035,7 @@ function _naRender() {
     + (n.chg ? '<select onchange="naSet(\'pid\',this.value)">' + (state.members || []).filter(function(m) { return !m.deleted && (m.title || '').trim() !== 'OUT'; }).sort(_treeSortCmp(state.members, 'title')).map(function(m) {
       return '<option value="' + m.id + '"' + (m.id === n.pid ? ' selected' : '') + '>' + evEsc(((m.lastName || '') + ' ' + (m.firstName || '')).trim() || '(無名)') + '</option>'; }).join('') + '</select>'
       : '<span class="ux-lk" style="margin:0" onclick="naChg()">変える</span>') + '</div>'
-    + '<div class="ppl">名前</div><div class="ppn"><input class="ppin" id="naLast" placeholder="姓" value="' + evEsc(n.last) + '" autocomplete="off"><input class="ppin" id="naFirst" placeholder="名" value="' + evEsc(n.first) + '" autocomplete="off"></div>'
+    + '<div class="ppl">名前</div><div class="ppn"><input class="ppin" id="naNmA" placeholder="例：山田" value="' + evEsc(n.last) + '" autocomplete="off"><input class="ppin" id="naNmB" placeholder="例：花子" value="' + evEsc(n.first) + '" autocomplete="off"></div>'
     + '<div class="ppl">性別</div><div class="ppb sm" style="--n:2"><span class="' + (n.gender !== 'female' ? 'on' : '') + '" onclick="naSet(\'gender\',\'male\')">男性</span><span class="' + (n.gender === 'female' ? 'on' : '') + '" style="--a:var(--female)" onclick="naSet(\'gender\',\'female\')">女性</span></div>'
     + '<div class="ppl">タイトル（カードを押して選ぶ）</div>' + _ttlPickHtml(n.title, NA_GROUPS, 'naTitle', '_naReRender', tr ? { '研修生': _naTrBox(n) } : null);
   // v753: 研修の日・Aさんは「研修生」のカードの中（選んだすぐ下）に出す
@@ -22033,7 +22050,7 @@ function _naRender() {
 function naSave(after) {
   if (!_na) return; _naKeep();
   var n = _na, last = String(n.last || '').trim(), first = String(n.first || '').trim();
-  if (!last && !first) { toast('名前を入れてください'); var i = document.getElementById('naLast'); if (i) try { i.focus(); } catch (e) {} return; }
+  if (!last && !first) { toast('名前を入れてください'); var i = document.getElementById('naNmA'); if (i) try { i.focus(); } catch (e) {} return; }
   var tr = _naTrCat(n.title), cat = tr ? '研修生' : (_qaCatOf(n.title) || detectCategory(n.title) || '');
   var gsv = tr ? 0 : Math.max(0, parseInt(n.gsv, 10) || 0), cm = state.currentMonth || currentMonthStr();
   var m = { id: 'id-' + Date.now(), lastName: last, firstName: first, gender: n.gender, title: n.title, cat: cat,
@@ -22050,7 +22067,7 @@ function naSave(after) {
   autoSave();
   try { gameCheck(); } catch (eG) {}
   var nm = (last + ' ' + first).trim();
-  if (after === 'cont') { _na.last = ''; _na.first = ''; _na.gsv = ''; _na.date = ''; _na.act = ''; _naRender(); toast('✓ ' + nm + ' さんを追加しました。続けてどうぞ'); var l = document.getElementById('naLast'); if (l) try { l.focus(); } catch (e2) {} return; }
+  if (after === 'cont') { _na.last = ''; _na.first = ''; _na.gsv = ''; _na.date = ''; _na.act = ''; _naRender(); toast('✓ ' + nm + ' さんを追加しました。続けてどうぞ'); var l = document.getElementById('naNmA'); if (l) try { l.focus(); } catch (e2) {} return; }
   naClose();
   if (after === 'more') { ppOpen(m.id, 'current'); toast('✓ ' + nm + ' さんを追加しました'); return; }
   toastAction('✓ ' + nm + ' さんを追加しました（' + (titleAbbr(n.title) || n.title) + '）', 'くわしく ›', function() { ppOpen(m.id, 'current'); }, 6000);
@@ -22753,6 +22770,7 @@ function _stRender() {
     var hImg = _homeImgOn(); // v832: HOMEのタイル
     h += '<h2 class="ux-h2">見た目</h2><div class="ppl">テーマ</div><div class="ppb sm" style="--n:2"><span class="' + (!light ? 'on' : '') + '" onclick="setTheme(\'dark\');_stRender()">🌙 ダーク</span><span class="' + (light ? 'on' : '') + '" onclick="setTheme(\'light\');_stRender()">☀ ライト</span></div>'
       + '<div class="ppl">HOMEのタイル</div><div class="ppb sm" style="--n:2"><span class="' + (hImg ? 'on' : '') + '" onclick="setHomeImg(true);_stRender()">画像あり</span><span class="' + (!hImg ? 'on' : '') + '" onclick="setHomeImg(false);_stRender()">画像なし</span></div>'
+      + '<div class="ppl">MAP を開いた時の段数</div><div class="ppb sm" style="--n:5">' + ['2', '3', '4', '5', 'all'].map(function(v) { var cur = mapLevelPref(); return '<span class="' + (cur === v ? 'on' : '') + '" onclick="setMapLevelPref(\'' + v + '\');_stRender()">' + (v === 'all' ? '全段' : v + '段') + '</span>'; }).join('') + '</div><div class="ux-hint">スマホの MAP を開いた時、いつもこの段数で開きます（ログアウトしても・別の端末でも同じ）。MAP の上の「○段 ▾」で、その場だけ変えることもできます</div>'
       ; // v633: メンバーの一覧はMAPと同じ内容なので、スマホのメニューからは外した（表示/非表示の切り替えもなし）
   } else if (_stPg === 'ntf') {
     var den = ('Notification' in window) && Notification.permission === 'denied';
@@ -44875,7 +44893,7 @@ var GD_TOURS = {
   ] },
   na: { lb: 'フロント追加', ic: '➕', go: '', steps: [
     { s: ['#naPg .nap'], t: '追加先', d: 'この人の直下に足します。「変える」で別の人の下にも' },
-    { s: ['#naLast'], t: '名前', d: '姓と名を入れます' },
+    { s: ['#naNmA'], t: '名前', d: '姓と名を入れます' },
     { s: ['#naPg .ttc'], t: 'タイトル', d: '研修生・審査中・BA・BR からカードを押して選びます' },
     { s: ['#naPg .tre'], t: '研修の記録', d: '研修生の時は、研修の日（今日・昨日・日付）とAさん。選んだ段階が「✓ 進んだ」で入ります' },
     { s: ['#naPg .nalk'], t: '続けて入れる', d: '「＋ 追加して続けて入れる」で何人も続けて。「くわしく」でその人の画面へ' }

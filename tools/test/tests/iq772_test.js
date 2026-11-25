@@ -41,7 +41,7 @@ T.run(async () => {
   c('元に戻す', !w.state.idealMembers.some(x => x.idealKind === 'user'));
   // 新しい人：名前と「消す」
   w.idqOpen(nw[0].id); await sleep(20);
-  c('新しい人は名前欄と「この新しい人を消す」', !!$('#idqLast') && /この新しい人を消す/.test($('.iq-ft').textContent));
+  c('新しい人は名前欄と「この新しい人を消す」', !!$('#idqNmA') && /この新しい人を消す/.test($('.iq-ft').textContent));
   w.idqClose(true);
   // スマホの理想MAPも同じシート
   w.ppOpen('a', 'ideal'); await sleep(20);

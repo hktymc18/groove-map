@@ -28,7 +28,7 @@ T.run(async () => {
   c('#45: 削除した人の id で開いても、上の人の下', w._na && w._na.pid === 'p');
   // 開いている間に追加先の人が削除されても、保存は上の人の下
   w._na.pid = 'a'; w.$ && 0;
-  w.document.getElementById('naLast').value = '新人'; w.document.getElementById('naFirst').value = '太郎';
+  w.document.getElementById('naNmA').value = '新人'; w.document.getElementById('naNmB').value = '太郎';
   w.naSave(); await sleep(60);
   const nw = w.state.members.find(m => m.lastName === '新人');
   c('#45: 保存も削除した人の下には入れない', nw && nw.parentId === 'p', nw && nw.parentId);
