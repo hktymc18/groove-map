@@ -12,7 +12,7 @@ T.run(async () => {
   $$('#naPg .dch span')[1].click(); await sleep(5);
   const td = w.evTodayYmd(), yd = w.evYmd(new Date(Date.parse(td.replace(/-/g, '/')) - 864e5));
   c('昨日を押すと昨日', w._na.date === yd && $('#naPg .dch .on').textContent === '昨日');
-  $('#naLast').value = '佐藤'; $('#naAsan').value = '山内'; w.naSave(''); await sleep(10);
+  $('#naNmA').value = '佐藤'; $('#naAsan').value = '山内'; w.naSave(''); await sleep(10);
   const m = w.state.members.find(x => x.lastName === '佐藤');
   c('保存すると昨日の日付・進んだ・Aさん', m.traineeHistory[0].date === yd && m.traineeHistory[0].result === 'next' && m.aSan === '山内');
   w.naOpen('g'); await sleep(5); w.naTitle('B1'); await sleep(5);

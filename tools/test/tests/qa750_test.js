@@ -8,7 +8,7 @@ T.run(async () => {
   const td = w.evTodayYmd(), past = w.evYmd(new Date(Date.parse(td) - 3 * 864e5)), fut = w.evYmd(new Date(Date.parse(td) + 5 * 864e5));
   const add = async (nm, d, title) => {
     w.naOpen('g'); await sleep(5); if (title) { w.naTitle(title); await sleep(5); }
-    $('#naLast').value = nm; $('#naFirst').value = '一'; if ($('#naDate')) $('#naDate').value = d;
+    $('#naNmA').value = nm; $('#naNmB').value = '一'; if ($('#naDate')) $('#naDate').value = d;
     w.naSave(''); await sleep(10);
     return w.state.members.find(m => m.lastName === nm);
   };
