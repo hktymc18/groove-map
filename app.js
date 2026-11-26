@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v920';
+var APP_JS_VERSION = 'v921';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -5202,7 +5202,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v920';
+  var DATA_VERSION = 'v921';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -7342,6 +7342,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v921', d:'2026-11-26', items:['🌈 夢100：上にも「＋ 夢を追加」を置きました','「月を選ぶ」は、期日にした月だけが出るようにしました','夢を期日の月ごとに分けて表示。PC では3列で全部見られます'] },
   { v:'v920', d:'2026-11-25', items:['名前などを直してすぐアプリを閉じた（上にスワイプした）時やログアウトした時に、直した内容が元に戻ることがあったのを直しました'] },
   { v:'v919', d:'2026-11-25', items:['名前を入れる欄で、iPhone の「連絡先を自動入力」が出て漢字に変換できなかったのを直しました','設定 › 見た目 に「MAP を開いた時の段数」（2〜5段・全段）。ログアウトしても・別の端末でも同じ段数で開きます','リスタート表示（🔄）：付いている人のタイトルを変えると消すか聞くように。同じ月に BR にしてすぐ戻した時は降格扱いにしないように。付けるボタンはプロフィールの下の一覧へ'] },
   { v:'v918', d:'2026-11-25', items:['#50 設定から「MAPの共有」を開くと、画面が設定の後ろに隠れて出てこなかったのを直しました','#49 予定でメンバーを選んだ時の「どこに出すか」の言葉を直しました（MAPのカードだけ／自分のカレンダーだけ／両方。メンバー本人のアプリのカレンダーには入りません）'] },
@@ -25134,23 +25135,45 @@ function _p2WhyPageHtml(i) {
     var dr = all.filter(inP), dn = dr.filter(function(x) { return x.done; }).length, amt = 0, noDl = to ? all.filter(function(x) { return !x.dl && !x.done; }).length : 0;
     dr.forEach(function(x) { if (!x.done) amt += parseFloat(x.amt) || 0; });
     dr.sort(function(a, b) { if (!!a.done !== !!b.done) return a.done ? 1 : -1; return (a.dl || '9999').localeCompare(b.dl || '9999'); });
-    var showAll = _uxLists['dream:all'], list = showAll ? dr : dr.slice(0, 6), man = function(v) { return (Math.round(v * 10) / 10).toLocaleString(); };
+    // v921: PC は全部出す（スマホは今まで通り6個まで→すべて見る）
+    var pcW = typeof _px3On === 'function' && _px3On();
+    var showAll = _uxLists['dream:all'] || pcW, man = function(v) { return (Math.round(v * 10) / 10).toLocaleString(); };
     var ch = [['', 'すべて'], [cur9, '今月'], [_p2YmAdd(cur9, 2), '3ヶ月'], [_p2YmAdd(cur9, 5), '半年'], [_p2YmAdd(cur9, 11), '1年']];
     if (yEnd > cur9 && ch.every(function(c) { return c[0] !== yEnd; })) ch.splice(2, 0, [yEnd, '今年']);
-    var mx = cur9; all.forEach(function(x) { if (x.dl && x.dl > mx) mx = x.dl; }); if (_p2YmDiff(cur9, mx) < 24) mx = _p2YmAdd(cur9, 24);
-    var mo = '<option value="">月を選ぶ</option>'; for (var y9 = cur9, g9 = 0; y9 <= mx && g9 < 120; y9 = _p2YmAdd(y9, 1), g9++) mo += '<option value="' + y9 + '"' + (y9 === to ? ' selected' : '') + '>' + _p2DrYmLabel(y9) + 'まで</option>';
+    // v921: 「月を選ぶ」は期日にした月だけ（今月より前は選べない）。右はその月までに入る夢の数
+    var dlMs = []; all.forEach(function(x) { if (x.dl && x.dl >= cur9 && dlMs.indexOf(x.dl) < 0) dlMs.push(x.dl); });
+    if (to && dlMs.indexOf(to) < 0 && ch.every(function(c) { return c[0] !== to; })) dlMs.push(to);
+    dlMs.sort();
+    var mo = '<option value="">月を選ぶ</option>' + dlMs.map(function(y9) { var n9 = all.filter(function(x) { return x.dl && x.dl <= y9; }).length; return '<option value="' + y9 + '"' + (y9 === to ? ' selected' : '') + '>' + _p2DrYmLabel(y9) + 'まで（' + n9 + '個）</option>'; }).join('');
     var isCh = ch.some(function(c) { return c[0] === to; });
-    var flt = all.length ? '<div class="dr-f">' + ch.map(function(c) { return '<span class="' + (c[0] === to ? 'on' : '') + '" onclick="p2DrTo(\'' + c[0] + '\')">' + c[1] + '</span>'; }).join('') + '<select class="' + (to && !isCh ? 'on' : '') + '" onchange="p2DrTo(this.value)">' + mo + '</select></div>' : '';
+    var flt = all.length ? '<div class="dr-f">' + ch.map(function(c) { return '<span class="' + (c[0] === to ? 'on' : '') + '" onclick="p2DrTo(\'' + c[0] + '\')">' + c[1] + '</span>'; }).join('') + (dlMs.length ? '<select class="' + (to && !isCh ? 'on' : '') + '" onchange="p2DrTo(this.value)">' + mo + '</select>' : '') + '</div>' : '';
     var nM = to ? Math.max(1, _p2YmDiff(cur9, to) + 1) : 0;
-    var sum = all.length ? '<div class="ux-sum"><b>' + dn + '<small> / ' + dr.length + '</small></b><span>' + (to ? _p2DrYmLabel(to) + 'までの夢・' : '') + '達成</span></div>'
-      + (to ? '<div class="dr-need"><div><small>' + _p2DrYmLabel(to) + 'までに必要</small><b>' + man(amt) + '<i>万円</i></b></div><div><small>あと' + nM + 'ヶ月・月あたり</small><b>' + man(amt / nM) + '<i>万円</i></b></div></div>' + (noDl ? '<div class="dr-nt">期日を決めていない夢 ' + noDl + '個は入っていません</div>' : '')
-        : (amt ? '<div class="dr-nt">残り必要 <b>' + man(amt) + '万円</b></div>' : '')) : '';
+    // v921: 上に「達成の数・残り必要」と「＋ 夢を追加」を並べる（下までスクロールしなくても足せる）
+    var top = all.length ? '<div class="dr-top"><div class="dr-cnt"><div class="ux-sum"><b>' + dn + '<small> / ' + dr.length + '</small></b><span>' + (to ? _p2DrYmLabel(to) + 'までの夢・' : '') + '達成</span></div>'
+      + (!to && amt ? '<div class="dr-nt">残り必要 <b>' + man(amt) + '万円</b></div>' : '') + '</div><span class="dr-add" onclick="p2DrFormOpen()">＋ 夢を追加</span></div>' : '';
+    var need = all.length && to ? '<div class="dr-need"><div><small>' + _p2DrYmLabel(to) + 'までに必要</small><b>' + man(amt) + '<i>万円</i></b></div><div><small>あと' + nM + 'ヶ月・月あたり</small><b>' + man(amt / nM) + '<i>万円</i></b></div></div>' + (noDl ? '<div class="dr-nt">期日を決めていない夢 ' + noDl + '個は入っていません</div>' : '') : '';
+    // v921: 期日の月ごとに見出し（全部叶えた月・期日なしは後ろ）。中は叶えていない夢が先
+    var gm = {}, gk = [];
+    dr.forEach(function(x) { var k2 = x.dl || ''; if (!gm[k2]) { gm[k2] = []; gk.push(k2); } gm[k2].push(x); });
+    var gDone = function(k2) { return gm[k2].every(function(x) { return x.done; }); };
+    gk.sort(function(p, q) { if (gDone(p) !== gDone(q)) return gDone(p) ? 1 : -1; return (p || '9999').localeCompare(q || '9999'); });
+    var ord = []; gk.forEach(function(k2) { gm[k2].sort(function(p, q) { return (p.done ? 1 : 0) - (q.done ? 1 : 0); }); ord = ord.concat(gm[k2]); });
+    var list = showAll ? ord : ord.slice(0, 6);
+    var row = function(x) {
+      // v793: タスクと同じスワイプ（左＝🗑 消す・右＝叶えた）
+      return '<div class="dr-lw" data-drid="' + x.id + '"><div class="dr-dl" onclick="p2DrDelU(\'' + x.id + '\')">' + icn('trash') + '<span>消す</span></div><div class="ln ux-sk' + (x.done ? ' done' : '') + '"><span class="ck" onclick="p2DrTgl(\'' + x.id + '\')">' + (x.done ? '✓' : '') + '</span><span class="t" onclick="if(!(window._drSwAt&&Date.now()-window._drSwAt<350))p2DrFormOpen(\'' + x.id + '\')">' + evEsc(x.t) + '</span>' + (x.amt ? '<span class="dr-am" onclick="if(!(window._drSwAt&&Date.now()-window._drSwAt<350))p2DrFormOpen(\'' + x.id + '\')">' + evEsc(String(x.amt)) + '万円</span>' : '') + (_p2DrUrl(x.url) ? '<a class="dr-go" href="' + evEsc(_p2DrUrl(x.url)) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">' + icn('link') + '開く</a>' : '') + '</div></div>'; // v787: URLを入れた夢は「開く」でそのページへ
+    };
+    var groups = '', curK = null, buf = [];
+    var flush = function() {
+      if (curK === null) return;
+      var g = gm[curK], rest = 0; g.forEach(function(x) { if (!x.done) rest += parseFloat(x.amt) || 0; });
+      groups += '<div class="dr-grp"><div class="dr-gh"><b>' + (curK ? _p2DrYmLabel(curK) + 'まで' : '期日なし') + '</b><span>' + g.length + '個' + (gDone(curK) ? '・ぜんぶ叶えた' : (rest ? '・' + man(rest) + '万円' : '')) + '</span></div><div class="dr-grid">' + buf.map(row).join('') + '</div></div>';
+      buf = [];
+    };
+    list.forEach(function(x) { var k2 = x.dl || ''; if (k2 !== curK) { flush(); curK = k2; } buf.push(x); }); flush();
     _p2DrCss(); _p2DrSwBind();
-    return head + '<h2 class="ux-h2">夢100</h2>' + flt + sum
-      + (dr.length ? list.map(function(x) {
-        // v793: タスクと同じスワイプ（左＝🗑 消す・右＝叶えた）
-        return '<div class="dr-lw" data-drid="' + x.id + '"><div class="dr-dl" onclick="p2DrDelU(\'' + x.id + '\')">' + icn('trash') + '<span>消す</span></div><div class="ln ux-sk' + (x.done ? ' done' : '') + '"><span class="ck" onclick="p2DrTgl(\'' + x.id + '\')">' + (x.done ? '✓' : '') + '</span><span class="t" onclick="if(!(window._drSwAt&&Date.now()-window._drSwAt<350))p2DrFormOpen(\'' + x.id + '\')">' + evEsc(x.t) + (x.dl || x.amt ? '<small style="display:block;font-size:11px;color:var(--text-dim);font-weight:600">' + (x.dl ? _p2DrYmLabel(x.dl) + 'まで' : '') + (x.amt ? (x.dl ? '・' : '') + x.amt + '万円' : '') + '</small>' : '') + '</span>' + (_p2DrUrl(x.url) ? '<a class="dr-go" href="' + evEsc(_p2DrUrl(x.url)) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">' + icn('link') + '開く</a>' : '') + '</div></div>'; // v787: URLを入れた夢は「開く」でそのページへ
-      }).join('') : (all.length ? '<div class="ux-empty">この期間の夢はありません</div>' : '<div class="ux-empty">やりたいこと・欲しいものを100個。<br>まずは5個から</div>'))
+    return head + '<h2 class="ux-h2 dr-h2">夢100</h2>' + top + flt + need
+      + (dr.length ? groups : (all.length ? '<div class="ux-empty">この期間の夢はありません</div>' : '<div class="ux-empty">やりたいこと・欲しいものを100個。<br>まずは5個から</div>'))
       + (!showAll && dr.length > 6 ? '<span class="ux-more" onclick="_uxLists[\'dream:all\']=1;renderPlan()">ほか ' + (dr.length - 6) + '個 すべて見る ›</span>' : '')
       + '<span class="ux-lk" onclick="p2DrFormOpen()">＋ 夢を追加</span>';
   }
@@ -28819,7 +28842,15 @@ function _p2DrCss() {
     + '.dr-dl{position:absolute;top:0;right:0;bottom:0;width:84px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:color-mix(in srgb,#FF6B7F 18%,var(--surface));color:#FF6B7F;font-size:12px;font-weight:900;cursor:pointer;border-radius:0 13px 13px 0}.dr-dl svg{width:20px;height:20px}'
     + '.ux-sk .dr-go{flex:none;display:inline-flex;align-items:center;gap:4px;margin-left:8px;padding:6px 10px;border-radius:10px;border:1px solid color-mix(in srgb,#5AD7FF 50%,var(--border));color:#2BA8D8;font-size:12.5px;font-weight:900;text-decoration:none;white-space:nowrap}.ux-sk .dr-go svg{width:14px;height:14px}'
     + '.dr-f{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 12px}.dr-f span{padding:7px 12px;border-radius:10px;border:1px solid var(--border);font-size:13.5px;font-weight:900;color:var(--text-mid);cursor:pointer}.dr-f span.on,.dr-f select.on{background:color-mix(in srgb,var(--accent) 16%,transparent);border-color:var(--accent);color:var(--accent)}.dr-f select{padding:7px 8px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text-mid);font-weight:900;font-size:13.5px;font-family:inherit}'
-    + '.dr-need{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:2px 0 10px}.dr-need>div{padding:10px 12px;border-radius:14px;background:var(--surface);border:1px solid var(--border)}.dr-need small{display:block;font-size:12px;font-weight:800;color:var(--text-dim)}.dr-need b{font:900 24px Inter,sans-serif;color:var(--gold)}.dr-need b i{font-style:normal;font-size:12px;color:var(--text-mid);margin-left:2px}.dr-nt{font-size:12.5px;font-weight:700;color:var(--text-dim);margin:0 0 10px}.dr-nt b{color:var(--text)}';
+    + '.dr-need{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:2px 0 10px}.dr-need>div{padding:10px 12px;border-radius:14px;background:var(--surface);border:1px solid var(--border)}.dr-need small{display:block;font-size:12px;font-weight:800;color:var(--text-dim)}.dr-need b{font:900 24px Inter,sans-serif;color:var(--gold)}.dr-need b i{font-style:normal;font-size:12px;color:var(--text-mid);margin-left:2px}.dr-nt{font-size:12.5px;font-weight:700;color:var(--text-dim);margin:0 0 10px}.dr-nt b{color:var(--text)}'
+    // v921: 上の「＋ 夢を追加」・月ごとの見出し・金額は右・PC は3列
+    + '.dr-top{display:flex;align-items:center;gap:12px;margin:2px 0 8px}.dr-top .dr-cnt{flex:1;min-width:0}.dr-top .ux-sum{margin:0}.dr-top .dr-nt{margin:2px 0 0}'
+    + '.dr-add{flex:none;padding:10px 16px;border-radius:12px;background:#EFFF40;color:#373334;font-size:14px;font-weight:900;cursor:pointer;white-space:nowrap;box-shadow:0 1px 0 rgba(0,0,0,.08)}'
+    + '.dr-grp{margin-top:16px}.dr-gh{display:flex;align-items:baseline;gap:10px;padding:0 2px 6px;border-bottom:2px solid var(--text);margin-bottom:2px}.dr-gh b{font-size:15.5px;font-weight:900}.dr-gh span{font-size:12.5px;font-weight:800;color:var(--text-mid)}'
+    + '.ux-sk .dr-am{flex:none;margin-left:auto;padding-left:8px;font-size:13.5px;font-weight:900;color:var(--text-mid);white-space:nowrap;cursor:pointer}.ux-sk.done .dr-am{text-decoration:line-through}.ux-sk .t{flex:1;min-width:0}'
+    + 'body.px3 .dr-h2{display:none}'
+    + 'body.px3 .dr-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:8px}body.px3 .dr-grid .dr-lw{margin-top:0}body.px3 .dr-grid .ux-sk{padding:9px 12px}body.px3 .dr-grid .ux-sk .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
+    + 'body.px3 .dr-top .dr-cnt{display:flex;align-items:baseline;gap:18px}';
   document.head.appendChild(st);
 }
 function _p2DrYmLabel(ym) { var p = String(ym).split('-'); return p[0] + '年' + parseInt(p[1], 10) + '月'; }
