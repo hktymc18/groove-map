@@ -1443,6 +1443,15 @@ body.uapp #toast{bottom:calc(96px + env(safe-area-inset-bottom, 0px));}
 .td-dots i.fu{opacity:.35;border-style:dashed;}
 .les-u{display:inline-block;font-size:11px;color:var(--ua-vio);font-weight:800;margin-bottom:2px;}
 .bt-ls{display:grid;gap:6px;margin:0 0 6px;}
+.cs-row{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:10px 12px;}
+.cs-row>div{flex:1;min-width:0;display:grid;gap:3px;}
+.cs-row .cs-tg{display:flex;flex-wrap:wrap;gap:4px;}
+.cs-row .cs-tg span{font-size:11px;font-weight:700;border-radius:999px;padding:1px 8px;background:var(--line);}
+.cs-row.off{opacity:.55;}
+.cs-row .btns{margin:0;flex:none;flex-direction:column;gap:4px;}
+.cs-pick{display:grid;gap:6px;max-height:40vh;overflow:auto;margin:6px 0 10px;}
+.cs-pick label{display:flex;gap:8px;align-items:center;font-size:14px;}
+.dv-note{border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:13px;line-height:1.75;margin-top:12px;}
 .bt-lsr{display:flex;gap:8px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:8px 10px;}
 .bt-lsr>div{flex:1;min-width:0;display:grid;gap:2px;}
 .bt-lsr span{font-size:12.5px;color:var(--sub);}
@@ -3109,10 +3118,11 @@ if(gTrainerMode) document.documentElement.classList.add('trm');   // 🎓 研修
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v179';
+var APP_VER = 'v180';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v180', d: '2026/11/26', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v179', d: '2026/11/24', items: ['🖥 PC の「⚙ 設定 › 人と役割」を1行1名の表にしました（役割ごとの列に ✓。縦に見ると、だれが OL を受け付けているかなどがひと目で分かります）'] },
   { v: 'v178', d: '2026/11/24', items: ['🖥 「⚙ 設定」タブを PC の広い画面に合わせました（体制チェックとメニューを横に並べ、人と役割の一覧も2〜3列に）'] },
   { v: 'v177', d: '2026/11/24', items: ['🧹 名簿の「⚙ 管理メニュー」をすっきりさせました。受付管理者・研修担当・徴収なし・ユニオン管理者・リーダーの任命、管理者一覧、受付の金額、オーナー用の機能（特別カード工房・カードの裏面・ユニオンの追加・名前の変更・削除など）は「⚙ 設定」タブから使えます'] },
@@ -16559,6 +16569,8 @@ function ckUaMount(c, token){
   mv('friends', 'bdArea'); mv('friends', 'fiArea'); mv('friends', 'lgArea');
   mv('me', 'pzArea');
   var phA = document.createElement('div'); phA.id = 'phArea'; pg('me').appendChild(phA);   // 💜 v174: 自分だけの写真
+  var dvA = document.createElement('div'); dvA.id = 'dvArea'; pg('me').appendChild(dvA);   // 💜 v180: この端末で相談できるか
+  if(ckCsOn(c.union)) ckBindStart(c, token);
   mv('me', 'exArea'); mv('me', 'rcptArea'); mv('me', 'mcHelp'); mv('me', 'verCard');
   var nav = document.createElement('nav'); nav.id = 'uaTabs'; nav.setAttribute('aria-label', 'メニュー');
   nav.innerHTML = ckUaTabs().map(function(t){
@@ -17348,6 +17360,8 @@ function btDraw(){
     + '<div class="bt-box" id="btPz"></div>'
     + '<div class="bt-box" id="btMt"></div>'
     + '<div class="bt-box" id="btCh"></div>'
+    + '<div class="bt-box" id="btCs"></div>'
+    + '<div class="bt-box" id="btDv"></div>'
     + '<div class="bt-box" id="btLs"></div>'
     + '<div class="bt-box" id="btQe"></div>'
     + '</div>';
@@ -17358,6 +17372,8 @@ function btDraw(){
   btPzDraw();   // 💜 v144
   btMtDraw();   // 💜 v172
   btChDraw();   // 💜 v174
+  btCsDraw();   // 💜 v180
+  btDvDraw();   // 💜 v180
   btLsDraw();   // 💜 v175
   btQeDraw();   // 💜 v140
   Array.prototype.forEach.call(box.querySelectorAll('[data-go]'), function(b){
@@ -17607,6 +17623,173 @@ function btLsDraw(){
     if(!x || !window.confirm('「' + (x.t || '') + '」を消しますか？')) return;
     save(L.filter(function(_, j){ return j !== i; }), '消しました', bt);
   }; });
+}
+/* 💜 v180: 相談の準備（まず REVE で試す）・守りの土台
+   ・会員証と端末のひもづけ：ckBind/{トークン} = { uids: [匿名ログインの uid], by: 'self'｜付け替えたスタッフの uid, at }
+     最初に開いた端末がひもづく。ほかの端末で使う時は、スタッフが「端末の付け替え」で空にすると、次に開いた端末がひもづく。
+     相談（次の段）は、ひもづいた端末とログインしたスタッフだけが読めるようにする（会員証のリンクだけでは読めない）
+   ・匿名ログインは 'cardDev' という別の接続で行う。ログインしていない接続（cardAnon）と、スタッフのログインとは混ぜない。
+     ルールの signedIn() は匿名ログインを含まない（匿名の人が、ログインしたメンバーとして扱われないように）
+   ・相談を受けるスタッフ：ckCs/{ユニオン}/s/{スタッフの uid} = { name, tags, bio（60字）, off（受付を休む）, ord, by, at }
+     登録・外すのはオーナー・ユニオン管理者・DAY HOST。本人は「受付を休む」とひとことだけ変えられる */
+// 会員証の画面は、このスクリプトの読み込みの途中で描かれるので、ここの決まりは var ではなく関数にする（まだ無いと undefined になる）
+function ckCsUnions(){ return ['REVE']; }
+function ckCsUi(){ return window.__ckCsUi === true; }   // 相談の画面を出すか（②で true にする）。それまでは、ひもづけだけ黙って行う
+function ckCsTags(){ return [['skin', 'スキンケア'], ['inner', '体内ケア'], ['body', 'ボディマネジメント'], ['bust', 'バストアップ']]; }
+function ckCsOn(un){ return ckCsUnions().indexOf(un) >= 0; }
+function ckCsTagN(k){ var T = ckCsTags(); for(var i = 0; i < T.length; i++) if(T[i][0] === k) return T[i][1]; return ''; }
+var gDev = null;   // { p: Promise, auth, db, uid }
+function ckDev(){
+  if(gDev) return gDev.p;
+  gDev = {};
+  gDev.p = new Promise(function(ok, ng){
+    try{
+      var ap = (firebase.apps || []).filter(function(a){ return a.name === 'cardDev'; })[0] || firebase.initializeApp(firebaseConfig, 'cardDev');
+      gDev.auth = ap && ap.auth ? ap.auth() : firebase.auth();
+      gDev.db = ap && ap.firestore ? ap.firestore() : db;
+    }catch(e){ gDev.auth = firebase.auth(); gDev.db = db; }
+    var first = true, off = null;
+    // 前に匿名ログインした端末は、それが戻ってくるのを待つ（待たずにログインすると、開くたびに別の人になる）
+    off = gDev.auth.onAuthStateChanged(function(u){
+      if(!first) return; first = false;
+      try{ if(off) off(); }catch(e){}
+      if(u && u.isAnonymous){ gDev.uid = u.uid; ok(gDev); return; }
+      gDev.auth.signInAnonymously().then(function(r){ gDev.uid = r.user.uid; ok(gDev); }, ng);
+    });
+  });
+  gDev.p.catch(function(){ gDev = null; });
+  return gDev.p;
+}
+// 'mine'＝この端末で使える／'other'＝別の端末にひもづいている／'na'＝確かめられない（匿名ログインが使えない・電波など）
+function ckBindEnsure(token){
+  return ckDev().then(function(d){
+    var ref = d.db.collection('ckBind').doc(token), mk = function(){ return ref.set({ uids: [d.uid], by: 'self', at: FV.serverTimestamp() }).then(function(){ return 'mine'; }); };
+    return ref.get().then(function(s){
+      var u = s.exists ? (s.data().uids || []) : null;
+      if(u && u.indexOf(d.uid) >= 0) return 'mine';
+      if(!s.exists || !u.length) return mk();
+      return 'other';
+    }, function(e){ return e && e.code === 'permission-denied' ? 'other' : 'na'; });
+  }).catch(function(){ return 'na'; });
+}
+function ckBindStart(c, token){
+  ckBindEnsure(token).then(function(st){
+    if(!gUa || gUa.token !== token) return;
+    gUa.bind = st;
+    var el = $('dvArea'); if(!el) return;
+    el.innerHTML = ckCsUi() && st === 'other' ? '<div class="dv-note">📱 この会員証は、別のスマホで使われています。DAYスタッフへの相談は、ひとつのスマホだけで使えます。このスマホで使う時は、会場でスタッフに「端末の付け替え」を頼んでください。</div>' : '';
+  });
+}
+// ── スタッフの画面（「💜 Beauty」タブ）：相談を受けるスタッフ
+function btCsCan(un){ return isCoreAdmin(un) || isDayStaff(un); }
+function btCsDraw(){
+  var box = $('btCs'), me = gBt;
+  if(!box || !me) return;
+  if(!ckCsOn(me.un)){ box.classList.add('hide'); box.innerHTML = ''; return; }
+  box.classList.remove('hide');
+  if(me.cs === undefined){
+    me.cs = null; box.innerHTML = '<h3>💬 相談を受けるスタッフ</h3><p class="bt-note">読み込み中…</p>';
+    db.collection('ckCs').doc(me.un).collection('s').get().then(function(qs){
+      if(gBt !== me) return;
+      var a = []; qs.forEach(function(d){ var x = d.data() || {}; x.uid = d.id; a.push(x); });
+      a.sort(function(x, y){ return (x.ord || 0) - (y.ord || 0); });
+      me.cs = a; btCsDraw();
+    }).catch(function(){ if(gBt === me){ me.cs = []; btCsDraw(); } });
+    return;
+  }
+  if(me.cs === null) return;
+  var L = me.cs, can = btCsCan(me.un);
+  box.innerHTML = '<h3>💬 相談を受けるスタッフ' + hq('お客さんのアプリの「相談」に、この順で出ます。得意分野で選んでもらいます。相談には受付アプリにログインして返事をするので、NAVIGATOR のアカウントがある人を選んでください。「受付を休む」にすると、お客さんの画面に「今は受付を休んでいます」と出ます。') + '</h3>'
+    + (L.length ? '<div class="bt-ls">' + L.map(function(x, i){
+        var mine = gUser && x.uid === gUser.uid;
+        return '<div class="cs-row' + (x.off ? ' off' : '') + '"><div><b>' + esc(x.name || '') + (x.off ? '（受付を休んでいます）' : '') + '</b>'
+          + '<div class="cs-tg">' + (x.tags || []).map(function(t){ return '<span>' + esc(ckCsTagN(t)) + '</span>'; }).join('') + '</div>'
+          + (x.bio ? '<small class="bt-note">' + esc(x.bio) + '</small>' : '') + '</div><div class="btns">'
+          + (mine ? '<button type="button" data-csoff="' + i + '">' + (x.off ? '受付を再開' : '受付を休む') + '</button>' : '')
+          + (can ? '<button type="button" data-csed="' + i + '">直す</button><button type="button" class="danger ghost" data-csdel="' + i + '">外す</button>' : '') + '</div></div>';
+      }).join('') + '</div>' : '<p class="bt-note">まだいません。</p>')
+    + (can ? '<div class="btns" style="justify-content:flex-start;"><button type="button" class="primary" id="btCsAdd">＋ スタッフを足す</button></div>' : '');
+  if($('btCsAdd')) $('btCsAdd').onclick = function(){ btCsEdit(null); };
+  Array.prototype.forEach.call(box.querySelectorAll('[data-csed]'), function(b){ b.onclick = function(){ btCsEdit(L[+b.getAttribute('data-csed')]); }; });
+  Array.prototype.forEach.call(box.querySelectorAll('[data-csdel]'), function(b){ b.onclick = function(){
+    var x = L[+b.getAttribute('data-csdel')];
+    if(!window.confirm('「' + x.name + '」さんを、相談を受けるスタッフから外しますか？')) return;
+    db.collection('ckCs').doc(me.un).collection('s').doc(x.uid)['delete']().then(function(){ me.cs = L.filter(function(y){ return y !== x; }); toast('外しました'); btCsDraw(); })
+      .catch(function(e){ toast(permMsg(e, '外せませんでした')); });
+  }; });
+  Array.prototype.forEach.call(box.querySelectorAll('[data-csoff]'), function(b){ b.onclick = function(){
+    var x = L[+b.getAttribute('data-csoff')], d = { name: x.name, tags: x.tags || [], bio: x.bio || '', off: !x.off, ord: x.ord || 0, by: gUser.uid, at: FV.serverTimestamp() };
+    b.disabled = true;
+    db.collection('ckCs').doc(me.un).collection('s').doc(x.uid).set(d).then(function(){ x.off = d.off; toast(d.off ? '受付を休みにしました' : '受付を再開しました'); btCsDraw(); })
+      .catch(function(e){ b.disabled = false; toast(permMsg(e, '変えられませんでした')); });
+  }; });
+}
+// 足す・直す。足す時は、このユニオンの NAVIGATOR のアカウントから選ぶ
+function btCsEdit(x){
+  var me = gBt, un = me.un, tags = x ? (x.tags || []).slice() : [];
+  var draw = function(users){
+    var sel = x ? '<p><b>' + esc(x.name) + '</b></p>'
+      : (users.length ? '<label>だれ？</label><div class="cs-pick" id="csWho">' + users.map(function(u, i){ return '<label><input type="radio" name="csWho" value="' + i + '"> ' + esc(u.name) + '</label>'; }).join('') + '</div>'
+        : '<p class="bt-note">足せる人がいません（このユニオンの NAVIGATOR のアカウントがある人から選びます）。</p>');
+    modal('<h2>' + (x ? '💬 スタッフを直す' : '💬 相談を受けるスタッフを足す') + '</h2>' + sel
+      + '<label>得意分野（いくつでも）</label><div class="ulg-chips" id="csTags">' + ckCsTags().map(function(t){ return '<button type="button" data-v="' + t[0] + '"' + (tags.indexOf(t[0]) >= 0 ? ' class="on"' : '') + '>' + t[1] + '</button>'; }).join('') + '</div>'
+      + '<label for="csBio" style="margin-top:10px;">ひとこと（60文字まで・お客さんに見えます）</label><input type="text" id="csBio" maxlength="60" value="' + esc(x ? x.bio || '' : '') + '" placeholder="例: 乾燥肌のケアならおまかせください">'
+      + '<div class="btns"><button id="csX">キャンセル</button><button class="primary" id="csGo">保存</button></div>', true);
+    $('csTags').onclick = function(e){ var b = e.target.closest ? e.target.closest('button[data-v]') : null; if(!b) return; var v = b.getAttribute('data-v'), i = tags.indexOf(v); if(i >= 0) tags.splice(i, 1); else tags.push(v); b.classList.toggle('on', i < 0); };
+    $('csX').onclick = closeModal;
+    $('csGo').onclick = function(){
+      var who = x || null;
+      if(!who){ var r = document.querySelector('#csWho input:checked'); if(!r){ toast('だれかを選んでください'); return; } who = users[+r.value]; }
+      if(!tags.length){ toast('得意分野を1つ以上選んでください'); return; }
+      var bio = $('csBio').value.replace(/\s+/g, ' ').trim().slice(0, 60);
+      var ws = CK_LG_WARN.filter(function(w){ return bio.indexOf(w) >= 0; });
+      if(ws.length){ toast('効果をうたう言葉（' + ws.join('・') + '）は使えません'); return; }
+      var d = { name: String(who.name || '').slice(0, 40), tags: ckCsTags().map(function(t){ return t[0]; }).filter(function(k){ return tags.indexOf(k) >= 0; }), bio: bio,
+        off: x ? !!x.off : false, ord: x ? (x.ord || 0) : (me.cs.length ? Math.max.apply(null, me.cs.map(function(y){ return y.ord || 0; })) + 1 : 1), by: gUser.uid, at: FV.serverTimestamp() };
+      $('csGo').disabled = true;
+      db.collection('ckCs').doc(un).collection('s').doc(who.uid).set(d).then(function(){
+        d.uid = who.uid; if(x){ Object.keys(d).forEach(function(k){ x[k] = d[k]; }); } else me.cs.push(d);
+        closeModal(); toast(x ? '直しました' : '足しました'); btCsDraw();
+      }).catch(function(e){ $('csGo').disabled = false; toast(permMsg(e, '保存できませんでした。ルールの反映をオーナーに確認してください')); });
+    };
+  };
+  if(x){ draw([]); return; }
+  db.collection('users').where('union', '==', un).get().then(function(qs){
+    var have = {}; me.cs.forEach(function(y){ have[y.uid] = 1; });
+    var a = []; qs.forEach(function(d){ var u = d.data() || {}; if(u.union === un && u.status !== 'disabled' && !have[d.id]) a.push({ uid: d.id, name: u.name || d.id.slice(0, 8) }); });
+    a.sort(function(p, q){ return String(p.name).localeCompare(String(q.name), 'ja'); });
+    draw(a);
+  }).catch(function(e){ toast(permMsg(e, '読めませんでした')); });
+}
+// ── スタッフの画面：端末の付け替え（会場で、お客さんに頼まれた時）
+function btDvDraw(){
+  var box = $('btDv'), me = gBt;
+  if(!box || !me) return;
+  if(!ckCsOn(me.un) || !btCsCan(me.un)){ box.classList.add('hide'); box.innerHTML = ''; return; }
+  box.classList.remove('hide');
+  box.innerHTML = '<h3>📱 端末の付け替え' + hq('お客さんの相談は、ひとつのスマホだけで使えます（会員証のリンクを知っているだけでは読めないように）。スマホを変えた・別のスマホで使いたいと頼まれた時に、ここで外してください。外したあと、お客さんが新しいスマホで会員証を開くと、そのスマホにひもづきます。必ず本人だと確かめてから外してください。') + '</h3>'
+    + '<div style="display:flex;gap:6px;"><input type="text" id="btDvQ" maxlength="20" placeholder="お客さんの名前" style="flex:1;min-width:0;"><button type="button" id="btDvGo">探す</button></div><div id="btDvList"></div>';
+  var go = function(){
+    var q = $('btDvQ').value.replace(/[\s　]/g, '');
+    if(!q){ toast('名前を入れてください'); return; }
+    var L = me.dvUsers ? Promise.resolve(me.dvUsers) : db.collection('checkinUsers').where('union', '==', me.un).get().then(function(qs){
+      var a = []; qs.forEach(function(d){ var x = d.data() || {}; if(x.union === me.un && x.cardToken && x.active !== false) a.push({ name: x.name || '', t: x.cardToken }); }); me.dvUsers = a; return a;
+    });
+    L.then(function(a){
+      var hit = a.filter(function(u){ return String(u.name).replace(/[\s　]/g, '').indexOf(q) >= 0; }).slice(0, 10);
+      $('btDvList').innerHTML = hit.length ? '<div class="bt-ls" style="margin-top:8px;">' + hit.map(function(u, i){ return '<div class="cs-row"><div><b>' + esc(u.name) + '</b></div><div class="btns"><button type="button" data-dv="' + i + '">付け替える</button></div></div>'; }).join('') + '</div>'
+        : '<p class="bt-note">見つかりません。</p>';
+      Array.prototype.forEach.call($('btDvList').querySelectorAll('[data-dv]'), function(b){ b.onclick = function(){
+        var u = hit[+b.getAttribute('data-dv')];
+        if(!window.confirm(u.name + ' さんの会員証を、今のスマホから外しますか？\n本人だと確かめてから外してください。')) return;
+        b.disabled = true;
+        db.collection('ckBind').doc(u.t).set({ uids: [], by: gUser.uid, at: FV.serverTimestamp() }).then(function(){ b.textContent = '外しました'; toast('外しました。新しいスマホで会員証を開いてもらってください'); })
+          .catch(function(e){ b.disabled = false; toast(permMsg(e, '外せませんでした。ルールの反映をオーナーに確認してください')); });
+      }; });
+    }).catch(function(e){ toast(permMsg(e, '読めませんでした')); });
+  };
+  $('btDvGo').onclick = go;
+  $('btDvQ').onkeydown = function(e){ if(e.key === 'Enter') go(); };
 }
 function btMtLoad(){
   var me = gBt; if(!me) return;

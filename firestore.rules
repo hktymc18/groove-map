@@ -17,7 +17,9 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function signedIn() { return request.auth != null; }
+    // 受付v180: 匿名ログイン（お客さんの端末のひもづけ用）は「ログインした人」に含めない
+    function signedIn() { return request.auth != null && request.auth.token.get('firebase', {}).get('sign_in_provider', '') != 'anonymous'; }
+    function ckDevUser() { return request.auth != null && request.auth.token.get('firebase', {}).get('sign_in_provider', '') == 'anonymous'; }
     function myEmail()  { return request.auth.token.email; }
     function isSelf(uid){ return signedIn() && request.auth.uid == uid; }
 
@@ -1141,6 +1143,45 @@ service cloud.firestore {
     //   アプリ（ログインなし）が1件ずつ読む。書けるのはオーナー・ユニオン管理者・DAYスタッフ（消す＝はじめの内容にもどす）
     // 💜 受付v174: 今月のチャレンジ（ユニオンごと）。ckChal/{ユニオン} = { m: 'YYYY-MM', t: テーマ（30字まで）, g: 日数（1〜31）, by, at }
     //   読むのはだれでも1件ずつ（お客さんのアプリ）。書く・消すはオーナー・ユニオン管理者・DAYスタッフだけ
+    // 💜 受付v180: 会員証と端末のひもづけ（相談の守りの土台）。ckBind/{会員証のトークン} = { uids: [匿名ログインの uid], by: 'self'｜スタッフの uid, at }
+    //   読む：まだだれもひもづいていない時・ひもづいた端末・オーナー・そのユニオンのスタッフ（会員証のリンクを知っているだけでは中身は読めない）
+    //   本人の端末：だれもひもづいていない時だけ、自分の端末をひもづける。スタッフ：付け替え（空にする）
+    match /ckBind/{token} {
+      allow get: if resource == null
+        || resource.data.get('uids', []).size() == 0
+        || (ckDevUser() && resource.data.get('uids', []).hasAny([request.auth.uid]))
+        || isOwnerAdmin()
+        || (exists(/databases/$(database)/documents/cards/$(token)) && ckLoungeStaff(get(/databases/$(database)/documents/cards/$(token)).data.get('union', '_')));
+      allow list: if false;
+      allow create, update: if ckDevUser() && exists(/databases/$(database)/documents/cards/$(token))
+        && (resource == null || resource.data.get('uids', []).size() == 0)
+        && request.resource.data.keys().hasOnly(['uids', 'by', 'at'])
+        && request.resource.data.get('uids', []) == [request.auth.uid] && request.resource.data.get('by', '') == 'self';
+      allow create, update: if exists(/databases/$(database)/documents/cards/$(token))
+        && (isOwnerAdmin() || ckLoungeStaff(get(/databases/$(database)/documents/cards/$(token)).data.get('union', '_')))
+        && request.resource.data.keys().hasOnly(['uids', 'by', 'at'])
+        && request.resource.data.get('uids', ['x']).size() == 0 && request.resource.data.get('by', '') == request.auth.uid;
+      allow delete: if isOwnerAdmin();
+    }
+    // 💜 受付v180: 相談を受けるスタッフ。ckCs/{ユニオン}/s/{スタッフの uid} = { name, tags, bio, off, ord, by, at }
+    //   読むのはだれでも（お客さんのアプリの相談相手の一覧）。登録・外すのはオーナー・ユニオン管理者・DAY HOST（そのユニオンのアカウントだけ）
+    //   本人は「受付を休む」とひとことだけ変えられる
+    match /ckCs/{un}/s/{uid} {
+      allow get, list: if true;
+      allow create, update: if ckLoungeStaff(un) && ckCsOk(request.resource.data)
+        && profileExists(uid) && (profile(uid).get('union', '') == un || isOwnerAdmin());
+      allow update: if isSelf(uid) && notDisabled(uid) && ckCsOk(request.resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['off', 'bio', 'at', 'by']);
+      allow delete: if ckLoungeStaff(un);
+    }
+    function ckCsOk(d) {
+      return d.keys().hasOnly(['name', 'tags', 'bio', 'off', 'ord', 'by', 'at'])
+        && d.get('name', '') is string && d.get('name', '').size() > 0 && d.get('name', '').size() <= 40
+        && d.get('tags', []) is list && d.get('tags', []).size() <= 4 && d.get('tags', []).hasOnly(['skin', 'inner', 'body', 'bust'])
+        && d.get('bio', '') is string && d.get('bio', '').size() <= 60
+        && d.get('off', false) is bool && d.get('ord', 0) is int
+        && d.get('by', '') == request.auth.uid;
+    }
     match /ckChal/{un} {
       allow get: if true;
       allow list: if false;
