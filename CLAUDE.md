@@ -3,10 +3,19 @@
 ## Firestoreルールの変更フロー
 
 ルールの正本はこのリポジトリの `firestore.rules`。変更は必ずこのファイルを更新して
-PR → main へマージし、オーナーが **Cloud Shell から `firebase deploy` でデプロイ**する。
+PR → main へマージする。**main に入ると GitHub Actions（`.github/workflows/deploy-firestore.yml`）が
+ルールと索引（`firestore.indexes.json`）を自動でデプロイする**（2026/11 から。前はオーナーが PC の Cloud Shell で実行していた）。
+
+- 動くのは `firestore.rules` か `firestore.indexes.json` が変わった時だけ。手で動かす時は Actions の
+  「Deploy Firestore rules」› Run workflow（MCP の `actions_run_trigger` でも動かせる）。
+- 鍵は使わない（Workload Identity 連携。main ブランチから動いた時だけ、ルールと索引の更新しかできない専用アカウントで動く）。
+  最初の設定は `tools/deploy/setup_wif.sh`（オーナーが Cloud Shell で1回だけ実行）。
+- 索引の削除はしない（`--force` を付けない）。
+- ルールを変えたPRをマージしたら、**Actions のデプロイが成功したか（緑）を確かめて**完了報告に書く。
+  失敗した時だけ、オーナーに Cloud Shell での手動デプロイを頼む：
 
 ```bash
-# Cloud Shell での適用手順（オーナーが実行）
+# Cloud Shell での手動デプロイ（自動デプロイが失敗した時だけ・オーナーが実行）
 # 初回のみ: git clone https://github.com/hktymc18/groove-map.git
 git -C groove-map pull
 cd groove-map && firebase deploy --only firestore:rules,firestore:indexes
@@ -15,11 +24,9 @@ cd ~
 ```
 
 - **ルールと一緒に索引（`firestore.indexes.json`）も必ずデプロイする**（2026/11 に、索引が本番に入っていない可能性が見つかった。
-  索引が無いとアプリは代わりの読み方で多めに読むので、読み取りの無料枠を使い切る原因になる）。
+  索引が無いとアプリは代わりの読み方で多めに読むので、読み取りの無料枠を使い切る原因になる）。自動デプロイは両方を入れる。
 - **Firebaseコンソールにルール全文を貼り付ける運用は廃止**。コンソールで直接変えた内容は、
   次に誰かがファイルからデプロイした時に上書きされて消えるため。
-- ルールを変更したPRの完了報告では、上記のCloud Shellコマンドの実行を依頼すること
-  （テキストファイルでの全文お渡しは不要）。
 
 ## マージの決まり（自動の実行）
 
