@@ -49,9 +49,9 @@ const _e = console.error; console.error = (...a) => { if (!/PERMISSION_DENIED|ev
   c('お客さんは相談相手を変えられない', !(await ok(updateDoc(doc(A1, 'ckDm/t1'), { sUid: 'st2' }))));
   c('メッセージは1000文字まで', !(await ok(setDoc(doc(A1, 'ckDm/t1/m/m9'), MSG('u', 'dev1', 'あ'.repeat(1001))))));
   c('お客さんはスタッフとして書けない', !(await ok(setDoc(doc(A1, 'ckDm/t1/m/m8'), MSG('s', 'dev1')))));
-  c('オーナーも、報告がない相談は読めない', !(await ok(getDoc(doc(OW, 'ckDm/t1')))));
+  c('（v182）オーナーは、報告がなくても相談とメッセージを読める', await ok(getDoc(doc(OW, 'ckDm/t1'))) && await ok(getDocs(collection(OW, 'ckDm/t1/m'))));
   c('お客さんは報告できる', await ok(updateDoc(doc(A1, 'ckDm/t1'), { rep: { at: now + 3 }, upAt: now + 3 })));
-  c('報告のあと、オーナーは相談を読めるが、記録を残すまでメッセージは読めない', await ok(getDoc(doc(OW, 'ckDm/t1'))) && !(await ok(getDocs(collection(OW, 'ckDm/t1/m')))));
+  c('報告のあとも、オーナーは相談を読める', await ok(getDoc(doc(OW, 'ckDm/t1'))));
   c('オーナーが読んだ記録を残すと、メッセージを読める', await ok(setDoc(doc(OW, 'ckDm/t1/olog/' + OWN), { at: serverTimestamp() })) && await ok(getDocs(collection(OW, 'ckDm/t1/m'))));
   c('ほかの人の名前で読んだ記録は残せない', !(await ok(setDoc(doc(S1, 'ckDm/t1/olog/st1'), { at: serverTimestamp() }))));
   // 引き継ぎ

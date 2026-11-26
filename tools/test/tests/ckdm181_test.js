@@ -29,7 +29,7 @@ const base = (x) => Object.assign({ ['cards/' + TA]: card(), ['cardClaims/' + UA
     c('試す会員番号に入っていると「相談」が出る', !(await o.ev(`document.getElementById('uaSegCs').hidden`)));
     await o.page.click('#uaTabs [data-tab="friends"]'); await o.wt(200);
     await o.page.click('#uaSegCs'); await o.wt(300);
-    c('「相談する」ボタンと説明', /DAYスタッフに、1対1で相談できます/.test(await o.ev(`document.getElementById('csArea').innerText`)));
+    c('「相談する」ボタンと説明（運営も見ることを伝える）', /DAYスタッフに、1対1で相談できます。中身は、相談したスタッフと運営（オーナー）が見ます。紹介者には見えません/.test(await o.ev(`document.getElementById('csArea').innerText`)));
     await o.page.screenshot({ path: OUT + '/ckdm181_list0.png' });
     await o.ev(`document.getElementById('csNew').click()`); await o.wt(500);
     const tx = await o.ev(`document.querySelector('.modal').innerText`);
@@ -50,6 +50,7 @@ const base = (x) => Object.assign({ ['cards/' + TA]: card(), ['cardClaims/' + UA
     c('メッセージは、この端末の名前で', ms === 'u:dev-1', ms);
     c('やりとりの画面が開く', /朝つっぱります/.test(await o.ev(`document.getElementById('csChat').innerText`)));
     await o.page.screenshot({ path: OUT + '/ckdm181_chat.png' });
+    c('（v182）解決・止める・報告が、下に貼り付くボタンの帯に隠れない', await o.ev(`document.getElementById('csRep').getBoundingClientRect().bottom <= document.querySelector('.modal .btns').getBoundingClientRect().top + 1`));
     await o.ev(`document.getElementById('csRep').click()`); await o.wt(300);
     c('報告できる', !!(await o.ev(`!!(window.__FBDATA['${keys[0]}'].rep)`)));
     c('エラーなし（お客さん）', !o.errs.length, o.errs.join(' / '));
