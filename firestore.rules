@@ -903,8 +903,10 @@ service cloud.firestore {
       allow list: if false;
       // 💜 受付v119: 準備中のユーザー機能を見られる確認メンバー（オーナーだけが指定）
       allow create, update: if isOwnerUid() && id == 'beauty'
-        && request.resource.data.keys().hasOnly(['testers', 'cardNos', 'by', 'at'])
-        && request.resource.data.testers is list && request.resource.data.testers.size() <= 100
+        && request.resource.data.keys().hasOnly(['testers', 'cardNos', 'csOpen', 'csNos', 'by', 'at'])
+        && request.resource.data.get('testers', []) is list && request.resource.data.get('testers', []).size() <= 100
+        && request.resource.data.get('csOpen', false) is bool
+        && request.resource.data.get('csNos', []) is list && request.resource.data.get('csNos', []).size() <= 100
         && request.resource.data.get('cardNos', []) is list && request.resource.data.get('cardNos', []).size() <= 300
         && request.resource.data.by == request.auth.uid
         && request.resource.data.at == request.time;
@@ -1173,6 +1175,85 @@ service cloud.firestore {
       allow update: if isSelf(uid) && notDisabled(uid) && ckCsOk(request.resource.data)
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['off', 'bio', 'at', 'by']);
       allow delete: if ckLoungeStaff(un);
+    }
+    // 💜 受付v181: DAYスタッフに相談（DM）。ckDm/{相談} と ckDm/{相談}/m/{メッセージ}
+    //   読める：ひもづいた端末のお客さん（ckBind）・相談相手のスタッフ（sUid）。オーナーは報告があった時だけ、olog（読んだ記録）を残してから
+    //   お客さんから始める／スタッフから始める（1人のお客さんに月1回まで＝ckDmCap・止められていたら不可＝ckDmStop）
+    function ckDmBound(tk) {
+      return ckDevUser() && tk is string && exists(/databases/$(database)/documents/ckBind/$(tk))
+        && get(/databases/$(database)/documents/ckBind/$(tk)).data.get('uids', []).hasAny([request.auth.uid]);
+    }
+    function ckDmStaffOk(un, uid) { return exists(/databases/$(database)/documents/ckCs/$(un)/s/$(uid)); }
+    function ckDmNew(d) {
+      return d.keys().hasOnly(['tk', 'un', 'cno', 'cname', 'sUid', 'sName', 'topic', 'st', 'last', 'uRead', 'sRead', 'byStaff', 'at', 'upAt'])
+        && d.tk is string && d.tk.size() == 32 && exists(/databases/$(database)/documents/cards/$(d.tk))
+        && get(/databases/$(database)/documents/cards/$(d.tk)).data.get('union', '_') == d.un
+        && d.sUid is string && ckDmStaffOk(d.un, d.sUid)
+        && d.topic in ['skin', 'inner', 'body', 'bust', 'other'] && d.st == 'open'
+        && d.cname is string && d.cname.size() <= 40 && d.sName is string && d.sName.size() <= 40
+        && d.last is map && d.last.keys().hasOnly(['by', 't', 'at']) && d.last.t is string && d.last.t.size() <= 40
+        && d.uRead is int && d.sRead is int && d.upAt is int && d.at == request.time;
+    }
+    match /ckDm/{tid} {
+      allow get, list: if ckDmBound(resource.data.tk) || (signedIn() && resource.data.sUid == request.auth.uid)
+        || (isOwnerAdmin() && resource.data.get('rep', null) != null);
+      allow create: if ckDmBound(request.resource.data.get('tk', '')) && ckDmNew(request.resource.data)
+        && request.resource.data.byStaff == false && request.resource.data.last.by == 'u'
+        && get(/databases/$(database)/documents/ckCs/$(request.resource.data.un)/s/$(request.resource.data.sUid)).data.get('off', false) == false;
+      allow create: if signedIn() && notDisabled(request.auth.uid) && ckDmNew(request.resource.data)
+        && request.resource.data.byStaff == true && request.resource.data.sUid == request.auth.uid && request.resource.data.last.by == 's'
+        && !exists(/databases/$(database)/documents/ckDmStop/$(request.resource.data.tk + '_' + request.auth.uid))
+        && !exists(/databases/$(database)/documents/ckDmCap/$(request.resource.data.tk + '_' + request.auth.uid + '_' + string(request.time.year()) + '_' + string(request.time.month())))
+        && existsAfter(/databases/$(database)/documents/ckDmCap/$(request.resource.data.tk + '_' + request.auth.uid + '_' + string(request.time.year()) + '_' + string(request.time.month())));
+      // お客さん：既読・最後・解決・止める・報告
+      allow update: if ckDmBound(resource.data.tk)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['last', 'uRead', 'upAt', 'st', 'stop', 'rep'])
+        && request.resource.data.st in ['open', 'done'] && request.resource.data.get('stop', false) in [false, true]
+        && (!('last' in request.resource.data.diff(resource.data).affectedKeys()) || request.resource.data.last.by == 'u');
+      // スタッフ：既読・最後・解決・タグ・引き継ぎ（同じユニオンの相談スタッフへ）
+      allow update: if signedIn() && resource.data.sUid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['last', 'sRead', 'upAt', 'st', 'tags', 'sUid', 'sName'])
+        && request.resource.data.st in ['open', 'done']
+        && request.resource.data.get('tags', []) is list && request.resource.data.get('tags', []).size() <= 8
+        && ckDmStaffOk(resource.data.un, request.resource.data.sUid)
+        && (!('last' in request.resource.data.diff(resource.data).affectedKeys()) || (request.resource.data.last.by == 's' && resource.data.get('stop', false) == false));
+      allow delete: if false;
+      match /m/{mid} {
+        allow get, list: if ckDmBound(get(/databases/$(database)/documents/ckDm/$(tid)).data.tk)
+          || (signedIn() && get(/databases/$(database)/documents/ckDm/$(tid)).data.sUid == request.auth.uid)
+          || (isOwnerAdmin() && exists(/databases/$(database)/documents/ckDm/$(tid)/olog/$(request.auth.uid)));
+        allow create: if request.resource.data.keys().hasOnly(['by', 'uid', 't', 'at'])
+          && request.resource.data.t is string && request.resource.data.t.size() > 0 && request.resource.data.t.size() <= 1000
+          && request.resource.data.at == request.time
+          && ((request.resource.data.by == 'u' && request.resource.data.uid == request.auth.uid
+                && ckDmBound(getAfter(/databases/$(database)/documents/ckDm/$(tid)).data.tk))
+            || (request.resource.data.by == 's' && signedIn() && request.resource.data.uid == request.auth.uid
+                && (exists(/databases/$(database)/documents/ckDm/$(tid))
+                    ? (get(/databases/$(database)/documents/ckDm/$(tid)).data.sUid == request.auth.uid && get(/databases/$(database)/documents/ckDm/$(tid)).data.get('stop', false) == false)
+                    : getAfter(/databases/$(database)/documents/ckDm/$(tid)).data.sUid == request.auth.uid)));
+        allow update, delete: if false;
+      }
+      // オーナーが報告された相談を読んだ記録（読む前に必ず書く）
+      match /olog/{uid} {
+        allow get, list: if isOwnerAdmin();
+        allow create: if isOwnerAdmin() && uid == request.auth.uid && request.resource.data.keys().hasOnly(['at'])
+          && request.resource.data.at == request.time
+          && get(/databases/$(database)/documents/ckDm/$(tid)).data.get('rep', null) != null;
+        allow update, delete: if false;
+      }
+    }
+    // お客さんが「このスタッフを止める」：ckDmStop/{会員証}_{スタッフ}。スタッフから先に送れなくなる
+    match /ckDmStop/{id} {
+      allow get: if signedIn() && id.matches('.*_' + request.auth.uid + '$');
+      allow create: if ckDmBound(id.split('_')[0]) && request.resource.data.keys().hasOnly(['at']) && request.resource.data.at == request.time;
+      allow update, delete: if false;
+    }
+    // スタッフから先に送った印：ckDmCap/{会員証}_{スタッフ}_{年}_{月}（1人のお客さんに、1人のスタッフから月1回まで）
+    match /ckDmCap/{id} {
+      allow get: if signedIn() && id.matches('^[A-Za-z0-9]+_' + request.auth.uid + '_[0-9]+_[0-9]+$');
+      allow create: if signedIn() && notDisabled(request.auth.uid) && id.matches('^[A-Za-z0-9]+_' + request.auth.uid + '_[0-9]+_[0-9]+$')
+        && request.resource.data.keys().hasOnly(['by', 'at']) && request.resource.data.by == request.auth.uid && request.resource.data.at == request.time;
+      allow update, delete: if false;
     }
     function ckCsOk(d) {
       return d.keys().hasOnly(['name', 'tags', 'bio', 'off', 'ord', 'by', 'at'])

@@ -16,7 +16,7 @@ const TA = '0123456789abcdef0123456789abcdef', UA = 'u17620000000001';
     'ckNotice/ANTARES': { items: [{ t: '12月のDAYは14時から。', d: day(-3) }] },
     'ckLounge/p1': { union: 'ANTARES', uid: 'u2', n: '見本 さくら', t: '毎日歩けました。', st: 'ok', okAt: 2000 } };
   const { ctx, page, ev, wt, errs } = await P.open(b, { hash: '#c=' + TA, data: base, wait: 2600 });
-  const dots = () => ev(`[].map.call(document.querySelectorAll('.ua-dot'), function(d){ return (d.closest('[data-tab]') ? d.closest('[data-tab]').getAttribute('data-tab') : d.closest('#uaBell') ? 'bell' : 'seg') + ':' + (d.hidden ? 0 : 1); }).join(',')`);
+  const dots = () => ev(`[].map.call(document.querySelectorAll('.ua-dot:not([data-dot="cs"])'), function(d){ return (d.closest('[data-tab]') ? d.closest('[data-tab]').getAttribute('data-tab') : d.closest('#uaBell') ? 'bell' : 'seg') + ':' + (d.hidden ? 0 : 1); }).join(',')`);
   const reopen = async (more) => {   // データを足して、端末の控え（お知らせ30分・ラウンジ10分）を消して開き直す
     await page.addInitScript(d => { window.__FBDATA = Object.assign(window.__FBDATA || {}, d); }, more);
     await ev(`localStorage.removeItem('bci_ntc_ANTARES'); localStorage.removeItem('bci_lg_ANTARES');`);
