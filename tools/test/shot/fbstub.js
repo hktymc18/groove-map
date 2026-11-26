@@ -53,7 +53,9 @@
   var user = { uid: OWNER, email: 't@example.com', displayName: '山内北斗', getIdToken: function () { return Promise.resolve('x'); } };
   var authObj = { currentUser: user, onAuthStateChanged: function (cb) { setTimeout(function () { cb(user); }, 0); return function () {}; },
     signOut: function () { return Promise.resolve(); }, signInWithEmailAndPassword: function () { return Promise.resolve({ user: user }); },
-    signInWithPopup: function () { return Promise.resolve({ user: user }); }, setPersistence: function () { return Promise.resolve(); } };
+    signInWithPopup: function () { return Promise.resolve({ user: user }); }, setPersistence: function () { return Promise.resolve(); },
+    // v180: 匿名ログイン（お客さんの端末のひもづけ）。window.__FBANON で端末ごとの uid を変えられる。スタッフのログインは変えない
+    signInAnonymously: function () { return Promise.resolve({ user: { uid: window.__FBANON || 'anon-test', isAnonymous: true } }); } };
   var FV = { delete: function () { return undefined; }, serverTimestamp: function () { return new Date().toISOString(); }, arrayUnion: function () { return { __op: 'union', v: [].slice.call(arguments) }; }, arrayRemove: function () { return { __op: 'remove', v: [].slice.call(arguments) }; }, increment: function (n) { return n; } };
   window.firebase = { apps: [], initializeApp: function () { return {}; }, app: function () { return {}; },
     firestore: Object.assign(function () { return db; }, { FieldValue: FV, CACHE_SIZE_UNLIMITED: -1, Timestamp: { now: function () { return { toDate: function () { return new Date(); } }; }, fromDate: function (d) { return { toDate: function () { return d; } }; } } }),

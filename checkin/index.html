@@ -1313,11 +1313,29 @@ body.uapp #vCard .cardwrap{max-width:520px;margin:0 auto;padding:calc(env(safe-a
 .ua-visits{text-align:center;font-size:12.5px;color:var(--sub);margin:14px 0 0;}
 .ua-visits b{color:var(--ink);font-size:15px;}
 .ua-qrnote{text-align:center;font-size:12.5px;color:var(--sub);margin:8px 0 0;}
-.ua-seg{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;padding:3px;border-radius:12px;background:var(--line);}
+.ua-seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:3px;padding:3px;border-radius:12px;background:var(--line);}
 #uaApp .ua-seg button{border:0;background:transparent;border-radius:9px;padding:8px 0;font-weight:700;font-size:13px;color:var(--sub);}
 #uaApp .ua-seg button.on{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12);}
-#uaApp .ua-pg[data-p="friends"] > #bdArea,#uaApp .ua-pg[data-p="friends"] > #fiArea,#uaApp .ua-pg[data-p="friends"] > #lgArea{display:none;}
-#uaApp .ua-pg[data-seg="buddy"] > #bdArea,#uaApp .ua-pg[data-seg="invite"] > #fiArea,#uaApp .ua-pg[data-seg="lounge"] > #lgArea{display:block;}
+#uaApp .ua-pg[data-p="friends"] > #bdArea,#uaApp .ua-pg[data-p="friends"] > #fiArea,#uaApp .ua-pg[data-p="friends"] > #lgArea,#uaApp .ua-pg[data-p="friends"] > #csArea{display:none;}
+#uaApp .ua-pg[data-seg="buddy"] > #bdArea,#uaApp .ua-pg[data-seg="invite"] > #fiArea,#uaApp .ua-pg[data-seg="lounge"] > #lgArea,#uaApp .ua-pg[data-seg="cs"] > #csArea{display:block;}
+.cs-wrap{display:grid;gap:10px;margin-top:12px;}
+.cs-th{display:grid;gap:2px;text-align:left;border:1px solid var(--line);background:var(--card);border-radius:16px;padding:12px 14px;font:inherit;color:inherit;cursor:pointer;position:relative;}
+.cs-th b{font-size:14.5px;}.cs-th small{color:var(--sub);font-size:12.5px;}
+.cs-th .cs-nd{position:absolute;top:12px;right:12px;width:9px;height:9px;border-radius:50%;background:var(--ua-or);}
+.cs-st{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:var(--card);font:inherit;color:inherit;text-align:left;cursor:pointer;width:100%;}
+.cs-st[disabled]{opacity:.5;cursor:default;}
+.cs-st .cs-av{width:40px;height:40px;border-radius:50%;flex:0 0 40px;display:grid;place-items:center;font-weight:800;color:#fff;background:var(--ua-vio);}
+.cs-st .cs-b{flex:1;min-width:0;display:grid;gap:2px;}
+.cs-bdg{display:inline-block;font-size:10.5px;font-weight:800;border-radius:999px;padding:1px 8px;margin-left:4px;background:var(--ua-vio-soft);color:var(--ua-vio);}
+.cs-tgs{display:flex;flex-wrap:wrap;gap:4px;}.cs-tgs span{font-size:11px;font-weight:700;border-radius:999px;padding:1px 8px;background:var(--ua-vio-soft);color:var(--ua-vio);}
+.cs-chat{display:flex;flex-direction:column;gap:8px;max-height:50vh;overflow-y:auto;padding:4px 2px;margin:8px 0;}
+.cs-msg{max-width:82%;border-radius:16px;padding:9px 12px;font-size:14px;line-height:1.7;white-space:pre-wrap;word-break:break-word;}
+.cs-msg.me{align-self:flex-end;background:var(--ua-vio);color:#fff;border-bottom-right-radius:4px;}
+.cs-msg.you{align-self:flex-start;background:var(--bg,#f2f2f5);border:1px solid var(--line);border-bottom-left-radius:4px;}
+.cs-tm{font-size:10.5px;color:var(--sub);text-align:center;}
+.cs-acts{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;font-size:12.5px;}
+.cs-acts button{border:0;background:transparent;color:var(--sub);text-decoration:underline;padding:6px 2px;font:inherit;font-size:12.5px;}
+
 .ua-me{display:flex;align-items:center;gap:12px;}
 .ua-av{width:54px;height:54px;flex:none;border-radius:50%;background:var(--ua-vio-soft);color:var(--ua-vio);display:grid;place-items:center;font-size:22px;font-weight:900;}
 .ua-me b{display:block;font-size:19px;font-weight:900;}
@@ -1443,6 +1461,15 @@ body.uapp #toast{bottom:calc(96px + env(safe-area-inset-bottom, 0px));}
 .td-dots i.fu{opacity:.35;border-style:dashed;}
 .les-u{display:inline-block;font-size:11px;color:var(--ua-vio);font-weight:800;margin-bottom:2px;}
 .bt-ls{display:grid;gap:6px;margin:0 0 6px;}
+.cs-row{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:10px 12px;}
+.cs-row>div{flex:1;min-width:0;display:grid;gap:3px;}
+.cs-row .cs-tg{display:flex;flex-wrap:wrap;gap:4px;}
+.cs-row .cs-tg span{font-size:11px;font-weight:700;border-radius:999px;padding:1px 8px;background:var(--line);}
+.cs-row.off{opacity:.55;}
+.cs-row .btns{margin:0;flex:none;flex-direction:column;gap:4px;}
+.cs-pick{display:grid;gap:6px;max-height:40vh;overflow:auto;margin:6px 0 10px;}
+.cs-pick label{display:flex;gap:8px;align-items:center;font-size:14px;}
+.dv-note{border:1px solid var(--line);border-radius:14px;padding:12px 14px;font-size:13px;line-height:1.75;margin-top:12px;}
 .bt-lsr{display:flex;gap:8px;align-items:flex-start;border:1px solid var(--line);border-radius:10px;padding:8px 10px;}
 .bt-lsr>div{flex:1;min-width:0;display:grid;gap:2px;}
 .bt-lsr span{font-size:12.5px;color:var(--sub);}
@@ -3109,10 +3136,12 @@ if(gTrainerMode) document.documentElement.classList.add('trm');   // 🎓 研修
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v179';
+var APP_VER = 'v181';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v181', d: '2026/11/26', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
+  { v: 'v180', d: '2026/11/26', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v179', d: '2026/11/24', items: ['🖥 PC の「⚙ 設定 › 人と役割」を1行1名の表にしました（役割ごとの列に ✓。縦に見ると、だれが OL を受け付けているかなどがひと目で分かります）'] },
   { v: 'v178', d: '2026/11/24', items: ['🖥 「⚙ 設定」タブを PC の広い画面に合わせました（体制チェックとメニューを横に並べ、人と役割の一覧も2〜3列に）'] },
   { v: 'v177', d: '2026/11/24', items: ['🧹 名簿の「⚙ 管理メニュー」をすっきりさせました。受付管理者・研修担当・徴収なし・ユニオン管理者・リーダーの任命、管理者一覧、受付の金額、オーナー用の機能（特別カード工房・カードの裏面・ユニオンの追加・名前の変更・削除など）は「⚙ 設定」タブから使えます'] },
@@ -7651,6 +7680,7 @@ function ckMig33(list){
 /* ---------- 起動 ---------- */
 function afterLogin(){
   ckBeautyLoad().then(function(){ if(gMembersLoaded) renderRoster(); ckBtApply(); });
+  ckCsMineLoad();   // 💜 v181: 相談を受けるスタッフ
   ckRecvLoad();   // 💜 v146: 予約受付担当に任命されている DAY   // 💜 ユーザー機能の確認メンバー
   db.collection('checkinUnions').get().then(function(qs){
     gUnions = [];
@@ -8218,7 +8248,7 @@ function coreAdminsModal(un, rows, kind, opt){
     $('caSave').disabled = true;
     var cnos = bty ? ($('caNos').value || '').split(/[\s,、，]+/).map(function(x){ return x.trim().toUpperCase(); })
       .filter(function(x, i, a){ return x && a.indexOf(x) === i; }).slice(0, 300) : [];
-    var w = bty ? db.collection('checkinConfig').doc('beauty').set({ testers: arr, cardNos: cnos, by: gUser.uid, at: FV.serverTimestamp() })
+    var w = bty ? db.collection('checkinConfig').doc('beauty').set({ testers: arr, cardNos: cnos, by: gUser.uid, at: FV.serverTimestamp() }, { merge: true })
       : db.collection('checkinUnions').doc(un).set(day ? { dayStaff: arr } : lead ? { leaders: arr } : { unionAdmins: arr }, { merge: true });
     var what = day ? CK_DAY_NAME : bty ? 'ユーザー機能の確認メンバー' : lead ? 'リーダー' : 'ユニオン管理者';
     w.then(function(){
@@ -16548,7 +16578,8 @@ function ckUaMount(c, token){
     + '<section class="ua-pg" data-p="qr"><h2 class="ua-ttl ua-c">受付</h2><div id="uaQrCard"></div><p class="ua-visits" id="uaVisits"></p>'
       + '<p class="ua-qrnote">受付でこの画面を見せてください。<br>画面を明るくすると読みやすくなります。</p></section>'
     + '<section class="ua-pg" data-p="friends" data-seg="lounge"><h2 class="ua-ttl">なかま</h2><div class="ua-seg" role="tablist">'
-      + [['lounge', 'ラウンジ'], ['buddy', 'バディ'], ['invite', '招待']].map(function(x){ return '<button type="button" role="tab" data-seg="' + x[0] + '">' + x[1] + '<span class="ua-lk" hidden>🔒</span>' + (x[0] === 'lounge' ? '<i class="ua-dot" data-dot="lg" hidden></i>' : '') + '</button>'; }).join('') + '</div>'
+      + [['lounge', 'ラウンジ'], ['buddy', 'バディ'], ['invite', '招待']].map(function(x){ return '<button type="button" role="tab" data-seg="' + x[0] + '">' + x[1] + '<span class="ua-lk" hidden>🔒</span>' + (x[0] === 'lounge' ? '<i class="ua-dot" data-dot="lg" hidden></i>' : '') + '</button>'; }).join('')
+        + '<button type="button" role="tab" data-seg="cs" id="uaSegCs" hidden>相談<i class="ua-dot" data-dot="cs" hidden></i></button></div>'
       + '<div class="ua-lock" id="uaLock" hidden></div></section>'
     + '<section class="ua-pg" data-p="me"><h2 class="ua-ttl">マイページ</h2><div class="ua-me" id="uaMe"></div><div id="uaMeNw"></div></section>';
   wrap.insertBefore(app, wrap.firstChild);
@@ -16557,8 +16588,11 @@ function ckUaMount(c, token){
   mv('plan', 'mpArea');
   $('uaQrCard').appendChild($('mcTilt')); if($('mcErr')) $('uaQrCard').appendChild($('mcErr'));
   mv('friends', 'bdArea'); mv('friends', 'fiArea'); mv('friends', 'lgArea');
+  var csA = document.createElement('div'); csA.id = 'csArea'; pg('friends').appendChild(csA);   // 💜 v181: DAYスタッフに相談
   mv('me', 'pzArea');
   var phA = document.createElement('div'); phA.id = 'phArea'; pg('me').appendChild(phA);   // 💜 v174: 自分だけの写真
+  var dvA = document.createElement('div'); dvA.id = 'dvArea'; pg('me').appendChild(dvA);   // 💜 v180: この端末で相談できるか
+  if(ckCsOn(c.union)) ckBindStart(c, token);
   mv('me', 'exArea'); mv('me', 'rcptArea'); mv('me', 'mcHelp'); mv('me', 'verCard');
   var nav = document.createElement('nav'); nav.id = 'uaTabs'; nav.setAttribute('aria-label', 'メニュー');
   nav.innerHTML = ckUaTabs().map(function(t){
@@ -16712,7 +16746,7 @@ function ckUaBadges(){
   if(L && (lSeen == null || (gUa.tab === 'friends' && gUa.seg === 'lounge'))){ lSeen = ckUaSeen('lg', lmax); gSeen = ckUaSeen('lgng', ngs); }
   var nNew = ns != null && !!ns && ns !== nSeen;
   var lNew = !!L && (lmax > (+lSeen || 0) || (ngs && ngs.split(',').some(function(id){ return (',' + gSeen + ',').indexOf(',' + id + ',') < 0; })));
-  Array.prototype.forEach.call(document.querySelectorAll('.ua-dot'), function(d){ d.hidden = !(d.getAttribute('data-dot') === 'news' ? nNew : lNew); });
+  Array.prototype.forEach.call(document.querySelectorAll('.ua-dot'), function(d){ if(d.getAttribute('data-dot') === 'cs') return; d.hidden = !(d.getAttribute('data-dot') === 'news' ? nNew : lNew); });
 }
 /* 💜 v141: ホーム画面に追加するやり方（ジェッ子ちゃんが1つずつ案内する・絵つき）
    iPhone は新しい画面（下のバーの「…」→「共有」）と、前の画面（共有ボタン）の両方を案内する。Safari のボタンそのものは指せないので、絵で「このあたり」を示す */
@@ -17214,7 +17248,7 @@ function ckBtUnions(){
 }
 function ckBtApply(){
   var us = ckBtUnions(), t = document.querySelector('nav button[data-pane="pBeauty"]');
-  if(t) t.classList.toggle('hide', !us.length && !gRecvDays.length);
+  if(t) t.classList.toggle('hide', !us.length && !gRecvDays.length && !gCsMine.length);
   ['btUnionSel', 'btReload'].forEach(function(id){ var e = $(id); if(e) e.classList.toggle('hide', !us.length); });
   var lb = document.querySelector('label[for="btUnionSel"]'); if(lb) lb.classList.toggle('hide', !us.length);
   if(!us.length && gRecvDays.length){   // 💜 v146: 予約受付担当だけの人（ログインして、任命された DAY の申し込みを確かめる）
@@ -17223,11 +17257,17 @@ function ckBtApply(){
     if($('pBeauty') && $('pBeauty').classList.contains('on')) btDraw();
     return;
   }
+  if(!us.length && gCsMine.length){   // 💜 v181: 相談を受けるスタッフだけの人
+    $('btnDayStaff').classList.add('hide');
+    if(!gBt || !gBt.csOnly){ gBt = { un: gCsMine[0], csOnly: true, at: Date.now() }; }
+    if($('pBeauty') && $('pBeauty').classList.contains('on')) btDraw();
+    return;
+  }
   if(!us.length){
     if($('pBeauty') && $('pBeauty').classList.contains('on')){ var k = document.querySelector('nav button[data-pane="pKiosk"]'); if(k) k.click(); }
     return;
   }
-  if(gBt && gBt.recvOnly) gBt = null;
+  if(gBt && (gBt.recvOnly || gBt.csOnly)) gBt = null;
   if(us.indexOf(gBtUnion) < 0){ gBtUnion = us.indexOf(gUnion) >= 0 ? gUnion : us[0]; gBt = null; gBtSeg = 'ok'; }
   fillUnionSel($('btUnionSel'), gBtUnion, us);
   $('btnDayStaff').classList.toggle('hide', !isCoreAdmin(gBtUnion));
@@ -17309,6 +17349,7 @@ function btDraw(){
   var me = gBt, box = $('btBody');
   if(!box) return;
   if(me && me.recvOnly){ box.innerHTML = '<div class="bt-wrap"><div class="bt-box" id="btRq"></div></div>'; btRqDraw(); return; }   // 💜 v146: 予約受付担当は申し込みだけ
+  if(me && me.csOnly){ box.innerHTML = '<div class="bt-wrap"><div class="bt-box" id="btDm"></div><div class="bt-box" id="btCs"></div></div>'; btCsDraw(); return; }   // 💜 v181: 相談を受けるスタッフだけの人は、受信箱と自分の受付
   if(!me || me.items === null){
     box.innerHTML = me && me.err ? '<p class="bt-note">' + esc(me.err) + '</p>' : '<p style="color:var(--sub)">読み込み中…</p>';
     return;
@@ -17348,6 +17389,9 @@ function btDraw(){
     + '<div class="bt-box" id="btPz"></div>'
     + '<div class="bt-box" id="btMt"></div>'
     + '<div class="bt-box" id="btCh"></div>'
+    + '<div class="bt-box" id="btDm"></div>'
+    + '<div class="bt-box" id="btCs"></div>'
+    + '<div class="bt-box" id="btDv"></div>'
     + '<div class="bt-box" id="btLs"></div>'
     + '<div class="bt-box" id="btQe"></div>'
     + '</div>';
@@ -17358,6 +17402,8 @@ function btDraw(){
   btPzDraw();   // 💜 v144
   btMtDraw();   // 💜 v172
   btChDraw();   // 💜 v174
+  btCsDraw();   // 💜 v180
+  btDvDraw();   // 💜 v180
   btLsDraw();   // 💜 v175
   btQeDraw();   // 💜 v140
   Array.prototype.forEach.call(box.querySelectorAll('[data-go]'), function(b){
@@ -17607,6 +17653,500 @@ function btLsDraw(){
     if(!x || !window.confirm('「' + (x.t || '') + '」を消しますか？')) return;
     save(L.filter(function(_, j){ return j !== i; }), '消しました', bt);
   }; });
+}
+/* 💜 v180: 相談の準備（まず REVE で試す）・守りの土台
+   ・会員証と端末のひもづけ：ckBind/{トークン} = { uids: [匿名ログインの uid], by: 'self'｜付け替えたスタッフの uid, at }
+     最初に開いた端末がひもづく。ほかの端末で使う時は、スタッフが「端末の付け替え」で空にすると、次に開いた端末がひもづく。
+     相談（次の段）は、ひもづいた端末とログインしたスタッフだけが読めるようにする（会員証のリンクだけでは読めない）
+   ・匿名ログインは 'cardDev' という別の接続で行う。ログインしていない接続（cardAnon）と、スタッフのログインとは混ぜない。
+     ルールの signedIn() は匿名ログインを含まない（匿名の人が、ログインしたメンバーとして扱われないように）
+   ・相談を受けるスタッフ：ckCs/{ユニオン}/s/{スタッフの uid} = { name, tags, bio（60字）, off（受付を休む）, ord, by, at }
+     登録・外すのはオーナー・ユニオン管理者・DAY HOST。本人は「受付を休む」とひとことだけ変えられる */
+// 会員証の画面は、このスクリプトの読み込みの途中で描かれるので、ここの決まりは var ではなく関数にする（まだ無いと undefined になる）
+function ckCsUnions(){ return ['REVE']; }
+// 相談の画面を出すか：オーナーが「💜 Beauty」タブで決める（checkinConfig/beauty の csOpen＝全員・csNos＝試す会員番号）。gCsCfg に読んでおく
+var gCsCfg = null;
+function ckCsUi(c){
+  if(window.__ckCsUi === true) return true;
+  var g = gCsCfg; if(!g) return false;
+  c = c || (gUa && gUa.c) || {};
+  return g.open === true || (g.nos || []).map(function(x){ return String(x).toUpperCase(); }).indexOf(String(c.no || '').toUpperCase()) >= 0;
+}
+function ckCsCfgLoad(){
+  try{ var o = JSON.parse(localStorage.getItem('bci_cs_cfg') || 'null'); if(o && Date.now() - o.at < 30 * 60000){ gCsCfg = o.g; return Promise.resolve(gCsCfg); } }catch(e){}
+  return ckAnonDb().collection('checkinConfig').doc('beauty').get().then(function(s){
+    var d = s.exists ? (s.data() || {}) : {};
+    gCsCfg = { open: d.csOpen === true, nos: d.csNos || [] };
+    try{ localStorage.setItem('bci_cs_cfg', JSON.stringify({ at: Date.now(), g: gCsCfg })); }catch(e){}
+    return gCsCfg;
+  }).catch(function(){ gCsCfg = { open: false, nos: [] }; return gCsCfg; });
+}
+function ckCsTags(){ return [['skin', 'スキンケア'], ['inner', '体内ケア'], ['body', 'ボディマネジメント'], ['bust', 'バストアップ']]; }
+function ckCsOn(un){ return ckCsUnions().indexOf(un) >= 0; }
+function ckCsTagN(k){ var T = ckCsTags(); for(var i = 0; i < T.length; i++) if(T[i][0] === k) return T[i][1]; return ''; }
+var gDev = null;   // { p: Promise, auth, db, uid }
+function ckDev(){
+  if(gDev) return gDev.p;
+  gDev = {};
+  gDev.p = new Promise(function(ok, ng){
+    try{
+      var ap = (firebase.apps || []).filter(function(a){ return a.name === 'cardDev'; })[0] || firebase.initializeApp(firebaseConfig, 'cardDev');
+      gDev.auth = ap && ap.auth ? ap.auth() : firebase.auth();
+      gDev.db = ap && ap.firestore ? ap.firestore() : db;
+    }catch(e){ gDev.auth = firebase.auth(); gDev.db = db; }
+    var first = true, off = null;
+    // 前に匿名ログインした端末は、それが戻ってくるのを待つ（待たずにログインすると、開くたびに別の人になる）
+    off = gDev.auth.onAuthStateChanged(function(u){
+      if(!first) return; first = false;
+      try{ if(off) off(); }catch(e){}
+      if(u && u.isAnonymous){ gDev.uid = u.uid; ok(gDev); return; }
+      gDev.auth.signInAnonymously().then(function(r){ gDev.uid = r.user.uid; ok(gDev); }, ng);
+    });
+  });
+  gDev.p.catch(function(){ gDev = null; });
+  return gDev.p;
+}
+// 'mine'＝この端末で使える／'other'＝別の端末にひもづいている／'na'＝確かめられない（匿名ログインが使えない・電波など）
+function ckBindEnsure(token){
+  return ckDev().then(function(d){
+    var ref = d.db.collection('ckBind').doc(token), mk = function(){ return ref.set({ uids: [d.uid], by: 'self', at: FV.serverTimestamp() }).then(function(){ return 'mine'; }); };
+    return ref.get().then(function(s){
+      var u = s.exists ? (s.data().uids || []) : null;
+      if(u && u.indexOf(d.uid) >= 0) return 'mine';
+      if(!s.exists || !u.length) return mk();
+      return 'other';
+    }, function(e){ return e && e.code === 'permission-denied' ? 'other' : 'na'; });
+  }).catch(function(){ return 'na'; });
+}
+function ckBindStart(c, token){
+  Promise.all([ckBindEnsure(token), ckCsCfgLoad()]).then(function(r){
+    var st = r[0];
+    if(!gUa || gUa.token !== token) return;
+    gUa.bind = st;
+    ckCsMount();
+    var el = $('dvArea'); if(!el) return;
+    el.innerHTML = ckCsUi() && st === 'other' ? '<div class="dv-note">📱 この会員証は、別のスマホで使われています。DAYスタッフへの相談は、ひとつのスマホだけで使えます。このスマホで使う時は、会場でスタッフに「端末の付け替え」を頼んでください。</div>' : '';
+  });
+}
+/* 💜 v181: DAYスタッフに相談（DM）。まず REVE・オーナーが「出す」にした時だけ
+   ・ckDm/{相談} = { tk（会員証）, un, cno, cname, sUid, sName（相談相手）, topic, st: open|done, last: { by: 'u'|'s', t（40字）, at }, uRead, sRead, byStaff,
+     stop（お客さんが止めた）, rep（報告）, tags（スタッフが付ける悩みのタグ）, at, upAt }
+   ・ckDm/{相談}/m/{メッセージ} = { by: 'u'|'s', uid, t（1000字）, at }
+   ・読めるのは、ひもづいた端末のお客さん・相談相手のスタッフだけ（オーナーは報告があった時だけ、記録を残して＝③）
+   ・お客さんの側は、匿名ログインの接続（ckDev）で読み書きする */
+var gCs = null;   // { token, threads, staff, unsub }
+function ckTsMs(v){ if(!v) return 0; if(typeof v === 'number') return v; if(v.toMillis) return v.toMillis(); if(v.toDate) return v.toDate().getTime(); var t = Date.parse(v); return isNaN(t) ? 0 : t; }
+function ckCsAgo(ms){
+  if(!ms) return '';
+  var m = Math.round((Date.now() - ms) / 60000);
+  if(m < 1) return 'いま'; if(m < 60) return m + '分前'; if(m < 60 * 24) return Math.round(m / 60) + '時間前';
+  var d = new Date(ms); return (d.getMonth() + 1) + '/' + d.getDate();
+}
+function ckCsUnread(t){ return !!(t && t.last && t.last.by === 's' && (t.last.at || 0) > (t.uRead || 0)); }
+function ckCsMount(){
+  if(!gUa) return;
+  var on = ckCsOn(gUa.c.union) && ckCsUi(gUa.c), b = $('uaSegCs');
+  if(b) b.hidden = !on;
+  if(!on) return;
+  if(gUa.bind !== 'mine'){ ckCsDraw(); return; }
+  var tk = gUa.token;
+  ckDev().then(function(d){
+    return d.db.collection('ckDm').where('tk', '==', tk).get().then(function(qs){
+      var a = []; qs.forEach(function(x){ var t = x.data() || {}; if(t.tk !== tk) return; t.id = x.id; a.push(t); });
+      a.sort(function(x, y){ return (y.upAt || 0) - (x.upAt || 0); });
+      gCs = { token: tk, threads: a, staff: gCs && gCs.token === tk ? gCs.staff : null };
+      ckCsDraw();
+    });
+  }).catch(function(){ gCs = { token: tk, threads: [], staff: null }; ckCsDraw(); });
+}
+function ckCsDraw(){
+  var el = $('csArea'); if(!el || !gUa) return;
+  var dot = document.querySelector('.ua-dot[data-dot="cs"]');
+  if(gUa.bind === 'other'){ el.innerHTML = '<div class="dv-note">📱 この会員証は、別のスマホで使われています。相談は、ひとつのスマホだけで使えます。このスマホで使う時は、会場でスタッフに「端末の付け替え」を頼んでください。</div>'; return; }
+  if(gUa.bind !== 'mine'){ el.innerHTML = '<p class="ua-p">今は相談を使えません。電波の良い所で、開き直してください。</p>'; return; }
+  if(!gCs || gCs.token !== gUa.token){ el.innerHTML = '<p class="ua-p">読み込み中…</p>'; return; }
+  var T = gCs.threads;
+  if(dot) dot.hidden = !T.some(ckCsUnread);
+  el.innerHTML = '<div class="cs-wrap"><p class="ua-p">DAYスタッフに、1対1で相談できます。中身は、相談したスタッフだけが見ます。</p>'
+    + '<button type="button" class="primary ua-btn" id="csNew">＋ 相談する</button>'
+    + T.map(function(t, i){
+        return '<button type="button" class="cs-th" data-th="' + i + '">' + (ckCsUnread(t) ? '<i class="cs-nd" aria-label="新しい返事"></i>' : '')
+          + '<b>' + esc(t.sName || '') + ' さん' + (t.st === 'done' ? '<span class="cs-bdg">解決済み</span>' : '') + '</b>'
+          + '<small>' + esc(ckCsTagN(t.topic) || 'その他') + ' ・ ' + esc(ckCsAgo(t.last && t.last.at)) + '</small>'
+          + '<small>' + esc((t.last && t.last.t) || '') + '</small></button>';
+      }).join('') + '</div>';
+  $('csNew').onclick = ckCsPick;
+  Array.prototype.forEach.call(el.querySelectorAll('[data-th]'), function(b){ b.onclick = function(){ ckCsOpen(T[+b.getAttribute('data-th')]); }; });
+}
+// 相談相手を選ぶ。悩みに合いそうな人（コース）と、DAY で担当した人に印
+function ckCsStaffGet(un){
+  if(gCs && gCs.staff) return Promise.resolve(gCs.staff);
+  return ckAnonDb().collection('ckCs').doc(un).collection('s').get().then(function(qs){
+    var a = []; qs.forEach(function(d){ var x = d.data() || {}; x.uid = d.id; a.push(x); });
+    a.sort(function(x, y){ return (x.ord || 0) - (y.ord || 0); });
+    if(gCs) gCs.staff = a; return a;
+  });
+}
+function ckCsPick(){
+  var c = gUa.c, plan = gMp && gMp.token === gUa.token ? gMp.plan : null;
+  var want = ({ yuragi: 'skin', diet: 'body', inner: 'inner' })[plan && plan.course] || '';
+  var met = {}; Object.keys(c).forEach(function(k){ if(k.indexOf('exp_') === 0 && c[k] && c[k].staff) met[btNameKey(c[k].staff)] = 1; });
+  ckCsStaffGet(c.union).then(function(L){
+    var flt = '';
+    var draw = function(){
+      var A = L.filter(function(x){ return !flt || (x.tags || []).indexOf(flt) >= 0; });
+      A = A.map(function(x){ return { x: x, met: !!met[btNameKey(x.name)], rec: !!want && (x.tags || []).indexOf(want) >= 0 }; })
+        .sort(function(p, q){ return (p.x.off - q.x.off) || (q.met - p.met) || (q.rec - p.rec) || ((p.x.ord || 0) - (q.x.ord || 0)); });
+      modal('<h2>だれに相談する？</h2><div class="ulg-chips" id="csFlt"><button type="button" data-v=""' + (!flt ? ' class="on"' : '') + '>すべて</button>'
+        + ckCsTags().map(function(t){ return '<button type="button" data-v="' + t[0] + '"' + (flt === t[0] ? ' class="on"' : '') + '>' + t[1] + '</button>'; }).join('') + '</div>'
+        + '<div class="cs-wrap">' + (A.length ? A.map(function(r, i){ var x = r.x;
+            return '<button type="button" class="cs-st" data-st="' + i + '"' + (x.off ? ' disabled' : '') + '><span class="cs-av">' + esc(String(x.name || '?').replace(/^見本\s*/, '').charAt(0)) + '</span><span class="cs-b">'
+              + '<b>' + esc(x.name || '') + (r.met ? '<span class="cs-bdg">DAYで担当した人</span>' : r.rec ? '<span class="cs-bdg">おすすめ</span>' : '') + '</b>'
+              + '<span class="cs-tgs">' + (x.tags || []).map(function(t){ return '<span>' + esc(ckCsTagN(t)) + '</span>'; }).join('') + '</span>'
+              + '<small class="muted">' + esc(x.off ? '今は受付を休んでいます' : (x.bio || '')) + '</small></span></button>';
+          }).join('') : '<p class="ua-p">この分野のスタッフは、まだいません。</p>') + '</div>'
+        + '<div class="btns"><button id="csPx">閉じる</button></div>', true);
+      $('csPx').onclick = closeModal;
+      $('csFlt').onclick = function(e){ var b = e.target.closest ? e.target.closest('button[data-v]') : null; if(!b) return; flt = b.getAttribute('data-v'); draw(); };
+      Array.prototype.forEach.call(document.querySelectorAll('[data-st]'), function(b){ b.onclick = function(){ ckCsCompose(A[+b.getAttribute('data-st')].x); }; });
+    };
+    draw();
+  }).catch(function(){ toast('スタッフを読めませんでした。電波の良い所で、もう一度押してください'); });
+}
+function ckCsCompose(st){
+  var c = gUa.c, tk = gUa.token, topic = (st.tags || [])[0] || 'other';
+  modal('<h2>' + esc(st.name) + ' さんに相談</h2>'
+    + '<label>なんの相談？</label><div class="ulg-chips" id="csTp">' + (st.tags || []).concat(['other']).map(function(t){ return '<button type="button" data-v="' + t + '"' + (t === topic ? ' class="on"' : '') + '>' + esc(t === 'other' ? 'その他' : ckCsTagN(t)) + '</button>'; }).join('') + '</div>'
+    + '<label for="csTx" style="margin-top:10px;">相談（1000文字まで）</label><textarea id="csTx" rows="5" maxlength="1000" placeholder="例: 冬になると、夜に保湿しても朝つっぱります。順番や量を変えた方がいいですか？"></textarea>'
+    + '<p class="bt-note">相談の中身は、' + esc(st.name) + ' さんだけが見ます。</p>'
+    + '<div class="btns"><button id="csCx">もどる</button><button class="primary" id="csGo">送る</button></div>', true);
+  $('csTp').onclick = function(e){ var b = e.target.closest ? e.target.closest('button[data-v]') : null; if(!b) return; topic = b.getAttribute('data-v'); [].forEach.call($('csTp').querySelectorAll('button'), function(x){ x.classList.toggle('on', x === b); }); };
+  $('csCx').onclick = ckCsPick;
+  $('csGo').onclick = function(){
+    var txt = $('csTx').value.trim();
+    if(!txt){ toast('相談を書いてください'); return; }
+    $('csGo').disabled = true;
+    ckDev().then(function(d){
+      var ref = d.db.collection('ckDm').doc(), now = Date.now();
+      var th = { tk: tk, un: c.union, cno: String(c.no || ''), cname: String(c.name || '').slice(0, 40), sUid: st.uid, sName: String(st.name || '').slice(0, 40), topic: topic, st: 'open',
+        last: { by: 'u', t: txt.slice(0, 40), at: now }, uRead: now, sRead: 0, byStaff: false, at: FV.serverTimestamp(), upAt: now };
+      var b = d.db.batch();
+      b.set(ref, th); b.set(ref.collection('m').doc(), { by: 'u', uid: d.uid, t: txt.slice(0, 1000), at: FV.serverTimestamp() });
+      return b.commit().then(function(){ th.id = ref.id; gCs.threads.unshift(th); ckCsDraw(); ckCsOpen(th); toast('送りました。返事が来たら、ここに出ます'); });
+    }).catch(function(e){ if($('csGo')) $('csGo').disabled = false; toast(permMsg(e, '送れませんでした。電波の良い所で、もう一度押してください')); });
+  };
+}
+// やりとり（開いている間は、新しいメッセージがすぐ出る）
+function ckCsOpen(th){
+  if(gCs && gCs.unsub){ try{ gCs.unsub(); }catch(e){} gCs.unsub = null; }
+  modal('<h2>' + esc(th.sName || '') + ' さん</h2><p class="bt-note">' + esc(ckCsTagN(th.topic) || 'その他') + (th.st === 'done' ? ' ・ 解決済み' : '') + '</p>'
+    + '<div class="cs-chat" id="csChat"><p class="cs-tm">読み込み中…</p></div>'
+    + (th.stop ? '<p class="bt-note">このスタッフを止めています。</p>' : '<label for="csRe" class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);">メッセージ</label><textarea id="csRe" rows="2" maxlength="1000" placeholder="メッセージを書く"></textarea>')
+    + '<div class="btns"><button id="csCl">閉じる</button>' + (th.stop ? '' : '<button class="primary" id="csSend">送る</button>') + '</div>'
+    + '<div class="cs-acts">' + (th.st !== 'done' ? '<button type="button" id="csDone">解決した</button>' : '') + (th.stop ? '' : '<button type="button" id="csStop">このスタッフを止める</button>') + (th.rep ? '' : '<button type="button" id="csRep">報告</button>') + '</div>', true);
+  var close = function(){ if(gCs && gCs.unsub){ try{ gCs.unsub(); }catch(e){} gCs.unsub = null; } closeModal(); ckCsDraw(); };
+  $('csCl').onclick = close;
+  ckDev().then(function(d){
+    var ref = d.db.collection('ckDm').doc(th.id), now = Date.now();
+    gCs.unsub = ref.collection('m').orderBy('at').onSnapshot(function(qs){
+      var box = $('csChat'); if(!box) return;
+      var a = []; qs.forEach(function(x){ a.push(x.data() || {}); });
+      a.sort(function(p, q){ return ckTsMs(p.at) - ckTsMs(q.at); });
+      box.innerHTML = a.map(function(m){ return '<div class="cs-msg ' + (m.by === 'u' ? 'me' : 'you') + '">' + esc(m.t || '') + '</div>'; }).join('') || '<p class="cs-tm">まだメッセージはありません</p>';
+      box.scrollTop = box.scrollHeight;
+    }, function(){});
+    if(ckCsUnread(th) || !th.uRead){ th.uRead = now; ref.update({ uRead: now }).catch(function(){}); }
+    if($('csSend')) $('csSend').onclick = function(){
+      var txt = $('csRe').value.trim(); if(!txt) return;
+      var t2 = Date.now(), b = d.db.batch();
+      b.set(ref.collection('m').doc(), { by: 'u', uid: d.uid, t: txt.slice(0, 1000), at: FV.serverTimestamp() });
+      var up = { last: { by: 'u', t: txt.slice(0, 40), at: t2 }, uRead: t2, upAt: t2, st: 'open' };
+      b.update(ref, up);
+      $('csSend').disabled = true;
+      b.commit().then(function(){ Object.keys(up).forEach(function(k){ th[k] = up[k]; }); $('csRe').value = ''; $('csSend').disabled = false; })
+        .catch(function(e){ $('csSend').disabled = false; toast(permMsg(e, '送れませんでした')); });
+    };
+    if($('csDone')) $('csDone').onclick = function(){ var t2 = Date.now(); ref.update({ st: 'done', upAt: t2 }).then(function(){ th.st = 'done'; th.upAt = t2; toast('解決にしました'); close(); }).catch(function(e){ toast(permMsg(e, '変えられませんでした')); }); };
+    if($('csStop')) $('csStop').onclick = function(){
+      if(!window.confirm(th.sName + ' さんからのメッセージを止めますか？\nこのスタッフからは、もう届かなくなります。')) return;
+      var b = d.db.batch(), t2 = Date.now();
+      b.update(ref, { stop: true, upAt: t2 }); b.set(d.db.collection('ckDmStop').doc(th.tk + '_' + th.sUid), { at: FV.serverTimestamp() });
+      b.commit().then(function(){ th.stop = true; toast('止めました'); close(); }).catch(function(e){ toast(permMsg(e, '止められませんでした')); });
+    };
+    if($('csRep')) $('csRep').onclick = function(){
+      if(!window.confirm('このやりとりを、運営者に報告しますか？\n運営者が、記録を残して中身を確かめます。')) return;
+      var t2 = Date.now();
+      ref.update({ rep: { at: t2 }, upAt: t2 }).then(function(){ th.rep = { at: t2 }; toast('報告しました'); close(); }).catch(function(e){ toast(permMsg(e, '報告できませんでした')); });
+    };
+  }).catch(function(){ var box = $('csChat'); if(box) box.innerHTML = '<p class="cs-tm">読めませんでした。電波の良い所で、開き直してください。</p>'; });
+}
+// ── スタッフの画面：相談の受信箱（自分あての相談だけ）
+function btDmDraw(){
+  var box = $('btDm'), me = gBt;
+  if(!box || !me) return;
+  var mine = ckCsOn(me.un) && gUser && me.cs && me.cs.some(function(x){ return x.uid === gUser.uid; });
+  if(!mine){ box.classList.add('hide'); box.innerHTML = ''; return; }
+  box.classList.remove('hide');
+  if(!me.dmSub){
+    me.dm = null;
+    me.dmSub = db.collection('ckDm').where('sUid', '==', gUser.uid).onSnapshot(function(qs){
+      if(gBt !== me) return;
+      var a = []; qs.forEach(function(d){ var t = d.data() || {}; if(t.sUid !== gUser.uid || t.un !== me.un) return; t.id = d.id; a.push(t); });
+      a.sort(function(x, y){ return (y.upAt || 0) - (x.upAt || 0); });
+      me.dm = a; btDmDraw();
+    }, function(e){ if(gBt === me){ me.dm = []; me.dmErr = permMsg(e, '読めませんでした'); btDmDraw(); } });
+  }
+  var seg = me.dmSeg || 'todo', A = me.dm;
+  var grp = { todo: function(t){ return t.st !== 'done' && t.last && t.last.by === 'u'; }, wait: function(t){ return t.st !== 'done' && !(t.last && t.last.by === 'u'); }, done: function(t){ return t.st === 'done'; } };
+  var n = function(k){ return A ? A.filter(grp[k]).length : 0; };
+  box.innerHTML = '<h3>💬 相談の受信箱' + hq('あなたあての相談です。中身は、あなたと相談したお客さんだけが見ます。効果の言い切り（「治る」「効く」など）と、病気への意見は言わないでください。病気のことは、お医者さんへの相談をすすめてください。') + '</h3>'
+    + (me.dmErr ? '<p class="bt-note">' + esc(me.dmErr) + '</p>' : '')
+    + '<div class="rkseg" role="tablist">' + [['todo', '未返信'], ['wait', '返事待ち'], ['done', '解決済み']].map(function(g){ return '<button type="button" data-dmseg="' + g[0] + '"' + (g[0] === seg ? ' class="on"' : '') + '>' + g[1] + (A ? '（' + n(g[0]) + '）' : '') + '</button>'; }).join('') + '</div>'
+    + (A === null ? '<p class="bt-note">読み込み中…</p>' : (A.filter(grp[seg]).map(function(t){
+        return '<div class="cs-row"><div><b>' + esc(t.cname || '') + ' さん</b><small class="bt-note">' + esc(ckCsTagN(t.topic) || 'その他') + ' ・ ' + esc(ckCsAgo(t.last && t.last.at)) + (t.byStaff ? ' ・ こちらから送った' : '') + (t.stop ? ' ・ 止められています' : '') + '</small>'
+          + '<small>' + esc((t.last && t.last.t) || '') + '</small></div><div class="btns"><button type="button" data-dm="' + t.id + '">開く</button></div></div>';
+      }).join('') || '<p class="bt-note">ありません。</p>'))
+    + '<div class="btns" style="justify-content:flex-start;"><button type="button" class="ghost" id="btDmNew">お客さんに先に送る</button></div>';
+  Array.prototype.forEach.call(box.querySelectorAll('[data-dmseg]'), function(b){ b.onclick = function(){ me.dmSeg = b.getAttribute('data-dmseg'); btDmDraw(); }; });
+  Array.prototype.forEach.call(box.querySelectorAll('[data-dm]'), function(b){ b.onclick = function(){ btDmOpen((me.dm || []).filter(function(t){ return t.id === b.getAttribute('data-dm'); })[0]); }; });
+  $('btDmNew').onclick = btDmStart;
+}
+function btDmWarn(txt){
+  var ws = CK_LG_WARN.filter(function(w){ return txt.indexOf(w) >= 0; });
+  return !ws.length || window.confirm('効果をうたう言葉（' + ws.join('・') + '）が入っています。\n言い切っていないか確かめてください。このまま送りますか？');
+}
+function btDmOpen(th){
+  if(!th) return;
+  var me = gBt, ref = db.collection('ckDm').doc(th.id);
+  if(me.dmMsgUnsub){ try{ me.dmMsgUnsub(); }catch(e){} }
+  modal('<h2>' + esc(th.cname || '') + ' さん</h2><p class="bt-note">' + esc(ckCsTagN(th.topic) || 'その他') + (th.st === 'done' ? ' ・ 解決済み' : '') + (th.stop ? ' ・ このお客さんに止められています' : '') + '</p>'
+    + '<div class="cs-chat" id="dmChat"><p class="cs-tm">読み込み中…</p></div>'
+    + (th.stop ? '' : '<label for="dmRe">返事</label><textarea id="dmRe" rows="3" maxlength="1000"></textarea>')
+    + '<p class="bt-note">⚠ 「治る」「効く」などの言葉は使わないでください。病気のことは、お医者さんへの相談をすすめてください。</p>'
+    + '<label for="dmTags">悩みのタグ（、で区切る・お客さんには見えません）</label><input type="text" id="dmTags" maxlength="60" value="' + esc((th.tags || []).join('、')) + '" placeholder="例: 乾燥、冬">'
+    + '<div class="btns" style="flex-wrap:wrap;"><button id="dmX">閉じる</button>' + (th.st !== 'done' ? '<button id="dmDone" class="ghost">解決にする</button>' : '') + (th.stop ? '' : '<button id="dmHand" class="ghost">ほかのスタッフへ</button><button class="primary" id="dmSend">送る</button>') + '</div>', true);
+  var close = function(){ if(me.dmMsgUnsub){ try{ me.dmMsgUnsub(); }catch(e){} me.dmMsgUnsub = null; } closeModal(); };
+  var tagsNow = function(){ return $('dmTags').value.split(/[、,，\s]+/).map(function(x){ return x.trim().slice(0, 20); }).filter(Boolean).slice(0, 8); };
+  $('dmX').onclick = function(){ var tg = tagsNow(); if(tg.join() !== (th.tags || []).join()){ ref.update({ tags: tg }).then(function(){ th.tags = tg; }).catch(function(){}); } close(); };
+  me.dmMsgUnsub = ref.collection('m').orderBy('at').onSnapshot(function(qs){
+    var box = $('dmChat'); if(!box) return;
+    var a = []; qs.forEach(function(x){ a.push(x.data() || {}); });
+    a.sort(function(p, q){ return ckTsMs(p.at) - ckTsMs(q.at); });
+    box.innerHTML = a.map(function(m){ return '<div class="cs-msg ' + (m.by === 's' ? 'me' : 'you') + '">' + esc(m.t || '') + '</div>'; }).join('') || '<p class="cs-tm">まだメッセージはありません</p>';
+    box.scrollTop = box.scrollHeight;
+  }, function(){});
+  var now = Date.now();
+  if(!th.sRead || (th.last && th.last.by === 'u' && (th.last.at || 0) > (th.sRead || 0))){ th.sRead = now; ref.update({ sRead: now }).catch(function(){}); }
+  if($('dmSend')) $('dmSend').onclick = function(){
+    var txt = $('dmRe').value.trim(); if(!txt) return;
+    if(!btDmWarn(txt)) return;
+    var t2 = Date.now(), b = db.batch(), up = { last: { by: 's', t: txt.slice(0, 40), at: t2 }, sRead: t2, upAt: t2, tags: tagsNow() };
+    b.set(ref.collection('m').doc(), { by: 's', uid: gUser.uid, t: txt.slice(0, 1000), at: FV.serverTimestamp() });
+    b.update(ref, up);
+    $('dmSend').disabled = true;
+    b.commit().then(function(){ Object.keys(up).forEach(function(k){ th[k] = up[k]; }); $('dmRe').value = ''; $('dmSend').disabled = false; toast('送りました'); })
+      .catch(function(e){ $('dmSend').disabled = false; toast(permMsg(e, '送れませんでした')); });
+  };
+  if($('dmDone')) $('dmDone').onclick = function(){ var t2 = Date.now(); ref.update({ st: 'done', upAt: t2, tags: tagsNow() }).then(function(){ th.st = 'done'; toast('解決にしました'); close(); }).catch(function(e){ toast(permMsg(e, '変えられませんでした')); }); };
+  if($('dmHand')) $('dmHand').onclick = function(){
+    var others = (me.cs || []).filter(function(x){ return x.uid !== gUser.uid && !x.off; });
+    if(!others.length){ toast('引き継げるスタッフがいません'); return; }
+    modal('<h2>ほかのスタッフへ</h2><p class="bt-note">お客さんの了解をもらってから引き継いでください。引き継ぐと、このやりとりはあなたからは見えなくなります。</p>'
+      + '<div class="cs-pick" id="dmTo">' + others.map(function(x, i){ return '<label><input type="radio" name="dmTo" value="' + i + '"> ' + esc(x.name) + '（' + esc((x.tags || []).map(ckCsTagN).join('・')) + '）</label>'; }).join('') + '</div>'
+      + '<div class="btns"><button id="dmHx">もどる</button><button class="primary" id="dmHgo">引き継ぐ</button></div>', true);
+    $('dmHx').onclick = function(){ btDmOpen(th); };
+    $('dmHgo').onclick = function(){
+      var r = document.querySelector('#dmTo input:checked'); if(!r){ toast('だれかを選んでください'); return; }
+      var to = others[+r.value], t2 = Date.now(), b = db.batch(), msg = '（' + to.name + ' さんに引き継ぎました。ここからは ' + to.name + ' さんが返事をします）';
+      b.set(ref.collection('m').doc(), { by: 's', uid: gUser.uid, t: msg, at: FV.serverTimestamp() });
+      b.update(ref, { sUid: to.uid, sName: String(to.name).slice(0, 40), last: { by: 's', t: msg.slice(0, 40), at: t2 }, upAt: t2 });
+      $('dmHgo').disabled = true;
+      b.commit().then(function(){ toast(to.name + ' さんに引き継ぎました'); close(); }).catch(function(e){ $('dmHgo').disabled = false; toast(permMsg(e, '引き継げませんでした')); });
+    };
+  };
+}
+// スタッフから先に送る（基本は送らない。1人のお客さんに月1回まで・止められていたら送れない）
+function btDmStart(){
+  var me = gBt;
+  modal('<h2>お客さんに先に送る</h2><p class="bt-note">基本は、お客さんからの相談を待ちます。先に送れるのは、1人のお客さんに月1回までです（止められている時は送れません）。</p>'
+    + '<div style="display:flex;gap:6px;"><input type="text" id="dmQ" maxlength="20" placeholder="お客さんの名前" style="flex:1;min-width:0;"><button type="button" id="dmQgo">探す</button></div><div id="dmQl"></div>'
+    + '<div class="btns"><button id="dmSx">閉じる</button></div>', true);
+  $('dmSx').onclick = closeModal;
+  var go = function(){
+    var q = $('dmQ').value.replace(/[\s　]/g, ''); if(!q){ toast('名前を入れてください'); return; }
+    (me.dvUsers ? Promise.resolve(me.dvUsers) : db.collection('checkinUsers').where('union', '==', me.un).get().then(function(qs){
+      var a = []; qs.forEach(function(d){ var x = d.data() || {}; if(x.union === me.un && x.cardToken && x.active !== false) a.push({ name: x.name || '', t: x.cardToken, no: d.id }); }); me.dvUsers = a; return a;
+    })).then(function(a){
+      var hit = a.filter(function(u){ return String(u.name).replace(/[\s　]/g, '').indexOf(q) >= 0; }).slice(0, 10);
+      $('dmQl').innerHTML = hit.length ? '<div class="bt-ls" style="margin-top:8px;">' + hit.map(function(u, i){ return '<div class="cs-row"><div><b>' + esc(u.name) + '</b></div><div class="btns"><button type="button" data-dq="' + i + '">選ぶ</button></div></div>'; }).join('') + '</div>' : '<p class="bt-note">見つかりません。</p>';
+      Array.prototype.forEach.call($('dmQl').querySelectorAll('[data-dq]'), function(b){ b.onclick = function(){ btDmFirst(hit[+b.getAttribute('data-dq')]); }; });
+    }).catch(function(e){ toast(permMsg(e, '読めませんでした')); });
+  };
+  $('dmQgo').onclick = go;
+}
+function btDmFirst(u){
+  var me = gBt, my = (me.cs || []).filter(function(x){ return x.uid === gUser.uid; })[0] || {};
+  modal('<h2>' + esc(u.name) + ' さんに送る</h2>'
+    + '<label>なんの話？</label><div class="ulg-chips" id="dmTp">' + (my.tags || []).concat(['other']).map(function(t, i){ return '<button type="button" data-v="' + t + '"' + (i === 0 ? ' class="on"' : '') + '>' + esc(t === 'other' ? 'その他' : ckCsTagN(t)) + '</button>'; }).join('') + '</div>'
+    + '<label for="dmFt" style="margin-top:10px;">メッセージ（1000文字まで）</label><textarea id="dmFt" rows="4" maxlength="1000" placeholder="例: この前の DAY ではありがとうございました。その後、乾燥はどうですか？"></textarea>'
+    + '<div class="btns"><button id="dmFx">もどる</button><button class="primary" id="dmFgo">送る</button></div>', true);
+  var topic = (my.tags || [])[0] || 'other';
+  $('dmTp').onclick = function(e){ var b = e.target.closest ? e.target.closest('button[data-v]') : null; if(!b) return; topic = b.getAttribute('data-v'); [].forEach.call($('dmTp').querySelectorAll('button'), function(x){ x.classList.toggle('on', x === b); }); };
+  $('dmFx').onclick = btDmStart;
+  $('dmFgo').onclick = function(){
+    var txt = $('dmFt').value.trim(); if(!txt){ toast('メッセージを書いてください'); return; }
+    if(!window.confirm(u.name + ' さんからは、まだ相談がありません。先に送りますか？\n（1人のお客さんに月1回まで）')) return;
+    if(!btDmWarn(txt)) return;
+    var ref = db.collection('ckDm').doc(), now = Date.now(), d = new Date(), cap = u.t + '_' + gUser.uid + '_' + d.getUTCFullYear() + '_' + (d.getUTCMonth() + 1), b = db.batch();
+    b.set(ref, { tk: u.t, un: me.un, cno: String(u.no || ''), cname: String(u.name || '').slice(0, 40), sUid: gUser.uid, sName: String(my.name || (gProf && gProf.name) || '').slice(0, 40), topic: topic, st: 'open',
+      last: { by: 's', t: txt.slice(0, 40), at: now }, uRead: 0, sRead: now, byStaff: true, at: FV.serverTimestamp(), upAt: now });
+    b.set(ref.collection('m').doc(), { by: 's', uid: gUser.uid, t: txt.slice(0, 1000), at: FV.serverTimestamp() });
+    b.set(db.collection('ckDmCap').doc(cap), { by: gUser.uid, at: FV.serverTimestamp() });
+    $('dmFgo').disabled = true;
+    b.commit().then(function(){ toast('送りました'); closeModal(); })
+      .catch(function(e){ $('dmFgo').disabled = false; toast(permMsg(e, '送れませんでした（今月はもう送っている・止められている、のどちらかかもしれません）')); });
+  };
+}
+// オーナー：お客さんの画面に「相談」を出すか（REVE の全員／試す会員番号だけ）
+function btCsCfgHtml(){
+  if(!isOwner()) return '';
+  var g = gCsCfg || { open: false, nos: [] };
+  return '<div class="cs-row" style="margin-top:10px;"><div><b>お客さんの画面に「相談」を出す（オーナー）</b>'
+    + '<label style="display:flex;gap:8px;align-items:center;font-size:14px;"><input type="checkbox" id="csOpen"' + (g.open ? ' checked' : '') + '> ' + esc(ckCsUnions().join('・')) + ' の全員に出す</label>'
+    + '<label for="csNos" style="font-size:13px;">試す会員番号だけに出す（、で区切る）</label><input type="text" id="csNos" value="' + esc((g.nos || []).join(', ')) + '" placeholder="例: u1762…">'
+    + '<div class="btns" style="justify-content:flex-start;margin:6px 0 0;"><button type="button" id="csCfgGo">保存</button></div></div></div>';
+}
+function btCsCfgBind(){
+  if(!$('csCfgGo')) return;
+  $('csCfgGo').onclick = function(){
+    var d = { csOpen: !!$('csOpen').checked, csNos: $('csNos').value.split(/[、,，\s]+/).map(function(x){ return x.trim(); }).filter(Boolean).slice(0, 100), by: gUser.uid, at: FV.serverTimestamp() };
+    db.collection('checkinConfig').doc('beauty').set(d, { merge: true }).then(function(){
+      gCsCfg = { open: d.csOpen, nos: d.csNos }; try{ localStorage.removeItem('bci_cs_cfg'); }catch(e){}
+      toast('保存しました。お客さんのアプリには30分ほどで出ます');
+    }).catch(function(e){ toast(permMsg(e, '保存できませんでした。ルールの反映を確認してください')); });
+  };
+}
+// 自分が相談を受けるスタッフになっているユニオン（DAY HOST・管理者でない人も「💜 Beauty」タブで受信箱を使う）
+var gCsMine = [];
+function ckCsMineLoad(){
+  gCsMine = [];
+  if(!gUser) return Promise.resolve();
+  return Promise.all(ckCsUnions().map(function(un){
+    return db.collection('ckCs').doc(un).collection('s').doc(gUser.uid).get().then(function(s){ if(s.exists) gCsMine.push(un); }, function(){});
+  })).then(function(){ ckBtApply(); });
+}
+// ── スタッフの画面（「💜 Beauty」タブ）：相談を受けるスタッフ
+function btCsCan(un){ return isCoreAdmin(un) || isDayStaff(un); }
+function btCsDraw(){
+  var box = $('btCs'), me = gBt;
+  if(!box || !me) return;
+  if(!ckCsOn(me.un)){ box.classList.add('hide'); box.innerHTML = ''; return; }
+  box.classList.remove('hide');
+  if(me.cs === undefined){
+    me.cs = null; box.innerHTML = '<h3>💬 相談を受けるスタッフ</h3><p class="bt-note">読み込み中…</p>';
+    db.collection('ckCs').doc(me.un).collection('s').get().then(function(qs){
+      if(gBt !== me) return;
+      var a = []; qs.forEach(function(d){ var x = d.data() || {}; x.uid = d.id; a.push(x); });
+      a.sort(function(x, y){ return (x.ord || 0) - (y.ord || 0); });
+      me.cs = a; btCsDraw(); btDmDraw();
+    }).catch(function(){ if(gBt === me){ me.cs = []; btCsDraw(); btDmDraw(); } });
+    return;
+  }
+  if(me.cs === null) return;
+  var L = me.cs, can = btCsCan(me.un);
+  box.innerHTML = '<h3>💬 相談を受けるスタッフ' + hq('お客さんのアプリの「相談」に、この順で出ます。得意分野で選んでもらいます。相談には受付アプリにログインして返事をするので、NAVIGATOR のアカウントがある人を選んでください。「受付を休む」にすると、お客さんの画面に「今は受付を休んでいます」と出ます。') + '</h3>'
+    + (L.length ? '<div class="bt-ls">' + L.map(function(x, i){
+        var mine = gUser && x.uid === gUser.uid;
+        return '<div class="cs-row' + (x.off ? ' off' : '') + '"><div><b>' + esc(x.name || '') + (x.off ? '（受付を休んでいます）' : '') + '</b>'
+          + '<div class="cs-tg">' + (x.tags || []).map(function(t){ return '<span>' + esc(ckCsTagN(t)) + '</span>'; }).join('') + '</div>'
+          + (x.bio ? '<small class="bt-note">' + esc(x.bio) + '</small>' : '') + '</div><div class="btns">'
+          + (mine ? '<button type="button" data-csoff="' + i + '">' + (x.off ? '受付を再開' : '受付を休む') + '</button>' : '')
+          + (can ? '<button type="button" data-csed="' + i + '">直す</button><button type="button" class="danger ghost" data-csdel="' + i + '">外す</button>' : '') + '</div></div>';
+      }).join('') + '</div>' : '<p class="bt-note">まだいません。</p>')
+    + (can ? '<div class="btns" style="justify-content:flex-start;"><button type="button" class="primary" id="btCsAdd">＋ スタッフを足す</button></div>' : '') + btCsCfgHtml();
+  btCsCfgBind();
+  if(gCsCfg === null && isOwner()) ckCsCfgLoad().then(function(){ if(gBt === me) btCsDraw(); });
+  if($('btCsAdd')) $('btCsAdd').onclick = function(){ btCsEdit(null); };
+  Array.prototype.forEach.call(box.querySelectorAll('[data-csed]'), function(b){ b.onclick = function(){ btCsEdit(L[+b.getAttribute('data-csed')]); }; });
+  Array.prototype.forEach.call(box.querySelectorAll('[data-csdel]'), function(b){ b.onclick = function(){
+    var x = L[+b.getAttribute('data-csdel')];
+    if(!window.confirm('「' + x.name + '」さんを、相談を受けるスタッフから外しますか？')) return;
+    db.collection('ckCs').doc(me.un).collection('s').doc(x.uid)['delete']().then(function(){ me.cs = L.filter(function(y){ return y !== x; }); toast('外しました'); btCsDraw(); })
+      .catch(function(e){ toast(permMsg(e, '外せませんでした')); });
+  }; });
+  Array.prototype.forEach.call(box.querySelectorAll('[data-csoff]'), function(b){ b.onclick = function(){
+    var x = L[+b.getAttribute('data-csoff')], d = { name: x.name, tags: x.tags || [], bio: x.bio || '', off: !x.off, ord: x.ord || 0, by: gUser.uid, at: FV.serverTimestamp() };
+    b.disabled = true;
+    db.collection('ckCs').doc(me.un).collection('s').doc(x.uid).set(d).then(function(){ x.off = d.off; toast(d.off ? '受付を休みにしました' : '受付を再開しました'); btCsDraw(); })
+      .catch(function(e){ b.disabled = false; toast(permMsg(e, '変えられませんでした')); });
+  }; });
+}
+// 足す・直す。足す時は、このユニオンの NAVIGATOR のアカウントから選ぶ
+function btCsEdit(x){
+  var me = gBt, un = me.un, tags = x ? (x.tags || []).slice() : [];
+  var draw = function(users){
+    var sel = x ? '<p><b>' + esc(x.name) + '</b></p>'
+      : (users.length ? '<label>だれ？</label><div class="cs-pick" id="csWho">' + users.map(function(u, i){ return '<label><input type="radio" name="csWho" value="' + i + '"> ' + esc(u.name) + '</label>'; }).join('') + '</div>'
+        : '<p class="bt-note">足せる人がいません（このユニオンの NAVIGATOR のアカウントがある人から選びます）。</p>');
+    modal('<h2>' + (x ? '💬 スタッフを直す' : '💬 相談を受けるスタッフを足す') + '</h2>' + sel
+      + '<label>得意分野（いくつでも）</label><div class="ulg-chips" id="csTags">' + ckCsTags().map(function(t){ return '<button type="button" data-v="' + t[0] + '"' + (tags.indexOf(t[0]) >= 0 ? ' class="on"' : '') + '>' + t[1] + '</button>'; }).join('') + '</div>'
+      + '<label for="csBio" style="margin-top:10px;">ひとこと（60文字まで・お客さんに見えます）</label><input type="text" id="csBio" maxlength="60" value="' + esc(x ? x.bio || '' : '') + '" placeholder="例: 乾燥肌のケアならおまかせください">'
+      + '<div class="btns"><button id="csX">キャンセル</button><button class="primary" id="csGo">保存</button></div>', true);
+    $('csTags').onclick = function(e){ var b = e.target.closest ? e.target.closest('button[data-v]') : null; if(!b) return; var v = b.getAttribute('data-v'), i = tags.indexOf(v); if(i >= 0) tags.splice(i, 1); else tags.push(v); b.classList.toggle('on', i < 0); };
+    $('csX').onclick = closeModal;
+    $('csGo').onclick = function(){
+      var who = x || null;
+      if(!who){ var r = document.querySelector('#csWho input:checked'); if(!r){ toast('だれかを選んでください'); return; } who = users[+r.value]; }
+      if(!tags.length){ toast('得意分野を1つ以上選んでください'); return; }
+      var bio = $('csBio').value.replace(/\s+/g, ' ').trim().slice(0, 60);
+      var ws = CK_LG_WARN.filter(function(w){ return bio.indexOf(w) >= 0; });
+      if(ws.length){ toast('効果をうたう言葉（' + ws.join('・') + '）は使えません'); return; }
+      var d = { name: String(who.name || '').slice(0, 40), tags: ckCsTags().map(function(t){ return t[0]; }).filter(function(k){ return tags.indexOf(k) >= 0; }), bio: bio,
+        off: x ? !!x.off : false, ord: x ? (x.ord || 0) : (me.cs.length ? Math.max.apply(null, me.cs.map(function(y){ return y.ord || 0; })) + 1 : 1), by: gUser.uid, at: FV.serverTimestamp() };
+      $('csGo').disabled = true;
+      db.collection('ckCs').doc(un).collection('s').doc(who.uid).set(d).then(function(){
+        d.uid = who.uid; if(x){ Object.keys(d).forEach(function(k){ x[k] = d[k]; }); } else me.cs.push(d);
+        closeModal(); toast(x ? '直しました' : '足しました'); btCsDraw();
+      }).catch(function(e){ $('csGo').disabled = false; toast(permMsg(e, '保存できませんでした。ルールの反映をオーナーに確認してください')); });
+    };
+  };
+  if(x){ draw([]); return; }
+  db.collection('users').where('union', '==', un).get().then(function(qs){
+    var have = {}; me.cs.forEach(function(y){ have[y.uid] = 1; });
+    var a = []; qs.forEach(function(d){ var u = d.data() || {}; if(u.union === un && u.status !== 'disabled' && !have[d.id]) a.push({ uid: d.id, name: u.name || d.id.slice(0, 8) }); });
+    a.sort(function(p, q){ return String(p.name).localeCompare(String(q.name), 'ja'); });
+    draw(a);
+  }).catch(function(e){ toast(permMsg(e, '読めませんでした')); });
+}
+// ── スタッフの画面：端末の付け替え（会場で、お客さんに頼まれた時）
+function btDvDraw(){
+  var box = $('btDv'), me = gBt;
+  if(!box || !me) return;
+  if(!ckCsOn(me.un) || !btCsCan(me.un)){ box.classList.add('hide'); box.innerHTML = ''; return; }
+  box.classList.remove('hide');
+  box.innerHTML = '<h3>📱 端末の付け替え' + hq('お客さんの相談は、ひとつのスマホだけで使えます（会員証のリンクを知っているだけでは読めないように）。スマホを変えた・別のスマホで使いたいと頼まれた時に、ここで外してください。外したあと、お客さんが新しいスマホで会員証を開くと、そのスマホにひもづきます。必ず本人だと確かめてから外してください。') + '</h3>'
+    + '<div style="display:flex;gap:6px;"><input type="text" id="btDvQ" maxlength="20" placeholder="お客さんの名前" style="flex:1;min-width:0;"><button type="button" id="btDvGo">探す</button></div><div id="btDvList"></div>';
+  var go = function(){
+    var q = $('btDvQ').value.replace(/[\s　]/g, '');
+    if(!q){ toast('名前を入れてください'); return; }
+    var L = me.dvUsers ? Promise.resolve(me.dvUsers) : db.collection('checkinUsers').where('union', '==', me.un).get().then(function(qs){
+      var a = []; qs.forEach(function(d){ var x = d.data() || {}; if(x.union === me.un && x.cardToken && x.active !== false) a.push({ name: x.name || '', t: x.cardToken }); }); me.dvUsers = a; return a;
+    });
+    L.then(function(a){
+      var hit = a.filter(function(u){ return String(u.name).replace(/[\s　]/g, '').indexOf(q) >= 0; }).slice(0, 10);
+      $('btDvList').innerHTML = hit.length ? '<div class="bt-ls" style="margin-top:8px;">' + hit.map(function(u, i){ return '<div class="cs-row"><div><b>' + esc(u.name) + '</b></div><div class="btns"><button type="button" data-dv="' + i + '">付け替える</button></div></div>'; }).join('') + '</div>'
+        : '<p class="bt-note">見つかりません。</p>';
+      Array.prototype.forEach.call($('btDvList').querySelectorAll('[data-dv]'), function(b){ b.onclick = function(){
+        var u = hit[+b.getAttribute('data-dv')];
+        if(!window.confirm(u.name + ' さんの会員証を、今のスマホから外しますか？\n本人だと確かめてから外してください。')) return;
+        b.disabled = true;
+        db.collection('ckBind').doc(u.t).set({ uids: [], by: gUser.uid, at: FV.serverTimestamp() }).then(function(){ b.textContent = '外しました'; toast('外しました。新しいスマホで会員証を開いてもらってください'); })
+          .catch(function(e){ b.disabled = false; toast(permMsg(e, '外せませんでした。ルールの反映をオーナーに確認してください')); });
+      }; });
+    }).catch(function(e){ toast(permMsg(e, '読めませんでした')); });
+  };
+  $('btDvGo').onclick = go;
+  $('btDvQ').onkeydown = function(e){ if(e.key === 'Enter') go(); };
 }
 function btMtLoad(){
   var me = gBt; if(!me) return;
