@@ -412,8 +412,27 @@ service cloud.firestore {
       allow read, write: if isSelf(uid);
     }
 
+    // ============ v923: ユニオン予定の「予定係」 ============
+    //   unions/{un}/meta/evEditors = { uids:[…], at, by }。付ける・外すのはオーナーとそのユニオンの管理者（兼務の管理者も）だけ。
+    //   予定係は、所属ユニオン（プロフィールの union == un）の予定だけ書ける（plan_meta＝PLAN の係数などは不可）。
+    //   止めた人（無効・受付で無効）は、一覧に残っていても書けない
+    function isEvEditorOf(un) {
+      return signedIn() && notDisabled(request.auth.uid)
+        && profile(request.auth.uid).get('union', '') == un
+        && exists(/databases/$(database)/documents/unions/$(un)/meta/evEditors)
+        && get(/databases/$(database)/documents/unions/$(un)/meta/evEditors).data.get('uids', []).hasAny([request.auth.uid]);
+    }
+    match /unions/{un}/meta/{doc} {
+      allow read: if doc == 'evEditors'
+        && (isOwnerAdmin() || admOf(un)
+            || (signedIn() && profileExists(request.auth.uid) && profile(request.auth.uid).get('union', '') == un));
+      allow create, update: if doc == 'evEditors' && (isOwnerAdmin() || admOf(un))
+        && request.resource.data.keys().hasOnly(['uids', 'at', 'by'])
+        && request.resource.data.uids is list && request.resource.data.uids.size() <= 200;
+    }
+
     // ============ v392: ユニオン共有予定（セミナー等の一括配信・購読型） ============
-    // 読み: 同じユニオンに所属するメンバー。書き: オーナー or 同ユニオンの管理者(role=='admin')。
+    // 読み: 同じユニオンに所属するメンバー。書き: オーナー or 同ユニオンの管理者(role=='admin') or 予定係（v923）。
     match /unions/{un}/events/{eid} {
       // v22: オーナーも読める（受付システムの「ユニオン名を変更」で新しい名前へ移すため）
       allow read: if isOwnerAdmin()
@@ -424,7 +443,8 @@ service cloud.firestore {
         || (signedIn() && profileExists(request.auth.uid)
             && profile(request.auth.uid).get('role', '') == 'admin'
             && profile(request.auth.uid).get('union', '') == un)
-        || isCoreAdminOf(un); // v831
+        || isCoreAdminOf(un) // v831
+        || (eid != 'plan_meta' && isEvEditorOf(un)); // v923: 予定係（PLAN の係数・マイルストーンは不可）
     }
 
     // ============ ATTACK LIST: CDATAフォーマット（ユニオン別テンプレート） ============

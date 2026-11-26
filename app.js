@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v923';
+var APP_JS_VERSION = 'v924';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3666,6 +3666,35 @@ function _admUnions() {
 }
 function _admOf(un) { return !!currentUser && (isOwnerUid(currentUser.uid) || (!!un && _admUnions().indexOf(un) >= 0)); }
 function _canAdmPanel() { return isCurrentAdmin() || _admUnions().length > 0; }
+// ════ v923: ユニオン予定の「予定係」 ════
+//  unions/{ユニオン}/meta/evEditors = { uids:[…], at, by }。付ける・外すのはオーナーとそのユニオンの管理者（アカウント管理の 📅 の札）
+//  予定係は、所属ユニオンのユニオン予定だけ 作る・直す・消す ができる。アカウント管理・チェック項目・PLAN の係数などは管理者だけ（ルールも同じ）
+var _evEdMine = null; // 自分が予定係のユニオン（''＝ちがう）
+function _evEdKey() { return 'gm_evEd_' + ((currentUser && currentUser.uid) || ''); }
+function _isEvEditor(un) {
+  if (!currentUser || !currentUser.union || currentUser.union.indexOf('/') >= 0) return false;
+  if (un && un !== currentUser.union) return false;
+  if (_evEdMine === null) { try { _evEdMine = localStorage.getItem(_evEdKey()) || ''; } catch (e) { _evEdMine = ''; } }
+  return _evEdMine === currentUser.union;
+}
+function _evEdLoad() {
+  if (!db || !currentUser || !currentUser.uid || !currentUser.union || currentUser.union.indexOf('/') >= 0) return;
+  var uid = currentUser.uid, un = currentUser.union, before = _isEvEditor(un);
+  db.doc('unions/' + un + '/meta/evEditors').get().then(function(d) {
+    if (!currentUser || currentUser.uid !== uid) return;
+    var on = d.exists && ((d.data() || {}).uids || []).indexOf(uid) >= 0;
+    _evEdMine = on ? un : '';
+    try { localStorage.setItem(_evEdKey(), _evEdMine); } catch (e) {}
+    if (on !== before) _admUiSync();
+  }).catch(function() {});
+}
+// ユニオン予定を 作る・直す・消す ができるか（オーナー・管理者・兼務の管理者・予定係）
+function _canUnionEv(un) {
+  if (!currentUser) return false;
+  un = un || currentUser.union || '';
+  if (!un) return false;
+  return _admOf(un) || (isCurrentAdmin() && un === currentUser.union) || _isEvEditor(un);
+}
 function _admUiSync() { // 兼務がわかった時：メニュー・ユニオン予定を出し直す
   try { if (document.getElementById('setPg') && typeof _stRender === 'function') _stRender(); } catch (e1) {}
   try { if (typeof renderMenuHub === 'function' && document.getElementById('menuHub')) renderMenuHub(); } catch (e2) {}
@@ -3695,6 +3724,7 @@ function loadAdminUsers() {
     _admCkLoad(); // v770: 紐付いた受付の名簿（無効かどうか）
     _accLoad(); // v790: 公開範囲・登録待ちの名簿
     _admCoreAllLoad(); // v831: 兼務の設定（オーナー）
+    _admEvLoad(); // v923: ユニオン予定の予定係
     _shAdmLoad(); // v827: 共有してよい上の人・アップ以外への共有
   }).catch(function() {
     if (body) body.innerHTML = '<div class="ev-empty">読み込みに失敗しました（権限をご確認ください）</div>';
@@ -4396,8 +4426,36 @@ function adminRowHtml(u) {
     + (sub  ? '<div class="adm-sub">' + sub  + '</div>' : '')
     + (sub2 ? '<div class="adm-sub">' + sub2 + '</div>' : '')
     + (email? '<div class="adm-sub" style="opacity:.7">' + email + '</div>' : '')
-    + _admUnxLine(u) + _admDupLine(u) + _admPurgeLine(u) + _admCkLine(u) + _accRowChip(u) + _admCoreChip(u)
+    + _admUnxLine(u) + _admDupLine(u) + _admPurgeLine(u) + _admCkLine(u) + _accRowChip(u) + _admCoreChip(u) + _admEvChip(u)
     + '</div><div class="adm-actions">' + actions + _admDelBtn(u) + '</div></div>';
+}
+// ── v923: ユニオン予定の「予定係」（管理者にしなくても、ユニオン予定だけ入れられる人）──
+//  付ける・外すのはオーナーとそのユニオンの管理者。同じユニオンの人だけ（ルールでも、所属がちがうと書けない）
+var _admEvAll = {}; // ユニオン → 予定係の uid の一覧
+function _admEvCan(un) { return !!un && un.indexOf('/') < 0 && (_admOf(un) || (isCurrentAdmin() && currentUser && un === currentUser.union)); }
+function _admEvLoad() {
+  if (!db) return;
+  var uns = {}; (_adminUsers || []).forEach(function(u) { if (u && _admEvCan(u.union)) uns[u.union] = 1; });
+  Promise.all(Object.keys(uns).map(function(un) {
+    return db.doc('unions/' + un + '/meta/evEditors').get().then(function(d) { _admEvAll[un] = d.exists ? ((d.data() || {}).uids || []) : []; }).catch(function() {});
+  })).then(function() { if (document.getElementById('adminPanel') && document.getElementById('adminPanel').classList.contains('open')) renderAdminList(); });
+}
+function _admEvChip(u) {
+  if (!u || isOwnerUid(u.id) || u.role === 'admin' || u.status === 'disabled' || u.status === 'pending' || u.deleted === true) return ''; // 管理者はもともと入れられる
+  if (!_admEvCan(u.union) || !_admEvAll[u.union]) return '';
+  var on = _admEvAll[u.union].indexOf(u.id) >= 0;
+  return '<span class="acc-ev' + (on ? ' on' : '') + '" onclick="admEvToggle(\'' + u.id + '\')">' + (on ? '📅 ユニオン予定を入力できる' : '＋ ユニオン予定の入力') + '</span>';
+}
+function admEvToggle(uid) {
+  var u = _adminFindUser(uid); if (!u || !_admEvCan(u.union) || !_admEvAll[u.union]) return;
+  var un = u.union, on = _admEvAll[un].indexOf(uid) >= 0, nm = u.name || '';
+  if (!confirm(on ? nm + ' さんを予定係から外しますか？\n（「' + un + '」のユニオン予定を入れられなくなります）'
+    : nm + ' さんを「' + un + '」の予定係にしますか？\n\nユニオン予定の 作る・直す・消す だけができます（ほかのメンバーの予定も直せます）。\nアカウント管理・チェック項目などの管理者の機能は使えません。')) return;
+  var FV = firebase.firestore.FieldValue;
+  db.doc('unions/' + un + '/meta/evEditors').set({ uids: on ? FV.arrayRemove(uid) : FV.arrayUnion(uid), at: new Date().toISOString(), by: currentUser.uid }, { merge: true }).then(function() {
+    if (on) _admEvAll[un] = _admEvAll[un].filter(function(x) { return x !== uid; }); else _admEvAll[un] = _admEvAll[un].concat([uid]);
+    toast(on ? '予定係から外しました' : '📅 予定係にしました（相手が次に開いた時から使えます）'); renderAdminList();
+  }).catch(function(e) { toast('変えられませんでした（権限をご確認ください）'); console.error(e); });
 }
 // ── v770: 受付（BASE CHECK-IN）の名簿とアカウントの紐付け ──
 //  users/{uid}.ckNo = 受付の会員番号。設定できるのはオーナーと同じユニオンの管理者だけ（本人は変えられない＝ルール）。
@@ -5202,7 +5260,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v923';
+  var DATA_VERSION = 'v924';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -7342,6 +7400,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v924', d:'2026-11-26', items:['📅 ユニオン予定の「予定係」：管理者にしなくても、ユニオン予定だけを入れられる人を決められるようになりました（アカウント管理で「＋ ユニオン予定の入力」を押す。付けられるのはオーナーとそのユニオンの管理者）'] },
   { v:'v923', d:'2026-11-26', items:['🛠 細かい修正をしました'] },
   { v:'v922', d:'2026-11-26', items:['🌈 夢100：達成の数と「＋ 夢を追加」が、スクロールしても上に残るようにしました','月ごとに「＋ この月に追加」を置きました（期日にその月が入った状態で開きます）'] },
   { v:'v921', d:'2026-11-26', items:['🌈 夢100：上にも「＋ 夢を追加」を置きました','「月を選ぶ」は、期日にした月だけが出るようにしました','夢を期日の月ごとに分けて表示。PC では3列で全部見られます'] },
@@ -21800,7 +21859,7 @@ function efRepUntil(v) { if (_ef && _ef.mode === 'add') _ef.o.repUntil = v || ''
 function efUnion(on) { _efKeepTitle(); if (_ef && _ef.mode === 'add') { _ef.o.union = typeof on === 'string' && on ? on : !!on; _efRender(); } } // v831: ユニオン名＝そのユニオンへ配信
 function _efUnionList() { // 予定を配信できるユニオン（所属ユニオンの管理者なら所属ユニオン＋兼務のユニオン）
   if (!currentUser || viewingOwnerUid) return [];
-  var L = []; if (isCurrentAdmin() && currentUser.union) L.push(currentUser.union);
+  var L = []; if ((isCurrentAdmin() || _isEvEditor(currentUser.union)) && currentUser.union) L.push(currentUser.union); // v923: 予定係も所属ユニオンへ
   _admCoreList().forEach(function(u) { if (u && L.indexOf(u) < 0) L.push(u); });
   return L;
 }
@@ -32175,7 +32234,7 @@ function evUnionArea(mine) {
 function _evUnionRowUpdate() {
   var row = document.getElementById('evUnionRow');
   if (!row) return;
-  var show = !_evEditId && _evType === 'event' && typeof isCurrentAdmin === 'function' && isCurrentAdmin()
+  var show = !_evEditId && _evType === 'event' && typeof _canUnionEv === 'function' && _canUnionEv(currentUser && currentUser.union) // v923: 予定係も
              && !!(currentUser && currentUser.union) && !viewingOwnerUid;
   row.style.display = show ? '' : 'none';
   if (show) {
@@ -32223,7 +32282,7 @@ function _unionApplyToState() {
   var add = [];
   if (!_unionPrefs.off && currentUser && !viewingOwnerUid) {
     var myArea = currentUser.area || '';
-    var admin = (typeof isCurrentAdmin === 'function') && isCurrentAdmin();
+    var admin = ((typeof isCurrentAdmin === 'function') && isCurrentAdmin()) || _isEvEditor(currentUser.union); // v923: 予定係も全地域（直すため）
     var cut = evYmd(new Date(Date.now() - 120 * 86400000)); // 過去4ヶ月分まで表示
     _unionRaw.forEach(function(u) {
       if (!u || !u.date) return;
@@ -32264,7 +32323,7 @@ function _unionRawById(id) {
 function _unionSaveFromModal(editRawId) {
   try {
   var un = editRawId ? ((_unionRawById(editRawId) || {}).union || currentUser.union) : (_evUnionTo || currentUser.union); // v831: 兼務のユニオンへも
-  if (!un || !_admOf(un) && !(isCurrentAdmin() && un === currentUser.union)) { toast('このユニオンの予定は作れません'); return; }
+  if (!un || !_canUnionEv(un)) { toast('このユニオンの予定は作れません'); return; } // v923: 予定係も
   var title = document.getElementById('evTitle').value.trim().replace(/^🏛/, '');
   if (!title) { toast('タイトルを入力してください'); return; }
   var date = document.getElementById('evDate').value;
@@ -32339,7 +32398,7 @@ function openUnionEventSheet(compId) {
   }
   window._unRetry = '';
   var unU = u.union || (currentUser && currentUser.union) || '';
-  var admin = (isCurrentAdmin() && unU === ((currentUser && currentUser.union) || '')) || _admOf(unU); // v831: 兼務のユニオンの予定も直せる
+  var admin = _canUnionEv(unU); // v831: 兼務のユニオンの予定も直せる・v923: 予定係も
   var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'unSheetOv';
   ov.onclick = function(e) { if (e.target === ov) closeUnionSheet(); };
   var tmTx = u.allDay ? '終日' : ((u.time || '') + (u.endTime ? '〜' + u.endTime : ''));
@@ -32355,7 +32414,7 @@ function openUnionEventSheet(compId) {
     + (admin
        ? '<button class="fol-add" style="flex:1;margin-top:0" onclick="closeUnionSheet();openEventModal(\'UN_' + rawId + '\')">' + icn('pencil') + ' 編集</button>'
          + '<button class="fol-add" style="flex:1;margin-top:0;color:var(--red);border-color:var(--red)" onclick="unionDelete(\'' + rawId + '\')">' + icn('trash') + ' 削除</button>'
-       : '<div style="flex:1"><div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;line-height:1.6">' + icn('pencil') + ' 編集・削除はユニオン管理者のみ行えます（このアカウントは一般メンバー判定です。管理者のはずの場合はオーナーに「アカウント管理」での管理者付与を確認してください）</div>'
+       : '<div style="flex:1"><div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;line-height:1.6">' + icn('pencil') + ' 編集・削除はユニオン管理者と予定係だけができます（予定を入れる係になりたい時は、ユニオンの管理者に「アカウント管理」で予定係にしてもらってください）</div>'
          + '<button class="fol-add" style="width:100%;margin-top:0" onclick="unionHide(\'' + rawId + '\')">' + icn('eyeoff') + ' 自分のカレンダーから非表示</button></div>')
     + '</div></div>';
   document.body.appendChild(ov);
@@ -37342,7 +37401,7 @@ function evTplQuickAdd(tplId, ds) {
   if (!t) return;
   // v409: ユニオン共有テンプレの即登録は、必ず確認してからユニオン予定として配信（誤爆防止）
   if (t.unionScope) {
-    if (!(typeof isCurrentAdmin === 'function' && isCurrentAdmin() && currentUser && currentUser.union)) { toast('ユニオン共有テンプレはユニオン管理者のみ使えます'); return; }
+    if (!(currentUser && currentUser.union && _canUnionEv(currentUser.union))) { toast('ユニオン共有テンプレはユニオン管理者・予定係だけ使えます'); return; } // v923
     var un9 = currentUser.union;
     var area9 = t.unionAreaMine ? (currentUser.area || '') : '';
     if (!confirm('「' + un9 + '」の' + (area9 ? '「' + area9 + '」地域の' : '全') + 'メンバーのカレンダーに「' + (t.name || '') + '」を登録します。よろしいですか？')) return;
@@ -38579,7 +38638,7 @@ function evTplPick(id) {
   if (t.allDay) evToggleAllDay(true); // v404: 終日テンプレ
   else if (t.defaultTime && readTimeSelects() === '') buildTimeSelects(t.defaultTime, t.defaultTimeEnd || readTimeEnd());
   // v409: ユニオン共有テンプレ→共有範囲トグルを自動セット（管理者・新規予定のみ。保存時に通常の確認が出る）
-  if (t.unionScope && !_evEditId && typeof isCurrentAdmin === 'function' && isCurrentAdmin() && currentUser && currentUser.union) {
+  if (t.unionScope && !_evEditId && currentUser && currentUser.union && _canUnionEv(currentUser.union)) { // v923: 予定係も
     try { evUnionScope(true); evUnionArea(!!t.unionAreaMine); } catch(eUn9) {}
   }
   _evSetRemind(t.notifyOffset);
@@ -38705,8 +38764,8 @@ function openEvTplEdit(id) {
     + '<div style="flex:1">' + fld('終了時刻（任意）', '<input class="fi" id="evtF_timeEnd" type="text" readonly placeholder="なし" onclick="openTimePad(\'evtF_timeEnd\')" style="cursor:pointer;text-align:center" value="' + evEsc(t ? (t.defaultTimeEnd || _tplpAddMin(t.defaultTime || '', t.durationMin || 0) || '') : '') + '">') + '</div>'
     + '</div>'
     + '<div class="fr" style="margin-top:2px"><div class="rg"><div class="rb' + (t && t.allDay ? ' sel' : '') + '" id="evtF_allday" onclick="evtToggleAllDay()">' + icn('sun') + ' 終日（時刻なし）</div></div></div>'
-    + ((typeof isCurrentAdmin === 'function' && isCurrentAdmin() && currentUser && currentUser.union)
-      ? '<div class="fr"><label class="fl"><svg class="lic" viewBox="0 0 24 24"><path d="M3 21h18M5 21V10M19 21V10M9 21v-8M15 21v-8M2.5 10L12 3l9.5 7z"/></svg> 共有範囲（ユニオン管理者）</label><div class="rg">'
+    + ((currentUser && currentUser.union && _canUnionEv(currentUser.union)) // v923: 予定係も
+      ? '<div class="fr"><label class="fl"><svg class="lic" viewBox="0 0 24 24"><path d="M3 21h18M5 21V10M19 21V10M9 21v-8M15 21v-8M2.5 10L12 3l9.5 7z"/></svg> 共有範囲（ユニオン予定）</label><div class="rg">'
         + '<div class="rb' + (!(t && t.unionScope) ? ' sel' : '') + '" id="evtF_un0" onclick="evtUnionScope(false)">自分のみ</div>'
         + '<div class="rb' + ((t && t.unionScope) ? ' sel' : '') + '" id="evtF_un1" onclick="evtUnionScope(true)"><svg class="lic" viewBox="0 0 24 24"><path d="M3 21h18M5 21V10M19 21V10M9 21v-8M15 21v-8M2.5 10L12 3l9.5 7z"/></svg> ユニオン全員</div>'
         + '</div><div class="rg" id="evtF_unaRow" style="margin-top:6px;display:' + ((t && t.unionScope) ? '' : 'none') + '">'
@@ -40532,6 +40591,7 @@ function loginSuccess(user) {
   if (user.uid && _pvNeed(user)) { showPrivacyGate(user, function() { loginSuccess(user); }); return; }
   ckAccessCheck(user, false); // v770: 受付の名簿を確認（無効ならゲート）
   _admCore = null; setTimeout(_admCoreLoad, 1200); // v831: 兼務のユニオン管理者か
+  _evEdMine = null; setTimeout(_evEdLoad, 1300); // v923: ユニオン予定の予定係か
   accCheck(user, false); // v790: 公開範囲を確認（まだ使えない人はゲート）
   _featLoad(); // v847: 新機能のテスト（先に見られる人・全員に公開）
   setTimeout(function() { _shRefFill(user); _shDailyCheck(); }, 2500); // v827: 紹介者を名簿から・前からある共有を確かめる（#23）
@@ -45338,7 +45398,7 @@ function _hwItems(P) {
 }
 // v875: まだテスト中。新機能のテスト（hwimp）の「先に見られる人」だけに出す
 function _hwOn() { return typeof featOn === 'function' && featOn('hwimp'); }
-function _hwCanUnion() { var un = currentUser && currentUser.union; return !!un && un.indexOf('/') < 0 && (_admOf(un) || (typeof isCurrentAdmin === 'function' && isCurrentAdmin())); }
+function _hwCanUnion() { var un = currentUser && currentUser.union; return !!un && un.indexOf('/') < 0 && _canUnionEv(un); } // v923: 予定係も
 function hwOpen(P) {
   if (!_hwOn()) return;
   if (!eventsUid() || viewingOwnerUid) { toast('自分のカレンダーを開いている時に使えます'); return; }
