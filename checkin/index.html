@@ -3136,10 +3136,11 @@ if(gTrainerMode) document.documentElement.classList.add('trm');   // 🎓 研修
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v181';
+var APP_VER = 'v182';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v182', d: '2026/11/26', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v181', d: '2026/11/26', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v180', d: '2026/11/26', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v179', d: '2026/11/24', items: ['🖥 PC の「⚙ 設定 › 人と役割」を1行1名の表にしました（役割ごとの列に ✓。縦に見ると、だれが OL を受け付けているかなどがひと目で分かります）'] },
@@ -17390,6 +17391,8 @@ function btDraw(){
     + '<div class="bt-box" id="btMt"></div>'
     + '<div class="bt-box" id="btCh"></div>'
     + '<div class="bt-box" id="btDm"></div>'
+    + '<div class="bt-box" id="btDs"></div>'
+    + '<div class="bt-box" id="btDr"></div>'
     + '<div class="bt-box" id="btCs"></div>'
     + '<div class="bt-box" id="btDv"></div>'
     + '<div class="bt-box" id="btLs"></div>'
@@ -17403,6 +17406,8 @@ function btDraw(){
   btMtDraw();   // 💜 v172
   btChDraw();   // 💜 v174
   btCsDraw();   // 💜 v180
+  btDsDraw();   // 💜 v182: 相談の数
+  btDrDraw();   // 💜 v182: 報告された相談（オーナー）
   btDvDraw();   // 💜 v180
   btLsDraw();   // 💜 v175
   btQeDraw();   // 💜 v140
@@ -18034,6 +18039,71 @@ function ckCsMineLoad(){
   return Promise.all(ckCsUnions().map(function(un){
     return db.collection('ckCs').doc(un).collection('s').doc(gUser.uid).get().then(function(s){ if(s.exists) gCsMine.push(un); }, function(){});
   })).then(function(){ ckBtApply(); });
+}
+/* 💜 v182: 相談の数（ckDmStat/{ユニオン}・毎日20時にサーバーがまとめる。中身は入れない）と、報告された相談（オーナーだけ・読む前に記録を残す） */
+function btDsDraw(){
+  var box = $('btDs'), me = gBt;
+  if(!box || !me) return;
+  if(!ckCsOn(me.un) || !btCsCan(me.un)){ box.classList.add('hide'); box.innerHTML = ''; return; }
+  box.classList.remove('hide');
+  if(me.ds === undefined){
+    me.ds = null; box.innerHTML = '<h3>📊 相談の数</h3><p class="bt-note">読み込み中…</p>';
+    db.collection('ckDmStat').doc(me.un).get().then(function(s){ if(gBt === me){ me.ds = s.exists ? (s.data() || {}) : false; btDsDraw(); } }).catch(function(){ if(gBt === me){ me.ds = false; btDsDraw(); } });
+    return;
+  }
+  if(me.ds === null) return;
+  var d = me.ds, h = '<h3>📊 相談の数' + hq('最近30日に始まった相談の数です。毎日20時にまとめます。相談の中身は、ここには出ません。') + '</h3>';
+  if(!d){ box.innerHTML = h + '<p class="bt-note">まだありません（毎日20時にまとめます）。</p>'; return; }
+  var tp = d.topics || {};
+  box.innerHTML = h + '<div class="mt-grid">'
+    + '<div><b class="mono">' + (d.n30 || 0) + '</b><small>件（30日）</small></div>'
+    + '<div><b class="mono">' + (d.avgFirstMin == null ? '—' : d.avgFirstMin < 60 ? d.avgFirstMin + '分' : Math.round(d.avgFirstMin / 6) / 10 + '時間') + '</b><small>最初の返事まで（平均）</small></div>'
+    + '<div><b class="mono">' + (d.noReply || 0) + '</b><small>まだ返事のない相談</small></div>'
+    + '<div><b class="mono">' + (d.open || 0) + ' / ' + (d.done || 0) + '</b><small>続いている / 解決済み</small></div></div>'
+    + '<p class="bt-note">分野：' + ckCsTags().concat([['other', 'その他']]).map(function(t){ return esc(t[1]) + ' ' + (tp[t[0]] || 0); }).join(' ・ ')
+    + ' ／ スタッフから先に送った ' + (d.byStaff || 0) + ' ・ 止められた ' + (d.stop || 0) + (d.rep ? ' ・ <b>未対応の報告 ' + d.rep + '</b>' : '') + '</p>';
+}
+function btDrDraw(){
+  var box = $('btDr'), me = gBt;
+  if(!box || !me) return;
+  if(!ckCsOn(me.un) || !isOwner()){ box.classList.add('hide'); box.innerHTML = ''; return; }
+  box.classList.remove('hide');
+  if(me.dr === undefined){
+    me.dr = null; box.innerHTML = '<h3>🚩 報告された相談</h3><p class="bt-note">読み込み中…</p>';
+    db.collection('ckDm').where('rep.at', '>', 0).get().then(function(qs){
+      if(gBt !== me) return;
+      var a = []; qs.forEach(function(d){ var t = d.data() || {}; if(t.un !== me.un || !t.rep) return; t.id = d.id; a.push(t); });
+      a.sort(function(x, y){ return (y.rep.at || 0) - (x.rep.at || 0); });
+      me.dr = a; btDrDraw();
+    }).catch(function(e){ if(gBt === me){ me.dr = []; me.drErr = permMsg(e, '読めませんでした'); btDrDraw(); } });
+    return;
+  }
+  if(me.dr === null) return;
+  box.innerHTML = '<h3>🚩 報告された相談' + hq('お客さんが「報告」を押した相談です。中身を読む時は、読んだ記録が残ります（記録はあとから消せません）。') + '</h3>'
+    + (me.drErr ? '<p class="bt-note">' + esc(me.drErr) + '</p>' : '')
+    + (me.dr.length ? '<div class="bt-ls">' + me.dr.map(function(t, i){
+        return '<div class="cs-row"><div><b>' + esc(t.cname || '') + ' さん → ' + esc(t.sName || '') + ' さん</b><small class="bt-note">' + esc(ckCsTagN(t.topic) || 'その他') + ' ・ 報告 ' + esc(ckCsAgo(t.rep.at)) + (t.repDone ? ' ・ 対応済み' : '') + '</small></div>'
+          + '<div class="btns"><button type="button" data-dr="' + i + '">記録を残して読む</button></div></div>';
+      }).join('') + '</div>' : '<p class="bt-note">ありません。</p>');
+  Array.prototype.forEach.call(box.querySelectorAll('[data-dr]'), function(b){ b.onclick = function(){ btDrOpen(me.dr[+b.getAttribute('data-dr')]); }; });
+}
+function btDrOpen(th){
+  if(!window.confirm('この相談の中身を読みますか？\n「オーナーが読んだ」という記録が残ります。')) return;
+  var ref = db.collection('ckDm').doc(th.id);
+  ref.collection('olog').doc(gUser.uid).get().then(function(s){
+    return s.exists ? null : ref.collection('olog').doc(gUser.uid).set({ at: FV.serverTimestamp() });
+  }).then(function(){ return ref.collection('m').get(); }).then(function(qs){
+    var a = []; qs.forEach(function(x){ a.push(x.data() || {}); });
+    a.sort(function(p, q){ return ckTsMs(p.at) - ckTsMs(q.at); });
+    modal('<h2>🚩 ' + esc(th.cname || '') + ' さん → ' + esc(th.sName || '') + ' さん</h2><p class="bt-note">' + esc(ckCsTagN(th.topic) || 'その他') + ' ・ 読んだ記録を残しました</p>'
+      + '<div class="cs-chat">' + a.map(function(m){ return '<div class="cs-msg ' + (m.by === 's' ? 'me' : 'you') + '">' + (m.by === 's' ? '<b>スタッフ</b><br>' : '<b>お客さん</b><br>') + esc(m.t || '') + '</div>'; }).join('') + '</div>'
+      + '<div class="btns"><button id="drX">閉じる</button>' + (th.repDone ? '' : '<button class="primary" id="drDone">対応済みにする</button>') + '</div>', true);
+    $('drX').onclick = closeModal;
+    if($('drDone')) $('drDone').onclick = function(){
+      ref.update({ repDone: { at: Date.now(), by: gUser.uid } }).then(function(){ th.repDone = true; closeModal(); toast('対応済みにしました'); btDrDraw(); })
+        .catch(function(e){ toast(permMsg(e, '変えられませんでした')); });
+    };
+  }).catch(function(e){ toast(permMsg(e, '読めませんでした。ルールの反映を確かめてください')); });
 }
 // ── スタッフの画面（「💜 Beauty」タブ）：相談を受けるスタッフ
 function btCsCan(un){ return isCoreAdmin(un) || isDayStaff(un); }

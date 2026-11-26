@@ -228,6 +228,8 @@ exports.sendReminders = onSchedule(
 //   定時の実行（Cloud Scheduler）は3つまで無料なので、2つに分けずに1つにまとめている（今は overdueReminders・sendReminders と合わせて3つ）
 //   デプロイ: firebase deploy --only functions:beautyDaily
 const beauty = require('./beauty');
+// 💬 受付v182: DAYスタッフへの相談（通知・数のまとめ）。中身は dm.js
+const dm = require('./dm');
 exports.beautyDaily = onSchedule(
   { schedule: '0 20 * * *', region: 'asia-northeast1', timeZone: 'Asia/Tokyo', memory: '256MiB' },
   async () => {
@@ -236,6 +238,18 @@ exports.beautyDaily = onSchedule(
     try { console.log('beauty dayEve ' + JSON.stringify(await beauty.dayEve(db, m, now, sent))); } catch (e) { console.log('beauty dayEve error ' + e); }
     try { console.log('beauty nudge ' + JSON.stringify(await beauty.nudge(db, m, now, sent))); } catch (e) { console.log('beauty nudge error ' + e); }
     try { console.log('beauty cleanup ' + JSON.stringify(await beauty.cleanup(db, now, admin.firestore.FieldValue.delete()))); } catch (e) { console.log('beauty cleanup error ' + e); }
+    try { console.log('beauty dmStats ' + JSON.stringify(await dm.stats(db, now))); } catch (e) { console.log('beauty dmStats error ' + e); }
+  }
+);
+
+// 💬 受付v182: 相談のメッセージが届いた時に、相手のスマホに知らせる（定時の実行ではないので、無料の3つの枠は使わない）
+//   デプロイ: firebase deploy --only functions:beautyDmMsg（はじめての時は Eventarc の有効化を聞かれることがある）
+const { onDocumentCreated } = require('firebase-functions/v2/firestore');
+exports.beautyDmMsg = onDocumentCreated(
+  { document: 'ckDm/{tid}/m/{mid}', region: 'asia-northeast1', memory: '256MiB' },
+  async (event) => {
+    const m = event.data ? event.data.data() : null;
+    try { console.log('beauty dm ' + JSON.stringify(await dm.onMsg(admin.firestore(), admin.messaging(), event.params.tid, m, Date.now()))); } catch (e) { console.log('beauty dm error ' + e); }
   }
 );
 

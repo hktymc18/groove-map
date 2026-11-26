@@ -1195,8 +1195,14 @@ service cloud.firestore {
         && d.uRead is int && d.sRead is int && d.upAt is int && d.at == request.time;
     }
     match /ckDm/{tid} {
-      allow get, list: if ckDmBound(resource.data.tk) || (signedIn() && resource.data.sUid == request.auth.uid)
+      allow get: if ckDmBound(resource.data.tk) || (signedIn() && resource.data.sUid == request.auth.uid)
         || (isOwnerAdmin() && resource.data.get('rep', null) != null);
+      allow list: if ckDmBound(resource.data.tk) || (signedIn() && resource.data.sUid == request.auth.uid)
+        || (isOwnerAdmin() && resource.data.rep.at > 0);
+      // 受付v182: オーナーは報告に「対応済み」を付けるだけ
+      allow update: if isOwnerAdmin() && resource.data.get('rep', null) != null
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['repDone'])
+        && request.resource.data.repDone.keys().hasOnly(['at', 'by']) && request.resource.data.repDone.by == request.auth.uid;
       allow create: if ckDmBound(request.resource.data.get('tk', '')) && ckDmNew(request.resource.data)
         && request.resource.data.byStaff == false && request.resource.data.last.by == 'u'
         && get(/databases/$(database)/documents/ckCs/$(request.resource.data.un)/s/$(request.resource.data.sUid)).data.get('off', false) == false;
@@ -1241,6 +1247,11 @@ service cloud.firestore {
           && get(/databases/$(database)/documents/ckDm/$(tid)).data.get('rep', null) != null;
         allow update, delete: if false;
       }
+    }
+    // 受付v182: 相談の数（サーバーが毎日まとめる・中身なし）。読めるのはオーナー・ユニオン管理者・DAY HOST
+    match /ckDmStat/{un} {
+      allow get: if ckLoungeStaff(un);
+      allow list, write: if false;
     }
     // お客さんが「このスタッフを止める」：ckDmStop/{会員証}_{スタッフ}。スタッフから先に送れなくなる
     match /ckDmStop/{id} {
