@@ -1,0 +1,48 @@
+# Firestore のルール（firestore.rules）と索引（firestore.indexes.json）を、main に入った時に自動でデプロイする。
+# ・前は オーナーが PC の Cloud Shell から firebase deploy していた（スマホからはできなかった）
+# ・鍵（パスワードのような文字列）は使わない。GitHub の「この repo の main から動いている」という証明を
+#   Google が確かめて、デプロイ専用のサービスアカウントで動く（Workload Identity 連携）。
+#   最初の1回だけ、オーナーが tools/deploy/setup_wif.sh を Cloud Shell で実行して、この連携を作る
+# ・索引の削除はしない（--force を付けない。Cloud Shell で「No」と答えていたのと同じ）
+# ・手で動かす時は Actions › Deploy Firestore rules › Run workflow（Claude からも動かせる）
+name: Deploy Firestore rules
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - firestore.rules
+      - firestore.indexes.json
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # Google に「この repo の main から」と証明するため
+
+concurrency:
+  group: firestore-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Google にログイン（鍵なし・Workload Identity 連携）
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/565556414915/locations/global/workloadIdentityPools/github/providers/groove-map
+          service_account: github-deploy-rules@hotlist-21865.iam.gserviceaccount.com
+      - name: ルールと索引をデプロイ
+        run: npx --yes firebase-tools@13 deploy --only firestore:rules,firestore:indexes --project hotlist-21865 --non-interactive
+      - name: 結果
+        if: always()
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "### ✅ Firestore のルールと索引をデプロイしました（$(git log -1 --format=%h)）" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "### ❌ デプロイできませんでした。上のログを見てください（最初の設定が済んでいない時は tools/deploy/setup_wif.sh）" >> "$GITHUB_STEP_SUMMARY"
+          fi
