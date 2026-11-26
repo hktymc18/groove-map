@@ -50,6 +50,7 @@ const base = (x) => Object.assign({ ['cards/' + TA]: card(), ['cardClaims/' + UA
     c('メッセージは、この端末の名前で', ms === 'u:dev-1', ms);
     c('やりとりの画面が開く', /朝つっぱります/.test(await o.ev(`document.getElementById('csChat').innerText`)));
     await o.page.screenshot({ path: OUT + '/ckdm181_chat.png' });
+    c('（v182）解決・止める・報告が、下に貼り付くボタンの帯に隠れない', await o.ev(`document.getElementById('csRep').getBoundingClientRect().bottom <= document.querySelector('.modal .btns').getBoundingClientRect().top + 1`));
     await o.ev(`document.getElementById('csRep').click()`); await o.wt(300);
     c('報告できる', !!(await o.ev(`!!(window.__FBDATA['${keys[0]}'].rep)`)));
     c('エラーなし（お客さん）', !o.errs.length, o.errs.join(' / '));
