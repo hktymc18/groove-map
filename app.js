@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v924';
+var APP_JS_VERSION = 'v925';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -5260,7 +5260,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v924';
+  var DATA_VERSION = 'v925';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -7400,6 +7400,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v925', d:'2026-11-26', items:['🔁 予定の繰り返しに「平日（月〜金）」を足しました（土日は入りません。土日から始めた時は次の月曜から）'] },
   { v:'v924', d:'2026-11-26', items:['📅 ユニオン予定の「予定係」：管理者にしなくても、ユニオン予定だけを入れられる人を決められるようになりました（アカウント管理で「＋ ユニオン予定の入力」を押す。付けられるのはオーナーとそのユニオンの管理者）'] },
   { v:'v923', d:'2026-11-26', items:['🛠 細かい修正をしました'] },
   { v:'v922', d:'2026-11-26', items:['🌈 夢100：達成の数と「＋ 夢を追加」が、スクロールしても上に残るようにしました','月ごとに「＋ この月に追加」を置きました（期日にその月が入った状態で開きます）'] },
@@ -21653,7 +21654,7 @@ function _cvDayHtml(ds) {
 //  時刻は今までと同じ「開始〜終了」の欄＋数字パッド。色はカテゴリの選択画面（名前・色の編集もそこで）
 var _ef = null;
 var EV_RMD = [['', 'なし'], ['0', 'ちょうど'], ['10', '10分前'], ['30', '30分前'], ['60', '1時間前'], ['1440', '前日']];
-var EV_REP = [['', 'なし'], ['d', '毎日'], ['w', '毎週'], ['2w', '隔週'], ['m', '毎月']];
+var EV_REP = [['', 'なし'], ['d', '毎日'], ['wd', '平日（月〜金）'], ['w', '毎週'], ['2w', '隔週'], ['m', '毎月']]; // v925: 平日
 function _efCss() {
   if (document.getElementById('efCss')) return;
   var st = document.createElement('style'); st.id = 'efCss';
@@ -36036,6 +36037,7 @@ function _tdSeriesMark(e) {
     });
     if (nextD) {
       var dd = Math.round((new Date(nextD) - new Date(e.date)) / 86400000);
+      if (e.repKind === 'wd') lbl = icn('repeat') + '平日'; else // v925
       lbl = dd === 1 ? icn('repeat') + '毎日' : (dd === 7 ? icn('repeat') + '毎週' : (dd === 14 ? icn('repeat') + '隔週' : ((dd >= 28 && dd <= 31) ? icn('repeat') + '毎月' : icn('repeat'))));
     }
   } catch(eS) {}
@@ -37997,10 +37999,19 @@ function _evCreateSeries(base, rep, untilYmd) {
   }
   var sid = 'sr_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
   base.seriesId = sid;
+  window._evWdMoved = '';
+  if (rep === 'wd') { // v925: 平日（月〜金）。土日から始めた時は、最初の回を次の月曜にする
+    base.repKind = 'wd';
+    if (!base.endDate && (cur.getDay() === 0 || cur.getDay() === 6)) {
+      while (cur.getDay() === 0 || cur.getDay() === 6) cur.setDate(cur.getDate() + 1);
+      base.date = evYmd(cur); window._evWdMoved = base.date;
+    }
+  }
   var domBase = cur.getDate(); // 毎月は同じ「日」。無い月は月末に丸める
   var count = 1, mi = 0;
   while (count < 60) {
     if (rep === 'd') cur.setDate(cur.getDate() + 1);
+    else if (rep === 'wd') { do { cur.setDate(cur.getDate() + 1); } while (cur.getDay() === 0 || cur.getDay() === 6); } // v925: 土日は飛ばす
     else if (rep === 'w') cur.setDate(cur.getDate() + 7);
     else if (rep === '2w') cur.setDate(cur.getDate() + 14);
     else if (rep === 'm') {
@@ -38020,6 +38031,7 @@ function _evCreateSeries(base, rep, untilYmd) {
       color: base.color || '', place: base.place || ''
     };
     if (base.templateStage) inst.templateStage = base.templateStage;
+    if (base.repKind) inst.repKind = base.repKind; // v925: 🔁 の札に「平日」と出すため
     if (base.subtasks && base.subtasks.length) inst.subtasks = base.subtasks.map(function(s){ return { id: s.id, t: s.t, done: false }; });
     state.events.push(inst);
     saveEventDoc(inst);
@@ -39189,7 +39201,7 @@ function _saveEventBody() {
   try { if (!viewingOwnerUid && e.type === 'event' && (e.olGid || evKindOf(e) === 'OL') && evIsMemberLinked(e)) _olFromEvent(e); } catch (eOl) {} // v567: OLの予定はOLの記録にも
   var _qt9 = !!window._evQuiet; // v613: 予定の画面からの保存は自前のトースト
   saveEventDoc(e).then(function(){
-    if (_repMade > 1) toast('繰り返し予定を' + _repMade + '件作成しました ✓');
+    if (_repMade > 1) toast('繰り返し予定を' + _repMade + '件作成しました ✓' + (window._evWdMoved ? '（土日は入れないので、1回目は ' + parseInt(window._evWdMoved.slice(5, 7), 10) + '/' + parseInt(window._evWdMoved.slice(8), 10) + '（月）から）' : '')); // v925
     else if (_newTask) toastAction('✓ 「' + _savedTitle + '」を追加しました', '＋ 続けて追加', function(){
       openEventModal(null, _contIds[0] || '', '', _contType);
       if (_contIds.length > 1) { _evMemberIds = _contIds.slice(); updateEvMemberDisplay(); }
