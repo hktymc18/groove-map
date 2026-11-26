@@ -5,7 +5,9 @@
 #   ・デプロイ専用のサービスアカウント github-deploy-rules（できるのは ルールの更新・索引の更新 だけ。データは読めない）
 #   ・GitHub の hktymc18/groove-map の main ブランチから動いた時だけ、そのアカウントを使える連携（鍵は作らない）
 # 何回実行しても大丈夫（もうある物は飛ばす）
-set -u
+# 必要な権限：このプロジェクトの「オーナー」（権限を付ける操作があるため。編集者ではできない）
+set -euo pipefail
+trap 'echo ""; echo "❌ 途中で止まりました（上のエラーを Claude に送ってください）"' ERR
 PROJECT=hotlist-21865
 REPO=hktymc18/groove-map
 SA=github-deploy-rules
@@ -17,6 +19,22 @@ gcloud config set project $PROJECT >/dev/null
 PN=$(gcloud projects describe $PROJECT --format='value(projectNumber)')
 echo "▶ プロジェクト $PROJECT（番号 $PN）"
 
+# v2: 先に権限を確かめる（前は オーナーでない時もエラーのあと「✅」と出ていた）
+ME=$(gcloud config get-value account 2>/dev/null)
+MYROLES=$(gcloud projects get-iam-policy $PROJECT --flatten="bindings[].members" --filter="bindings.members:user:$ME" --format="value(bindings.role)" | tr '\n' ' ')
+echo "▶ $ME の役割：${MYROLES:-（なし）}"
+if ! echo " $MYROLES " | grep -q " roles/owner "; then
+  trap - ERR
+  echo ""
+  echo "❌ このアカウントはプロジェクトの「オーナー」ではないので、設定できません。"
+  echo "   このプロジェクトのオーナー（下の人）に、次のどちらかを頼んでください："
+  echo "   ① オーナーがこのスクリプトを実行する"
+  echo "   ② オーナーが Google Cloud の IAM で、$ME に「オーナー」を付ける → もう一度このスクリプトを実行"
+  echo "   オーナー："
+  gcloud projects get-iam-policy $PROJECT --flatten="bindings[].members" --filter="bindings.role:roles/owner" --format="value(bindings.members)" | sed 's/^/     /'
+  exit 1
+fi
+
 echo "▶ 使う機能をオンにする"
 gcloud services enable iamcredentials.googleapis.com sts.googleapis.com firebaserules.googleapis.com firestore.googleapis.com
 
@@ -26,7 +44,8 @@ gcloud iam service-accounts describe $SA_EMAIL >/dev/null 2>&1 \
 
 echo "▶ できることを、ルール・索引の更新だけにする"
 for R in roles/firebaserules.admin roles/datastore.indexAdmin roles/serviceusage.serviceUsageConsumer; do
-  gcloud projects add-iam-policy-binding $PROJECT --member="serviceAccount:$SA_EMAIL" --role=$R --condition=None >/dev/null && echo "  $R"
+  gcloud projects add-iam-policy-binding $PROJECT --member="serviceAccount:$SA_EMAIL" --role=$R --condition=None >/dev/null
+  echo "  $R"
 done
 
 echo "▶ GitHub との連携（鍵なし）"
