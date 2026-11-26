@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v921';
+var APP_JS_VERSION = 'v922';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -5202,7 +5202,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v921';
+  var DATA_VERSION = 'v922';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -7342,6 +7342,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v922', d:'2026-11-26', items:['🌈 夢100：達成の数と「＋ 夢を追加」が、スクロールしても上に残るようにしました','月ごとに「＋ この月に追加」を置きました（期日にその月が入った状態で開きます）'] },
   { v:'v921', d:'2026-11-26', items:['🌈 夢100：上にも「＋ 夢を追加」を置きました','「月を選ぶ」は、期日にした月だけが出るようにしました','夢を期日の月ごとに分けて表示。PC では3列で全部見られます'] },
   { v:'v920', d:'2026-11-25', items:['名前などを直してすぐアプリを閉じた（上にスワイプした）時やログアウトした時に、直した内容が元に戻ることがあったのを直しました'] },
   { v:'v919', d:'2026-11-25', items:['名前を入れる欄で、iPhone の「連絡先を自動入力」が出て漢字に変換できなかったのを直しました','設定 › 見た目 に「MAP を開いた時の段数」（2〜5段・全段）。ログアウトしても・別の端末でも同じ段数で開きます','リスタート表示（🔄）：付いている人のタイトルを変えると消すか聞くように。同じ月に BR にしてすぐ戻した時は降格扱いにしないように。付けるボタンはプロフィールの下の一覧へ'] },
@@ -25167,15 +25168,20 @@ function _p2WhyPageHtml(i) {
     var flush = function() {
       if (curK === null) return;
       var g = gm[curK], rest = 0; g.forEach(function(x) { if (!x.done) rest += parseFloat(x.amt) || 0; });
-      groups += '<div class="dr-grp"><div class="dr-gh"><b>' + (curK ? _p2DrYmLabel(curK) + 'まで' : '期日なし') + '</b><span>' + g.length + '個' + (gDone(curK) ? '・ぜんぶ叶えた' : (rest ? '・' + man(rest) + '万円' : '')) + '</span></div><div class="dr-grid">' + buf.map(row).join('') + '</div></div>';
+      // v922: 月の最後に「＋ この月に追加」（期日にその月が入った入力画面が開く）
+      groups += '<div class="dr-grp"><div class="dr-gh"><b>' + (curK ? _p2DrYmLabel(curK) + 'まで' : '期日なし') + '</b><span>' + g.length + '個' + (gDone(curK) ? '・ぜんぶ叶えた' : (rest ? '・' + man(rest) + '万円' : '')) + '</span></div><div class="dr-grid">' + buf.map(row).join('')
+        + (curK && curK < cur9 ? '' : '<div class="dr-addc" onclick="p2DrFormOpen(\'\',\'' + curK + '\')">＋ ' + (curK ? 'この月に追加' : '期日なしで追加') + '</div>') + '</div></div>'; // 過ぎた月には出さない
       buf = [];
     };
     list.forEach(function(x) { var k2 = x.dl || ''; if (k2 !== curK) { flush(); curK = k2; } buf.push(x); }); flush();
     _p2DrCss(); _p2DrSwBind();
-    return head + '<h2 class="ux-h2 dr-h2">夢100</h2>' + top + flt + need
+    // v922: 上の帯（達成の数・＋ 夢を追加、PC は期間のボタンも）はスクロールしても上に残す。PC は PLAN のタブの下に付ける
+    if (top) setTimeout(function() { var st = document.querySelector('.dr-stk'), hd = document.querySelector('.pcx2-hd'); if (st) st.style.top = (pcW && hd ? hd.offsetHeight : 0) + 'px'; }, 0);
+    var stk = top ? (pcW ? '<div class="dr-stk">' + top + flt + '</div>' : '<div class="dr-stk">' + top + '</div>' + flt) : flt;
+    return head + '<h2 class="ux-h2 dr-h2">夢100</h2>' + stk + need
       + (dr.length ? groups : (all.length ? '<div class="ux-empty">この期間の夢はありません</div>' : '<div class="ux-empty">やりたいこと・欲しいものを100個。<br>まずは5個から</div>'))
       + (!showAll && dr.length > 6 ? '<span class="ux-more" onclick="_uxLists[\'dream:all\']=1;renderPlan()">ほか ' + (dr.length - 6) + '個 すべて見る ›</span>' : '')
-      + '<span class="ux-lk" onclick="p2DrFormOpen()">＋ 夢を追加</span>';
+      + (top ? '' : '<span class="ux-lk" onclick="p2DrFormOpen()">＋ 夢を追加</span>'); // v922: 上の帯にいつもあるので、下のボタンは夢が無い時だけ
   }
   // まとめ
   var tot2 = 0; try { tot2 = _p2GwTotal(); } catch (e) {}
@@ -28850,7 +28856,11 @@ function _p2DrCss() {
     + '.ux-sk .dr-am{flex:none;margin-left:auto;padding-left:8px;font-size:13.5px;font-weight:900;color:var(--text-mid);white-space:nowrap;cursor:pointer}.ux-sk.done .dr-am{text-decoration:line-through}.ux-sk .t{flex:1;min-width:0}'
     + 'body.px3 .dr-h2{display:none}'
     + 'body.px3 .dr-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:8px}body.px3 .dr-grid .dr-lw{margin-top:0}body.px3 .dr-grid .ux-sk{padding:9px 12px}body.px3 .dr-grid .ux-sk .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
-    + 'body.px3 .dr-top .dr-cnt{display:flex;align-items:baseline;gap:18px}';
+    + 'body.px3 .dr-top .dr-cnt{display:flex;align-items:baseline;gap:18px}'
+    // v922: 上に残す帯・「＋ この月に追加」の点線カード
+    + '.dr-stk{position:sticky;top:0;z-index:20;background:var(--bg);margin:0 -6px;padding:6px 6px 2px;border-bottom:1px solid transparent}.dr-stk .dr-f{margin-bottom:8px}.dr-stk .dr-top{margin-bottom:4px}'
+    + '.dr-addc{display:flex;align-items:center;justify-content:center;margin-top:8px;padding:11px 12px;border-radius:13px;border:1.5px dashed var(--border);color:var(--text-mid);font-size:13.5px;font-weight:900;cursor:pointer}.dr-addc:hover{border-color:var(--text-mid);color:var(--text)}'
+    + 'body.px3 .dr-grid .dr-addc{margin-top:0}';
   document.head.appendChild(st);
 }
 function _p2DrYmLabel(ym) { var p = String(ym).split('-'); return p[0] + '年' + parseInt(p[1], 10) + '月'; }
@@ -28919,7 +28929,7 @@ function _p2DrSync() {
 function p2DrTab(c) { _p2DrCat = c; _p2DrSync(); }
 function p2DrPeriodChange(v) { _p2DrPeriod = v; _p2DrSync(); }
 // ── 入力モーダル（追加・編集共通。閲覧側の再描画から独立） ──
-function p2DrFormOpen(editId) {
+function p2DrFormOpen(editId, dl) { // v922: dl＝新しく足す時の期日（月の「＋ この月に追加」から）
   _p2SheetClose('p2DrFormOv');
   _p2DrEditId = editId || null;
   var editing = null;
@@ -28941,7 +28951,7 @@ function p2DrFormOpen(editId) {
     + '<input class="fi" id="p2drT" placeholder="例：ロレックス / ハワイ旅行" value="' + evEsc(editing ? editing.t : '') + '" style="margin-bottom:6px">'
     + '<div style="display:flex;gap:6px;margin-bottom:6px">'
     + '<input class="fi" id="p2drA" type="number" placeholder="万円" value="' + (editing && editing.amt ? editing.amt : '') + '" style="flex:1;min-width:60px" inputmode="numeric">'
-    + _p2DrYmSel('p2drD', editing ? editing.dl : '')
+    + _p2DrYmSel('p2drD', editing ? editing.dl : (dl || ''))
     + '</div>'
     + '<input class="fi" id="p2drU" type="url" placeholder="URL（任意・商品ページなど）" value="' + evEsc(editing && editing.url ? editing.url : '') + '" style="margin-bottom:10px">'
     + '<div style="display:flex;gap:6px">'
