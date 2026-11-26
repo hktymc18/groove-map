@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v923';
+var APP_JS_VERSION = 'v924';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -5260,7 +5260,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v923';
+  var DATA_VERSION = 'v924';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -7400,7 +7400,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
-  { v:'v923', d:'2026-11-26', items:['📅 ユニオン予定の「予定係」：管理者にしなくても、ユニオン予定だけを入れられる人を決められるようになりました（アカウント管理で「＋ ユニオン予定の入力」を押す。付けられるのはオーナーとそのユニオンの管理者）'] },
+  { v:'v924', d:'2026-11-26', items:['📅 ユニオン予定の「予定係」：管理者にしなくても、ユニオン予定だけを入れられる人を決められるようになりました（アカウント管理で「＋ ユニオン予定の入力」を押す。付けられるのはオーナーとそのユニオンの管理者）'] },
+  { v:'v923', d:'2026-11-26', items:['🛠 細かい修正をしました'] },
   { v:'v922', d:'2026-11-26', items:['🌈 夢100：達成の数と「＋ 夢を追加」が、スクロールしても上に残るようにしました','月ごとに「＋ この月に追加」を置きました（期日にその月が入った状態で開きます）'] },
   { v:'v921', d:'2026-11-26', items:['🌈 夢100：上にも「＋ 夢を追加」を置きました','「月を選ぶ」は、期日にした月だけが出るようにしました','夢を期日の月ごとに分けて表示。PC では3列で全部見られます'] },
   { v:'v920', d:'2026-11-25', items:['名前などを直してすぐアプリを閉じた（上にスワイプした）時やログアウトした時に、直した内容が元に戻ることがあったのを直しました'] },
@@ -24180,7 +24181,7 @@ function _uxIb(k) { return UX_INFO[k] ? '<span class="ux-ib" onclick="uxInfo(\''
 //   ユーザー側は一覧（スマホ）／表（PC）で、ADP・購入・ニーズ・プロフィールを持つ。「研修生にする」でビジネスのMAPへ。
 //   項目：adp {on, next}／buys [{t, d}]（新しい順・20件まで）／needs [タグ]／needMemo／uMemo／fromUser（研修生にした日）
 //   あとで（ユーザー用QR会員証）：ckNo・cardToken・uVisits（イベント来場回数）・uGrade（グレード）を受付から入れる予定（今は画面に出さない）
-var UM_KEYS = ['adp', 'buys', 'needs', 'needMemo', 'uMemo', 'fromUser', 'toUser', 'ngOut', 'ngFrom', 'ckNo', 'cardToken', 'uVisits', 'uGrade', 'uLastAt', 'uPrysm', 'uPrysmD', 'uCkAt', 'ckToMember', 'uDays', 'shopReg', 'fuJ', 'uAct']; // メンバー画面の保存で落とさない（v903: uAct＝アプリの活動・v864: 受付から）
+var UM_KEYS = ['adp', 'buys', 'needs', 'needMemo', 'uMemo', 'fromUser', 'toUser', 'ngOut', 'ngFrom', 'ckNo', 'cardToken', 'uVisits', 'uGrade', 'uLastAt', 'uPrysm', 'uPrysmD', 'uCkAt', 'ckToMember', 'uDays', 'shopReg', 'fuJ', 'uAct', 'uCs']; // メンバー画面の保存で落とさない（v903: uAct＝アプリの活動・v923: uCs＝DAYスタッフに相談した日・v864: 受付から）
 var _umMode = false, _umFlt = 'all', _umRef = '', _umSort = 'ref', _umOpenId = '', _umBuyF = false;
 try { _umMode = localStorage.getItem('gm_umMode') === '1'; } catch (e) {}
 function isUserM(m) { if (!m || m.deleted) return false; var t = String(m.title || '').trim(); return t === 'ユーザー' || /^U$/i.test(t); }
@@ -24289,7 +24290,7 @@ function _umTags(u) { var t = _umNeedS(u); return t ? '<span class="umt">' + evE
 function _umCardHtml(u) {
   var ph = _avatars[u.id], av = ph ? '<img src="' + ph + '" alt="">' : evEsc((u.lastName || u.firstName || '?').charAt(0));
   return '<div class="umcd" onclick="umOpen(\'' + u.id + '\')"><div class="umav">' + av + '</div><div class="umb2"><div class="umn">' + evEsc(_umNm(u)) + '<em class="' + (_umAdp(u) ? 'adp' : 'no') + '">' + (_umAdp(u) ? 'ADP' : 'ADPなし') + '</em></div>'
-    + _umBuyLine(u) + _umCkLine(u) + _umActLine(u) + _umDayLine(u) + (_umTags(u) ? '<div>' + _umTags(u) + '</div>' : '') + '</div>'
+    + _umBuyLine(u) + _umCkLine(u) + _umActLine(u) + _umCsLine(u) + _umDayLine(u) + (_umTags(u) ? '<div>' + _umTags(u) + '</div>' : '') + '</div>'
     + '<div class="umpt"><b>' + (parseInt(u.ptCurrent, 10) || 0).toLocaleString() + '</b><small>固定 ' + (parseInt(u.ptFixed, 10) || 0).toLocaleString() + '</small></div>'
     + (state.isEditor ? '<span class="umdel" title="削除" onclick="umDel(\'' + u.id + '\',event)">' + icn('trash') + '</span>' : '') + '</div>'; // v846: 一覧からも削除
 }
@@ -24508,6 +24509,12 @@ function _umActStop(u) { // 止まっている：マイプランを始めたの�
   var A = u && u.ckNo ? u.uAct : null; if (!A) return false;
   var d = _umDays(A.last || A.start); return d !== null && d >= 3;
 }
+// v923: DAYスタッフに相談した（最後の日だけ）。分野・中身・相手のスタッフは出さない
+function _umCsLine(u) {
+  var C = u && u.uCs; if (!C || !C.at) return '';
+  var d = new Date(C.at);
+  return '<span class="umck umcs">💬 DAYスタッフに相談した（最後 ' + (d.getMonth() + 1) + '/' + d.getDate() + '）</span>';
+}
 function _umActLine(u, tbl) {
   if (!u || !u.ckNo || u.uAct === undefined) return '';
   var A = u.uAct;
@@ -24612,6 +24619,9 @@ function umCkSync(force) {
         var D = Object.keys(cd).filter(function(k) { return k.indexOf('exp_') === 0 && cd[k] && cd[k].d; }).map(function(k) { var x = cd[k]; return { e: k.slice(4), d: x.d, ev: String(x.ev || '').slice(0, 40), kind: x.kind || '', menu: x.menu || '', staff: x.staff || '', st: x.st || 'rsv' }; })
           .sort(function(a, b) { return String(b.d).localeCompare(String(a.d)); }).slice(0, 20);
         if (JSON.stringify(D) !== JSON.stringify(u.uDays || [])) { u.uDays = D; ch = 1; }
+        // v923: NAVIGATOR Beauty で DAYスタッフに相談した（最後の日だけ。分野・中身・相手はここに来ない）
+        var CS = cd.cs && cd.cs.at ? { at: +cd.cs.at || 0 } : null;
+        if (JSON.stringify(CS) !== JSON.stringify(u.uCs || null)) { u.uCs = CS; ch = 1; }
         // v903: NAVIGATOR Beauty のアプリの活動（マイプラン：連続日数・この7日・最後にチェックした日）
         return db.doc('cards/' + cu.cardToken + '/plan/me').get().then(function(p) {
           var A = _umActOf(p.exists ? (p.data() || {}) : null);
