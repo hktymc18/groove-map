@@ -1,6 +1,7 @@
 // 受付 v182：相談の数・報告された相談（架空データ）
-//   「💜 Beauty」タブ：📊 相談の数（DAY HOST・管理者・オーナー。中身は出ない）／🚩 報告された相談（オーナーだけ）
-//   オーナーが読む時は確認 → 読んだ記録（olog）を残してから中身を出す → 「対応済みにする」
+//   「💜 Beauty」タブ：📊 相談の数（DAY HOST・管理者・オーナー。中身は出ない）／💬 すべての相談（オーナーだけ）
+//   オーナーはこのユニオンの相談を全部読める。開くと読んだ記録（olog）が残る。報告には「対応済み」を付けられる
+//   お客さんの画面の説明も「スタッフと運営（オーナー）が見ます」
 const path = require('path'), fs = require('fs');
 const P = require('../lib/ckpage.js');
 let fails = 0;
@@ -18,7 +19,8 @@ const data = {
   'ckDm/r1': TH({ rep: { at: now - 3600000 } }),
   'ckDm/r1/m/a': { by: 'u', uid: 'dev-1', t: '朝つっぱります', at: '2026-11-26T10:00:00Z' },
   'ckDm/r1/m/b': { by: 's', uid: 'st1', t: '化粧水のあとにすぐクリームを', at: '2026-11-26T11:00:00Z' },
-  'ckDm/n1': TH({ cname: '見本 ほか' }),
+  'ckDm/n1': TH({ cname: '見本 ほか', upAt: now + 1000 }),
+  'ckDm/n1/m/a': { by: 'u', uid: 'dev-1', t: 'ほかの相談です', at: '2026-11-26T09:00:00Z' },
   'ckDm/x1': TH({ un: 'ANTARES', cname: '見本 よそ', rep: { at: now } })
 };
 (async () => {
@@ -35,20 +37,25 @@ const data = {
   {
     const o = await open('');
     const dr = await o.ev(`document.getElementById('btDr').innerText`);
-    c('オーナー：報告された相談だけ・このユニオンだけ', /見本 はなこ さん → 見本 りな さん/.test(dr) && !/見本 ほか/.test(dr) && !/見本 よそ/.test(dr), dr);
+    c('オーナー：このユニオンのすべての相談（報告なしも）・ほかのユニオンは出ない', /見本 はなこ さん → 見本 りな さん/.test(dr) && /見本 ほか/.test(dr) && !/見本 よそ/.test(dr), dr);
+    c('未対応の報告が上', /🚩 報告あり/.test(await o.ev(`document.querySelector('#btDr .cs-row').innerText`)));
     c('一覧には中身を出さない', !/つっぱり/.test(dr));
-    await o.page.screenshot({ path: OUT + '/ckdm182_owner.png' });
-    let asked = ''; o.page.removeAllListeners('dialog'); o.page.on('dialog', d => { asked = d.message(); d.dismiss(); });
-    await o.ev(`document.querySelector('#btDr [data-dr]').click()`); await o.wt(400);
-    c('読む前に確認（やめたら記録も残さず読まない）', /読んだ」という記録が残ります/.test(asked) && !(await o.ev(`!!window.__FBDATA['ckDm/r1/olog/${OWN}']`)) && !(await o.ev(`!!document.querySelector('.modal .cs-chat')`)));
-    o.page.removeAllListeners('dialog'); o.page.on('dialog', d => d.accept());
+    await o.page.locator('#btDr').screenshot({ path: OUT + '/ckdm182_all.png' });
+    await o.ev(`document.querySelector('#drFlt [data-v="rep"]').click()`); await o.wt(200);
+    c('「🚩 報告」で絞れる', (await o.ev(`document.querySelectorAll('#btDr .cs-row').length`)) === 1);
+    await o.page.locator('#btDr').screenshot({ path: OUT + '/ckdm182_owner.png' });
     await o.ev(`document.querySelector('#btDr [data-dr]').click()`); await o.wt(500);
-    c('はい → 読んだ記録を残して中身を出す', (await o.ev(`!!window.__FBDATA['ckDm/r1/olog/${OWN}']`)) && /朝つっぱります/.test(await o.ev(`document.querySelector('.modal').innerText`)));
+    c('開くと中身が出て、読んだ記録が残る', (await o.ev(`!!window.__FBDATA['ckDm/r1/olog/${OWN}']`)) && /朝つっぱります/.test(await o.ev(`document.querySelector('.modal').innerText`)));
     await o.page.screenshot({ path: OUT + '/ckdm182_read.png' });
+    c('スタッフの吹き出しに色がある（受付の画面では --ua-vio が無いので、白い文字が見えなくなっていた）', !/rgba\(0, 0, 0, 0\)|transparent/.test(await o.ev(`getComputedStyle(document.querySelector('.modal .cs-msg.me')).backgroundColor`)));
+    c('お客さんとスタッフ、両方のメッセージ', /化粧水のあとにすぐクリームを/.test(await o.ev(`document.querySelector('.modal').innerText`)), await o.ev(`document.querySelector('.modal').innerHTML`));
     await o.ev(`document.getElementById('drDone').click()`); await o.wt(400);
     const rd = JSON.parse(await o.ev(`JSON.stringify(window.__FBDATA['ckDm/r1'].repDone || null)`));
-    c('対応済みにする（自分の名前で）', rd && rd.by === OWN && rd.at > 0, JSON.stringify(rd));
+    c('報告を対応済みにする（自分の名前で）', rd && rd.by === OWN && rd.at > 0, JSON.stringify(rd));
     c('一覧に「対応済み」', /対応済み/.test(await o.ev(`document.getElementById('btDr').innerText`)));
+    await o.ev(`document.querySelector('#drFlt [data-v=""]').click()`); await o.wt(200);
+    await o.ev(`[].filter.call(document.querySelectorAll('#btDr .cs-row'), function(r){ return /見本 ほか/.test(r.innerText); })[0].querySelector('[data-dr]').click()`); await o.wt(500);
+    c('報告のない相談も読める（対応済みボタンは出ない）', (await o.ev(`!!window.__FBDATA['ckDm/n1/olog/${OWN}']`)) && /ほかの相談です/.test(await o.ev(`document.querySelector('.modal').innerText`)) && !(await o.ev(`!!document.getElementById('drDone')`)));
     c('オーナーにも 📊 相談の数', /7\s*件（30日）/.test(await o.ev(`document.getElementById('btDs').innerText`)));
     c('エラーなし（オーナー）', !o.errs.length, o.errs.join(' / '));
     await o.ctx.close();

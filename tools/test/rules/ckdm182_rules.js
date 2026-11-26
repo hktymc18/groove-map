@@ -1,5 +1,5 @@
 // 受付 v182（相談の報告・数のまとめ）の firestore.rules を、Firestore エミュレータで試す（架空のデータだけ）
-//   オーナーは報告がある相談だけ一覧で読める・「対応済み」を付けるだけ。数のまとめは DAY HOST・管理者・オーナーだけ読める
+//   オーナーはすべての相談を読める（一覧・メッセージ）・書けるのは報告への「対応済み」だけ。数のまとめは DAY HOST・管理者・オーナーだけ読める
 //   準備・実行は ckpf109_rules.js と同じ
 const fs = require('fs'), path = require('path');
 const { initializeTestEnvironment } = require('@firebase/rules-unit-testing');
@@ -24,9 +24,11 @@ const _e = console.error; console.error = (...a) => { if (!/PERMISSION_DENIED|ev
   });
   const OW = env.authenticatedContext(OWN).firestore(), S1 = env.authenticatedContext('st1').firestore(), M1 = env.authenticatedContext('mem1').firestore(), H1 = env.authenticatedContext('host1').firestore();
   const AN = env.authenticatedContext('dev1', { firebase: { sign_in_provider: 'anonymous' } }).firestore(), NO = env.unauthenticatedContext().firestore();
-  c('オーナーは報告がある相談を一覧で読める', await ok(getDocs(query(collection(OW, 'ckDm'), where('rep.at', '>', 0)))));
-  c('オーナーでも、報告の条件なしの一覧は読めない', !(await ok(getDocs(collection(OW, 'ckDm')))));
-  c('一般メンバー・スタッフは報告の一覧を読めない', !(await ok(getDocs(query(collection(M1, 'ckDm'), where('rep.at', '>', 0))))) && !(await ok(getDocs(query(collection(S1, 'ckDm'), where('rep.at', '>', 0))))));
+  c('オーナーはユニオンのすべての相談を一覧で読める', await ok(getDocs(query(collection(OW, 'ckDm'), where('un', '==', 'REVE')))));
+  c('オーナーは報告のない相談のメッセージも読める', await ok(getDocs(collection(OW, 'ckDm/n1/m'))));
+  c('一般メンバー・DAY HOST は一覧を読めない', !(await ok(getDocs(query(collection(M1, 'ckDm'), where('un', '==', 'REVE'))))) && !(await ok(getDocs(query(collection(H1, 'ckDm'), where('un', '==', 'REVE'))))));
+  c('スタッフは、ほかの人あての相談を一覧で読めない', !(await ok(getDocs(query(collection(S1, 'ckDm'), where('un', '==', 'REVE'))))));
+  c('匿名の端末・未ログインは一覧を読めない', !(await ok(getDocs(query(collection(AN, 'ckDm'), where('un', '==', 'REVE'))))) && !(await ok(getDocs(query(collection(NO, 'ckDm'), where('un', '==', 'REVE'))))));
   c('オーナーは報告に「対応済み」を付けられる', await ok(updateDoc(doc(OW, 'ckDm/r1'), { repDone: { at: now, by: OWN } })));
   c('ほかの人の名前で「対応済み」は付けられない', !(await ok(updateDoc(doc(OW, 'ckDm/r1'), { repDone: { at: now, by: 'st1' } }))));
   c('オーナーは「対応済み」以外は変えられない', !(await ok(updateDoc(doc(OW, 'ckDm/r1'), { st: 'done' }))) && !(await ok(updateDoc(doc(OW, 'ckDm/r1'), { repDone: { at: now, by: OWN, note: 'x' } }))));

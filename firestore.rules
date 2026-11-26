@@ -1196,9 +1196,10 @@ service cloud.firestore {
     }
     match /ckDm/{tid} {
       allow get: if ckDmBound(resource.data.tk) || (signedIn() && resource.data.sUid == request.auth.uid)
-        || (isOwnerAdmin() && resource.data.get('rep', null) != null);
+        || isOwnerAdmin();
+      // 受付v182: オーナーはすべての相談を読める（読んだ記録 olog はアプリが残す）
       allow list: if ckDmBound(resource.data.tk) || (signedIn() && resource.data.sUid == request.auth.uid)
-        || (isOwnerAdmin() && resource.data.rep.at > 0);
+        || isOwnerAdmin();
       // 受付v182: オーナーは報告に「対応済み」を付けるだけ
       allow update: if isOwnerAdmin() && resource.data.get('rep', null) != null
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['repDone'])
@@ -1225,9 +1226,9 @@ service cloud.firestore {
         && (!('last' in request.resource.data.diff(resource.data).affectedKeys()) || (request.resource.data.last.by == 's' && resource.data.get('stop', false) == false));
       allow delete: if false;
       match /m/{mid} {
-        allow get, list: if ckDmBound(get(/databases/$(database)/documents/ckDm/$(tid)).data.tk)
-          || (signedIn() && get(/databases/$(database)/documents/ckDm/$(tid)).data.sUid == request.auth.uid)
-          || (isOwnerAdmin() && exists(/databases/$(database)/documents/ckDm/$(tid)/olog/$(request.auth.uid)));
+        allow get, list: if isOwnerAdmin()
+          || ckDmBound(get(/databases/$(database)/documents/ckDm/$(tid)).data.tk)
+          || (signedIn() && get(/databases/$(database)/documents/ckDm/$(tid)).data.sUid == request.auth.uid);
         allow create: if request.resource.data.keys().hasOnly(['by', 'uid', 't', 'at'])
           && request.resource.data.t is string && request.resource.data.t.size() > 0 && request.resource.data.t.size() <= 1000
           && request.resource.data.at == request.time

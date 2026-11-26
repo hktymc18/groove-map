@@ -1330,7 +1330,7 @@ body.uapp #vCard .cardwrap{max-width:520px;margin:0 auto;padding:calc(env(safe-a
 .cs-tgs{display:flex;flex-wrap:wrap;gap:4px;}.cs-tgs span{font-size:11px;font-weight:700;border-radius:999px;padding:1px 8px;background:var(--ua-vio-soft);color:var(--ua-vio);}
 .cs-chat{display:flex;flex-direction:column;gap:8px;max-height:50vh;overflow-y:auto;padding:4px 2px;margin:8px 0;}
 .cs-msg{max-width:82%;border-radius:16px;padding:9px 12px;font-size:14px;line-height:1.7;white-space:pre-wrap;word-break:break-word;}
-.cs-msg.me{align-self:flex-end;background:var(--ua-vio);color:#fff;border-bottom-right-radius:4px;}
+.cs-msg.me{align-self:flex-end;background:var(--ua-vio,#6a3fd1);color:#fff;border-bottom-right-radius:4px;}
 .cs-msg.you{align-self:flex-start;background:var(--bg,#f2f2f5);border:1px solid var(--line);border-bottom-left-radius:4px;}
 .cs-tm{font-size:10.5px;color:var(--sub);text-align:center;}
 .cs-acts{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;font-size:12.5px;}
@@ -17407,7 +17407,7 @@ function btDraw(){
   btChDraw();   // 💜 v174
   btCsDraw();   // 💜 v180
   btDsDraw();   // 💜 v182: 相談の数
-  btDrDraw();   // 💜 v182: 報告された相談（オーナー）
+  btDrDraw();   // 💜 v182: すべての相談（オーナー）
   btDvDraw();   // 💜 v180
   btLsDraw();   // 💜 v175
   btQeDraw();   // 💜 v140
@@ -17737,7 +17737,7 @@ function ckBindStart(c, token){
    ・ckDm/{相談} = { tk（会員証）, un, cno, cname, sUid, sName（相談相手）, topic, st: open|done, last: { by: 'u'|'s', t（40字）, at }, uRead, sRead, byStaff,
      stop（お客さんが止めた）, rep（報告）, tags（スタッフが付ける悩みのタグ）, at, upAt }
    ・ckDm/{相談}/m/{メッセージ} = { by: 'u'|'s', uid, t（1000字）, at }
-   ・読めるのは、ひもづいた端末のお客さん・相談相手のスタッフだけ（オーナーは報告があった時だけ、記録を残して＝③）
+   ・読めるのは、ひもづいた端末のお客さん・相談相手のスタッフ・オーナー（オーナーは読むと記録が残る＝③）
    ・お客さんの側は、匿名ログインの接続（ckDev）で読み書きする */
 var gCs = null;   // { token, threads, staff, unsub }
 function ckTsMs(v){ if(!v) return 0; if(typeof v === 'number') return v; if(v.toMillis) return v.toMillis(); if(v.toDate) return v.toDate().getTime(); var t = Date.parse(v); return isNaN(t) ? 0 : t; }
@@ -17772,7 +17772,7 @@ function ckCsDraw(){
   if(!gCs || gCs.token !== gUa.token){ el.innerHTML = '<p class="ua-p">読み込み中…</p>'; return; }
   var T = gCs.threads;
   if(dot) dot.hidden = !T.some(ckCsUnread);
-  el.innerHTML = '<div class="cs-wrap"><p class="ua-p">DAYスタッフに、1対1で相談できます。中身は、相談したスタッフだけが見ます。</p>'
+  el.innerHTML = '<div class="cs-wrap"><p class="ua-p">DAYスタッフに、1対1で相談できます。中身は、相談したスタッフと運営（オーナー）が見ます。紹介者には見えません。</p>'
     + '<button type="button" class="primary ua-btn" id="csNew">＋ 相談する</button>'
     + T.map(function(t, i){
         return '<button type="button" class="cs-th" data-th="' + i + '">' + (ckCsUnread(t) ? '<i class="cs-nd" aria-label="新しい返事"></i>' : '')
@@ -17823,7 +17823,7 @@ function ckCsCompose(st){
   modal('<h2>' + esc(st.name) + ' さんに相談</h2>'
     + '<label>なんの相談？</label><div class="ulg-chips" id="csTp">' + (st.tags || []).concat(['other']).map(function(t){ return '<button type="button" data-v="' + t + '"' + (t === topic ? ' class="on"' : '') + '>' + esc(t === 'other' ? 'その他' : ckCsTagN(t)) + '</button>'; }).join('') + '</div>'
     + '<label for="csTx" style="margin-top:10px;">相談（1000文字まで）</label><textarea id="csTx" rows="5" maxlength="1000" placeholder="例: 冬になると、夜に保湿しても朝つっぱります。順番や量を変えた方がいいですか？"></textarea>'
-    + '<p class="bt-note">相談の中身は、' + esc(st.name) + ' さんだけが見ます。</p>'
+    + '<p class="bt-note">相談の中身は、' + esc(st.name) + ' さんと運営（オーナー）が見ます。紹介者には見えません。</p>'
     + '<div class="btns"><button id="csCx">もどる</button><button class="primary" id="csGo">送る</button></div>', true);
   $('csTp').onclick = function(e){ var b = e.target.closest ? e.target.closest('button[data-v]') : null; if(!b) return; topic = b.getAttribute('data-v'); [].forEach.call($('csTp').querySelectorAll('button'), function(x){ x.classList.toggle('on', x === b); }); };
   $('csCx').onclick = ckCsPick;
@@ -18040,7 +18040,7 @@ function ckCsMineLoad(){
     return db.collection('ckCs').doc(un).collection('s').doc(gUser.uid).get().then(function(s){ if(s.exists) gCsMine.push(un); }, function(){});
   })).then(function(){ ckBtApply(); });
 }
-/* 💜 v182: 相談の数（ckDmStat/{ユニオン}・毎日20時にサーバーがまとめる。中身は入れない）と、報告された相談（オーナーだけ・読む前に記録を残す） */
+/* 💜 v182: 相談の数（ckDmStat/{ユニオン}・毎日20時にサーバーがまとめる。中身は入れない）と、すべての相談（オーナーだけ・読むと記録が残る） */
 function btDsDraw(){
   var box = $('btDs'), me = gBt;
   if(!box || !me) return;
@@ -18069,38 +18069,50 @@ function btDrDraw(){
   if(!ckCsOn(me.un) || !isOwner()){ box.classList.add('hide'); box.innerHTML = ''; return; }
   box.classList.remove('hide');
   if(me.dr === undefined){
-    me.dr = null; box.innerHTML = '<h3>🚩 報告された相談</h3><p class="bt-note">読み込み中…</p>';
-    db.collection('ckDm').where('rep.at', '>', 0).get().then(function(qs){
+    me.dr = null; box.innerHTML = '<h3>💬 すべての相談</h3><p class="bt-note">読み込み中…</p>';
+    db.collection('ckDm').where('un', '==', me.un).limit(300).get().then(function(qs){
       if(gBt !== me) return;
-      var a = []; qs.forEach(function(d){ var t = d.data() || {}; if(t.un !== me.un || !t.rep) return; t.id = d.id; a.push(t); });
-      a.sort(function(x, y){ return (y.rep.at || 0) - (x.rep.at || 0); });
+      var a = []; qs.forEach(function(d){ var t = d.data() || {}; if(t.un !== me.un) return; t.id = d.id; a.push(t); });
+      // 未対応の報告を上に。あとは新しく動いた順
+      var w = function(t){ return t.rep && !t.repDone ? 1 : 0; };
+      a.sort(function(x, y){ return (w(y) - w(x)) || ((+y.upAt || 0) - (+x.upAt || 0)); });
       me.dr = a; btDrDraw();
-    }).catch(function(e){ if(gBt === me){ me.dr = []; me.drErr = permMsg(e, '読めませんでした'); btDrDraw(); } });
+    }).catch(function(e){ if(gBt === me){ me.dr = []; me.drErr = permMsg(e, '読めませんでした。ルールの反映を確かめてください'); btDrDraw(); } });
     return;
   }
   if(me.dr === null) return;
-  box.innerHTML = '<h3>🚩 報告された相談' + hq('お客さんが「報告」を押した相談です。中身を読む時は、読んだ記録が残ります（記録はあとから消せません）。') + '</h3>'
+  var f = me.drF || '', L = me.dr.filter(function(t){ return !f || (f === 'rep' ? !!t.rep : f === 'open' ? t.st !== 'done' : (t.topic || 'other') === f); });
+  var nRep = me.dr.filter(function(t){ return t.rep && !t.repDone; }).length;
+  var chips = [['', 'すべて ' + me.dr.length], ['open', '続いている'], ['rep', '🚩 報告' + (nRep ? ' ' + nRep : '')]].concat(ckCsTags().concat([['other', 'その他']]));
+  box.innerHTML = '<h3>💬 すべての相談' + hq('このユニオンの相談を、オーナーは全部読めます。開くと「オーナーが読んだ」記録が残ります。お客さん・紹介者には出ません。') + '</h3>'
     + (me.drErr ? '<p class="bt-note">' + esc(me.drErr) + '</p>' : '')
-    + (me.dr.length ? '<div class="bt-ls">' + me.dr.map(function(t, i){
-        return '<div class="cs-row"><div><b>' + esc(t.cname || '') + ' さん → ' + esc(t.sName || '') + ' さん</b><small class="bt-note">' + esc(ckCsTagN(t.topic) || 'その他') + ' ・ 報告 ' + esc(ckCsAgo(t.rep.at)) + (t.repDone ? ' ・ 対応済み' : '') + '</small></div>'
-          + '<div class="btns"><button type="button" data-dr="' + i + '">記録を残して読む</button></div></div>';
+    + '<div class="ulg-chips" id="drFlt">' + chips.map(function(c){ return '<button type="button" data-v="' + c[0] + '" class="' + (c[0] === f ? 'on' : '') + '">' + esc(c[1]) + '</button>'; }).join('') + '</div>'
+    + (L.length ? '<div class="bt-ls">' + L.map(function(t){
+        var i = me.dr.indexOf(t), st = t.rep ? (t.repDone ? '報告・対応済み' : '<b>🚩 報告あり</b>') : (t.st === 'done' ? '解決済み' : '続いている');
+        return '<div class="cs-row"><div><b>' + esc(t.cname || '') + ' さん → ' + esc(t.sName || '') + ' さん</b><small class="bt-note">' + esc(ckCsTagN(t.topic) || 'その他') + ' ・ ' + st
+          + (t.byStaff ? ' ・ スタッフから' : '') + (t.stop ? ' ・ 止められた' : '') + (t.tags && t.tags.length ? ' ・ ' + esc(t.tags.join('、')) : '')
+          + ' ・ ' + esc(ckCsAgo(+t.upAt || 0)) + '</small></div>'
+          + '<div class="btns"><button type="button" data-dr="' + i + '">読む</button></div></div>';
       }).join('') + '</div>' : '<p class="bt-note">ありません。</p>');
+  Array.prototype.forEach.call(box.querySelectorAll('#drFlt [data-v]'), function(b){ b.onclick = function(){ me.drF = b.getAttribute('data-v'); btDrDraw(); }; });
   Array.prototype.forEach.call(box.querySelectorAll('[data-dr]'), function(b){ b.onclick = function(){ btDrOpen(me.dr[+b.getAttribute('data-dr')]); }; });
 }
 function btDrOpen(th){
-  if(!window.confirm('この相談の中身を読みますか？\n「オーナーが読んだ」という記録が残ります。')) return;
   var ref = db.collection('ckDm').doc(th.id);
+  // 読んだ記録（olog）を残す。最初の1回だけ
   ref.collection('olog').doc(gUser.uid).get().then(function(s){
     return s.exists ? null : ref.collection('olog').doc(gUser.uid).set({ at: FV.serverTimestamp() });
-  }).then(function(){ return ref.collection('m').get(); }).then(function(qs){
+  }).catch(function(){}).then(function(){ return ref.collection('m').get(); }).then(function(qs){
     var a = []; qs.forEach(function(x){ a.push(x.data() || {}); });
     a.sort(function(p, q){ return ckTsMs(p.at) - ckTsMs(q.at); });
-    modal('<h2>🚩 ' + esc(th.cname || '') + ' さん → ' + esc(th.sName || '') + ' さん</h2><p class="bt-note">' + esc(ckCsTagN(th.topic) || 'その他') + ' ・ 読んだ記録を残しました</p>'
+    var canDone = th.rep && !th.repDone;
+    modal('<h2>💬 ' + esc(th.cname || '') + ' さん → ' + esc(th.sName || '') + ' さん</h2><p class="bt-note">' + esc(ckCsTagN(th.topic) || 'その他')
+      + (th.tags && th.tags.length ? ' ・ 悩みのタグ：' + esc(th.tags.join('、')) : '') + (th.rep ? ' ・ 🚩 報告あり' + (th.repDone ? '（対応済み）' : '') : '') + '</p>'
       + '<div class="cs-chat">' + a.map(function(m){ return '<div class="cs-msg ' + (m.by === 's' ? 'me' : 'you') + '">' + (m.by === 's' ? '<b>スタッフ</b><br>' : '<b>お客さん</b><br>') + esc(m.t || '') + '</div>'; }).join('') + '</div>'
-      + '<div class="btns"><button id="drX">閉じる</button>' + (th.repDone ? '' : '<button class="primary" id="drDone">対応済みにする</button>') + '</div>', true);
+      + '<div class="btns"><button id="drX">閉じる</button>' + (canDone ? '<button class="primary" id="drDone">報告を対応済みにする</button>' : '') + '</div>', true);
     $('drX').onclick = closeModal;
     if($('drDone')) $('drDone').onclick = function(){
-      ref.update({ repDone: { at: Date.now(), by: gUser.uid } }).then(function(){ th.repDone = true; closeModal(); toast('対応済みにしました'); btDrDraw(); })
+      ref.update({ repDone: { at: Date.now(), by: gUser.uid } }).then(function(){ th.repDone = { at: Date.now(), by: gUser.uid }; closeModal(); toast('対応済みにしました'); btDrDraw(); })
         .catch(function(e){ toast(permMsg(e, '変えられませんでした')); });
     };
   }).catch(function(e){ toast(permMsg(e, '読めませんでした。ルールの反映を確かめてください')); });
