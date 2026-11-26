@@ -3,6 +3,7 @@
 #   bash ~/groove-map/tools/deploy/setup_wif.sh
 # 作る物：
 #   ・デプロイ専用のサービスアカウント github-deploy-rules（できるのは ルールの更新・索引の更新 だけ。データは読めない）
+#     役割：firebaserules.admin・datastore.indexAdmin・serviceusage.serviceUsageConsumer・firebaseextensions.viewer（見るだけ）
 #   ・GitHub の hktymc18/groove-map の main ブランチから動いた時だけ、そのアカウントを使える連携（鍵は作らない）
 # 何回実行しても大丈夫（もうある物は飛ばす）
 # 必要な権限：このプロジェクトの「オーナー」（権限を付ける操作があるため。編集者ではできない）
@@ -43,7 +44,8 @@ gcloud iam service-accounts describe $SA_EMAIL >/dev/null 2>&1 \
   || gcloud iam service-accounts create $SA --display-name="GitHub Actions: Firestore rules deploy"
 
 echo "▶ できることを、ルール・索引の更新だけにする"
-for R in roles/firebaserules.admin roles/datastore.indexAdmin roles/serviceusage.serviceUsageConsumer; do
+# firebaseextensions.viewer：拡張機能の一覧を見るだけ。別のプロジェクトでデプロイの時に足りなかったので、念のため最初から付ける
+for R in roles/firebaserules.admin roles/datastore.indexAdmin roles/serviceusage.serviceUsageConsumer roles/firebaseextensions.viewer; do
   gcloud projects add-iam-policy-binding $PROJECT --member="serviceAccount:$SA_EMAIL" --role=$R --condition=None >/dev/null
   echo "  $R"
 done
