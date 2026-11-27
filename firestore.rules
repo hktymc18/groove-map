@@ -1249,8 +1249,12 @@ service cloud.firestore {
         allow get, list: if isOwnerAdmin()
           || ckDmBound(get(/databases/$(database)/documents/ckDm/$(tid)).data.tk)
           || (signedIn() && get(/databases/$(database)/documents/ckDm/$(tid)).data.sUid == request.auth.uid);
-        allow create: if request.resource.data.keys().hasOnly(['by', 'uid', 't', 'at'])
-          && request.resource.data.t is string && request.resource.data.t.size() > 0 && request.resource.data.t.size() <= 1000
+        // 受付v183: 写真（img）も送れる。JPEG の data URL・40万文字（約300KB）まで。写真だけの時は t は空でよい
+        allow create: if request.resource.data.keys().hasOnly(['by', 'uid', 't', 'at', 'img'])
+          && request.resource.data.t is string && request.resource.data.t.size() <= 1000
+          && (request.resource.data.t.size() > 0 || 'img' in request.resource.data)
+          && (!('img' in request.resource.data) || (request.resource.data.img is string && request.resource.data.img.size() <= 400000
+                && request.resource.data.img.matches('data:image/jpeg;base64,[A-Za-z0-9+/=]+')))
           && request.resource.data.at == request.time
           && ((request.resource.data.by == 'u' && request.resource.data.uid == request.auth.uid
                 && ckDmBound(getAfter(/databases/$(database)/documents/ckDm/$(tid)).data.tk))

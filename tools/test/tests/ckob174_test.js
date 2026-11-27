@@ -1,5 +1,5 @@
 // 受付 v174：NAVIGATOR Beauty 第3弾（架空データ）
-//   今日の美容ポイント・昨日の結果発表・1日1分・今月のチャレンジ（スタッフが決める）・自分だけの写真（スマホの中だけ）・
+//   今日の美容ポイント・昨日の結果発表・1日1分・今月のチャレンジ（スタッフが決める）・（自分だけの写真は v183 で終わり）・
 //   あなたのタイプ（PRYSMiO の色）・シェア画像・アンバサダーのバッジ
 const path = require('path'), fs = require('fs');
 const P = require('../lib/ckpage.js');
@@ -48,25 +48,20 @@ const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAADCAIAAAA2iEnWAAAAFklEQVR
     c('先月のチャレンジは出ない', !/昔のテーマ/.test(tx));
     await o.ctx.close();
   }
-  // ③ 自分だけの写真（このスマホの中だけ）・今週の写真の案内
+  // ③ v183：自分だけの写真は終わり。案内も欄も出さず、スマホの中に残っている写真（IndexedDB nb_photo）を1回だけ消す
   {
     const o = await P.open(b, { hash: '#c=' + TA, data: base({ ['cards/' + TA + '/plan/me']: plan({ days: { [T]: ['am'] } }) }), wait: 2800 });
-    c('今週の写真がまだ → 「今日」に案内', /今週の1枚を撮ろう/.test(await o.ev(`document.getElementById('uaToday').innerText`)));
+    c('「今日」に写真の案内は出ない', !/今週の1枚/.test(await o.ev(`document.getElementById('uaToday').innerText`)));
     await o.page.click('#uaTabs [data-tab="me"]'); await o.wt(300);
-    const ph = await o.ev(`document.getElementById('phArea').innerText`);
-    c('マイページに MY PHOTO と「このスマホの中だけ」', /MY PHOTO/.test(ph) && /このスマホの中だけに保存/.test(ph) && /だれにも送られません/.test(ph), ph);
-    // 前の写真（3週間前）を入れておく → 今日撮ると見比べ
+    c('マイページに写真の欄は無い', !(await o.ev(`!!document.getElementById('phArea')`)) && !/MY PHOTO/.test(await o.ev(`document.body.innerText`)));
+    // 前のバージョンで撮った写真が残っている端末 → 開き直すと消える
     await o.ev(`new Promise(function(ok){ var r = indexedDB.open('nb_photo', 1); r.onupgradeneeded = function(){ r.result.createObjectStore('p', { keyPath: 'id' }); };
-      r.onsuccess = function(){ var t = r.result.transaction('p', 'readwrite'); t.objectStore('p').put({ id: '${TA}|${day(-21)}', tk: '${TA}', d: '${day(-21)}', u: 'data:image/png;base64,${PNG.toString('base64')}' }); t.oncomplete = function(){ ok(); }; }; })`);
-    const reqs = []; o.page.on('request', r => { if (r.method() !== 'GET') reqs.push(r.url()); });
-    await o.page.setInputFiles('#phIn', { name: 'me.png', mimeType: 'image/png', buffer: PNG }); await o.wt(900);
-    c('撮ると保存して、はじめ と いま を見比べる', (await o.ev(`document.querySelectorAll('#phArea .ph-cmp img').length`)) === 2 && (await o.ev(`document.querySelectorAll('#phArea .ph-list span').length`)) === 2);
-    c('写真はどこにも送らない（データベースにも入れない）', !reqs.length && !(await o.ev(`Object.keys(window.__FBDATA).some(function(k){ return /photo|nb_photo/.test(k); })`)), reqs.join(','));
-    c('今週撮ったら「今日」の案内は消える', !/今週の1枚を撮ろう/.test(await o.ev(`document.getElementById('uaToday').innerText`)));
-    await o.page.screenshot({ path: OUT + '/ckob174_photo.png', fullPage: true });
-    await o.ev(`document.querySelector('#phArea [data-phdel]').click()`); await o.wt(400);
-    c('消せる', (await o.ev(`document.querySelectorAll('#phArea .ph-list span').length`)) === 1);
-    c('エラーなし（写真）', !o.errs.length, o.errs.join(' / '));
+      r.onsuccess = function(){ var t = r.result.transaction('p', 'readwrite'); t.objectStore('p').put({ id: '${TA}|${day(-21)}', tk: '${TA}', d: '${day(-21)}', u: 'data:image/png;base64,${PNG.toString('base64')}' }); t.oncomplete = function(){ r.result.close(); ok(); }; }; })`);
+    c('（準備）写真の入れ物がある', (await o.ev(`indexedDB.databases().then(function(a){ return a.some(function(x){ return x.name === 'nb_photo'; }); })`)) === true);
+    await o.ev(`localStorage.removeItem('bci_ph_gone')`);
+    await o.page.reload(); await o.wt(2800);
+    c('開き直すと、スマホの中の写真の入れ物を消す', (await o.ev(`indexedDB.databases().then(function(a){ return a.some(function(x){ return x.name === 'nb_photo'; }); })`)) === false);
+    c('エラーなし（写真の終わり）', !o.errs.length, o.errs.join(' / '));
     await o.ctx.close();
   }
   // ④ あなたのタイプ・シェア画像・アンバサダー

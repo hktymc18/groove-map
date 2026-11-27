@@ -38,6 +38,12 @@ function fakeMsg(bad) { const sent = []; return { sent, sendEach: async (ms) => 
     c('2通目では最初の返事の時刻を変えない', store['ckDm/t1'].firstS === now);
   }
   {
+    // v183：写真が付いていたら、相談に枚数と大きさ（KB）を足す
+    const store = { 'ckDm/t1': th({ imgN: 2, imgKB: 200 }) }, img = 'data:image/jpeg;base64,' + 'A'.repeat(136533);
+    const r = await D.onMsg(fakeDb(store), fakeMsg(), 't1', { by: 'u', t: '', img }, now);
+    c('（v183）写真の枚数と大きさを相談に足す・通知はいつもどおり', store['ckDm/t1'].imgN === 3 && store['ckDm/t1'].imgKB === 300 && r.to === 'staff', JSON.stringify(store['ckDm/t1']));
+  }
+  {
     const store = { 'ckDm/t1': th({ stop: true }), 'ckPush/u1': { card: TK, t: 'tokU', on: true } };
     const m = fakeMsg(); await D.onMsg(fakeDb(store), m, 't1', { by: 's', t: 'x' }, now);
     c('止められていたら送らない', m.sent.length === 0);
@@ -49,12 +55,13 @@ function fakeMsg(bad) { const sent = []; return { sent, sendEach: async (ms) => 
       'ckDm/b': th({ topic: 'skin', at: now - 1 * day, firstS: now - 1 * day + 180 * 60000, st: 'done' }),
       'ckDm/c': th({ topic: 'bust', at: now - 3 * day, rep: { at: now }, stop: true }),
       'ckDm/d': th({ topic: 'inner', at: now - 1 * day, byStaff: true }),
-      'ckDm/e': th({ topic: 'skin', at: now - 40 * day, firstS: now - 40 * day + 60000 }),
-      'ckDm/f': th({ un: 'ANTARES', topic: 'body', at: now - day })
+      'ckDm/e': th({ topic: 'skin', at: now - 40 * day, firstS: now - 40 * day + 60000, imgN: 1, imgKB: 120 }),
+      'ckDm/f': th({ un: 'ANTARES', topic: 'body', at: now - day, imgN: 4, imgKB: 500 })
     };
     const r = await D.stats(fakeDb(store), now), s = store['ckDmStat/REVE'];
     c('30日の数・分野', s.n30 === 4 && s.topics.skin === 2 && s.topics.bust === 1 && s.topics.inner === 1, JSON.stringify(s));
     c('最初の返事まで（平均・分）・まだ返事のない相談・報告・止められた・先に送った', s.avgFirstMin === 120 && s.noReply === 1 && s.rep === 1 && s.stop === 1 && s.byStaff === 1, JSON.stringify(s));
+    c('（v183）写真はこれまでの全部（30日より前も）を数える', s.imgN === 1 && s.imgKB === 120 && store['ckDmStat/ANTARES'].imgN === 4, JSON.stringify([s.imgN, s.imgKB]));
     c('ユニオンごとに分ける・中身は入れない', store['ckDmStat/ANTARES'].n30 === 1 && !/見本/.test(JSON.stringify(store['ckDmStat/REVE'])));
   }
   console.log(fails ? 'FAIL ' + fails : 'ALL PASS'); process.exit(fails ? 1 : 0);

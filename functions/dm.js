@@ -5,6 +5,7 @@
  *       紹介者の NAVIGATOR のために、会員証に cs = { at }（最後に相談した日だけ。会員証はリンクを知っていれば読めるので、分野も中身も入れない）
  *     スタッフ → お客さん：お客さんの端末（ckPush の card＝会員証）に「返事が届きました」。最初の返事の時刻（firstS）を相談に残す
  *     通知には相談の中身を入れない（ロック画面に出るため）
+ *     受付 v183：写真（m.img・JPEG の data URL）が付いていたら、相談に imgN（枚数）・imgKB（大きさ）を足す（データ量を見るため）
  *   stats … 毎日20時（beautyDaily から）：ユニオンごとの相談の数を ckDmStat/{ユニオン} にまとめる（中身は入れない・数だけ）
  * firebase-admin はここでは読み込まない（テストで、にせの db・messaging を渡せるように）
  */
@@ -39,6 +40,11 @@ async function onMsg(db, messaging, tid, m, now) {
   const tr = db.collection('ckDm').doc(tid), ts = await tr.get();
   if (!ts.exists || !m) return { skip: 'no thread' };
   const t = ts.data() || {}, out = { to: m.by === 'u' ? 'staff' : 'user', ok: 0, ng: 0 };
+  if (typeof m.img === 'string' && m.img) {
+    const kb = Math.round(m.img.length * 3 / 4 / 1024);
+    await tr.set({ imgN: (t.imgN || 0) + 1, imgKB: (t.imgKB || 0) + kb }, { merge: true }).catch(() => {});
+    out.imgKB = kb;
+  }
   if (m.by === 'u') {
     const toks = await staffTokens(db, t.sUid || '_');
     toks.forEach((k) => { k.off = () => k.ref.delete().catch(() => {}); });
@@ -65,9 +71,10 @@ async function stats(db, now) {
   qs.docs.forEach((d) => {
     const t = d.data() || {}, at = ms(t.at), un = t.un;
     if (!un) return;
-    const s = by[un] || (by[un] = { n30: 0, topics: {}, open: 0, done: 0, rep: 0, byStaff: 0, stop: 0, firstN: 0, firstSum: 0, noReply: 0 });
+    const s = by[un] || (by[un] = { n30: 0, topics: {}, open: 0, done: 0, rep: 0, byStaff: 0, stop: 0, firstN: 0, firstSum: 0, noReply: 0, imgN: 0, imgKB: 0 });
     if (t.st !== 'done') s.open++; else s.done++;
     if (t.rep && !t.repDone) s.rep++;
+    s.imgN += +t.imgN || 0; s.imgKB += +t.imgKB || 0;   // v183: 写真は、これまでの全部（データ量を見るため）
     if (at < from) return;
     s.n30++;
     s.topics[t.topic || 'other'] = (s.topics[t.topic || 'other'] || 0) + 1;
@@ -78,7 +85,7 @@ async function stats(db, now) {
   const out = {};
   for (const un of Object.keys(by)) {
     const s = by[un];
-    const doc = { n30: s.n30, topics: s.topics, open: s.open, done: s.done, rep: s.rep, byStaff: s.byStaff, stop: s.stop, noReply: s.noReply,
+    const doc = { n30: s.n30, topics: s.topics, open: s.open, done: s.done, rep: s.rep, byStaff: s.byStaff, stop: s.stop, noReply: s.noReply, imgN: s.imgN, imgKB: s.imgKB,
       avgFirstMin: s.firstN ? Math.round(s.firstSum / s.firstN / 60000) : null, at: now };
     await db.collection('ckDmStat').doc(un).set(doc);
     out[un] = s.n30;
