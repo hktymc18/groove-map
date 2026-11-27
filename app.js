@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v926';
+var APP_JS_VERSION = 'v927';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3688,6 +3688,24 @@ function _evEdLoad() {
     if (on !== before) _admUiSync();
   }).catch(function() {});
 }
+// ════ v927: MAP の結合は許可制（オーナー・管理者・アカウント管理で「結合できる」を付けた人だけ）════
+//  users/{uid}.canMerge。付ける・外すのはオーナーとそのユニオンの管理者。本人は変えられない（ルール）
+//  許可が無い人：新しく結合できない。今の結合は表示を止め、自分が配った連鎖共有（派生共有）を片付ける（結合の設定は残すので、許可を付けると元に戻る）
+function _canMerge(u) { u = u || currentUser; if (!u) return false; var id = u.uid || u.id; return isOwnerUid(id) || u.role === 'admin' || u.canMerge === true; }
+function _mgOffKey() { return 'gm_mgOff_' + ((currentUser && currentUser.uid) || ''); }
+function _mergeOffCleanup(all) {
+  try { if (localStorage.getItem(_mgOffKey()) === '1') return; } catch (e) {}
+  if (!db || !currentUser || !all || !all.length) return;
+  fsGetCol('maps/' + currentUser.uid + '/shared').then(function(docs) {
+    all.forEach(function(cfg) {
+      docs.forEach(function(r) {
+        var rid = r.recipientUid || r.id;
+        if (rid && rid !== cfg.uid) db.doc('maps/' + cfg.uid + '/shared/' + rid).delete().catch(function() {}); // 自分が配った派生共有だけ消せる（ルール）
+      });
+    });
+    try { localStorage.setItem(_mgOffKey(), '1'); } catch (e) {}
+  }).catch(function() {});
+}
 // ユニオン予定を 作る・直す・消す ができるか（オーナー・管理者・兼務の管理者・予定係）
 function _canUnionEv(un) {
   if (!currentUser) return false;
@@ -4426,7 +4444,7 @@ function adminRowHtml(u) {
     + (sub  ? '<div class="adm-sub">' + sub  + '</div>' : '')
     + (sub2 ? '<div class="adm-sub">' + sub2 + '</div>' : '')
     + (email? '<div class="adm-sub" style="opacity:.7">' + email + '</div>' : '')
-    + _admUnxLine(u) + _admDupLine(u) + _admPurgeLine(u) + _admCkLine(u) + _accRowChip(u) + _admCoreChip(u) + _admEvChip(u)
+    + _admUnxLine(u) + _admDupLine(u) + _admPurgeLine(u) + _admCkLine(u) + _accRowChip(u) + _admCoreChip(u) + _admEvChip(u) + _admMgChip(u)
     + '</div><div class="adm-actions">' + actions + _admDelBtn(u) + '</div></div>';
 }
 // ── v923: ユニオン予定の「予定係」（管理者にしなくても、ユニオン予定だけ入れられる人）──
@@ -4445,6 +4463,22 @@ function _admEvChip(u) {
   if (!_admEvCan(u.union) || !_admEvAll[u.union]) return '';
   var on = _admEvAll[u.union].indexOf(u.id) >= 0;
   return '<span class="acc-ev' + (on ? ' on' : '') + '" onclick="admEvToggle(\'' + u.id + '\')">' + (on ? '📅 ユニオン予定を入力できる' : '＋ ユニオン予定の入力') + '</span>';
+}
+// ── v927: MAP の結合の許可（オーナー・管理者はもともとできる）──
+function _admMgChip(u) {
+  if (!u || isOwnerUid(u.id) || u.role === 'admin' || u.status === 'disabled' || u.status === 'pending' || u.deleted === true) return '';
+  if (!_admEvCan(u.union)) return '';
+  return '<span class="acc-ev' + (u.canMerge ? ' on' : '') + '" onclick="admMgToggle(\'' + u.id + '\')">' + (u.canMerge ? '🔗 MAPを結合できる' : '＋ MAPの結合') + '</span>';
+}
+function admMgToggle(uid) {
+  var u = _adminFindUser(uid); if (!u || !_admEvCan(u.union)) return;
+  var on = !!u.canMerge, nm = u.name || '';
+  if (!confirm(on ? nm + ' さんの「MAPの結合」の許可を外しますか？\n（今している結合も、次に開いた時から出なくなります）'
+    : nm + ' さんに「MAPの結合」を許可しますか？\n（共有してもらった MAP を、自分の MAP につなげて見られるようになります）')) return;
+  var d = { canMerge: !on, canMergeBy: currentUser.uid, canMergeAt: new Date().toISOString() };
+  fsSet('users/' + uid, d).then(function() {
+    Object.assign(u, d); toast(on ? '結合の許可を外しました' : '🔗 結合を許可しました（相手が次に開いた時から使えます）'); renderAdminList();
+  }).catch(function(e) { toast('変えられませんでした（権限をご確認ください）'); console.error(e); });
 }
 function admEvToggle(uid) {
   var u = _adminFindUser(uid); if (!u || !_admEvCan(u.union) || !_admEvAll[u.union]) return;
@@ -5260,7 +5294,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v926';
+  var DATA_VERSION = 'v927';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -7441,6 +7475,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v927', d:'2026-11-27', items:['🔁 予定の繰り返しに「平日（月〜金）」を足しました（土日は入りません。土日から始めた時は次の月曜から）','🌈 夢100の期日に「日にち」も入れられるように（入れなくても大丈夫）。近づくと「あと○日」、過ぎると「期日を過ぎました」と出ます','🔗 MAPの結合は、アカウント管理で許可された人（とオーナー・管理者）だけができるようにしました'] },
   { v:'v926', d:'2026-11-27', items:['🐛 #42 前の月に作った翌月の予定で、月が変わると関連メンバーが「?」になるバグを修正（翌月へコピーする前でも、前の月のMAPの名前で表示されます。共有メンバーも）'] },
   { v:'v924', d:'2026-11-26', items:['📅 ユニオン予定の「予定係」：管理者にしなくても、ユニオン予定だけを入れられる人を決められるようになりました（アカウント管理で「＋ ユニオン予定の入力」を押す。付けられるのはオーナーとそのユニオンの管理者）'] },
   { v:'v923', d:'2026-11-26', items:['🛠 細かい修正をしました'] },
@@ -21742,7 +21777,7 @@ function _cvDayHtml(ds) {
 //  時刻は今までと同じ「開始〜終了」の欄＋数字パッド。色はカテゴリの選択画面（名前・色の編集もそこで）
 var _ef = null;
 var EV_RMD = [['', 'なし'], ['0', 'ちょうど'], ['10', '10分前'], ['30', '30分前'], ['60', '1時間前'], ['1440', '前日']];
-var EV_REP = [['', 'なし'], ['d', '毎日'], ['w', '毎週'], ['2w', '隔週'], ['m', '毎月']];
+var EV_REP = [['', 'なし'], ['d', '毎日'], ['wd', '平日（月〜金）'], ['w', '毎週'], ['2w', '隔週'], ['m', '毎月']]; // v925: 平日
 function _efCss() {
   if (document.getElementById('efCss')) return;
   var st = document.createElement('style'); st.id = 'efCss';
@@ -25316,11 +25351,11 @@ function _p2WhyPageHtml(i) {
     dr.forEach(function(x) { var k2 = x.dl || ''; if (!gm[k2]) { gm[k2] = []; gk.push(k2); } gm[k2].push(x); });
     var gDone = function(k2) { return gm[k2].every(function(x) { return x.done; }); };
     gk.sort(function(p, q) { if (gDone(p) !== gDone(q)) return gDone(p) ? 1 : -1; return (p || '9999').localeCompare(q || '9999'); });
-    var ord = []; gk.forEach(function(k2) { gm[k2].sort(function(p, q) { return (p.done ? 1 : 0) - (q.done ? 1 : 0); }); ord = ord.concat(gm[k2]); });
+    var ord = []; gk.forEach(function(k2) { gm[k2].sort(function(p, q) { return ((p.done ? 1 : 0) - (q.done ? 1 : 0)) || ((parseInt(p.dd, 10) || 99) - (parseInt(q.dd, 10) || 99)); }); ord = ord.concat(gm[k2]); }); // v927: 同じ月の中は日にちの早い順（日にちが無いのは後ろ）
     var list = showAll ? ord : ord.slice(0, 6);
     var row = function(x) {
       // v793: タスクと同じスワイプ（左＝🗑 消す・右＝叶えた）
-      return '<div class="dr-lw" data-drid="' + x.id + '"><div class="dr-dl" onclick="p2DrDelU(\'' + x.id + '\')">' + icn('trash') + '<span>消す</span></div><div class="ln ux-sk' + (x.done ? ' done' : '') + '"><span class="ck" onclick="p2DrTgl(\'' + x.id + '\')">' + (x.done ? '✓' : '') + '</span><span class="t" onclick="if(!(window._drSwAt&&Date.now()-window._drSwAt<350))p2DrFormOpen(\'' + x.id + '\')">' + evEsc(x.t) + '</span>' + (x.amt ? '<span class="dr-am" onclick="if(!(window._drSwAt&&Date.now()-window._drSwAt<350))p2DrFormOpen(\'' + x.id + '\')">' + evEsc(String(x.amt)) + '万円</span>' : '') + (_p2DrUrl(x.url) ? '<a class="dr-go" href="' + evEsc(_p2DrUrl(x.url)) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">' + icn('link') + '開く</a>' : '') + '</div></div>'; // v787: URLを入れた夢は「開く」でそのページへ
+      return '<div class="dr-lw" data-drid="' + x.id + '"><div class="dr-dl" onclick="p2DrDelU(\'' + x.id + '\')">' + icn('trash') + '<span>消す</span></div><div class="ln ux-sk' + (x.done ? ' done' : '') + '"><span class="ck" onclick="p2DrTgl(\'' + x.id + '\')">' + (x.done ? '✓' : '') + '</span><span class="t" onclick="if(!(window._drSwAt&&Date.now()-window._drSwAt<350))p2DrFormOpen(\'' + x.id + '\')">' + evEsc(x.t) + (function() { var du = _p2DrDue(x); return du ? '<small class="dr-due' + (du.c ? ' ' + du.c : '') + '">' + du.t + '</small>' : ''; })() + '</span>' + (x.amt ? '<span class="dr-am" onclick="if(!(window._drSwAt&&Date.now()-window._drSwAt<350))p2DrFormOpen(\'' + x.id + '\')">' + evEsc(String(x.amt)) + '万円</span>' : '') + (_p2DrUrl(x.url) ? '<a class="dr-go" href="' + evEsc(_p2DrUrl(x.url)) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">' + icn('link') + '開く</a>' : '') + '</div></div>'; // v787: URLを入れた夢は「開く」でそのページへ
     };
     var groups = '', curK = null, buf = [];
     var flush = function() {
@@ -28986,15 +29021,42 @@ function p2DreamOpen() {
   requestAnimationFrame(function() { ov.classList.add('show'); });
   _p2DrSync();
 }
-function _p2DrYmSel(idBase, val) {
+function _p2DrYmSel(idBase, val, dd) {
   var cy = parseInt(String(val || '').slice(0, 4), 10) || 0, cm = parseInt(String(val || '').slice(5, 7), 10) || 0;
   var nowY = new Date().getFullYear();
-  var h = '<select class="fi" id="' + idBase + 'Y" style="flex:1;min-width:0;padding:9px 4px;font-size:12.5px"><option value="">年</option>';
+  var ch = ' onchange="_p2DrDayFix(\'' + idBase + '\')"'; // v927: 年・月を変えたら、日の選べる数（その月の最後の日まで）を直す
+  var h = '<select class="fi" id="' + idBase + 'Y" style="flex:1;min-width:0;padding:9px 4px;font-size:12.5px"' + ch + '><option value="">年</option>';
   for (var y = nowY; y <= nowY + 10; y++) h += '<option value="' + y + '"' + (y === cy ? ' selected' : '') + '>' + y + '</option>';
-  h += '</select><select class="fi" id="' + idBase + 'M" style="flex:1;min-width:0;padding:9px 4px;font-size:12.5px"><option value="">月</option>';
+  h += '</select><select class="fi" id="' + idBase + 'M" style="flex:1;min-width:0;padding:9px 4px;font-size:12.5px"' + ch + '><option value="">月</option>';
   for (var m = 1; m <= 12; m++) h += '<option value="' + m + '"' + (m === cm ? ' selected' : '') + '>' + m + '月</option>';
   h += '</select>';
+  // v927: 日（入れなくてもいい。最初は「—」＝月だけ）
+  h += '<select class="fi" id="' + idBase + 'D" style="flex:1;min-width:0;padding:9px 4px;font-size:12.5px">' + _p2DrDayOpts(cy, cm, parseInt(dd, 10) || 0) + '</select>';
   return h;
+}
+function _p2DrDayOpts(y, m, sel) {
+  var last = (y && m) ? new Date(y, m, 0).getDate() : 31, h = '<option value="">—</option>';
+  for (var d = 1; d <= last; d++) h += '<option value="' + d + '"' + (d === sel ? ' selected' : '') + '>' + d + '日</option>';
+  return h;
+}
+function _p2DrDayFix(idBase) {
+  var gv = function(s) { return parseInt(((document.getElementById(idBase + s) || {}).value || ''), 10) || 0; };
+  var el = document.getElementById(idBase + 'D'); if (!el) return;
+  var cur = gv('D'), y = gv('Y'), m = gv('M'), last = (y && m) ? new Date(y, m, 0).getDate() : 31;
+  el.innerHTML = _p2DrDayOpts(y, m, Math.min(cur, last));
+}
+// v927: 期日の表示（日にちがある時だけ「11/30まで・あと3日」など）。返すのは {t:文字, c:'over'|'soon'|''}
+function _p2DrDue(x) {
+  if (!x || !x.dl || !x.dd) return null;
+  var y = parseInt(x.dl.slice(0, 4), 10), m = parseInt(x.dl.slice(5, 7), 10), d = parseInt(x.dd, 10);
+  var t = m + '/' + d + 'まで';
+  if (x.done) return { t: t, c: '' };
+  var due = new Date(y, m - 1, d), now = new Date(); now.setHours(0, 0, 0, 0);
+  var n = Math.round((due - now) / 86400000);
+  if (n < 0) return { t: t + '・期日を過ぎました', c: 'over' };
+  if (n === 0) return { t: t + '・今日が期日', c: 'soon' };
+  if (n <= 7) return { t: t + '・あと' + n + '日', c: 'soon' };
+  return { t: t, c: '' };
 }
 function _p2DrTo() { var v = ''; try { v = localStorage.getItem('gm_drTo') || ''; } catch (e) {} if (v && v < _p2Ym(0)) v = ''; return v; }
 function p2DrTo(v) { try { if (v) localStorage.setItem('gm_drTo', v); else localStorage.removeItem('gm_drTo'); } catch (e) {} renderPlan(); }
@@ -29018,7 +29080,9 @@ function _p2DrCss() {
     // v922: 上に残す帯・「＋ この月に追加」の点線カード
     + '.dr-stk{position:sticky;top:0;z-index:20;background:var(--bg);margin:0 -6px;padding:6px 6px 2px;border-bottom:1px solid transparent}.dr-stk .dr-f{margin-bottom:8px}.dr-stk .dr-top{margin-bottom:4px}'
     + '.dr-addc{display:flex;align-items:center;justify-content:center;margin-top:8px;padding:11px 12px;border-radius:13px;border:1.5px dashed var(--border);color:var(--text-mid);font-size:13.5px;font-weight:900;cursor:pointer}.dr-addc:hover{border-color:var(--text-mid);color:var(--text)}'
-    + 'body.px3 .dr-grid .dr-addc{margin-top:0}';
+    + 'body.px3 .dr-grid .dr-addc{margin-top:0}'
+    // v927: 期日の日にち（あと○日＝紫・期日を過ぎました＝赤）
+    + '.ux-sk .t .dr-due{display:block;font-size:11.5px;font-weight:800;color:var(--text-dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ux-sk .t .dr-due.soon{color:var(--purple,#602BFC)}.ux-sk .t .dr-due.over{color:var(--red,#C8333D)}.ux-sk.done .t .dr-due{text-decoration:line-through}';
   document.head.appendChild(st);
 }
 function _p2DrYmLabel(ym) { var p = String(ym).split('-'); return p[0] + '年' + parseInt(p[1], 10) + '月'; }
@@ -29109,7 +29173,7 @@ function p2DrFormOpen(editId, dl) { // v922: dl＝新しく足す時の期日（
     + '<input class="fi" id="p2drT" placeholder="例：ロレックス / ハワイ旅行" value="' + evEsc(editing ? editing.t : '') + '" style="margin-bottom:6px">'
     + '<div style="display:flex;gap:6px;margin-bottom:6px">'
     + '<input class="fi" id="p2drA" type="number" placeholder="万円" value="' + (editing && editing.amt ? editing.amt : '') + '" style="flex:1;min-width:60px" inputmode="numeric">'
-    + _p2DrYmSel('p2drD', editing ? editing.dl : (dl || ''))
+    + _p2DrYmSel('p2drD', editing ? editing.dl : (dl || ''), editing ? editing.dd : '')
     + '</div>'
     + '<input class="fi" id="p2drU" type="url" placeholder="URL（任意・商品ページなど）" value="' + evEsc(editing && editing.url ? editing.url : '') + '" style="margin-bottom:10px">'
     + '<div style="display:flex;gap:6px">'
@@ -29128,13 +29192,14 @@ function p2DrFormCat(c) {
 }
 function _p2DrReadForm() {
   var gv = function(id) { return ((document.getElementById(id) || {}).value || '').trim(); };
-  var y = gv('p2drDY'), m = gv('p2drDM');
+  var y = gv('p2drDY'), m = gv('p2drDM'), dd = parseInt(gv('p2drDD'), 10) || 0;
   var url = gv('p2drU');
   if (url && !/^https?:\/\//i.test(url)) url = 'https://' + url;
   return {
     t: gv('p2drT'),
     amt: parseFloat(gv('p2drA')) || 0,
     dl: (y && m) ? (y + '-' + String(m).padStart(2, '0')) : '',
+    dd: (y && m && dd) ? Math.min(dd, new Date(parseInt(y, 10), parseInt(m, 10), 0).getDate()) : '', // v927: 日（無い時は ''）
     url: url
   };
 }
@@ -29144,13 +29209,13 @@ function p2DrSave() {
   var dreams = _p2().dreams;
   if (_p2DrEditId) {
     for (var i = 0; i < dreams.length; i++) {
-      if (dreams[i].id === _p2DrEditId) { dreams[i].t = f.t; dreams[i].amt = f.amt; dreams[i].dl = f.dl; dreams[i].url = f.url; dreams[i].cat = _p2DrFormCat; break; }
+      if (dreams[i].id === _p2DrEditId) { dreams[i].t = f.t; dreams[i].amt = f.amt; dreams[i].dl = f.dl; dreams[i].dd = f.dd; dreams[i].url = f.url; dreams[i].cat = _p2DrFormCat; break; }
     }
     _p2DrEditId = null;
     _p2SheetClose('p2DrFormOv');
     toast('✏ 更新しました');
   } else {
-    dreams.unshift({ id: 'dr_' + Date.now() + '_' + Math.floor(Math.random() * 10000), cat: _p2DrFormCat, t: f.t, amt: f.amt, dl: f.dl, url: f.url, done: false });
+    dreams.unshift({ id: 'dr_' + Date.now() + '_' + Math.floor(Math.random() * 10000), cat: _p2DrFormCat, t: f.t, amt: f.amt, dl: f.dl, dd: f.dd, url: f.url, done: false });
     // 連続入力: モーダルは開いたまま、フォームだけクリア（カテゴリ・期日は維持）
     var tEl = document.getElementById('p2drT'), aEl = document.getElementById('p2drA'), uEl = document.getElementById('p2drU');
     if (tEl) { tEl.value = ''; try { tEl.focus(); } catch(e) {} }
@@ -36125,6 +36190,7 @@ function _tdSeriesMark(e) {
     });
     if (nextD) {
       var dd = Math.round((new Date(nextD) - new Date(e.date)) / 86400000);
+      if (e.repKind === 'wd') lbl = icn('repeat') + '平日'; else // v925
       lbl = dd === 1 ? icn('repeat') + '毎日' : (dd === 7 ? icn('repeat') + '毎週' : (dd === 14 ? icn('repeat') + '隔週' : ((dd >= 28 && dd <= 31) ? icn('repeat') + '毎月' : icn('repeat'))));
     }
   } catch(eS) {}
@@ -38090,10 +38156,19 @@ function _evCreateSeries(base, rep, untilYmd) {
   }
   var sid = 'sr_' + Date.now() + '_' + Math.floor(Math.random() * 10000);
   base.seriesId = sid;
+  window._evWdMoved = '';
+  if (rep === 'wd') { // v925: 平日（月〜金）。土日から始めた時は、最初の回を次の月曜にする
+    base.repKind = 'wd';
+    if (!base.endDate && (cur.getDay() === 0 || cur.getDay() === 6)) {
+      while (cur.getDay() === 0 || cur.getDay() === 6) cur.setDate(cur.getDate() + 1);
+      base.date = evYmd(cur); window._evWdMoved = base.date;
+    }
+  }
   var domBase = cur.getDate(); // 毎月は同じ「日」。無い月は月末に丸める
   var count = 1, mi = 0;
   while (count < 60) {
     if (rep === 'd') cur.setDate(cur.getDate() + 1);
+    else if (rep === 'wd') { do { cur.setDate(cur.getDate() + 1); } while (cur.getDay() === 0 || cur.getDay() === 6); } // v925: 土日は飛ばす
     else if (rep === 'w') cur.setDate(cur.getDate() + 7);
     else if (rep === '2w') cur.setDate(cur.getDate() + 14);
     else if (rep === 'm') {
@@ -38113,6 +38188,7 @@ function _evCreateSeries(base, rep, untilYmd) {
       color: base.color || '', place: base.place || ''
     };
     if (base.templateStage) inst.templateStage = base.templateStage;
+    if (base.repKind) inst.repKind = base.repKind; // v925: 🔁 の札に「平日」と出すため
     if (base.subtasks && base.subtasks.length) inst.subtasks = base.subtasks.map(function(s){ return { id: s.id, t: s.t, done: false }; });
     state.events.push(inst);
     saveEventDoc(inst);
@@ -39282,7 +39358,7 @@ function _saveEventBody() {
   try { if (!viewingOwnerUid && e.type === 'event' && (e.olGid || evKindOf(e) === 'OL') && evIsMemberLinked(e)) _olFromEvent(e); } catch (eOl) {} // v567: OLの予定はOLの記録にも
   var _qt9 = !!window._evQuiet; // v613: 予定の画面からの保存は自前のトースト
   saveEventDoc(e).then(function(){
-    if (_repMade > 1) toast('繰り返し予定を' + _repMade + '件作成しました ✓');
+    if (_repMade > 1) toast('繰り返し予定を' + _repMade + '件作成しました ✓' + (window._evWdMoved ? '（土日は入れないので、1回目は ' + parseInt(window._evWdMoved.slice(5, 7), 10) + '/' + parseInt(window._evWdMoved.slice(8), 10) + '（月）から）' : '')); // v925
     else if (_newTask) toastAction('✓ 「' + _savedTitle + '」を追加しました', '＋ 続けて追加', function(){
       openEventModal(null, _contIds[0] || '', '', _contType);
       if (_contIds.length > 1) { _evMemberIds = _contIds.slice(); updateEvMemberDisplay(); }
@@ -41630,7 +41706,7 @@ function buildSharedCard(owner) {
   var merged = isMerged(owner.uid);
   var mergeBtn = document.createElement('button');
   mergeBtn.className = 'sd-merge-btn' + (merged ? ' active' : '');
-  mergeBtn.textContent = merged ? '🔗 結合を解除' : '🔗 自分のMAPに結合';
+  mergeBtn.textContent = merged ? '🔗 結合を解除' : (_canMerge() ? '🔗 自分のMAPに結合' : '🔒 結合（許可が必要）'); // v927
   mergeBtn.onclick = function(e) {
     e.stopPropagation();
     if (merged) unmergeMap(owner.uid);
@@ -41755,7 +41831,12 @@ function mergedConfigPath() { return 'maps/' + currentUser.uid + '/meta/merged';
 function loadMergedConfig() {
   if (!db || !currentUser) return;
   fsGet(mergedConfigPath()).then(function(d) {
-    state.mergedMaps = (d && d.maps) ? d.maps : [];
+    var _all = (d && d.maps) ? d.maps : [];
+    if (_canMerge()) {
+      state.mergedMaps = _all;
+      // v927: 許可が無かった間に片付けた連鎖共有を、許可が付いたら配り直す
+      try { if (_all.length && localStorage.getItem(_mgOffKey()) === '1') { localStorage.removeItem(_mgOffKey()); setTimeout(propagateDerivedShares, 500); } } catch (eMo) {}
+    } else { state.mergedMaps = []; _mergeOffCleanup(_all); } // v927: 許可が無い人の結合は外す
     startAllMergeListeners();
     try { var _pk = 'gm_pds_' + currentUser.uid; if (localStorage.getItem(_pk) !== evTodayYmd()) { localStorage.setItem(_pk, evTodayYmd()); propagateDerivedShares(); } } catch (ePd) { propagateDerivedShares(); } // v355: ログイン時に連鎖共有の配布状態を同期（v867: ログイン時は1日1回。共有・結合を変えた時は今までどおりその場で）
     _reapproachEnsure(); // v361: メニューの件数表示用に先読み
@@ -42026,9 +42107,11 @@ function startViewMergedSync(ownerUid) {
   _viewMerged = { owner: ownerUid, maps: [], data: {}, fail: {} }; _mgFailNote();
   if (!db) return;
   var month = state.currentMonth;
-  fsGet('maps/' + ownerUid + '/meta/merged').then(function(d) {
+  Promise.all([fsGet('maps/' + ownerUid + '/meta/merged'), fsGet('users/' + ownerUid).catch(function() { return null; })]).then(function(R) {
+    var d = R[0];
     if (viewingOwnerUid !== ownerUid || _viewMerged.owner !== ownerUid) return;
-    _viewMerged.maps = (d && d.maps) ? d.maps : [];
+    // v927: MAP の持ち主に結合の許可が無ければ、結合したツリーは出さない
+    _viewMerged.maps = ((d && d.maps) && _canMerge(Object.assign({ uid: ownerUid }, R[1] || {}))) ? d.maps : [];
     _viewMerged.maps.forEach(function(mmCfg) {
       if (mmCfg.hidden) return;
       loadMergedAvatars(mmCfg.uid); // 結合メンバーの写真も表示
@@ -42049,6 +42132,7 @@ function startViewMergedSync(ownerUid) {
 }
 // ── 結合UI ──
 function openMergePicker(owner) {
+  if (!_canMerge()) { toast('🔒 MAPの結合は、許可された人だけ使えます（ユニオンの管理者に頼んでください）'); return; } // v927
   var members = membersForMap('current');
   if (!members.length) { toast('先に自分のMAPにメンバーを追加してください'); return; }
   closeMergePicker();

@@ -34,6 +34,11 @@ service cloud.firestore {
     function isOwnerUid() {
       return signedIn() && request.auth.uid in ['j2DPDAccCygHmR9i5K3bTvHnH0V2', 'E4WT7EHai5c6WANUgASz42Euu1y1'];
     }
+    // 🔗 v927: MAP の結合ができる人＝オーナー・管理者（role=='admin'）・アカウント管理で許可された人（users/{uid}.canMerge）
+    function mergeOk(uid) {
+      return uid in ['j2DPDAccCygHmR9i5K3bTvHnH0V2', 'E4WT7EHai5c6WANUgASz42Euu1y1']
+        || (profileExists(uid) && (profile(uid).get('canMerge', false) == true || profile(uid).get('role', '') == 'admin'));
+    }
     // オーナー(固定・永久) または role=='admin' を付与された共同管理者
     function isAdmin() {
       return signedIn() && (
@@ -114,7 +119,8 @@ service cloud.firestore {
         && request.resource.data.get('status','pending') != 'active'
         && !('ckNo' in request.resource.data)
         && !('early' in request.resource.data)
-        && !('alLeader' in request.resource.data);
+        && !('alLeader' in request.resource.data)
+        && !('canMerge' in request.resource.data); // v927: 結合の許可は本人が付けられない
 
       // 更新：オーナーは全員／ユニオンリーダーは同ユニオンのみ（承認・無効化・役割付与）。
       //       本人は role/status/ckNo（受付の名簿との紐付け）/early（先行利用）を変えない範囲のみ可。
@@ -128,6 +134,7 @@ service cloud.firestore {
             && request.resource.data.get('ckNo','')         == resource.data.get('ckNo','')
             && request.resource.data.get('early', false)    == resource.data.get('early', false) // v790: 先行利用は本人が変えられない
             && request.resource.data.get('alLeader', false) == resource.data.get('alLeader', false) // ATTACK LIST のリーダー指定は本人が変えられない
+            && request.resource.data.get('canMerge', false) == resource.data.get('canMerge', false) // v927: 結合の許可は本人が変えられない
             // 🏷 v880: 所属ユニオンを変える時は、決めた一覧の名前だけ（変えない保存は今までどおり。一覧を読むのは変える時だけ）
             && (request.resource.data.get('union', '') == resource.data.get('union', '') || unionNameOk(request.resource.data.get('union', '')))
             // v831: 管理者は自分の所属ユニオンを変えられない（変えると別のユニオンの管理者になれてしまうため。オーナーに頼む）
@@ -369,7 +376,11 @@ service cloud.firestore {
     }
     match /maps/{uid}/meta/{doc} {
       allow read:  if ownerActive(uid) || isSharedToMap(uid);
-      allow write: if ownerActive(uid) || canEditMap(uid);
+      allow delete: if ownerActive(uid) || canEditMap(uid);
+      // 🔗 v927: 結合の設定（meta/merged）は、許可が無い人は増やせない（外す・減らすのはできる）
+      allow create, update: if (ownerActive(uid) || canEditMap(uid))
+        && (doc != 'merged' || mergeOk(uid)
+            || request.resource.data.get('maps', []).size() <= (resource == null ? 0 : resource.data.get('maps', []).size()));
     }
     // 共有設定サブコレクション：作成・変更は本人のみ（共有編集者でも変更不可。v586: 管理者も不可）
     // v355 連鎖共有: このMAPの共有を受けている人は、自分の共有相手向けに
@@ -382,6 +393,7 @@ service cloud.firestore {
              && request.resource.data.get('derived', false) == true
              && request.resource.data.get('via', '') == request.auth.uid
              && request.resource.data.get('perm', 'view') == 'view'
+             && mergeOk(request.auth.uid) // 🔗 v927: 連鎖共有を配れるのは、結合の許可がある人だけ
              && rid != request.auth.uid
              && exists(/databases/$(database)/documents/maps/$(uid)/shared/$(request.auth.uid))
              && (resource == null || resource.data.get('derived', false) == true) );
