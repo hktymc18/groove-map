@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v923';
+var APP_JS_VERSION = 'v926';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -3666,6 +3666,35 @@ function _admUnions() {
 }
 function _admOf(un) { return !!currentUser && (isOwnerUid(currentUser.uid) || (!!un && _admUnions().indexOf(un) >= 0)); }
 function _canAdmPanel() { return isCurrentAdmin() || _admUnions().length > 0; }
+// ════ v923: ユニオン予定の「予定係」 ════
+//  unions/{ユニオン}/meta/evEditors = { uids:[…], at, by }。付ける・外すのはオーナーとそのユニオンの管理者（アカウント管理の 📅 の札）
+//  予定係は、所属ユニオンのユニオン予定だけ 作る・直す・消す ができる。アカウント管理・チェック項目・PLAN の係数などは管理者だけ（ルールも同じ）
+var _evEdMine = null; // 自分が予定係のユニオン（''＝ちがう）
+function _evEdKey() { return 'gm_evEd_' + ((currentUser && currentUser.uid) || ''); }
+function _isEvEditor(un) {
+  if (!currentUser || !currentUser.union || currentUser.union.indexOf('/') >= 0) return false;
+  if (un && un !== currentUser.union) return false;
+  if (_evEdMine === null) { try { _evEdMine = localStorage.getItem(_evEdKey()) || ''; } catch (e) { _evEdMine = ''; } }
+  return _evEdMine === currentUser.union;
+}
+function _evEdLoad() {
+  if (!db || !currentUser || !currentUser.uid || !currentUser.union || currentUser.union.indexOf('/') >= 0) return;
+  var uid = currentUser.uid, un = currentUser.union, before = _isEvEditor(un);
+  db.doc('unions/' + un + '/meta/evEditors').get().then(function(d) {
+    if (!currentUser || currentUser.uid !== uid) return;
+    var on = d.exists && ((d.data() || {}).uids || []).indexOf(uid) >= 0;
+    _evEdMine = on ? un : '';
+    try { localStorage.setItem(_evEdKey(), _evEdMine); } catch (e) {}
+    if (on !== before) _admUiSync();
+  }).catch(function() {});
+}
+// ユニオン予定を 作る・直す・消す ができるか（オーナー・管理者・兼務の管理者・予定係）
+function _canUnionEv(un) {
+  if (!currentUser) return false;
+  un = un || currentUser.union || '';
+  if (!un) return false;
+  return _admOf(un) || (isCurrentAdmin() && un === currentUser.union) || _isEvEditor(un);
+}
 function _admUiSync() { // 兼務がわかった時：メニュー・ユニオン予定を出し直す
   try { if (document.getElementById('setPg') && typeof _stRender === 'function') _stRender(); } catch (e1) {}
   try { if (typeof renderMenuHub === 'function' && document.getElementById('menuHub')) renderMenuHub(); } catch (e2) {}
@@ -3695,6 +3724,7 @@ function loadAdminUsers() {
     _admCkLoad(); // v770: 紐付いた受付の名簿（無効かどうか）
     _accLoad(); // v790: 公開範囲・登録待ちの名簿
     _admCoreAllLoad(); // v831: 兼務の設定（オーナー）
+    _admEvLoad(); // v923: ユニオン予定の予定係
     _shAdmLoad(); // v827: 共有してよい上の人・アップ以外への共有
   }).catch(function() {
     if (body) body.innerHTML = '<div class="ev-empty">読み込みに失敗しました（権限をご確認ください）</div>';
@@ -4396,8 +4426,36 @@ function adminRowHtml(u) {
     + (sub  ? '<div class="adm-sub">' + sub  + '</div>' : '')
     + (sub2 ? '<div class="adm-sub">' + sub2 + '</div>' : '')
     + (email? '<div class="adm-sub" style="opacity:.7">' + email + '</div>' : '')
-    + _admUnxLine(u) + _admDupLine(u) + _admPurgeLine(u) + _admCkLine(u) + _accRowChip(u) + _admCoreChip(u)
+    + _admUnxLine(u) + _admDupLine(u) + _admPurgeLine(u) + _admCkLine(u) + _accRowChip(u) + _admCoreChip(u) + _admEvChip(u)
     + '</div><div class="adm-actions">' + actions + _admDelBtn(u) + '</div></div>';
+}
+// ── v923: ユニオン予定の「予定係」（管理者にしなくても、ユニオン予定だけ入れられる人）──
+//  付ける・外すのはオーナーとそのユニオンの管理者。同じユニオンの人だけ（ルールでも、所属がちがうと書けない）
+var _admEvAll = {}; // ユニオン → 予定係の uid の一覧
+function _admEvCan(un) { return !!un && un.indexOf('/') < 0 && (_admOf(un) || (isCurrentAdmin() && currentUser && un === currentUser.union)); }
+function _admEvLoad() {
+  if (!db) return;
+  var uns = {}; (_adminUsers || []).forEach(function(u) { if (u && _admEvCan(u.union)) uns[u.union] = 1; });
+  Promise.all(Object.keys(uns).map(function(un) {
+    return db.doc('unions/' + un + '/meta/evEditors').get().then(function(d) { _admEvAll[un] = d.exists ? ((d.data() || {}).uids || []) : []; }).catch(function() {});
+  })).then(function() { if (document.getElementById('adminPanel') && document.getElementById('adminPanel').classList.contains('open')) renderAdminList(); });
+}
+function _admEvChip(u) {
+  if (!u || isOwnerUid(u.id) || u.role === 'admin' || u.status === 'disabled' || u.status === 'pending' || u.deleted === true) return ''; // 管理者はもともと入れられる
+  if (!_admEvCan(u.union) || !_admEvAll[u.union]) return '';
+  var on = _admEvAll[u.union].indexOf(u.id) >= 0;
+  return '<span class="acc-ev' + (on ? ' on' : '') + '" onclick="admEvToggle(\'' + u.id + '\')">' + (on ? '📅 ユニオン予定を入力できる' : '＋ ユニオン予定の入力') + '</span>';
+}
+function admEvToggle(uid) {
+  var u = _adminFindUser(uid); if (!u || !_admEvCan(u.union) || !_admEvAll[u.union]) return;
+  var un = u.union, on = _admEvAll[un].indexOf(uid) >= 0, nm = u.name || '';
+  if (!confirm(on ? nm + ' さんを予定係から外しますか？\n（「' + un + '」のユニオン予定を入れられなくなります）'
+    : nm + ' さんを「' + un + '」の予定係にしますか？\n\nユニオン予定の 作る・直す・消す だけができます（ほかのメンバーの予定も直せます）。\nアカウント管理・チェック項目などの管理者の機能は使えません。')) return;
+  var FV = firebase.firestore.FieldValue;
+  db.doc('unions/' + un + '/meta/evEditors').set({ uids: on ? FV.arrayRemove(uid) : FV.arrayUnion(uid), at: new Date().toISOString(), by: currentUser.uid }, { merge: true }).then(function() {
+    if (on) _admEvAll[un] = _admEvAll[un].filter(function(x) { return x !== uid; }); else _admEvAll[un] = _admEvAll[un].concat([uid]);
+    toast(on ? '予定係から外しました' : '📅 予定係にしました（相手が次に開いた時から使えます）'); renderAdminList();
+  }).catch(function(e) { toast('変えられませんでした（権限をご確認ください）'); console.error(e); });
 }
 // ── v770: 受付（BASE CHECK-IN）の名簿とアカウントの紐付け ──
 //  users/{uid}.ckNo = 受付の会員番号。設定できるのはオーナーと同じユニオンの管理者だけ（本人は変えられない＝ルール）。
@@ -5202,7 +5260,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v923';
+  var DATA_VERSION = 'v926';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -5313,6 +5371,7 @@ function onYearMonthChange() {
   var mm = String(m).padStart(2,'0');
   var _prevMonth = state.currentMonth;
   state.currentMonth = y + '.' + mm;
+  if (state.currentMonth !== _prevMonth) _memFb = { month: '', data: {}, busy: {} }; // v926 #42: 月を切り替えたら名前の予備も読み直す
   try { _px3MonBar(); } catch (eMb) {} // v706
   if (state.months.indexOf(state.currentMonth) < 0) state.months.unshift(state.currentMonth);
   // v544: 読み込みが終わるまで前の月のMAPを新しい月として見せない（読み込み中の表示→読込後に描画）
@@ -5828,7 +5887,7 @@ var FB_DUEK = [['w', '今週中'], ['m', '今月中'], ['n', '来月'], ['l', '�
 var FB_SCREENS = ['HOME', 'MAP', '理想MAP', '予定', 'ToDo', 'PLAN', 'データ', 'OL', 'メンバー', 'メンバー編集', '受付', 'その他'];
 var FB_VIEW_LB = { home: 'HOME', current: 'MAP', ideal: '理想MAP', events: '予定', plan: 'PLAN', stats: 'データ', ol: 'OL', members: 'メンバー' };
 var FB_IMG_MAX = 3, FB_IMG_KEEP_DAYS = 60;
-var _fb = { ok: null, cfg: null, items: [], tab: 'new', sel: {}, open: null, det: null, form: null, newN: 0, view: 'st', kf: '' };
+var _fb = { ok: null, cfg: null, items: [], tab: 'new', sel: {}, open: null, det: null, form: null, newN: 0, view: 'st', kf: '', tri: {} };
 function _fbStLb(k) { for (var i = 0; i < FB_ST.length; i++) if (FB_ST[i].k === k) return FB_ST[i]; return FB_ST[0]; }
 function _fbIsOwner() { return !!currentUser && typeof isOwnerUid === 'function' && isOwnerUid(currentUser.uid); } // v817: オーナー（山内さん・馬越さん）は管理者
 function _fbMyName() { return (currentUser && currentUser.name) || ''; }
@@ -5895,6 +5954,9 @@ function _fbCreate(it, imgs) {
 function _fbUpdate(id, data) { return _fbCol().doc(String(id)).update(data); }
 function _fbAddNote(id, note) { return _fbCol().doc(String(id)).collection('notes').add(Object.assign({ byUid: currentUser.uid, byName: _fbMyName(), at: firebase.firestore.FieldValue.serverTimestamp() }, note)); }
 function _fbLoadSub(id, sub) { return fsGetCol('fbItems/' + id + '/' + sub); }
+// v925: 🤖 Claude の見立て（fbTriage/{id}。オーナーだけ読める・書くのは関数 fbTriageWrite だけ）
+function _fbLoadTriAll() { return fsGetCol('fbTriage'); }
+function _fbLoadTri(id) { return fsGet('fbTriage/' + id); }
 function _fbDelImgs(id, n) { var ps = []; for (var i = 0; i < Math.max(n || 0, FB_IMG_MAX); i++) ps.push(_fbCol().doc(String(id)).collection('imgs').doc(String(i)).delete().catch(function() {})); return Promise.all(ps); }
 // ── 見られる人か（オーナー＋指定した人）。ログイン後に1回だけ確かめる ──
 function fbCheckAccess() {
@@ -5943,6 +6005,11 @@ function _fbCss() {
     + ".fb-th{border-top:1px solid var(--border);padding:9px 0;font-size:13px;line-height:1.6;color:var(--text);white-space:pre-wrap;word-break:break-word}.fb-th small{display:block;color:var(--text-dim);font-size:11px;white-space:normal}.fb-th.adm{color:var(--accent)}.fb-th.log{color:var(--text-dim);font-size:12px}\n"
     + ".fb-row{display:flex;gap:8px;align-items:center}.fb-row .fi{flex:1}\n"
     + ".fb-u{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--border);font-size:13.5px;color:var(--text);cursor:pointer}.fb-u small{color:var(--text-dim);font-size:11.5px}.fb-u .sp{flex:1}\n"
+    + ".fb-aimk{font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:6px;background:color-mix(in srgb,#8B7CFF 20%,transparent);color:var(--purple)}\n"
+    + ".fb-ai{margin:12px 0 4px;border:1px solid color-mix(in srgb,#8B7CFF 40%,var(--border));background:color-mix(in srgb,#8B7CFF 8%,var(--surface));border-radius:14px;padding:12px 13px}.fb-ai-hd{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.fb-ai-hd .t{font-size:13.5px;font-weight:800;color:var(--text)}.fb-ai-hd .sp{flex:1}.fb-ai-hd small{font-size:11px;color:var(--text-dim)}\n"
+    + ".fb-ai-v{font-size:11.5px;font-weight:800;padding:3px 9px;border-radius:999px}.fb-ai-v.bug{background:color-mix(in srgb,var(--accent) 20%,transparent);color:var(--accent)}.fb-ai-v.wa{background:color-mix(in srgb,#8B7CFF 22%,transparent);color:var(--purple)}.fb-ai-v.no{background:var(--surface2);color:var(--text-mid)}.fb-ai-v.decide{background:color-mix(in srgb,var(--gold) 22%,transparent);color:var(--gold)}.fb-ai-c{font-size:11px;font-weight:700;color:var(--text-dim)}\n"
+    + ".fb-ai-sm{font-size:14px;font-weight:700;line-height:1.6;color:var(--text);margin:8px 0 2px;white-space:pre-wrap;word-break:break-word}.fb-ai-lb{font-size:11.5px;font-weight:800;color:var(--text-dim);margin:10px 0 4px}.fb-ai-tx{font-size:13px;line-height:1.65;color:var(--text);white-space:pre-wrap;word-break:break-word}.fb-ai-tx.rp{background:var(--surface2);border-radius:10px;padding:8px 10px}.fb-ai-tx a{color:var(--accent);font-weight:800}\n"
+    + ".fb-ai-bt{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.fb-ai-nt{font-size:11px;color:var(--text-dim);margin-top:8px}\n"
     + ".fb-big{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:700;display:flex;align-items:center;justify-content:center}.fb-big img{max-width:96vw;max-height:92vh}";
   document.head.appendChild(st);
 }
@@ -5966,7 +6033,12 @@ function fbReload() {
     _fb.newN = _fb.items.filter(function(x) { return x.status === 'new'; }).length;
     var nAc = _fbAutoCheck(); if (nAc) toast('👀 ' + nAc + '件を「確認待ち」にしました（直した版が出たもの）'); // v817
     _fbSyncEntry(); _fbRenderList(); _fbPurgeImgs();
+    _fbTriReload();
   }).catch(function() { var m = document.getElementById('fbMain'); if (m) m.innerHTML = '<div class="fb-empty">読み込めませんでした（見られる人に指定されているか確認してください）</div>'; });
+}
+function _fbTriReload() { // v925: 見立てのある報告（一覧の印）。オーナー以外は読みに行かない
+  if (!_fbIsOwner()) { _fb.tri = {}; return; }
+  _fbLoadTriAll().then(function(L) { var m = {}; (L || []).forEach(function(t) { if (t && t.id && t.verdict) m[t.id] = t; }); _fb.tri = m; _fbRenderList(); }).catch(function() {});
 }
 function _fbRenderList(loading) {
   var box = document.getElementById('fbMain'); if (!box) return;
@@ -5989,7 +6061,7 @@ function _fbRenderList(loading) {
     var row = function(x) {
       var st = _fbStLb(x.status), dl = _fbDueLb(x), od = !FB_CLOSED[x.status] && _fbDueGrp(x) === 'od';
       return '<div class="fb-it" onclick="fbDetailOpen(\'' + x.id + '\')">' + (pick ? '<span class="fb-cb' + (_fb.sel[x.id] ? ' on' : '') + '" onclick="event.stopPropagation();fbPick(\'' + x.id + '\')">' + (_fb.sel[x.id] ? '✓' : '') + '</span>' : '')
-        + '<div class="bd"><div class="fb-ih"><span class="no">#' + x.no + '</span><span class="fb-k ' + (x.kind || 'bug') + '">' + _fbKindLb(x.kind) + '</span>' + (x.app && x.app !== 'NAVIGATOR' ? '<span class="fb-app">' + evEsc(x.app) + '</span>' : '') + evEsc(x.screen || '') + (dl ? '<span class="fb-due' + (od ? ' od' : '') + '">' + dl + '</span>' : '') + '<span class="fb-st ' + x.status + '">' + st.lb + '</span></div>'
+        + '<div class="bd"><div class="fb-ih"><span class="no">#' + x.no + '</span><span class="fb-k ' + (x.kind || 'bug') + '">' + _fbKindLb(x.kind) + '</span>' + (x.app && x.app !== 'NAVIGATOR' ? '<span class="fb-app">' + evEsc(x.app) + '</span>' : '') + evEsc(x.screen || '') + (dl ? '<span class="fb-due' + (od ? ' od' : '') + '">' + dl + '</span>' : '') + (own && _fb.tri[x.id] ? '<span class="fb-aimk" title="Claude の見立てあり">🤖 見立て</span>' : '') + '<span class="fb-st ' + x.status + '">' + st.lb + '</span></div>'
         + '<div class="tt">' + evEsc(x.title || '') + '</div><div class="mt">' + (x.reqBy && x.reqBy !== x.authorName ? '依頼 ' + evEsc(x.reqBy) + '・' : '') + evEsc(x.authorName || '') + '・' + _fbFmt(x.createdAt, true) + (x.ver ? '・' + evEsc(x.ver) : '') + (x.device ? '・' + evEsc(x.device) : '') + (x.slackUrl ? '・Slack' : '') + (x.imgN ? '・📷' + x.imgN : '') + (x.adminComment ? '・💬' : '') + '</div></div></div>';
     };
     if (_fb.view === 'due') {
@@ -6124,6 +6196,7 @@ function fbDetailOpen(id) {
   requestAnimationFrame(function() { ov.classList.add('show'); });
   _fbDetRender();
   _fbLoadSub(id, 'notes').then(function(n) { if (_fb.open !== id) return; _fb.det.notes = (n || []).sort(function(a, b) { return (_fbTs(a.at) || 0) - (_fbTs(b.at) || 0); }); _fbDetRender(); }).catch(function() { _fb.det.notes = []; _fbDetRender(); });
+  if (_fbIsOwner()) _fbLoadTri(id).then(function(t) { if (t && t.verdict) _fb.tri[id] = t; else delete _fb.tri[id]; if (_fb.open === id) _fbDetRender(); _fbRenderList(); }).catch(function() {}); // v925
   var x = _fbItem(id);
   if (x && x.imgN) _fbLoadSub(id, 'imgs').then(function(m) { if (_fb.open !== id) return; _fb.det.imgs = (m || []).sort(function(a, b) { return a.id.localeCompare(b.id); }); _fbDetRender(); }).catch(function() {});
 }
@@ -6144,6 +6217,7 @@ function _fbDetRender() {
   if (!own && x.authorUid === (currentUser && currentUser.uid) && x.status === 'new') h += '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><span class="fb-btn" onclick="fbFormOpen(\'' + x.id + '\')">✎ 内容を直す</span><span class="fb-btn" style="color:var(--red)" onclick="fbDelete()">🗑 消す</span></div>'; // v822
   if (x.status === 'wa' && x.waNote) h += '<div class="fb-lb">🧭 回避のしかた</div><div class="fb-txt" style="margin-top:0">' + evEsc(x.waNote) + '</div>';
   if ((x.status === 'done' || x.status === 'check') && x.doneVer) h += '<div class="fb-lb">' + (x.status === 'check' ? '👀 確認待ち' : '✓ 完了') + '</div><div class="fb-who">' + evEsc(x.doneVer) + ' で直しました' + (x.status === 'check' ? '。動きを確かめて、よければ「完了」にしてください' : '') + '</div>';
+  if (own && _fb.tri[x.id]) h += _fbTriHtml(x, _fb.tri[x.id]); // v925: オーナーだけ
   if (own) {
     h += '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><span class="fb-btn pri" onclick="fbCopyOne()">📋 Claude用にコピー</span><span class="fb-btn" onclick="fbCopySlack()">💬 Slack用にコピー</span></div>'; // v725・v817
     h += '<div class="fb-lb">状態<small>管理者だけ</small></div><div class="fb-tri">' + ['new', 'review', 'fix', 'doing', 'check', 'done'].map(function(k) { var s = _fbStLb(k); return '<span class="' + (x.status === k ? 'on' : '') + '" onclick="fbSetSt(\'' + k + '\')">' + (s.ic ? s.ic + ' ' : '') + s.lb + '</span>'; }).join('') + '</div>'
@@ -6205,6 +6279,31 @@ function fbSetSt(k) {
     _fb.newN = _fb.items.filter(function(i) { return i.status === 'new'; }).length; _fbSyncEntry();
     _fbDetRender(); _fbRenderList();
   }, function() { toast('保存できませんでした'); });
+}
+// v925: 🤖 Claude の見立て（オーナーだけ）。判断（状態を変える）はオーナーがボタンで
+var FB_TRI_V = { bug: { lb: '直す', st: 'fix' }, wa: { lb: '運用回避', st: 'wa' }, no: { lb: '対応しない', st: 'no' }, decide: { lb: '判断が要る', st: '' } };
+var FB_TRI_C = { high: '高', mid: '中', low: '低' };
+function _fbTriHtml(x, t) {
+  var v = FB_TRI_V[t.verdict] || FB_TRI_V.decide, vk = FB_TRI_V[t.verdict] ? t.verdict : 'decide', s = v.st ? _fbStLb(v.st) : null;
+  var h = '<div class="fb-ai" id="fbTri"><div class="fb-ai-hd"><span class="t">🤖 Claude の見立て</span><span class="fb-ai-v ' + vk + '">' + v.lb + '</span>' + (FB_TRI_C[t.confidence] ? '<span class="fb-ai-c">確信度 ' + FB_TRI_C[t.confidence] + '</span>' : '') + '<span class="sp"></span><small>' + (t.at ? _fbFmt(t.at, true) : '') + '</small></div>';
+  if (t.summary) h += '<div class="fb-ai-sm">' + evEsc(t.summary) + '</div>';
+  if (t.plan) h += '<div class="fb-ai-lb">直し方の見当</div><div class="fb-ai-tx">' + evEsc(t.plan) + '</div>';
+  if (t.replyDraft) h += '<div class="fb-ai-lb">返信の下書き</div><div class="fb-ai-tx rp">' + evEsc(t.replyDraft) + '</div>';
+  if (/^https:\/\/github\.com\//.test(t.pr || '')) h += '<div class="fb-ai-lb">直した PR</div><div class="fb-ai-tx"><a href="' + evEsc(t.pr) + '" target="_blank" rel="noopener">' + evEsc(t.pr.replace('https://github.com/', '')) + '</a></div>';
+  var bs = '';
+  if (s) bs += x.status === v.st ? '<span class="fb-btn dis">' + s.ic + ' いまは「' + s.lb + '」</span>' : '<span class="fb-btn pri" onclick="fbTriApply()">' + s.ic + ' 「' + s.lb + '」にする</span>';
+  if (t.replyDraft) bs += '<span class="fb-btn" onclick="fbTriReply()">✎ 下書きをコメント欄へ</span>';
+  if (bs) h += '<div class="fb-ai-bt">' + bs + '</div>';
+  return h + '<div class="fb-ai-nt">' + (s ? '' : '判断が要る報告です。下の「状態」から選んでください。') + '状態はボタンを押した時だけ変わります</div></div>';
+}
+function fbTriApply() {
+  var x = _fbItem(_fb.open), t = x && _fb.tri[x.id], v = t && FB_TRI_V[t.verdict]; if (!x || !v || !v.st || !_fbIsOwner()) return;
+  fbSetSt(v.st);
+}
+function fbTriReply() {
+  var x = _fbItem(_fb.open), t = x && _fb.tri[x.id], el = document.getElementById('fbCmt'); if (!t || !t.replyDraft || !el || !_fbIsOwner()) return;
+  el.value = t.replyDraft; try { el.focus({ preventScroll: false }); } catch (e) {}
+  toast('コメント欄に入れました（保存は「コメントを保存」）');
 }
 function fbSaveField(key, elId) {
   var x = _fbItem(_fb.open), el = document.getElementById(elId); if (!x || !el) return;
@@ -7342,6 +7441,8 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v926', d:'2026-11-27', items:['🐛 #42 前の月に作った翌月の予定で、月が変わると関連メンバーが「?」になるバグを修正（翌月へコピーする前でも、前の月のMAPの名前で表示されます。共有メンバーも）'] },
+  { v:'v924', d:'2026-11-26', items:['📅 ユニオン予定の「予定係」：管理者にしなくても、ユニオン予定だけを入れられる人を決められるようになりました（アカウント管理で「＋ ユニオン予定の入力」を押す。付けられるのはオーナーとそのユニオンの管理者）'] },
   { v:'v923', d:'2026-11-26', items:['🛠 細かい修正をしました'] },
   { v:'v922', d:'2026-11-26', items:['🌈 夢100：達成の数と「＋ 夢を追加」が、スクロールしても上に残るようにしました','月ごとに「＋ この月に追加」を置きました（期日にその月が入った状態で開きます）'] },
   { v:'v921', d:'2026-11-26', items:['🌈 夢100：上にも「＋ 夢を追加」を置きました','「月を選ぶ」は、期日にした月だけが出るようにしました','夢を期日の月ごとに分けて表示。PC では3列で全部見られます'] },
@@ -18176,8 +18277,57 @@ function findEvent(id) {
 function findMemberAny(id) {
   var arr = (state.members||[]).concat(state.idealMembers||[]);
   for (var i=0;i<arr.length;i++) if (arr[i].id === id) return arr[i];
-  if (/^MG_/.test(String(id)) && typeof _findMemberComposed === 'function') return _findMemberComposed(id); // v378: 結合メンバーの名前も解決
+  if (/^MG_/.test(String(id)) && typeof _findMemberComposed === 'function') { var _mc = _findMemberComposed(id); if (_mc) return _mc; } // v378: 結合メンバーの名前も解決
+  return _memFbFind(id); // v926 #42: その月のMAPに居ない時は予備（前の月のMAP）から
+}
+// ════ v926 #42: 関連メンバーの名前の予備の引き先 ════
+//   予定は月をまたいで残るが、メンバーは月ごとのMAP（maps/{uid}/months/{月}_current）にいる。
+//   その月のMAPがまだ無い（翌月へコピーしていない）と、前の月に選んだ関連メンバーの名前が引けず「?」になっていた
+//   （結合メンバーは、自分のMAPに接続先が無いと合成されないので、相手がコピー済みでも「?」）。
+//   → その月のMAPが無い人（自分・共有してくれている人）だけ、前の月（3か月前まで）のMAPを1回読んで名前を引く。
+//      読むのは月が変わって最初の1回だけ（同じ月の間は読み直さない）。予定の memberIds はもともと保存されたまま。
+var _memFb = { month: '', data: {}, busy: {} };
+function _memFbCur() { if (_memFb.month !== state.currentMonth) _memFb = { month: state.currentMonth, data: {}, busy: {} }; return _memFb; }
+function _memPrevMonth(mo) { var p = String(mo || '').split('.'), y = +p[0], m = +p[1] - 1; if (!y || !(m >= 0)) return ''; if (m < 1) { m = 12; y--; } return y + '.' + (m < 10 ? '0' : '') + m; }
+function _memFbFind(id) {
+  id = String(id || ''); if (!id) return null;
+  var fb = _memFbCur(), uid, oid = id, mg = null, lists = [];
+  if (/^MG_/.test(id)) {
+    mg = (typeof _mgParse === 'function') ? _mgParse(id) : null; if (!mg) return null;
+    uid = mg.uid; oid = mg.oid;
+    // 結合メンバー：自分のMAPに接続先が無くても、相手のMAPのその月の分（読めていれば）から直接引く
+    lists.push((viewingOwnerUid ? ((_viewMerged && _viewMerged.data) || {}) : (state.mergedData || {}))[uid]);
+    if (!viewingOwnerUid) for (var k in (_mergeSub || {})) lists.push((((_mergeSub[k] || {}).data) || {})[uid]);
+  } else uid = viewingOwnerUid || (currentUser && currentUser.uid) || '';
+  lists.push(fb.data[uid]);
+  for (var i = 0; i < lists.length; i++) {
+    var L = lists[i] || [];
+    for (var j = 0; j < L.length; j++) if (L[j] && L[j].id === oid) {
+      var c = {}; for (var key in L[j]) c[key] = L[j][key]; // 写しを返す（前の月のデータを書き換えない）
+      c._fb = true;
+      if (mg) { c.id = id; c._foreign = true; c._ownerName = mg.name || ''; c.mapType = 'current'; }
+      return c;
+    }
+  }
   return null;
+}
+function _memFbPrime(uid) { // その月のMAPが無かった人の、前の月のメンバーを読む（月ごとに1回）
+  var fb = _memFbCur();
+  if (!uid || !db || fb.data[uid] || fb.busy[uid]) return;
+  fb.busy[uid] = 1;
+  var n = 0;
+  var done = function(list) { if (_memFb !== fb) return; fb.data[uid] = list; delete fb.busy[uid]; if (list.length) _memFbRefresh(); };
+  (function step(mo) {
+    if (!mo || n++ >= 3) { done([]); return; }
+    fsGet('maps/' + uid + '/months/' + mo + '_current').then(function(d) {
+      if (d && d.members && d.members.length) done(d.members); else step(_memPrevMonth(mo));
+    }).catch(function() { done([]); });
+  })(_memPrevMonth(fb.month));
+}
+function _memFbRefresh() { // 読めたら、開いている画面の名前を描き直す
+  try { if (typeof updateEvMemberDisplay === 'function') updateEvMemberDisplay(); } catch (e1) {}
+  try { if (document.getElementById('mpList')) { var s = document.getElementById('mpSearch'); _mpRenderList(s ? s.value : ''); } } catch (e2) {}
+  try { if (typeof renderCurrentViewLazy === 'function') renderCurrentViewLazy(); } catch (e3) {}
 }
 function genEventId() {
   return 'ev_' + Date.now() + '_' + Math.floor(Math.random()*100000);
@@ -21530,10 +21680,8 @@ function _cvMemNames(e) {
   var ids = (e.memberIds && e.memberIds.length) ? e.memberIds : (e.memberId ? [e.memberId] : []);
   var out = [];
   ids.forEach(function(id) {
-    for (var i = 0; i < (state.members || []).length; i++) {
-      var m = state.members[i];
-      if (m.id === id) { out.push(((m.lastName || '') + ' ' + (m.firstName || '')).trim()); break; }
-    }
+    var m = findMemberAny(id); // v926 #42: 結合メンバー・その月のMAPがまだ無い時（前の月の名前）も
+    if (m) out.push(((m.lastName || '') + ' ' + (m.firstName || '')).trim());
   });
   return out;
 }
@@ -21766,7 +21914,7 @@ function _efCands(sel) {
     all.forEach(function(m) { if (out.length < 20 && (((m.lastName || '') + (m.firstName || '')).indexOf(q) >= 0 || String(m.furigana || '').indexOf(q) >= 0)) add(m); });
     return out;
   }
-  sel.forEach(function(id) { for (var i = 0; i < all.length; i++) if (all[i].id === id) add(all[i]); });
+  sel.forEach(function(id) { add(findMemberAny(id) || { id: id, lastName: '?' }); }); // v926 #42: 選んでいる人は、その月のMAPに居なくても出す（外せるように）
   var n = out.length;
   (state.events || []).slice().sort(function(a, b) { return (b.date || '') < (a.date || '') ? -1 : 1; }).forEach(function(e) {
     if (out.length - n >= 4) return;
@@ -21800,7 +21948,7 @@ function efRepUntil(v) { if (_ef && _ef.mode === 'add') _ef.o.repUntil = v || ''
 function efUnion(on) { _efKeepTitle(); if (_ef && _ef.mode === 'add') { _ef.o.union = typeof on === 'string' && on ? on : !!on; _efRender(); } } // v831: ユニオン名＝そのユニオンへ配信
 function _efUnionList() { // 予定を配信できるユニオン（所属ユニオンの管理者なら所属ユニオン＋兼務のユニオン）
   if (!currentUser || viewingOwnerUid) return [];
-  var L = []; if (isCurrentAdmin() && currentUser.union) L.push(currentUser.union);
+  var L = []; if ((isCurrentAdmin() || _isEvEditor(currentUser.union)) && currentUser.union) L.push(currentUser.union); // v923: 予定係も所属ユニオンへ
   _admCoreList().forEach(function(u) { if (u && L.indexOf(u) < 0) L.push(u); });
   return L;
 }
@@ -22339,7 +22487,7 @@ function _tkWhoRows(e) {
   var sel = (e.memberIds && e.memberIds.length) ? e.memberIds : (e.memberId ? [e.memberId] : []);
   var q = String(_tk.q || '').replace(/\s/g, ''), all = state.members || [], out = [];
   if (q) out = all.filter(function(m) { return ((m.lastName || '') + (m.firstName || '')).indexOf(q) >= 0; }).slice(0, 20);
-  else { sel.forEach(function(id) { var m = all.filter(function(x) { return x.id === id; })[0]; if (m) out.push(m); }); all.forEach(function(m) { if (out.length < sel.length + 5 && out.indexOf(m) < 0 && (m.trainee || m.memberCat === '研修生')) out.push(m); }); }
+  else { sel.forEach(function(id) { out.push(findMemberAny(id) || { id: id, lastName: '?' }); }); /* v926 #42: 選んでいる人は外せるように */ all.forEach(function(m) { if (out.length < sel.length + 5 && out.indexOf(m) < 0 && (m.trainee || m.memberCat === '研修生')) out.push(m); }); }
   if (!out.length) return '<div class="efr0">' + (q ? '見つかりません' : '名前で探してください') + '</div>';
   return out.map(function(m) { var on = sel.indexOf(m.id) >= 0; return '<div class="efr' + (on ? ' on' : '') + '" onclick="tkWho(\'' + m.id + '\')"><i>' + (on ? '✓' : '') + '</i>' + evEsc(((m.lastName || '') + ' ' + (m.firstName || '')).trim()) + '<small>' + evEsc(m.title || '') + '</small></div>'; }).join('');
 }
@@ -32175,7 +32323,7 @@ function evUnionArea(mine) {
 function _evUnionRowUpdate() {
   var row = document.getElementById('evUnionRow');
   if (!row) return;
-  var show = !_evEditId && _evType === 'event' && typeof isCurrentAdmin === 'function' && isCurrentAdmin()
+  var show = !_evEditId && _evType === 'event' && typeof _canUnionEv === 'function' && _canUnionEv(currentUser && currentUser.union) // v923: 予定係も
              && !!(currentUser && currentUser.union) && !viewingOwnerUid;
   row.style.display = show ? '' : 'none';
   if (show) {
@@ -32223,7 +32371,7 @@ function _unionApplyToState() {
   var add = [];
   if (!_unionPrefs.off && currentUser && !viewingOwnerUid) {
     var myArea = currentUser.area || '';
-    var admin = (typeof isCurrentAdmin === 'function') && isCurrentAdmin();
+    var admin = ((typeof isCurrentAdmin === 'function') && isCurrentAdmin()) || _isEvEditor(currentUser.union); // v923: 予定係も全地域（直すため）
     var cut = evYmd(new Date(Date.now() - 120 * 86400000)); // 過去4ヶ月分まで表示
     _unionRaw.forEach(function(u) {
       if (!u || !u.date) return;
@@ -32264,7 +32412,7 @@ function _unionRawById(id) {
 function _unionSaveFromModal(editRawId) {
   try {
   var un = editRawId ? ((_unionRawById(editRawId) || {}).union || currentUser.union) : (_evUnionTo || currentUser.union); // v831: 兼務のユニオンへも
-  if (!un || !_admOf(un) && !(isCurrentAdmin() && un === currentUser.union)) { toast('このユニオンの予定は作れません'); return; }
+  if (!un || !_canUnionEv(un)) { toast('このユニオンの予定は作れません'); return; } // v923: 予定係も
   var title = document.getElementById('evTitle').value.trim().replace(/^🏛/, '');
   if (!title) { toast('タイトルを入力してください'); return; }
   var date = document.getElementById('evDate').value;
@@ -32339,7 +32487,7 @@ function openUnionEventSheet(compId) {
   }
   window._unRetry = '';
   var unU = u.union || (currentUser && currentUser.union) || '';
-  var admin = (isCurrentAdmin() && unU === ((currentUser && currentUser.union) || '')) || _admOf(unU); // v831: 兼務のユニオンの予定も直せる
+  var admin = _canUnionEv(unU); // v831: 兼務のユニオンの予定も直せる・v923: 予定係も
   var ov = document.createElement('div'); ov.className = 'ms-overlay'; ov.id = 'unSheetOv';
   ov.onclick = function(e) { if (e.target === ov) closeUnionSheet(); };
   var tmTx = u.allDay ? '終日' : ((u.time || '') + (u.endTime ? '〜' + u.endTime : ''));
@@ -32355,7 +32503,7 @@ function openUnionEventSheet(compId) {
     + (admin
        ? '<button class="fol-add" style="flex:1;margin-top:0" onclick="closeUnionSheet();openEventModal(\'UN_' + rawId + '\')">' + icn('pencil') + ' 編集</button>'
          + '<button class="fol-add" style="flex:1;margin-top:0;color:var(--red);border-color:var(--red)" onclick="unionDelete(\'' + rawId + '\')">' + icn('trash') + ' 削除</button>'
-       : '<div style="flex:1"><div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;line-height:1.6">' + icn('pencil') + ' 編集・削除はユニオン管理者のみ行えます（このアカウントは一般メンバー判定です。管理者のはずの場合はオーナーに「アカウント管理」での管理者付与を確認してください）</div>'
+       : '<div style="flex:1"><div style="font-size:11px;color:var(--text-dim);margin-bottom:8px;line-height:1.6">' + icn('pencil') + ' 編集・削除はユニオン管理者と予定係だけができます（予定を入れる係になりたい時は、ユニオンの管理者に「アカウント管理」で予定係にしてもらってください）</div>'
          + '<button class="fol-add" style="width:100%;margin-top:0" onclick="unionHide(\'' + rawId + '\')">' + icn('eyeoff') + ' 自分のカレンダーから非表示</button></div>')
     + '</div></div>';
   document.body.appendChild(ov);
@@ -37342,7 +37490,7 @@ function evTplQuickAdd(tplId, ds) {
   if (!t) return;
   // v409: ユニオン共有テンプレの即登録は、必ず確認してからユニオン予定として配信（誤爆防止）
   if (t.unionScope) {
-    if (!(typeof isCurrentAdmin === 'function' && isCurrentAdmin() && currentUser && currentUser.union)) { toast('ユニオン共有テンプレはユニオン管理者のみ使えます'); return; }
+    if (!(currentUser && currentUser.union && _canUnionEv(currentUser.union))) { toast('ユニオン共有テンプレはユニオン管理者・予定係だけ使えます'); return; } // v923
     var un9 = currentUser.union;
     var area9 = t.unionAreaMine ? (currentUser.area || '') : '';
     if (!confirm('「' + un9 + '」の' + (area9 ? '「' + area9 + '」地域の' : '全') + 'メンバーのカレンダーに「' + (t.name || '') + '」を登録します。よろしいですか？')) return;
@@ -37863,6 +38011,10 @@ function _mpRenderList(q) {
   // v378: 結合中のDラインメンバー（🔗）も選択できるように合成リストを使う
   var _mpBase = (typeof composeMergedInto === 'function') ? composeMergedInto(membersForMap('current'), 'current') : (state.members || []);
   _mpBase = _mpApplyOrder(_mpBase); // v396: 保存した並び順を適用
+  // v926 #42: 選んでいるのに一覧に居ない人（その月のMAPがまだ無い・接続先が無い結合メンバー）も先頭に出す（見えないまま外せない・選び直すと二重になるのを防ぐ）
+  var _mpHas = {}; _mpBase.forEach(function(m) { _mpHas[m.id] = 1; });
+  var _mpMiss = _evMemberIds.filter(function(id) { return !_mpHas[id]; }).map(function(id) { return findMemberAny(id) || { id: id, lastName: '?' }; });
+  if (_mpMiss.length) _mpBase = _mpMiss.concat(_mpBase);
   var showHandle = !q; // 検索中はドラッグ並べ替え非表示
   _mpBase.forEach(function(m){
     if (m.deleted) return;
@@ -38579,7 +38731,7 @@ function evTplPick(id) {
   if (t.allDay) evToggleAllDay(true); // v404: 終日テンプレ
   else if (t.defaultTime && readTimeSelects() === '') buildTimeSelects(t.defaultTime, t.defaultTimeEnd || readTimeEnd());
   // v409: ユニオン共有テンプレ→共有範囲トグルを自動セット（管理者・新規予定のみ。保存時に通常の確認が出る）
-  if (t.unionScope && !_evEditId && typeof isCurrentAdmin === 'function' && isCurrentAdmin() && currentUser && currentUser.union) {
+  if (t.unionScope && !_evEditId && currentUser && currentUser.union && _canUnionEv(currentUser.union)) { // v923: 予定係も
     try { evUnionScope(true); evUnionArea(!!t.unionAreaMine); } catch(eUn9) {}
   }
   _evSetRemind(t.notifyOffset);
@@ -38705,8 +38857,8 @@ function openEvTplEdit(id) {
     + '<div style="flex:1">' + fld('終了時刻（任意）', '<input class="fi" id="evtF_timeEnd" type="text" readonly placeholder="なし" onclick="openTimePad(\'evtF_timeEnd\')" style="cursor:pointer;text-align:center" value="' + evEsc(t ? (t.defaultTimeEnd || _tplpAddMin(t.defaultTime || '', t.durationMin || 0) || '') : '') + '">') + '</div>'
     + '</div>'
     + '<div class="fr" style="margin-top:2px"><div class="rg"><div class="rb' + (t && t.allDay ? ' sel' : '') + '" id="evtF_allday" onclick="evtToggleAllDay()">' + icn('sun') + ' 終日（時刻なし）</div></div></div>'
-    + ((typeof isCurrentAdmin === 'function' && isCurrentAdmin() && currentUser && currentUser.union)
-      ? '<div class="fr"><label class="fl"><svg class="lic" viewBox="0 0 24 24"><path d="M3 21h18M5 21V10M19 21V10M9 21v-8M15 21v-8M2.5 10L12 3l9.5 7z"/></svg> 共有範囲（ユニオン管理者）</label><div class="rg">'
+    + ((currentUser && currentUser.union && _canUnionEv(currentUser.union)) // v923: 予定係も
+      ? '<div class="fr"><label class="fl"><svg class="lic" viewBox="0 0 24 24"><path d="M3 21h18M5 21V10M19 21V10M9 21v-8M15 21v-8M2.5 10L12 3l9.5 7z"/></svg> 共有範囲（ユニオン予定）</label><div class="rg">'
         + '<div class="rb' + (!(t && t.unionScope) ? ' sel' : '') + '" id="evtF_un0" onclick="evtUnionScope(false)">自分のみ</div>'
         + '<div class="rb' + ((t && t.unionScope) ? ' sel' : '') + '" id="evtF_un1" onclick="evtUnionScope(true)"><svg class="lic" viewBox="0 0 24 24"><path d="M3 21h18M5 21V10M19 21V10M9 21v-8M15 21v-8M2.5 10L12 3l9.5 7z"/></svg> ユニオン全員</div>'
         + '</div><div class="rg" id="evtF_unaRow" style="margin-top:6px;display:' + ((t && t.unionScope) ? '' : 'none') + '">'
@@ -40532,6 +40684,7 @@ function loginSuccess(user) {
   if (user.uid && _pvNeed(user)) { showPrivacyGate(user, function() { loginSuccess(user); }); return; }
   ckAccessCheck(user, false); // v770: 受付の名簿を確認（無効ならゲート）
   _admCore = null; setTimeout(_admCoreLoad, 1200); // v831: 兼務のユニオン管理者か
+  _evEdMine = null; setTimeout(_evEdLoad, 1300); // v923: ユニオン予定の予定係か
   accCheck(user, false); // v790: 公開範囲を確認（まだ使えない人はゲート）
   _featLoad(); // v847: 新機能のテスト（先に見られる人・全員に公開）
   setTimeout(function() { _shRefFill(user); _shDailyCheck(); }, 2500); // v827: 紹介者を名簿から・前からある共有を確かめる（#23）
@@ -41120,7 +41273,7 @@ function fsLoadSharedMap(ownerUid) {
       }
     }, 900);
   }
-  p1.then(function(data) { if (!_stale()) state.members = (data && data.members) ? data.members : []; done(); })
+  p1.then(function(data) { if (!_stale()) { state.members = (data && data.members) ? data.members : []; if (!state.members.length) _memFbPrime(ownerUid); } done(); }) // v926 #42
     .catch(function(e) { failed = true; console.error('shared map load error:', e); done(); });
   p2.then(function(data) { if (!_stale()) state.idealMembers = (data && data.members) ? data.members : []; done(); })
     .catch(function() { done(); });
@@ -41642,6 +41795,7 @@ function _loadMergeSub(uid) {
       fsGet('maps/' + sc.uid + '/months/' + month + '_current').then(function(md) {
         if (!_mergeSub[uid]) return;
         _mergeSub[uid].data[sc.uid] = (md && md.members) ? md.members : [];
+        if (!_mergeSub[uid].data[sc.uid].length && state.currentMonth === month) _memFbPrime(sc.uid); // v926 #42
         if (currentView === 'current' && !viewingOwnerUid) renderCurrentViewLazy();
       }).catch(function(e) { console.log('merge sub load:', e && e.message); }); // 派生共有が未配布なら黙ってスキップ
     });
@@ -41683,6 +41837,7 @@ function startMergeListener(uid) {
   _mergeUnsub[uid] = ref.onSnapshot(function(doc) {
     var data = doc.exists ? doc.data() : null;
     state.mergedData[uid] = (data && data.members) ? data.members : [];
+    if (!state.mergedData[uid].length && state.currentMonth === month) _memFbPrime(uid); // v926 #42: 相手がこの月のMAPをまだ作っていない
     if (currentView === 'current' && !viewingOwnerUid) renderCurrentViewLazy();
   }, function(err) { console.log('merge listener err:', err && err.message); });
 }
@@ -41880,6 +42035,7 @@ function startViewMergedSync(ownerUid) {
       fsGet('maps/' + mmCfg.uid + '/months/' + month + '_current').then(function(md) {
         if (viewingOwnerUid !== ownerUid || _viewMerged.owner !== ownerUid) return;
         _viewMerged.data[mmCfg.uid] = (md && md.members) ? md.members : [];
+        if (!_viewMerged.data[mmCfg.uid].length && state.currentMonth === month) _memFbPrime(mmCfg.uid); // v926 #42
         if (_viewMerged.fail) delete _viewMerged.fail[mmCfg.uid];
         if (currentView === 'current' || currentView === 'members') renderCurrentView();
         _mgFailNote();
@@ -42057,6 +42213,7 @@ function fsLoadFromFirestore(uid) {
       _lastMergeCheck = Date.now(); // 読みたて＝直後の保存はマージ読取り不要
     } else {
       state.members = [];
+      _memFbPrime(uid); // v926 #42: この月のMAPがまだ無い（翌月へコピーしていない）→ 関連メンバーの名前は前の月から
     }
 
     // 理想MAPメンバー
@@ -45338,7 +45495,7 @@ function _hwItems(P) {
 }
 // v875: まだテスト中。新機能のテスト（hwimp）の「先に見られる人」だけに出す
 function _hwOn() { return typeof featOn === 'function' && featOn('hwimp'); }
-function _hwCanUnion() { var un = currentUser && currentUser.union; return !!un && un.indexOf('/') < 0 && (_admOf(un) || (typeof isCurrentAdmin === 'function' && isCurrentAdmin())); }
+function _hwCanUnion() { var un = currentUser && currentUser.union; return !!un && un.indexOf('/') < 0 && _canUnionEv(un); } // v923: 予定係も
 function hwOpen(P) {
   if (!_hwOn()) return;
   if (!eventsUid() || viewingOwnerUid) { toast('自分のカレンダーを開いている時に使えます'); return; }

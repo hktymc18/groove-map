@@ -253,3 +253,20 @@ exports.beautyDmMsg = onDocumentCreated(
   }
 );
 
+
+// 🤖 NAVIGATOR バグ報告の「見立て」：外の Claude が報告を読み（fbTriageQueue）、見立て・直した記録を書き戻す（fbTriageWrite）。中身は triage.js
+//   鍵はシークレット TRIAGE_KEY（firebase functions:secrets:set TRIAGE_KEY）。ヘッダー X-Triage-Key が違えば 401。
+//   ブラウザからは呼ばないので CORS は付けない。外から呼ぶので invoker は public（鍵で守る）。
+//   デプロイ: firebase deploy --only functions:fbTriageQueue,functions:fbTriageWrite
+const { onRequest } = require('firebase-functions/v2/https');
+const { defineSecret } = require('firebase-functions/params');
+const triage = require('./triage');
+const TRIAGE_KEY = defineSecret('TRIAGE_KEY');
+const triageOpts = { region: 'asia-northeast1', memory: '256MiB', secrets: [TRIAGE_KEY], invoker: 'public', maxInstances: 2 };
+const triageSend = (res, r) => res.status(r.status).set('Cache-Control', 'no-store').json(r.body);
+exports.fbTriageQueue = onRequest(triageOpts, async (req, res) => {
+  try { triageSend(res, await triage.queue(admin.firestore(), req, TRIAGE_KEY.value())); } catch (e) { console.log('triage queue error ' + e); res.status(500).json({ error: 'internal' }); }
+});
+exports.fbTriageWrite = onRequest(triageOpts, async (req, res) => {
+  try { triageSend(res, await triage.write(admin.firestore(), req, TRIAGE_KEY.value(), Date.now())); } catch (e) { console.log('triage write error ' + e); res.status(500).json({ error: 'internal' }); }
+});
