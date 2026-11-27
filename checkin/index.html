@@ -1332,6 +1332,14 @@ body.uapp #vCard .cardwrap{max-width:520px;margin:0 auto;padding:calc(env(safe-a
 .cs-msg{max-width:82%;border-radius:16px;padding:9px 12px;font-size:14px;line-height:1.7;white-space:pre-wrap;word-break:break-word;}
 .cs-msg.me{align-self:flex-end;background:var(--ua-vio,#6a3fd1);color:#fff;border-bottom-right-radius:4px;}
 .cs-msg.you{align-self:flex-start;background:var(--bg,#f2f2f5);border:1px solid var(--line);border-bottom-left-radius:4px;}
+.cs-msg img.cs-img{display:block;max-width:100%;max-height:300px;border-radius:10px;margin:2px 0;cursor:zoom-in;}
+.cs-phrow{display:flex;align-items:center;gap:10px;margin:6px 0 0;flex-wrap:wrap;}
+.cs-phbtn{display:inline-flex;align-items:center;gap:4px;padding:8px 12px;border:1px solid var(--line);border-radius:999px;font-size:13.5px;cursor:pointer;background:var(--card);}
+.cs-phpv{position:relative;display:inline-block;}
+.cs-phpv img{width:64px;height:64px;object-fit:cover;border-radius:10px;display:block;}
+.cs-phpv button{position:absolute;top:-6px;right:-6px;width:22px;height:22px;padding:0;border-radius:50%;font-size:11px;line-height:1;}
+.cs-zoom{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:12px;}
+.cs-zoom img{max-width:100%;max-height:100%;border-radius:8px;}
 .cs-tm{font-size:10.5px;color:var(--sub);text-align:center;}
 .cs-acts{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;font-size:12.5px;}
 .cs-acts button{border:0;background:transparent;color:var(--sub);text-decoration:underline;padding:6px 2px;font:inherit;font-size:12.5px;}
@@ -1479,17 +1487,6 @@ body.uapp #toast{bottom:calc(96px + env(safe-area-inset-bottom, 0px));}
 .pz-type b{font-size:16px;color:var(--pz);}
 .pz-type span{font-size:12.5px;color:var(--sub);}
 .pz-type button{justify-self:start;margin-top:8px;}
-.ph-wrap .ui-s{font-size:12.5px;}
-.ph-cmp{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0;}
-.ph-cmp figure{margin:0;}
-.ph-cmp img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:12px;display:block;}
-.ph-cmp figcaption{font-size:12px;color:var(--sub);text-align:center;margin-top:4px;}
-.ph-list{display:flex;gap:6px;overflow-x:auto;padding:4px 0;}
-.ph-list span{position:relative;flex:none;width:64px;text-align:center;}
-.ph-list img{width:64px;height:84px;object-fit:cover;border-radius:8px;display:block;}
-.ph-list small{font-size:10.5px;color:var(--sub);}
-.ph-list button{position:absolute;top:2px;right:2px;width:20px;height:20px;padding:0;border-radius:50%;font-size:10px;line-height:1;}
-.ph-add{display:block;text-align:center;margin-top:10px;padding:12px;border-radius:12px;cursor:pointer;}
 /* 💜 v136: 新しいお知らせ・ラウンジの赤丸 */
 #uaTabs button,#uaApp .ua-bell,#uaApp .ua-seg button{position:relative;}
 .ua-dot{position:absolute;top:3px;right:calc(50% - 19px);width:9px;height:9px;border-radius:50%;background:#e2475f;border:2px solid var(--card);box-sizing:content-box;}
@@ -3136,10 +3133,11 @@ if(gTrainerMode) document.documentElement.classList.add('trm');   // 🎓 研修
    checkin/index.html を変更したら APP_VER を上げ、CHANGELOG の先頭に
    ユーザー向けの変更点を追記する（CLAUDE.md の規約参照）。
    未読の更新があると📣の横に赤丸が付き、開くと既読になる */
-var APP_VER = 'v182';
+var APP_VER = 'v183';
 // 🙈 お知らせ（更新履歴）の表示を一時停止中（ネタバレ防止・オーナーの指示）。再開するときは false に
 var CHANGELOG_OFF = true;
 var CHANGELOG = [
+  { v: 'v183', d: '2026/11/27', items: ['📷 マイページの「自分だけの写真」は終わりにしました。スマホの中に保存していた写真も消えます', '新しい機能の準備をしました'] },
   { v: 'v182', d: '2026/11/26', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v181', d: '2026/11/26', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
   { v: 'v180', d: '2026/11/26', items: ['新しい機能の準備をしました（今は画面の変化はありません）'] },
@@ -4961,8 +4959,6 @@ function ckUaToday(){
       + '<div class="mp-lvbar"><i style="width:' + Math.min(100, Math.round(cn / ch.g * 100)) + '%;"></i></div>'
       + (cn >= ch.g ? '<p class="ua-p">🎉 チャレンジ達成！</p>' : '<p class="ua-p">今月チェックした日が ' + ch.g + '日になると達成</p>') + '</div>';
   }
-  // 💜 v174: 今週の写真（このスマホの中だけ）
-  if(gPh && gPh.token === gUa.token){ var lp = gPh.list.length ? gPh.list[gPh.list.length - 1] : null; if(!lp || ckYmdDays(lp.d, today) >= 7) h += '<div class="td-soc" data-go="me">📷 今週の1枚を撮ろう（自分だけが見る写真）</div>'; }
   // はじめの7日
   var e7 = mp7Event(plan);
   if(e7) h += '<div class="ua-cd td-7"><div class="ua-lb">はじめの7日<em>' + e7.n + '日目</em></div><div class="td-dots">'
@@ -5318,61 +5314,32 @@ function ckShareOut(cv){
     else show();
   }, 'image/png');
 }
-// ── 自分だけの写真（このスマホの中だけ・IndexedDB。サーバーには送らない）。週に1枚
-var CK_PH_DB = null;
-function ckPhDb(){
-  if(CK_PH_DB) return CK_PH_DB;
-  CK_PH_DB = new Promise(function(ok, ng){
-    if(!window.indexedDB){ ng(new Error('na')); return; }
-    var r = indexedDB.open('nb_photo', 1);
-    r.onupgradeneeded = function(){ r.result.createObjectStore('p', { keyPath: 'id' }); };
-    r.onsuccess = function(){ ok(r.result); }; r.onerror = function(){ ng(r.error); };
-  });
-  CK_PH_DB.catch(function(){ CK_PH_DB = null; });
-  return CK_PH_DB;
+// 💜 v183: 「自分だけの写真」（v174・このスマホの中だけ）は終わり。スマホに残っている写真の入れ物（IndexedDB nb_photo）を1回だけ消す
+function ckPhGone(){
+  try{ if(localStorage.getItem('bci_ph_gone')) return; localStorage.setItem('bci_ph_gone', '1'); }catch(e){ return; }
+  try{ if(window.indexedDB) indexedDB.deleteDatabase('nb_photo'); }catch(e){}
 }
-function ckPhList(tk){
-  return ckPhDb().then(function(db){ return new Promise(function(ok){
-    var out = [], q = db.transaction('p').objectStore('p').openCursor();
-    q.onsuccess = function(){ var cu = q.result; if(cu){ if(cu.value.tk === tk) out.push(cu.value); cu['continue'](); } else ok(out.sort(function(a, b){ return a.d < b.d ? -1 : 1; })); };
-    q.onerror = function(){ ok(out); };
-  }); }).catch(function(){ return []; });
-}
-function ckPhPut(rec){ return ckPhDb().then(function(db){ return new Promise(function(ok, ng){ var t = db.transaction('p', 'readwrite'); t.objectStore('p').put(rec); t.oncomplete = function(){ ok(); }; t.onerror = function(){ ng(t.error); }; }); }); }
-function ckPhDel(id){ return ckPhDb().then(function(db){ return new Promise(function(ok){ var t = db.transaction('p', 'readwrite'); t.objectStore('p')['delete'](id); t.oncomplete = function(){ ok(); }; t.onerror = function(){ ok(); }; }); }); }
-function ckPhShrink(file){
+// 💜 v183: 写真を小さくする（相談の写真）。長い辺 max ピクセル・JPEG。lim 文字（data URL）を超えたら、画質→大きさの順に落とす
+function ckImgShrink(file, max, lim){
   return new Promise(function(ok, ng){
     var fr = new FileReader();
     fr.onload = function(){
       var im = new Image();
-      im.onload = function(){ var s = Math.min(1, 720 / Math.max(im.width, im.height)), cv = document.createElement('canvas'); cv.width = Math.round(im.width * s); cv.height = Math.round(im.height * s); cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height); ok(cv.toDataURL('image/jpeg', .82)); };
+      im.onload = function(){
+        var tries = [[max, .72], [max, .6], [Math.round(max * .75), .6], [Math.round(max * .55), .55]], u = '';
+        for(var k = 0; k < tries.length; k++){
+          var s = Math.min(1, tries[k][0] / Math.max(im.width, im.height)), cv = document.createElement('canvas');
+          cv.width = Math.max(1, Math.round(im.width * s)); cv.height = Math.max(1, Math.round(im.height * s));
+          var g = cv.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, cv.width, cv.height); g.drawImage(im, 0, 0, cv.width, cv.height);
+          u = cv.toDataURL('image/jpeg', tries[k][1]);
+          if(u.length <= lim) break;
+        }
+        if(u.length > lim || u.indexOf('data:image/jpeg;base64,') !== 0){ ng(new Error('big')); return; }
+        ok(u);
+      };
       im.onerror = function(){ ng(new Error('img')); }; im.src = fr.result;
     };
     fr.onerror = function(){ ng(fr.error); }; fr.readAsDataURL(file);
-  });
-}
-var gPh = null;   // { token, list }
-function renderPhotos(){
-  var el = $('phArea'); if(!el || !gUa) return;
-  var tk = gUa.token;
-  ckPhList(tk).then(function(L){
-    gPh = { token: tk, list: L };
-    var last = L.length ? L[L.length - 1] : null, week = last && ckYmdDays(last.d, todayStr()) < 7;
-    el.innerHTML = '<div class="nwwrap ph-wrap"><div class="next-head">MY PHOTO</div>'
-      + '<p class="ui-s">週に1枚、同じ時間・同じ明るさで撮って、自分で見比べよう。<b>写真はこのスマホの中だけに保存</b>され、だれにも送られません（スマホを変えると消えます）。</p>'
-      + (L.length >= 2 ? '<div class="ph-cmp"><figure><img src="' + L[0].u + '" alt="はじめの写真"><figcaption>はじめ ' + esc(ckMd(L[0].d)) + '</figcaption></figure>'
-          + '<figure><img src="' + last.u + '" alt="いちばん新しい写真"><figcaption>いま ' + esc(ckMd(last.d)) + '</figcaption></figure></div>' : '')
-      + (L.length ? '<div class="ph-list">' + L.slice().reverse().map(function(p){ return '<span><img src="' + p.u + '" alt=""><small>' + esc(ckMd(p.d)) + '</small><button type="button" data-phdel="' + esc(p.id) + '" aria-label="消す">✕</button></span>'; }).join('') + '</div>' : '')
-      + '<label class="primary ph-add" for="phIn">' + (week ? '📷 今週の1枚を撮り直す' : '📷 今週の1枚を撮る') + '</label><input type="file" id="phIn" accept="image/*" capture="user" hidden>'
-      + '</div>';
-    $('phIn').onchange = function(){
-      var f = $('phIn').files && $('phIn').files[0]; if(!f) return;
-      ckPhShrink(f).then(function(u){ var d = todayStr(); return ckPhPut({ id: tk + '|' + d, tk: tk, d: d, u: u }); })
-        .then(function(){ toast('保存しました（このスマホの中だけ）'); renderPhotos(); ckUaToday(); })
-        .catch(function(){ toast('写真を保存できませんでした'); });
-    };
-    Array.prototype.forEach.call(el.querySelectorAll('[data-phdel]'), function(b){ b.onclick = function(){ ckPhDel(b.getAttribute('data-phdel')).then(function(){ renderPhotos(); ckUaToday(); }); }; });
-    ckUaToday();
   });
 }
 function ckRenderUserCard(c, card, brand){
@@ -16591,7 +16558,6 @@ function ckUaMount(c, token){
   mv('friends', 'bdArea'); mv('friends', 'fiArea'); mv('friends', 'lgArea');
   var csA = document.createElement('div'); csA.id = 'csArea'; pg('friends').appendChild(csA);   // 💜 v181: DAYスタッフに相談
   mv('me', 'pzArea');
-  var phA = document.createElement('div'); phA.id = 'phArea'; pg('me').appendChild(phA);   // 💜 v174: 自分だけの写真
   var dvA = document.createElement('div'); dvA.id = 'dvArea'; pg('me').appendChild(dvA);   // 💜 v180: この端末で相談できるか
   if(ckCsOn(c.union)) ckBindStart(c, token);
   mv('me', 'exArea'); mv('me', 'rcptArea'); mv('me', 'mcHelp'); mv('me', 'verCard');
@@ -16623,7 +16589,7 @@ function ckUaMount(c, token){
   ckUaSeg('lounge');
   ckUaGo(ckUaPages().indexOf(t0) >= 0 ? t0 : 'today', true);   // 💜 v172: 開いたら「今日」
   ckUaInfo(); ckUaHome();
-  renderPhotos();   // 💜 v174
+  ckPhGone();   // 💜 v183: 自分だけの写真は終わり（スマホの中の写真も消す）
 }
 function ckUaGo(tab, auto){
   if(!gUa) return;
@@ -17841,12 +17807,40 @@ function ckCsCompose(st){
     }).catch(function(e){ if($('csGo')) $('csGo').disabled = false; toast(permMsg(e, '送れませんでした。電波の良い所で、もう一度押してください')); });
   };
 }
+// 💜 v183: 相談の写真。小さくして（長い辺 1080・JPEG）メッセージに入れる（ckDm/{相談}/m/{メッセージ}.img・データベースに入る）
+var CK_IMG_MAX = 1080, CK_IMG_LIM = 380000;
+function ckCsImgOk(u){ return typeof u === 'string' && u.length <= 400000 && /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(u); }
+// メッセージ1つ（mine＝自分の側の吹き出し・who＝オーナーが読む時の「お客さん」「スタッフ」）
+function ckCsMsgHtml(m, mine, who){
+  return '<div class="cs-msg ' + (mine ? 'me' : 'you') + '">' + (who ? '<b>' + esc(who) + '</b><br>' : '')
+    + (ckCsImgOk(m.img) ? '<img class="cs-img" src="' + m.img + '" alt="写真">' : '') + esc(m.t || '') + '</div>';
+}
+// 写真をえらぶボタン（id の頭 p）。st.img に入る
+function ckCsPhHtml(p){ return '<div class="cs-phrow"><label class="cs-phbtn" for="' + p + 'PhIn">📷 写真</label><input type="file" id="' + p + 'PhIn" accept="image/*" style="display:none;"><span id="' + p + 'PhPv"></span></div>'; }
+function ckCsPhBind(p, st){
+  var inp = $(p + 'PhIn'), pv = $(p + 'PhPv'); if(!inp || !pv) return;
+  var draw = function(){
+    pv.innerHTML = st.img ? '<span class="cs-phpv"><img src="' + st.img + '" alt="送る写真"><button type="button" id="' + p + 'PhX" aria-label="写真をやめる">✕</button></span>' : '';
+    if($(p + 'PhX')) $(p + 'PhX').onclick = function(){ st.img = ''; inp.value = ''; draw(); };
+  };
+  inp.onchange = function(){
+    var f = inp.files && inp.files[0]; if(!f) return;
+    pv.innerHTML = '<span class="bt-note">小さくしています…</span>';
+    ckImgShrink(f, CK_IMG_MAX, CK_IMG_LIM).then(function(u){ st.img = u; draw(); }).catch(function(){ st.img = ''; draw(); toast('この写真は送れませんでした'); });
+  };
+  draw();
+}
+// 写真を押すと大きく見る
+document.addEventListener('click', function(e){
+  var t = e.target;
+  if(t && t.classList && t.classList.contains('cs-img')){ var z = document.createElement('div'); z.className = 'cs-zoom'; z.innerHTML = '<img src="' + t.getAttribute('src') + '" alt="写真">'; z.onclick = function(){ z.parentNode && z.parentNode.removeChild(z); }; document.body.appendChild(z); }
+});
 // やりとり（開いている間は、新しいメッセージがすぐ出る）
 function ckCsOpen(th){
   if(gCs && gCs.unsub){ try{ gCs.unsub(); }catch(e){} gCs.unsub = null; }
   modal('<h2>' + esc(th.sName || '') + ' さん</h2><p class="bt-note">' + esc(ckCsTagN(th.topic) || 'その他') + (th.st === 'done' ? ' ・ 解決済み' : '') + '</p>'
     + '<div class="cs-chat" id="csChat"><p class="cs-tm">読み込み中…</p></div>'
-    + (th.stop ? '<p class="bt-note">このスタッフを止めています。</p>' : '<label for="csRe" class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);">メッセージ</label><textarea id="csRe" rows="2" maxlength="1000" placeholder="メッセージを書く"></textarea>')
+    + (th.stop ? '<p class="bt-note">このスタッフを止めています。</p>' : '<label for="csRe" class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);">メッセージ</label><textarea id="csRe" rows="2" maxlength="1000" placeholder="メッセージを書く"></textarea>' + ckCsPhHtml('cs'))
     // v182: スマホではボタンの帯が下に貼り付くので、解決・止める・報告は帯より前に置く（後ろだと帯の下に隠れる）
     + '<div class="cs-acts">' + (th.st !== 'done' ? '<button type="button" id="csDone">解決した</button>' : '') + (th.stop ? '' : '<button type="button" id="csStop">このスタッフを止める</button>') + (th.rep ? '' : '<button type="button" id="csRep">報告</button>') + '</div>'
     + '<div class="btns"><button id="csCl">閉じる</button>' + (th.stop ? '' : '<button class="primary" id="csSend">送る</button>') + '</div>', true);
@@ -17858,18 +17852,20 @@ function ckCsOpen(th){
       var box = $('csChat'); if(!box) return;
       var a = []; qs.forEach(function(x){ a.push(x.data() || {}); });
       a.sort(function(p, q){ return ckTsMs(p.at) - ckTsMs(q.at); });
-      box.innerHTML = a.map(function(m){ return '<div class="cs-msg ' + (m.by === 'u' ? 'me' : 'you') + '">' + esc(m.t || '') + '</div>'; }).join('') || '<p class="cs-tm">まだメッセージはありません</p>';
+      box.innerHTML = a.map(function(m){ return ckCsMsgHtml(m, m.by === 'u'); }).join('') || '<p class="cs-tm">まだメッセージはありません</p>';
       box.scrollTop = box.scrollHeight;
     }, function(){});
     if(ckCsUnread(th) || !th.uRead){ th.uRead = now; ref.update({ uRead: now }).catch(function(){}); }
+    var ph = {}; ckCsPhBind('cs', ph);
     if($('csSend')) $('csSend').onclick = function(){
-      var txt = $('csRe').value.trim(); if(!txt) return;
-      var t2 = Date.now(), b = d.db.batch();
-      b.set(ref.collection('m').doc(), { by: 'u', uid: d.uid, t: txt.slice(0, 1000), at: FV.serverTimestamp() });
-      var up = { last: { by: 'u', t: txt.slice(0, 40), at: t2 }, uRead: t2, upAt: t2, st: 'open' };
+      var txt = $('csRe').value.trim(); if(!txt && !ph.img) return;
+      var t2 = Date.now(), b = d.db.batch(), msg = { by: 'u', uid: d.uid, t: txt.slice(0, 1000), at: FV.serverTimestamp() };
+      if(ph.img) msg.img = ph.img;
+      b.set(ref.collection('m').doc(), msg);
+      var up = { last: { by: 'u', t: (txt || '📷 写真').slice(0, 40), at: t2 }, uRead: t2, upAt: t2, st: 'open' };
       b.update(ref, up);
       $('csSend').disabled = true;
-      b.commit().then(function(){ Object.keys(up).forEach(function(k){ th[k] = up[k]; }); $('csRe').value = ''; $('csSend').disabled = false; })
+      b.commit().then(function(){ Object.keys(up).forEach(function(k){ th[k] = up[k]; }); $('csRe').value = ''; ph.img = ''; ckCsPhBind('cs', ph); $('csSend').disabled = false; })
         .catch(function(e){ $('csSend').disabled = false; toast(permMsg(e, '送れませんでした')); });
     };
     if($('csDone')) $('csDone').onclick = function(){ var t2 = Date.now(); ref.update({ st: 'done', upAt: t2 }).then(function(){ th.st = 'done'; th.upAt = t2; toast('解決にしました'); close(); }).catch(function(e){ toast(permMsg(e, '変えられませんでした')); }); };
@@ -17927,7 +17923,7 @@ function btDmOpen(th){
   if(me.dmMsgUnsub){ try{ me.dmMsgUnsub(); }catch(e){} }
   modal('<h2>' + esc(th.cname || '') + ' さん</h2><p class="bt-note">' + esc(ckCsTagN(th.topic) || 'その他') + (th.st === 'done' ? ' ・ 解決済み' : '') + (th.stop ? ' ・ このお客さんに止められています' : '') + '</p>'
     + '<div class="cs-chat" id="dmChat"><p class="cs-tm">読み込み中…</p></div>'
-    + (th.stop ? '' : '<label for="dmRe">返事</label><textarea id="dmRe" rows="3" maxlength="1000"></textarea>')
+    + (th.stop ? '' : '<label for="dmRe">返事</label><textarea id="dmRe" rows="3" maxlength="1000"></textarea>' + ckCsPhHtml('dm'))
     + '<p class="bt-note">⚠ 「治る」「効く」などの言葉は使わないでください。病気のことは、お医者さんへの相談をすすめてください。</p>'
     + '<label for="dmTags">悩みのタグ（、で区切る・お客さんには見えません）</label><input type="text" id="dmTags" maxlength="60" value="' + esc((th.tags || []).join('、')) + '" placeholder="例: 乾燥、冬">'
     + '<div class="btns" style="flex-wrap:wrap;"><button id="dmX">閉じる</button>' + (th.st !== 'done' ? '<button id="dmDone" class="ghost">解決にする</button>' : '') + (th.stop ? '' : '<button id="dmHand" class="ghost">ほかのスタッフへ</button><button class="primary" id="dmSend">送る</button>') + '</div>', true);
@@ -17938,19 +17934,21 @@ function btDmOpen(th){
     var box = $('dmChat'); if(!box) return;
     var a = []; qs.forEach(function(x){ a.push(x.data() || {}); });
     a.sort(function(p, q){ return ckTsMs(p.at) - ckTsMs(q.at); });
-    box.innerHTML = a.map(function(m){ return '<div class="cs-msg ' + (m.by === 's' ? 'me' : 'you') + '">' + esc(m.t || '') + '</div>'; }).join('') || '<p class="cs-tm">まだメッセージはありません</p>';
+    box.innerHTML = a.map(function(m){ return ckCsMsgHtml(m, m.by === 's'); }).join('') || '<p class="cs-tm">まだメッセージはありません</p>';
     box.scrollTop = box.scrollHeight;
   }, function(){});
   var now = Date.now();
   if(!th.sRead || (th.last && th.last.by === 'u' && (th.last.at || 0) > (th.sRead || 0))){ th.sRead = now; ref.update({ sRead: now }).catch(function(){}); }
+  var ph = {}; ckCsPhBind('dm', ph);
   if($('dmSend')) $('dmSend').onclick = function(){
-    var txt = $('dmRe').value.trim(); if(!txt) return;
-    if(!btDmWarn(txt)) return;
-    var t2 = Date.now(), b = db.batch(), up = { last: { by: 's', t: txt.slice(0, 40), at: t2 }, sRead: t2, upAt: t2, tags: tagsNow() };
-    b.set(ref.collection('m').doc(), { by: 's', uid: gUser.uid, t: txt.slice(0, 1000), at: FV.serverTimestamp() });
+    var txt = $('dmRe').value.trim(); if(!txt && !ph.img) return;
+    if(txt && !btDmWarn(txt)) return;
+    var t2 = Date.now(), b = db.batch(), up = { last: { by: 's', t: (txt || '📷 写真').slice(0, 40), at: t2 }, sRead: t2, upAt: t2, tags: tagsNow() };
+    var msg = { by: 's', uid: gUser.uid, t: txt.slice(0, 1000), at: FV.serverTimestamp() }; if(ph.img) msg.img = ph.img;
+    b.set(ref.collection('m').doc(), msg);
     b.update(ref, up);
     $('dmSend').disabled = true;
-    b.commit().then(function(){ Object.keys(up).forEach(function(k){ th[k] = up[k]; }); $('dmRe').value = ''; $('dmSend').disabled = false; toast('送りました'); })
+    b.commit().then(function(){ Object.keys(up).forEach(function(k){ th[k] = up[k]; }); $('dmRe').value = ''; ph.img = ''; ckCsPhBind('dm', ph); $('dmSend').disabled = false; toast('送りました'); })
       .catch(function(e){ $('dmSend').disabled = false; toast(permMsg(e, '送れませんでした')); });
   };
   if($('dmDone')) $('dmDone').onclick = function(){ var t2 = Date.now(); ref.update({ st: 'done', upAt: t2, tags: tagsNow() }).then(function(){ th.st = 'done'; toast('解決にしました'); close(); }).catch(function(e){ toast(permMsg(e, '変えられませんでした')); }); };
@@ -18062,7 +18060,8 @@ function btDsDraw(){
     + '<div><b class="mono">' + (d.noReply || 0) + '</b><small>まだ返事のない相談</small></div>'
     + '<div><b class="mono">' + (d.open || 0) + ' / ' + (d.done || 0) + '</b><small>続いている / 解決済み</small></div></div>'
     + '<p class="bt-note">分野：' + ckCsTags().concat([['other', 'その他']]).map(function(t){ return esc(t[1]) + ' ' + (tp[t[0]] || 0); }).join(' ・ ')
-    + ' ／ スタッフから先に送った ' + (d.byStaff || 0) + ' ・ 止められた ' + (d.stop || 0) + (d.rep ? ' ・ <b>未対応の報告 ' + d.rep + '</b>' : '') + '</p>';
+    + ' ／ スタッフから先に送った ' + (d.byStaff || 0) + ' ・ 止められた ' + (d.stop || 0) + (d.rep ? ' ・ <b>未対応の報告 ' + d.rep + '</b>' : '') + '</p>'
+    + '<p class="bt-note">📷 相談の写真（これまで）：' + (d.imgN || 0) + '枚 ・ 約' + ((d.imgKB || 0) < 1024 ? (d.imgKB || 0) + 'KB' : Math.round((d.imgKB || 0) / 102.4) / 10 + 'MB') + '</p>';
 }
 function btDrDraw(){
   var box = $('btDr'), me = gBt;
@@ -18109,7 +18108,7 @@ function btDrOpen(th){
     var canDone = th.rep && !th.repDone;
     modal('<h2>💬 ' + esc(th.cname || '') + ' さん → ' + esc(th.sName || '') + ' さん</h2><p class="bt-note">' + esc(ckCsTagN(th.topic) || 'その他')
       + (th.tags && th.tags.length ? ' ・ 悩みのタグ：' + esc(th.tags.join('、')) : '') + (th.rep ? ' ・ 🚩 報告あり' + (th.repDone ? '（対応済み）' : '') : '') + '</p>'
-      + '<div class="cs-chat">' + a.map(function(m){ return '<div class="cs-msg ' + (m.by === 's' ? 'me' : 'you') + '">' + (m.by === 's' ? '<b>スタッフ</b><br>' : '<b>お客さん</b><br>') + esc(m.t || '') + '</div>'; }).join('') + '</div>'
+      + '<div class="cs-chat">' + a.map(function(m){ return ckCsMsgHtml(m, m.by === 's', m.by === 's' ? 'スタッフ' : 'お客さん'); }).join('') + '</div>'
       + '<div class="btns"><button id="drX">閉じる</button>' + (canDone ? '<button class="primary" id="drDone">報告を対応済みにする</button>' : '') + '</div>', true);
     $('drX').onclick = closeModal;
     if($('drDone')) $('drDone').onclick = function(){
