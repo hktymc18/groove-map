@@ -1,4 +1,4 @@
-// v926（MAP の結合は許可制）の firestore.rules を、Firestore エミュレータで試す（架空のデータだけ）
+// v927（MAP の結合は許可制）の firestore.rules を、Firestore エミュレータで試す（架空のデータだけ）
 //   結合の設定（maps/{uid}/meta/merged）を増やせるのは、オーナー・管理者・canMerge の人だけ。連鎖共有（派生共有）も同じ。
 //   canMerge は本人が付けられない。付けるのはオーナーとそのユニオンの管理者。準備・実行は ckpf109_rules.js と同じ
 const fs = require('fs'), path = require('path');
