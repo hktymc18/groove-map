@@ -9,11 +9,11 @@ T.run(async () => {
   const items = [
     { id: '40', no: 40, kind: 'bug', screen: 'MAP', title: '保存できない', did: '押した', got: '消えた', status: 'new', authorUid: 'uM', authorName: '架空 一郎' },
     { id: '41', no: 41, kind: 'req', screen: '予定', title: '並べ替えたい', did: 'x', status: 'new', authorUid: 'uM', authorName: '架空 一郎' },
-    { id: '42', no: 42, kind: 'bug', screen: 'PLAN', title: '仕様かも', did: 'y', status: 'fix', authorUid: 'uM', authorName: '架空 一郎' }
+    { id: '9042', no: 9042, kind: 'bug', screen: 'PLAN', title: '仕様かも', did: 'y', status: 'fix', authorUid: 'uM', authorName: '架空 一郎' } // v926: 架空の番号は実在のお知らせ（RELEASE_NOTES の #42）と被らない番号に（被ると「直した版が出たら確認待ち」が働く）
   ];
   const TRI = {
     '40': { id: '40', verdict: 'bug', confidence: 'high', summary: '保存の順番が逆になっている', plan: 'app.js の保存を await してから閉じる', replyDraft: 'ご報告ありがとうございます。次の版で直します', at: '2026-10-14T02:00:00Z', pr: 'https://github.com/hktymc18/groove-map/pull/700' },
-    '42': { id: '42', verdict: 'decide', confidence: 'low', summary: '仕様の判断が要る', at: '2026-10-14T02:00:00Z' }
+    '9042': { id: '9042', verdict: 'decide', confidence: 'low', summary: '仕様の判断が要る', at: '2026-10-14T02:00:00Z' }
   };
   const reads = [], ups = [], notes = [];
   const oG = w.fsGet, oC = w.fsGetCol;
@@ -42,7 +42,7 @@ T.run(async () => {
   c('オーナー：見立てがある報告に印（#40）', mark(40));
   c('オーナー：見立てが無い報告には印なし（#41）', !mark(41));
   w.fbTab('fix'); await sleep(10);
-  c('オーナー：判断が要る見立てにも印（#42）', mark(42));
+  c('オーナー：判断が要る見立てにも印（#9042）', mark(9042));
   w.fbTab('new');
   w.fbDetailOpen('40'); await sleep(60);
   c('オーナー：詳細を開くと fbTriage/{id} を読む', reads.indexOf('fbTriage/40') >= 0);
@@ -63,12 +63,12 @@ T.run(async () => {
   w._p2SheetClose('fbDetOv'); w.fbDetailOpen('41'); await sleep(60);
   c('見立てが無い報告には欄を出さない', !$('#fbTri'));
   // 判断が要る
-  w._p2SheetClose('fbDetOv'); w.fbDetailOpen('42'); await sleep(60);
+  w._p2SheetClose('fbDetOv'); w.fbDetailOpen('9042'); await sleep(60);
   c('判断が要る：状態のボタンは出さず、案内だけ', !!$('#fbTri') && /判断が要る/.test($('#fbTri').textContent) && !$$('#fbTri .fb-btn').length && /下の「状態」から選んで/.test($('#fbTri').textContent));
   // 見立てが後から消えた（詳細で読み直すと無い）→ 欄も印も消える
-  delete TRI['42'];
-  w._p2SheetClose('fbDetOv'); w.fbDetailOpen('42'); await sleep(60);
-  c('読み直して無ければ欄を出さない', !$('#fbTri') && !w._fb.tri['42']);
+  delete TRI['9042'];
+  w._p2SheetClose('fbDetOv'); w.fbDetailOpen('9042'); await sleep(60);
+  c('読み直して無ければ欄を出さない', !$('#fbTri') && !w._fb.tri['9042']);
   // 文字はエスケープ
   TRI['41'] = { id: '41', verdict: 'no', confidence: 'mid', summary: '<img src=x onerror=alert(1)>', at: '2026-10-14T02:00:00Z' };
   w._p2SheetClose('fbDetOv'); w.fbDetailOpen('41'); await sleep(60);

@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v925';
+var APP_JS_VERSION = 'v926';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -5260,7 +5260,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v925';
+  var DATA_VERSION = 'v926';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -5371,6 +5371,7 @@ function onYearMonthChange() {
   var mm = String(m).padStart(2,'0');
   var _prevMonth = state.currentMonth;
   state.currentMonth = y + '.' + mm;
+  if (state.currentMonth !== _prevMonth) _memFb = { month: '', data: {}, busy: {} }; // v926 #42: 月を切り替えたら名前の予備も読み直す
   try { _px3MonBar(); } catch (eMb) {} // v706
   if (state.months.indexOf(state.currentMonth) < 0) state.months.unshift(state.currentMonth);
   // v544: 読み込みが終わるまで前の月のMAPを新しい月として見せない（読み込み中の表示→読込後に描画）
@@ -7440,6 +7441,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v926', d:'2026-11-27', items:['🐛 #42 前の月に作った翌月の予定で、月が変わると関連メンバーが「?」になるバグを修正（翌月へコピーする前でも、前の月のMAPの名前で表示されます。共有メンバーも）'] },
   { v:'v924', d:'2026-11-26', items:['📅 ユニオン予定の「予定係」：管理者にしなくても、ユニオン予定だけを入れられる人を決められるようになりました（アカウント管理で「＋ ユニオン予定の入力」を押す。付けられるのはオーナーとそのユニオンの管理者）'] },
   { v:'v923', d:'2026-11-26', items:['🛠 細かい修正をしました'] },
   { v:'v922', d:'2026-11-26', items:['🌈 夢100：達成の数と「＋ 夢を追加」が、スクロールしても上に残るようにしました','月ごとに「＋ この月に追加」を置きました（期日にその月が入った状態で開きます）'] },
@@ -18275,8 +18277,57 @@ function findEvent(id) {
 function findMemberAny(id) {
   var arr = (state.members||[]).concat(state.idealMembers||[]);
   for (var i=0;i<arr.length;i++) if (arr[i].id === id) return arr[i];
-  if (/^MG_/.test(String(id)) && typeof _findMemberComposed === 'function') return _findMemberComposed(id); // v378: 結合メンバーの名前も解決
+  if (/^MG_/.test(String(id)) && typeof _findMemberComposed === 'function') { var _mc = _findMemberComposed(id); if (_mc) return _mc; } // v378: 結合メンバーの名前も解決
+  return _memFbFind(id); // v926 #42: その月のMAPに居ない時は予備（前の月のMAP）から
+}
+// ════ v926 #42: 関連メンバーの名前の予備の引き先 ════
+//   予定は月をまたいで残るが、メンバーは月ごとのMAP（maps/{uid}/months/{月}_current）にいる。
+//   その月のMAPがまだ無い（翌月へコピーしていない）と、前の月に選んだ関連メンバーの名前が引けず「?」になっていた
+//   （結合メンバーは、自分のMAPに接続先が無いと合成されないので、相手がコピー済みでも「?」）。
+//   → その月のMAPが無い人（自分・共有してくれている人）だけ、前の月（3か月前まで）のMAPを1回読んで名前を引く。
+//      読むのは月が変わって最初の1回だけ（同じ月の間は読み直さない）。予定の memberIds はもともと保存されたまま。
+var _memFb = { month: '', data: {}, busy: {} };
+function _memFbCur() { if (_memFb.month !== state.currentMonth) _memFb = { month: state.currentMonth, data: {}, busy: {} }; return _memFb; }
+function _memPrevMonth(mo) { var p = String(mo || '').split('.'), y = +p[0], m = +p[1] - 1; if (!y || !(m >= 0)) return ''; if (m < 1) { m = 12; y--; } return y + '.' + (m < 10 ? '0' : '') + m; }
+function _memFbFind(id) {
+  id = String(id || ''); if (!id) return null;
+  var fb = _memFbCur(), uid, oid = id, mg = null, lists = [];
+  if (/^MG_/.test(id)) {
+    mg = (typeof _mgParse === 'function') ? _mgParse(id) : null; if (!mg) return null;
+    uid = mg.uid; oid = mg.oid;
+    // 結合メンバー：自分のMAPに接続先が無くても、相手のMAPのその月の分（読めていれば）から直接引く
+    lists.push((viewingOwnerUid ? ((_viewMerged && _viewMerged.data) || {}) : (state.mergedData || {}))[uid]);
+    if (!viewingOwnerUid) for (var k in (_mergeSub || {})) lists.push((((_mergeSub[k] || {}).data) || {})[uid]);
+  } else uid = viewingOwnerUid || (currentUser && currentUser.uid) || '';
+  lists.push(fb.data[uid]);
+  for (var i = 0; i < lists.length; i++) {
+    var L = lists[i] || [];
+    for (var j = 0; j < L.length; j++) if (L[j] && L[j].id === oid) {
+      var c = {}; for (var key in L[j]) c[key] = L[j][key]; // 写しを返す（前の月のデータを書き換えない）
+      c._fb = true;
+      if (mg) { c.id = id; c._foreign = true; c._ownerName = mg.name || ''; c.mapType = 'current'; }
+      return c;
+    }
+  }
   return null;
+}
+function _memFbPrime(uid) { // その月のMAPが無かった人の、前の月のメンバーを読む（月ごとに1回）
+  var fb = _memFbCur();
+  if (!uid || !db || fb.data[uid] || fb.busy[uid]) return;
+  fb.busy[uid] = 1;
+  var n = 0;
+  var done = function(list) { if (_memFb !== fb) return; fb.data[uid] = list; delete fb.busy[uid]; if (list.length) _memFbRefresh(); };
+  (function step(mo) {
+    if (!mo || n++ >= 3) { done([]); return; }
+    fsGet('maps/' + uid + '/months/' + mo + '_current').then(function(d) {
+      if (d && d.members && d.members.length) done(d.members); else step(_memPrevMonth(mo));
+    }).catch(function() { done([]); });
+  })(_memPrevMonth(fb.month));
+}
+function _memFbRefresh() { // 読めたら、開いている画面の名前を描き直す
+  try { if (typeof updateEvMemberDisplay === 'function') updateEvMemberDisplay(); } catch (e1) {}
+  try { if (document.getElementById('mpList')) { var s = document.getElementById('mpSearch'); _mpRenderList(s ? s.value : ''); } } catch (e2) {}
+  try { if (typeof renderCurrentViewLazy === 'function') renderCurrentViewLazy(); } catch (e3) {}
 }
 function genEventId() {
   return 'ev_' + Date.now() + '_' + Math.floor(Math.random()*100000);
@@ -21629,10 +21680,8 @@ function _cvMemNames(e) {
   var ids = (e.memberIds && e.memberIds.length) ? e.memberIds : (e.memberId ? [e.memberId] : []);
   var out = [];
   ids.forEach(function(id) {
-    for (var i = 0; i < (state.members || []).length; i++) {
-      var m = state.members[i];
-      if (m.id === id) { out.push(((m.lastName || '') + ' ' + (m.firstName || '')).trim()); break; }
-    }
+    var m = findMemberAny(id); // v926 #42: 結合メンバー・その月のMAPがまだ無い時（前の月の名前）も
+    if (m) out.push(((m.lastName || '') + ' ' + (m.firstName || '')).trim());
   });
   return out;
 }
@@ -21865,7 +21914,7 @@ function _efCands(sel) {
     all.forEach(function(m) { if (out.length < 20 && (((m.lastName || '') + (m.firstName || '')).indexOf(q) >= 0 || String(m.furigana || '').indexOf(q) >= 0)) add(m); });
     return out;
   }
-  sel.forEach(function(id) { for (var i = 0; i < all.length; i++) if (all[i].id === id) add(all[i]); });
+  sel.forEach(function(id) { add(findMemberAny(id) || { id: id, lastName: '?' }); }); // v926 #42: 選んでいる人は、その月のMAPに居なくても出す（外せるように）
   var n = out.length;
   (state.events || []).slice().sort(function(a, b) { return (b.date || '') < (a.date || '') ? -1 : 1; }).forEach(function(e) {
     if (out.length - n >= 4) return;
@@ -22438,7 +22487,7 @@ function _tkWhoRows(e) {
   var sel = (e.memberIds && e.memberIds.length) ? e.memberIds : (e.memberId ? [e.memberId] : []);
   var q = String(_tk.q || '').replace(/\s/g, ''), all = state.members || [], out = [];
   if (q) out = all.filter(function(m) { return ((m.lastName || '') + (m.firstName || '')).indexOf(q) >= 0; }).slice(0, 20);
-  else { sel.forEach(function(id) { var m = all.filter(function(x) { return x.id === id; })[0]; if (m) out.push(m); }); all.forEach(function(m) { if (out.length < sel.length + 5 && out.indexOf(m) < 0 && (m.trainee || m.memberCat === '研修生')) out.push(m); }); }
+  else { sel.forEach(function(id) { out.push(findMemberAny(id) || { id: id, lastName: '?' }); }); /* v926 #42: 選んでいる人は外せるように */ all.forEach(function(m) { if (out.length < sel.length + 5 && out.indexOf(m) < 0 && (m.trainee || m.memberCat === '研修生')) out.push(m); }); }
   if (!out.length) return '<div class="efr0">' + (q ? '見つかりません' : '名前で探してください') + '</div>';
   return out.map(function(m) { var on = sel.indexOf(m.id) >= 0; return '<div class="efr' + (on ? ' on' : '') + '" onclick="tkWho(\'' + m.id + '\')"><i>' + (on ? '✓' : '') + '</i>' + evEsc(((m.lastName || '') + ' ' + (m.firstName || '')).trim()) + '<small>' + evEsc(m.title || '') + '</small></div>'; }).join('');
 }
@@ -37962,6 +38011,10 @@ function _mpRenderList(q) {
   // v378: 結合中のDラインメンバー（🔗）も選択できるように合成リストを使う
   var _mpBase = (typeof composeMergedInto === 'function') ? composeMergedInto(membersForMap('current'), 'current') : (state.members || []);
   _mpBase = _mpApplyOrder(_mpBase); // v396: 保存した並び順を適用
+  // v926 #42: 選んでいるのに一覧に居ない人（その月のMAPがまだ無い・接続先が無い結合メンバー）も先頭に出す（見えないまま外せない・選び直すと二重になるのを防ぐ）
+  var _mpHas = {}; _mpBase.forEach(function(m) { _mpHas[m.id] = 1; });
+  var _mpMiss = _evMemberIds.filter(function(id) { return !_mpHas[id]; }).map(function(id) { return findMemberAny(id) || { id: id, lastName: '?' }; });
+  if (_mpMiss.length) _mpBase = _mpMiss.concat(_mpBase);
   var showHandle = !q; // 検索中はドラッグ並べ替え非表示
   _mpBase.forEach(function(m){
     if (m.deleted) return;
@@ -41220,7 +41273,7 @@ function fsLoadSharedMap(ownerUid) {
       }
     }, 900);
   }
-  p1.then(function(data) { if (!_stale()) state.members = (data && data.members) ? data.members : []; done(); })
+  p1.then(function(data) { if (!_stale()) { state.members = (data && data.members) ? data.members : []; if (!state.members.length) _memFbPrime(ownerUid); } done(); }) // v926 #42
     .catch(function(e) { failed = true; console.error('shared map load error:', e); done(); });
   p2.then(function(data) { if (!_stale()) state.idealMembers = (data && data.members) ? data.members : []; done(); })
     .catch(function() { done(); });
@@ -41742,6 +41795,7 @@ function _loadMergeSub(uid) {
       fsGet('maps/' + sc.uid + '/months/' + month + '_current').then(function(md) {
         if (!_mergeSub[uid]) return;
         _mergeSub[uid].data[sc.uid] = (md && md.members) ? md.members : [];
+        if (!_mergeSub[uid].data[sc.uid].length && state.currentMonth === month) _memFbPrime(sc.uid); // v926 #42
         if (currentView === 'current' && !viewingOwnerUid) renderCurrentViewLazy();
       }).catch(function(e) { console.log('merge sub load:', e && e.message); }); // 派生共有が未配布なら黙ってスキップ
     });
@@ -41783,6 +41837,7 @@ function startMergeListener(uid) {
   _mergeUnsub[uid] = ref.onSnapshot(function(doc) {
     var data = doc.exists ? doc.data() : null;
     state.mergedData[uid] = (data && data.members) ? data.members : [];
+    if (!state.mergedData[uid].length && state.currentMonth === month) _memFbPrime(uid); // v926 #42: 相手がこの月のMAPをまだ作っていない
     if (currentView === 'current' && !viewingOwnerUid) renderCurrentViewLazy();
   }, function(err) { console.log('merge listener err:', err && err.message); });
 }
@@ -41980,6 +42035,7 @@ function startViewMergedSync(ownerUid) {
       fsGet('maps/' + mmCfg.uid + '/months/' + month + '_current').then(function(md) {
         if (viewingOwnerUid !== ownerUid || _viewMerged.owner !== ownerUid) return;
         _viewMerged.data[mmCfg.uid] = (md && md.members) ? md.members : [];
+        if (!_viewMerged.data[mmCfg.uid].length && state.currentMonth === month) _memFbPrime(mmCfg.uid); // v926 #42
         if (_viewMerged.fail) delete _viewMerged.fail[mmCfg.uid];
         if (currentView === 'current' || currentView === 'members') renderCurrentView();
         _mgFailNote();
@@ -42157,6 +42213,7 @@ function fsLoadFromFirestore(uid) {
       _lastMergeCheck = Date.now(); // 読みたて＝直後の保存はマージ読取り不要
     } else {
       state.members = [];
+      _memFbPrime(uid); // v926 #42: この月のMAPがまだ無い（翌月へコピーしていない）→ 関連メンバーの名前は前の月から
     }
 
     // 理想MAPメンバー
