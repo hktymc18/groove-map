@@ -1923,5 +1923,10 @@ service cloud.firestore {
         allow delete: if isOwnerAdmin() || fbMineNew(id);
       }
     }
+    // v925: 🤖 Claude の見立て（関数 fbTriageWrite が管理者の権限で書く）。読めるのはオーナーだけ・アプリからはだれも書けない
+    match /fbTriage/{id} {
+      allow read: if isOwnerUid();
+      allow write: if false;
+    }
   }
 }
