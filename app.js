@@ -3688,6 +3688,24 @@ function _evEdLoad() {
     if (on !== before) _admUiSync();
   }).catch(function() {});
 }
+// ════ v926: MAP の結合は許可制（オーナー・管理者・アカウント管理で「結合できる」を付けた人だけ）════
+//  users/{uid}.canMerge。付ける・外すのはオーナーとそのユニオンの管理者。本人は変えられない（ルール）
+//  許可が無い人：新しく結合できない。今の結合は表示を止め、自分が配った連鎖共有（派生共有）を片付ける（結合の設定は残すので、許可を付けると元に戻る）
+function _canMerge(u) { u = u || currentUser; if (!u) return false; var id = u.uid || u.id; return isOwnerUid(id) || u.role === 'admin' || u.canMerge === true; }
+function _mgOffKey() { return 'gm_mgOff_' + ((currentUser && currentUser.uid) || ''); }
+function _mergeOffCleanup(all) {
+  try { if (localStorage.getItem(_mgOffKey()) === '1') return; } catch (e) {}
+  if (!db || !currentUser || !all || !all.length) return;
+  fsGetCol('maps/' + currentUser.uid + '/shared').then(function(docs) {
+    all.forEach(function(cfg) {
+      docs.forEach(function(r) {
+        var rid = r.recipientUid || r.id;
+        if (rid && rid !== cfg.uid) db.doc('maps/' + cfg.uid + '/shared/' + rid).delete().catch(function() {}); // 自分が配った派生共有だけ消せる（ルール）
+      });
+    });
+    try { localStorage.setItem(_mgOffKey(), '1'); } catch (e) {}
+  }).catch(function() {});
+}
 // ユニオン予定を 作る・直す・消す ができるか（オーナー・管理者・兼務の管理者・予定係）
 function _canUnionEv(un) {
   if (!currentUser) return false;
@@ -4426,7 +4444,7 @@ function adminRowHtml(u) {
     + (sub  ? '<div class="adm-sub">' + sub  + '</div>' : '')
     + (sub2 ? '<div class="adm-sub">' + sub2 + '</div>' : '')
     + (email? '<div class="adm-sub" style="opacity:.7">' + email + '</div>' : '')
-    + _admUnxLine(u) + _admDupLine(u) + _admPurgeLine(u) + _admCkLine(u) + _accRowChip(u) + _admCoreChip(u) + _admEvChip(u)
+    + _admUnxLine(u) + _admDupLine(u) + _admPurgeLine(u) + _admCkLine(u) + _accRowChip(u) + _admCoreChip(u) + _admEvChip(u) + _admMgChip(u)
     + '</div><div class="adm-actions">' + actions + _admDelBtn(u) + '</div></div>';
 }
 // ── v923: ユニオン予定の「予定係」（管理者にしなくても、ユニオン予定だけ入れられる人）──
@@ -4445,6 +4463,22 @@ function _admEvChip(u) {
   if (!_admEvCan(u.union) || !_admEvAll[u.union]) return '';
   var on = _admEvAll[u.union].indexOf(u.id) >= 0;
   return '<span class="acc-ev' + (on ? ' on' : '') + '" onclick="admEvToggle(\'' + u.id + '\')">' + (on ? '📅 ユニオン予定を入力できる' : '＋ ユニオン予定の入力') + '</span>';
+}
+// ── v926: MAP の結合の許可（オーナー・管理者はもともとできる）──
+function _admMgChip(u) {
+  if (!u || isOwnerUid(u.id) || u.role === 'admin' || u.status === 'disabled' || u.status === 'pending' || u.deleted === true) return '';
+  if (!_admEvCan(u.union)) return '';
+  return '<span class="acc-ev' + (u.canMerge ? ' on' : '') + '" onclick="admMgToggle(\'' + u.id + '\')">' + (u.canMerge ? '🔗 MAPを結合できる' : '＋ MAPの結合') + '</span>';
+}
+function admMgToggle(uid) {
+  var u = _adminFindUser(uid); if (!u || !_admEvCan(u.union)) return;
+  var on = !!u.canMerge, nm = u.name || '';
+  if (!confirm(on ? nm + ' さんの「MAPの結合」の許可を外しますか？\n（今している結合も、次に開いた時から出なくなります）'
+    : nm + ' さんに「MAPの結合」を許可しますか？\n（共有してもらった MAP を、自分の MAP につなげて見られるようになります）')) return;
+  var d = { canMerge: !on, canMergeBy: currentUser.uid, canMergeAt: new Date().toISOString() };
+  fsSet('users/' + uid, d).then(function() {
+    Object.assign(u, d); toast(on ? '結合の許可を外しました' : '🔗 結合を許可しました（相手が次に開いた時から使えます）'); renderAdminList();
+  }).catch(function(e) { toast('変えられませんでした（権限をご確認ください）'); console.error(e); });
 }
 function admEvToggle(uid) {
   var u = _adminFindUser(uid); if (!u || !_admEvCan(u.union) || !_admEvAll[u.union]) return;
@@ -41549,7 +41583,7 @@ function buildSharedCard(owner) {
   var merged = isMerged(owner.uid);
   var mergeBtn = document.createElement('button');
   mergeBtn.className = 'sd-merge-btn' + (merged ? ' active' : '');
-  mergeBtn.textContent = merged ? '🔗 結合を解除' : '🔗 自分のMAPに結合';
+  mergeBtn.textContent = merged ? '🔗 結合を解除' : (_canMerge() ? '🔗 自分のMAPに結合' : '🔒 結合（許可が必要）'); // v926
   mergeBtn.onclick = function(e) {
     e.stopPropagation();
     if (merged) unmergeMap(owner.uid);
@@ -41674,7 +41708,12 @@ function mergedConfigPath() { return 'maps/' + currentUser.uid + '/meta/merged';
 function loadMergedConfig() {
   if (!db || !currentUser) return;
   fsGet(mergedConfigPath()).then(function(d) {
-    state.mergedMaps = (d && d.maps) ? d.maps : [];
+    var _all = (d && d.maps) ? d.maps : [];
+    if (_canMerge()) {
+      state.mergedMaps = _all;
+      // v926: 許可が無かった間に片付けた連鎖共有を、許可が付いたら配り直す
+      try { if (_all.length && localStorage.getItem(_mgOffKey()) === '1') { localStorage.removeItem(_mgOffKey()); setTimeout(propagateDerivedShares, 500); } } catch (eMo) {}
+    } else { state.mergedMaps = []; _mergeOffCleanup(_all); } // v926: 許可が無い人の結合は外す
     startAllMergeListeners();
     try { var _pk = 'gm_pds_' + currentUser.uid; if (localStorage.getItem(_pk) !== evTodayYmd()) { localStorage.setItem(_pk, evTodayYmd()); propagateDerivedShares(); } } catch (ePd) { propagateDerivedShares(); } // v355: ログイン時に連鎖共有の配布状態を同期（v867: ログイン時は1日1回。共有・結合を変えた時は今までどおりその場で）
     _reapproachEnsure(); // v361: メニューの件数表示用に先読み
@@ -41943,9 +41982,11 @@ function startViewMergedSync(ownerUid) {
   _viewMerged = { owner: ownerUid, maps: [], data: {}, fail: {} }; _mgFailNote();
   if (!db) return;
   var month = state.currentMonth;
-  fsGet('maps/' + ownerUid + '/meta/merged').then(function(d) {
+  Promise.all([fsGet('maps/' + ownerUid + '/meta/merged'), fsGet('users/' + ownerUid).catch(function() { return null; })]).then(function(R) {
+    var d = R[0];
     if (viewingOwnerUid !== ownerUid || _viewMerged.owner !== ownerUid) return;
-    _viewMerged.maps = (d && d.maps) ? d.maps : [];
+    // v926: MAP の持ち主に結合の許可が無ければ、結合したツリーは出さない
+    _viewMerged.maps = ((d && d.maps) && _canMerge(Object.assign({ uid: ownerUid }, R[1] || {}))) ? d.maps : [];
     _viewMerged.maps.forEach(function(mmCfg) {
       if (mmCfg.hidden) return;
       loadMergedAvatars(mmCfg.uid); // 結合メンバーの写真も表示
@@ -41965,6 +42006,7 @@ function startViewMergedSync(ownerUid) {
 }
 // ── 結合UI ──
 function openMergePicker(owner) {
+  if (!_canMerge()) { toast('🔒 MAPの結合は、許可された人だけ使えます（ユニオンの管理者に頼んでください）'); return; } // v926
   var members = membersForMap('current');
   if (!members.length) { toast('先に自分のMAPにメンバーを追加してください'); return; }
   closeMergePicker();
