@@ -1,5 +1,5 @@
 // v512: アプリ本体（index.htmlから分離。ブラウザがコンパイル結果を保存でき、2回目以降の起動が速くなる）
-var APP_JS_VERSION = 'v927';
+var APP_JS_VERSION = 'v928';
 // index.htmlとapp.jsの版ズレ検知：アップロード途中や古いキャッシュで組み合わせが食い違ったら
 // app.jsのキャッシュを捨てて1回だけ読み直す。それでも合わなければ案内を出して起動を止める（壊れた組み合わせで保存させない）
 (function() {
@@ -4007,19 +4007,33 @@ function _udWait(D) {
   if (D && D.err) return '<div class="usd-b"><div class="nt" style="color:#FF6B7F">読めませんでした（' + evEsc(D.err) + '）。ルールの反映をご確認ください。</div></div>';
   return '';
 }
-// ① 概要（読み取りなし＋1件）
+// v928: 昨日の NAVIGATOR の読み取り（readStats の app=='nav' の分だけ。1人1日1件なので、読み取りはその日に開いた人の数だけ。開いた時に1回）
+//   n＝端末で数えた読み取りの目安。返すのは { n: 合計, ppl: 人数 } か 'loading'
+function _usNavY(yd) {
+  var k = String(yd || '').replace(/-/g, '');
+  if (!k || !db) return null;
+  if (_us.navY && _us.navY.k === k) return _us.navY.v;
+  _us.navY = { k: k, v: 'loading' };
+  db.collection('readStats').doc(k).collection('u').where('app', '==', 'nav').get().then(function(qs) {
+    var n = 0, ppl = 0; qs.forEach(function(x) { var v = x.data() || {}; if (!v.uid) return; n += +v.n || 0; ppl++; }); // ログイン前の端末の分は入れない
+    _us.navY = { k: k, v: { n: n, ppl: ppl } };
+  }).catch(function(e) { _us.navY = { k: k, v: null }; }).then(function() { if (_ud.tab === 'sum') usRender(); });
+  return 'loading';
+}
+// ① 概要（appStats/usage の1件＋昨日の NAVIGATOR の記録）
 function _udSum() {
   var live = _adminUsers.filter(function(u) { return !u.deleted; }), ok = _usOk(), okIds = {}; ok.forEach(function(u) { okIds[u.id] = 1; });
   var t0 = _usSeen(0).length, lim = Date.now() - 7 * 86400000;
   var w7 = live.filter(function(u) { return Date.parse(u.lastSeenAt || '') >= lim; }), w7ok = w7.filter(function(u) { return okIds[u.id]; }).length;
   var idle = ok.filter(function(u) { return !(Date.parse(u.lastSeenAt || '') >= lim); }).length;
   var S = _us.stats, days = (S && S.days) || [], yd = _usDay(1), y = days.filter(function(x) { return x.d === yd; })[0];
-  var per = y && y.nav ? Math.round(y.r / y.nav) : 0;
+  // v928: 1人あたりは NAVIGATOR だけで数える（前は「全部のアプリの読み取り ÷ NAVIGATOR を開いた人」で、受付などの分まで入って大きく出ていた）
+  var NY = _usNavY(yd), per = NY && NY.ppl ? Math.round(NY.n / NY.ppl) : 0;
   var h = '<div class="usd-k4">'
     + '<div><b>' + t0 + '</b><small>今日 開いた人</small></div>'
     + '<div><b>' + w7.length + '</b><small>直近7日に開いた人</small></div>'
     + '<div><b>' + (ok.length ? Math.round(w7ok / ok.length * 100) : 0) + '%</b><small>解放済み ' + ok.length + '人のうち 7日で使った人</small></div>'
-    + '<div><b>' + (per ? _usNf(per) : '—') + '</b><small>1人あたりの読み取り（昨日）</small></div></div>'
+    + '<div><b>' + (per ? _usNf(per) : (NY === 'loading' ? '…' : '—')) + '</b><small>1人あたりの読み取り（NAVIGATOR・昨日）</small></div></div>'
     + (idle ? '<div class="usd-b usd-link" onclick="_ud.seg=\'idle7\';usTab(\'ppl\')">💤 解放済みで、7日開いていない人 <b>' + idle + '人</b><span>見る ›</span></div>' : '');
   if (!S) return h + '<div class="usd-b"><div class="nt">読み込み中…</div></div>';
   if (S.none || (!days.length && !S.err)) return h + '<div class="usd-b"><div class="nt">日ごとの数は、サーバーが次に数えた時（9・12・15・18・21時）から出ます。</div></div>';
@@ -5294,7 +5308,7 @@ function _evMarkIc(e) {
 
 // ── INIT ──
 function init() {
-  var DATA_VERSION = 'v927';
+  var DATA_VERSION = 'v928';
   populateUnionSelects(); // 登録フォームのユニオン選択肢を流し込む
   _unionCfgLoad(); // v838: オーナーが設定したユニオンとUPBD
   // localStorageを完全クリア（旧キャッシュ対策）
@@ -7475,6 +7489,7 @@ function gameRankPaint() {
 }
 // ── お知らせ（リリースノート）：新バージョンを出したらここに追記 ──
 var RELEASE_NOTES = [
+  { v:'v928', d:'2026-11-28', items:['📊 利用状況の「1人あたりの読み取り（昨日）」を、NAVIGATOR の分だけで数えるように直しました（前は受付などほかのアプリの分も入って大きく出ていました）'] },
   { v:'v927', d:'2026-11-27', items:['🔁 予定の繰り返しに「平日（月〜金）」を足しました（土日は入りません。土日から始めた時は次の月曜から）','🌈 夢100の期日に「日にち」も入れられるように（入れなくても大丈夫）。近づくと「あと○日」、過ぎると「期日を過ぎました」と出ます','🔗 MAPの結合は、アカウント管理で許可された人（とオーナー・管理者）だけができるようにしました'] },
   { v:'v926', d:'2026-11-27', items:['🐛 #42 前の月に作った翌月の予定で、月が変わると関連メンバーが「?」になるバグを修正（翌月へコピーする前でも、前の月のMAPの名前で表示されます。共有メンバーも）'] },
   { v:'v924', d:'2026-11-26', items:['📅 ユニオン予定の「予定係」：管理者にしなくても、ユニオン予定だけを入れられる人を決められるようになりました（アカウント管理で「＋ ユニオン予定の入力」を押す。付けられるのはオーナーとそのユニオンの管理者）'] },

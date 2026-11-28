@@ -22,7 +22,7 @@ T.run(async () => {
   const db0 = w.db;
   w.db = Object.assign({}, db0, {
     doc: (p) => ({ get: () => { reads.push(p); return Promise.resolve({ exists: true, data: () => JSON.parse(JSON.stringify(stats)) }); } }),
-    collection: (n) => ({ doc: (d) => ({ collection: (m) => ({ get: () => { reads.push(n + '/' + d + '/' + m); return Promise.resolve({ forEach: (f) => (R[d] || []).forEach((x) => f({ data: () => JSON.parse(JSON.stringify(x)) })) }); } }) }) })
+    collection: (n) => ({ doc: (d) => ({ collection: (m) => { const q = (app) => ({ where: (k, op, v) => q(v), get: () => { reads.push(n + '/' + d + '/' + m + (app ? '?' + app : '')); return Promise.resolve({ forEach: (f) => (R[d] || []).filter((x) => !app || x.app === app).forEach((x) => f({ data: () => JSON.parse(JSON.stringify(x)) })) }); } }); return q(''); } }) })
   });
   const rs = () => reads.filter((p) => /^readStats/.test(p)).length;
   const bt = () => ($('#usBody') || {}).textContent || '';
@@ -32,13 +32,13 @@ T.run(async () => {
   c('設定の「📊 利用状況」は全画面を開く', /usOpen\(\)/.test($('#adminBody').innerHTML));
   w.usOpen(); await sleep(50);
   c('全画面・上に固定の帯（タブ4つ）', !!$('#usOv') && !!$('#usHd') && !!$('#usBody') && [...w.document.querySelectorAll('#usHd .usd-tabs span')].map((x) => x.textContent).join() === '概要,画面,人,費用');
-  c('概要: 今日1・直近7日2・解放済み3人のうち7日で使った 67%・1人あたり（昨日 200,000÷100）2,000', /1今日 開いた人/.test(bt()) && /2直近7日に開いた人/.test(bt()) && /67%解放済み 3人のうち/.test(bt()) && /2,0001人あたりの読み取り/.test(bt()), bt().slice(0, 300));
+  c('概要: 今日1・直近7日2・解放済み3人のうち7日で使った 67%・1人あたり（v928: 昨日の NAVIGATOR だけ (1,000+300)÷2人＝650）', /1今日 開いた人/.test(bt()) && /2直近7日に開いた人/.test(bt()) && /67%解放済み 3人のうち/.test(bt()) && /6501人あたりの読み取り（NAVIGATOR・昨日）/.test(bt()), bt().slice(0, 300));
   c('概要: 7日開いていない人（読み取りなしで分かる）への入口', /7日開いていない人 1人/.test(bt()));
   c('概要: その日に開いた人と読み取りのグラフ（無料枠の線）', /その日に開いた人（NAVIGATOR）/.test(bt()) && /100人/.test(bt()) && /200,000/.test(bt()) && /線＝無料枠/.test(bt()));
-  c('概要では readStats を読まない', rs() === 0);
+  c('概要では readStats を昨日の NAVIGATOR の分だけ1回読む', rs() === 1 && reads.some((p) => /\?nav$/.test(p)));
   // 画面
   w.usTab('scr'); await sleep(50);
-  c('画面タブで、7日分を1回だけ読む', rs() === 7);
+  c('画面タブで、7日分を1回だけ読む', rs() === 8);
   c('画面ごとに 開いた回数・使った人・1人あたり・時間・読み取り（スマホはカード）', /MAP15/.test(bt()) && /開いた 15回・1人・1人 15回・50分・読み取り 4,000/.test(bt()) && /PLAN/.test(bt()), bt().slice(0, 500));
   const names = () => [...w.document.querySelectorAll('#usBody .usd-sc .h b')].map((x) => x.textContent);
   c('開いた回数の多い順（MAP→カレンダー→PLAN）', names().join() === 'MAP,カレンダー,PLAN', names().join());
@@ -46,7 +46,7 @@ T.run(async () => {
   c('使った時間で並べ替え・もう一度押すと逆（短い順: PLAN→カレンダー→MAP）', names().join() === 'PLAN,カレンダー,MAP', names().join());
   w.usSSort('op'); await sleep(5);
   w.usApp('ck'); await sleep(5);
-  c('受付・会員証に切り替え（読み直さない）', /会員証/.test(bt()) && rs() === 7);
+  c('受付・会員証に切り替え（読み直さない）', /会員証/.test(bt()) && rs() === 8);
   w.usApp('nav');
   // PC は表
   setWH(1280, 800); w.usRender(); await sleep(5);
@@ -73,9 +73,9 @@ T.run(async () => {
   $('#usDr').remove();
   // 30日は読み直す
   w.usPer(30); await sleep(50);
-  c('期間を30日にすると、30日分を読む（7日分とは別）', rs() === 37);
+  c('期間を30日にすると、30日分を読む（7日分とは別）', rs() === 38);
   w.usPer(7); await sleep(10);
-  c('7日に戻すと、もう読まない', rs() === 37);
+  c('7日に戻すと、もう読まない', rs() === 38);
   // 費用
   w.usTab('cost'); await sleep(10);
   c('費用: 1日の平均・超えた分・1か月の目安', /200,0001日の読み取り/.test(bt()) && /150,000無料枠を超えた分/.test(bt()) && /約405円/.test(bt()), bt().slice(0, 300));
