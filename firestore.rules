@@ -288,7 +288,7 @@ service cloud.firestore {
         && (!('sec' in request.resource.data) || request.resource.data.sec is int)   // v888: 画面が出ている時間（秒）
         && (!('hr' in request.resource.data) || (request.resource.data.hr is map && request.resource.data.hr.size() <= 24))   // v888: 時間帯ごとの秒
         && (!('op' in request.resource.data) || (request.resource.data.op is map && request.resource.data.op.size() <= 60))   // v887: 画面を開いた回数
-        && request.resource.data.app in ['nav', 'ck']
+        && request.resource.data.app in ['nav', 'ck', 'al'] // v928: ATTACK LIST（hotlist の index.html）も
         && request.resource.data.d == d
         && request.resource.data.n is int
         && request.resource.data.by is map && request.resource.data.by.size() <= 100
